@@ -12,6 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])  # LGPL
 
 exports_files(["LICENSE"])
+
+cc_library(
+    name = "libffmpeg",
+    srcs = glob(
+        [
+            "lib/x86_64-linux-gnu/libav*.so*",
+        ],
+    ),
+    hdrs = glob(["include/x86_64-linux-gnu/libav*/*.h"]),
+    includes = ["include"],
+    linkopts = [
+        "-lavcodec",
+        "-lavformat",
+        "-lavutil",
+    ],
+    linkstatic = 1,
+    visibility = ["//visibility:public"],
+)
