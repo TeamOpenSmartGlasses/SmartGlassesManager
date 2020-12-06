@@ -1,0 +1,6 @@
+[submodule "detectron2"]
+	path = detectron2
+	url = https://github.com/facebookresearch/detectron2
+[submodule "centermask2"]
+	path = centermask2
+	url = https://github.com/youngwanLEE/centermask2

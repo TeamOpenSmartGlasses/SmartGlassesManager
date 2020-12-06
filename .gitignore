@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+
+# data
+*.jpg
+*mp3
+*mp4
+*.png
+
+# models
+*.pkl
+*.h5
+*.scorer
+*.tflite
+*.pbmm
+*.pth
