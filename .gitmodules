@@ -4,3 +4,6 @@
 [submodule "centermask2"]
 	path = centermask2
 	url = https://github.com/youngwanLEE/centermask2
+[submodule "face_analysis/Face_info"]
+	path = face_analysis/Face_info
+	url = https://github.com/juan-csv/Face_info.git

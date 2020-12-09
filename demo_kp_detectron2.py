@@ -15,11 +15,9 @@ from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
 
-class Detectron:
+class DetectronPrebuilt:
     def __init__(self):
         self.frame = None
-        self.configs = dict()
-        self.demos = dict()
 
     def setup_cfg(self, config_file, opts, confidence_threshold):
         # load config from file and command-line arguments
@@ -43,43 +41,19 @@ class Detectron:
         config_file = os.path.join(path, "detectron2/configs/COCO-Keypoints/keypoint_rcnn_R_101_FPN_3x.yaml")
         opts = ["MODEL.WEIGHTS", os.path.join(path, "detectron2/models/keypoints_R101_FPN.pkl")]
         confidence_threshold = 0.5
+        print(opts)
         setup_logger(name="fvcore")
         self.logger = setup_logger()
 
-        self.configs["keypoints"] = self.setup_cfg(config_file, opts, confidence_threshold)
-        self.demos["keypoints"] = VisualizationDemo(self.configs["keypoints"])
-        
-    def setup_objects(self):
-        mp.set_start_method("spawn", force=True)
-        path = pathlib.Path(__file__).parent.absolute()
-        config_file = os.path.join(path, "detectron2/configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-        opts = ["MODEL.WEIGHTS", os.path.join(path, "detectron2/models/model_final_f10217_r50_FPN_3x_mask_rccn.pkl")]
-        confidence_threshold = 0.5
-        setup_logger(name="fvcore")
-        self.logger = setup_logger()
-
-        self.configs["objects"] = self.setup_cfg(config_file, opts, confidence_threshold)
-        self.demos["objects"] = VisualizationDemo(self.configs["objects"])
+        self.cfg = self.setup_cfg(config_file, opts, confidence_threshold)
+        self.demo = VisualizationDemo(self.cfg)
 
     def pass_frame(self, img):
         self.frame = img
-        
-    def get_objects(self):
-        start_time = time.time()
-        predictions, visualized_output = self.demos["objects"].run_on_image(self.frame)
-        self.logger.info(
-            "{} in {:.2f}s".format(
-                "detected {} instances".format(len(predictions["instances"]))
-                if "instances" in predictions
-                else "finished",
-                time.time() - start_time,
-            )
-        )
-        return predictions, visualized_output
 
     def get_keypoints(self):
         start_time = time.time()
-        predictions, visualized_output = self.demos["keypoints"].run_on_image(self.frame)
+        predictions, visualized_output = self.demo.run_on_image(self.frame)
         self.logger.info(
             "{} in {:.2f}s".format(
                 "detected {} instances".format(len(predictions["instances"]))
@@ -92,11 +66,11 @@ class Detectron:
 
 if __name__ == "__main__":
     WINDOW_NAME = "keypoint_demo"
-    dt2 = Detectron()
-    dt2.setup_objects()
+    dt2 = DetectronPrebuilt()
+    dt2.setup_keypoints()
     img = cv2.imread(sys.argv[1])
     dt2.pass_frame(img)
-    keypoints, visualized_output = dt2.get_objects()
+    keypoints, visualized_output = dt2.get_keypoints()
     print(keypoints)
     print(len(keypoints))
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)

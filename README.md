@@ -82,5 +82,6 @@ There's a lot of pretrained models here that you'll need to download. If one is 
 
 Detectron2 prebuilt models, to be saved in detectron2/models: https://github.com/facebookresearch/detectron2/blob/master/MODEL_ZOO.md
 
-
+# Ideas
+-when walking down street, read every sign and look it up on google maps with current GPS coordinates
 
