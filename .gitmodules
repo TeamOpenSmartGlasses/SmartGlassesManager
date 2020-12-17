@@ -1,15 +1,15 @@
 [submodule "detectron2"]
-	path = detectron2
+	path = python_pipeline/detectron2
 	url = https://github.com/facebookresearch/detectron2
 [submodule "centermask2"]
-	path = centermask2
+	path = python_pipeline/centermask2
 	url = https://github.com/youngwanLEE/centermask2
 [submodule "face_analysis/Face_info"]
-	path = face_analysis/Face_info
+	path = python_pipeline/face_analysis/Face_info
 	url = https://github.com/juan-csv/Face_info.git
 [submodule "places365"]
-	path = places365
+	path = python_pipeline/places365
 	url = https://github.com/CSAILVision/places365
 [submodule "mediapipe"]
-	path = mediapipe
+	path = python_pipeline/mediapipe
 	url = https://github.com/google/mediapipe
