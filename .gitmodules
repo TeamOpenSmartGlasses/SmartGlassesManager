@@ -7,3 +7,9 @@
 [submodule "face_analysis/Face_info"]
 	path = face_analysis/Face_info
 	url = https://github.com/juan-csv/Face_info.git
+[submodule "places365"]
+	path = places365
+	url = https://github.com/CSAILVision/places365
+[submodule "mediapipe"]
+	path = mediapipe
+	url = https://github.com/google/mediapipe

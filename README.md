@@ -59,12 +59,25 @@ PLAN
 1. Get a few pre-trained nets doing inference on images or audio chunks
 x -Deepspeech
 x-object recognition
--face information
+x-face information
 x-pose estimation
+-vectorize 
+    -image with vector hub
+    -audioo with vector hub
+    -make one class to wrap vectorhub funcs? Or just do in main...
+-room detection - MS CLNK
+    -install CNTK
+    -clone : https://github.com/TreeLLi/CNTK-Hotel-pictures-classificator
+    -get running in main.py
 
 2. Get them all running on the same data stream
 
-3. Train network on them.
+3. Run mobile (laptop with USB camera).
+4.  -run in cloud with GPUs?
+5. -run on ANdroid somehow?
+6. -run on smart glasses? WHich ones? - not vuzix
+ 
+7. Train network on them.
 
 
 

@@ -8,9 +8,12 @@ __pycache__
 *.png
 
 # models
+models/
 *.pkl
 *.h5
 *.scorer
 *.tflite
 *.pbmm
 *.pth
+*.pt
+*.tar
