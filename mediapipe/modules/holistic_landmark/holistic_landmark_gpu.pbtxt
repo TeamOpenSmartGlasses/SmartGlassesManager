@@ -73,6 +73,10 @@ output_stream: "FACE_LANDMARKS:face_landmarks"
 output_stream: "POSE_ROI:pose_landmarks_roi"
 output_stream: "POSE_DETECTION:pose_detection"
 
+#new outputs for iris downstream in wearable ai
+output_stream: "FACE_DETECTIONS:face_detections"
+output_stream: "FACE_RECT:face_rect"
+
 # Predicts pose landmarks.
 node {
   calculator: "PoseLandmarkGpu"
@@ -111,4 +115,6 @@ node {
   input_stream: "IMAGE:image"
   input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
   output_stream: "FACE_LANDMARKS:face_landmarks"
+  output_stream: "FACE_DETECTIONS:face_detections"
+  output_stream: "FACE_ROI_FROM_DETECTION:face_rect"
 }
