@@ -2,8 +2,13 @@
 
 ## PLAN
 
-AI is getting really, really good at interpreting sensor data. There seems to be a ton of networks that people make, and they work really well, but there are not many applications of thos networks.
+AI is getting really, really good at interpreting sensor data. There seems to be a ton of networks that people make, and they work really well, but there are not many applications of those networks.
 
+### 1 - Use
+
+Epson Moverio 200 BT running an assortment of AI models on an Android phone. Overload vision of machine intellgience extracting insights about the environment we are in and providing us with a live stream of information taht is immediatly useful to us. Examples include: lie detection, emotion detection, stress and confidence responses, comfort and discomfort responses, personal memory expansion (memorize everything and recall it naturally).
+
+## 2 - Learning
 My plan is to take many, many networks and run them on a wearable computers sensor stream. As well, we should take information that isn't a direct sensor reading, but easy to pull in (i.e. time of day, time of year, weather, light levels, etc. etc.). Make a giant output vector with as much environment/contextual information as possible, and train another deep NN on that, on the high level input vector... this could make possible many high level metric classification that currently is not possible when pulling it out form the low level data. This approaches somewhat Kurzweils theory of mind and how our cognition is models on models.
 
 VIDEO

@@ -6,6 +6,7 @@ __pycache__
 *mp3
 *mp4
 *.png
+data/
 
 # models
 models/
@@ -17,3 +18,4 @@ models/
 *.pth
 *.pt
 *.tar
+

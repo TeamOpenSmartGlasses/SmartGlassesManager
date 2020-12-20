@@ -11,5 +11,5 @@
 	path = python_pipeline/places365
 	url = https://github.com/CSAILVision/places365
 [submodule "mediapipe"]
-	path = python_pipeline/mediapipe
+	path = android_pipeline/mediapipe
 	url = https://github.com/google/mediapipe
