@@ -12,4 +12,7 @@
 	url = https://github.com/CSAILVision/places365
 [submodule "mediapipe"]
 	path = android_pipeline/mediapipe
-	url = https://github.com/google/mediapipe
+	url = https://github.com/CaydenPierce/mediapipe
+[submodule "android_pipeline/DeepSpeech"]
+	path = android_pipeline/DeepSpeech
+	url = https://github.com/mozilla/DeepSpeech

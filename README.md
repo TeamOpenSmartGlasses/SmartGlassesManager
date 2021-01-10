@@ -102,4 +102,3 @@ Detectron2 prebuilt models, to be saved in detectron2/models: https://github.com
 
 # Ideas
 -when walking down street, read every sign and look it up on google maps with current GPS coordinates
-
