@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import android.app.Activity;
 import android.hardware.Camera;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -17,6 +18,8 @@ import android.view.SurfaceView;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import android.view.Window;
+import android.view.WindowManager;
 
 public class MainActivity extends Activity {
     //socket class instance
@@ -35,6 +38,18 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //print a bunch of stuff we can see in logcat
+        for(int i = 0; i < 20; i++){
+            System.out.println("WEARABLEAI");
+        }
+
+        //set full screen for Moverio
+        long FLAG_SMARTFULLSCREEN = 0x80000000;
+        Window win = getWindow();
+        WindowManager.LayoutParams winParams = win.getAttributes();
+        winParams.flags |= FLAG_SMARTFULLSCREEN;
+        win.setAttributes(winParams);
+
         setContentView(R.layout.activity_main);
 
         //create client socket and setup socket
@@ -51,9 +66,26 @@ public class MainActivity extends Activity {
         takePictureButton = (Button) findViewById(R.id.captureImage);
         takePictureButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                takePicture();
+                takeAndSendPicture();
             }
         });
+
+        //startup a task that will take and send a picture every 10 seconds
+        final Handler handler = new Handler();
+        final int init_camera_delay = 1000; // 1000 milliseconds
+        final int delay = 500; // 500 milliseconds ~= 2Hz
+
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        takeAndSendPicture();
+                        handler.postDelayed(this, delay);
+                    }
+                }, delay);
+            }
+        }, delay);
     }
 
     @Override
@@ -132,7 +164,8 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void takePicture() {
+    private void takeAndSendPicture() {
+        System.out.println("TAKE AND SEND PICTURE CALLED");
         camera.takePicture(null, null, null, new PhotoHandler(getApplicationContext()));
         startPreview();
     }
