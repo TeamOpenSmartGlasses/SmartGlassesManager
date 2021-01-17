@@ -25,7 +25,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends com.google.mediapipe.apps.basic.MainActivity {
+public class MainActivity extends MediaPipeActivity {
   private static final String TAG = "MainActivity";
 
   private static final String FOCAL_LENGTH_STREAM_NAME = "focal_length_pixel";

@@ -49,7 +49,8 @@ android_binary(
         "//mediapipe/modules/face_detection:face_detection_front.tflite",
     ],
     assets_dir = "",
-    manifest = "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:AndroidManifest.xml",
+    manifest = "AndroidManifest.xml",
+    resource_files = glob(["res/**"]),
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.wearableai",
         "appName": "Wearable AI",
@@ -64,8 +65,16 @@ android_binary(
     multidex = "native",
     deps = [
         ":mediapipe_jni_lib",
-        "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/basic:basic_lib",
         "//mediapipe/framework/formats:landmark_java_proto_lite",
+        "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
+        "//mediapipe/java/com/google/mediapipe/components:android_components",
         "//mediapipe/java/com/google/mediapipe/framework:android_framework",
+        "//mediapipe/java/com/google/mediapipe/glutil",
+        "//third_party:androidx_appcompat",
+        "//third_party:androidx_constraint_layout",
+        "//third_party:opencv",
+        "@maven//:androidx_concurrent_concurrent_futures",
+        "@maven//:com_google_guava_guava",
+
     ],
 )
