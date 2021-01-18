@@ -14,6 +14,9 @@
 
 package com.google.mediapipe.apps.wearableai;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -32,6 +35,7 @@ import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
+import com.google.mediapipe.framework.AndroidPacketCreator;
 import com.google.mediapipe.glutil.EglManager;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
@@ -43,10 +47,51 @@ import com.google.mediapipe.framework.PacketGetter;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.HashMap;
 import java.util.Map;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /** Main activity of MediaPipe basic app. */
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = "WearableAi_MainActivity";
+
+    //socket stuff
+    ServerSocket serverSocket;
+    Thread SocketThread = null;
+    String message;
+    public static String SERVER_IP = "";
+    public static final int SERVER_PORT = 4567;
+    private PrintWriter output;
+    private DataInputStream input;
+    byte [] image_data_rcv_jpg;
+    TextView tvIP, tvPort;
+    TextView tvMessages;
+    EditText etMessage;
+    Button btnSend;
+    ImageView wearcam_view;
+
+    //temp, update this on repeat and send to wearable to show connection is live
+    private int count = 10;
+
+    //holds connection state
+    private boolean mConnectionState = false;
 
   // Flips the camera-preview frames vertically by default, before sending them into FrameProcessor
   // to be processed in a MediaPipe graph, and flips the processed frames back when they are
@@ -80,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
   protected FrameProcessor processor;
   // Handles camera access via the {@link CameraX} Jetpack support library.
   protected CameraXPreviewHelper cameraHelper;
-
+  
   // {@link SurfaceTexture} where the camera-preview frames can be accessed.
   private SurfaceTexture previewFrameTexture;
   // {@link SurfaceView} that displays the camera-preview frames processed by a MediaPipe graph.
@@ -102,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+      //mediapipe stuffs
     super.onCreate(savedInstanceState);
     setContentView(getContentViewLayoutResId());
 
@@ -140,9 +186,12 @@ public class MainActivity extends AppCompatActivity {
           (packet) -> {
             byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
             try {
+                System.out.println("FUCK1");
+                Log.v(TAG, "FUCK2");
               NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
               if (landmarks == null) {
                 Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
+                Log.v(TAG, "FUCK3");
                 return;
               }
               Log.v(
@@ -152,12 +201,62 @@ public class MainActivity extends AppCompatActivity {
                       + "] #Landmarks for face (including iris): "
                       + landmarks.getLandmarkCount());
               Log.v(TAG, getLandmarksDebugString(landmarks));
+              processOutput(landmarks);
             } catch (InvalidProtocolBufferException e) {
+            Log.v(TAG, "FUCK4");
               Log.e(TAG, "Couldn't Exception received - " + e);
               return;
             }
           });
     }
+
+    //moverio stuffs
+    //create references to the UI
+    ////comment for now because we are using the mediapipe UI
+//    tvIP = findViewById(R.id.tvIP);
+//    tvPort = findViewById(R.id.tvPort);
+//    tvMessages = findViewById(R.id.tvMessages);
+//    etMessage = findViewById(R.id.etMessage);
+//    btnSend = findViewById(R.id.btnSend);
+
+    //get local IP
+    try {
+        SERVER_IP = getLocalIpAddress();
+    } catch (UnknownHostException e) {
+        e.printStackTrace();
+    }
+
+//        //create socket handler
+//        mSocket = new SocketHandler();
+
+    SocketThread = new Thread(new SocketThread());
+    SocketThread.start();
+//    btnSend.setOnClickListener(new View.OnClickListener() {
+//        @Override
+//        public void onClick(View v) {
+//            message = etMessage.getText().toString().trim();
+//            if (!message.isEmpty()) {
+//                new Thread(new SendThread(message)).start();
+//            }
+//        }
+//    });
+
+    //setup image view
+    // New Code
+//    wearcam_view = (ImageView)findViewById(R.id.imageView); //Assuming an ImgView is there in your layout activity_main
+
+    //start a thread which send random data to the moverio every n seconds, this is for testing
+    final Handler handler = new Handler();
+    final int delay = 2000; // 2000 milliseconds == 2 second
+
+    handler.postDelayed(new Runnable() {
+        public void run() {
+            count = count + 1;
+            String message = "hello w0rLd!" + Integer.toString(count);
+            new Thread(new SendThread(message)).start();
+            handler.postDelayed(this, delay);
+        }
+    }, delay);
 
   }
 
@@ -301,5 +400,141 @@ public class MainActivity extends AppCompatActivity {
     }
     return landmarksString;
   }
+
+  //mediapipe handles the AI processing of data, here we implement the hardcoded data processing
+  private void processOutput(NormalizedLandmarkList landmarks){
+      System.out.println("Received output from mediapipe graph");
+//    List<NormalizedLandmark> rel = ; //landmarks for right eye
+//    List<NormalizedLandmark> lel = ; //landmarks for right eye
+    int leftEyeLocationStart = 469;
+    int leftEyeLocationEnd = 473;
+    int rightEyeLocationStart = 474;
+    int rightEyeLocationEnd = 478;
+    //we convert from NormalizedLandmarks into an array list of them. I'm sure there is a great way of doing this within mediapipe, but I am pretty lost to where getLandmarkList even comes from? Can't find it if I search the whole repo. I assume it's generated, as NormalizedLandmark is generated. Need a google C++ guy to explain I guess? Well, this will work for now -cayden
+      List<NormalizedLandmark> lll = landmarks.getLandmarkList();
+      List<NormalizedLandmark> leftEyeLandmarks = new ArrayList<NormalizedLandmark>();
+      List<NormalizedLandmark> rightEyeLandmarks = new ArrayList<NormalizedLandmark>();
+      int landmarkIndex = 0;
+    for (NormalizedLandmark landmark : lll) {
+        if ((landmarkIndex >= leftEyeLocationStart) && (landmarkIndex <= leftEyeLocationEnd)){
+            leftEyeLandmarks.add(landmark);
+        }
+        else if ((landmarkIndex >= rightEyeLocationStart) && (landmarkIndex <= rightEyeLocationEnd)){
+            rightEyeLandmarks.add(landmark);
+        }
+        landmarkIndex++;
+    }
+    
+    processEyeContact(leftEyeLandmarks, rightEyeLandmarks);
+  }
+
+  private void processEyeContact(List<NormalizedLandmark> leftEyeLandmarks, List<NormalizedLandmark> rightEyeLandmarks){
+      System.out.println("Processing eye contact from iris landmarks...");
+    for (NormalizedLandmark landmark : leftEyeLandmarks) {
+        System.out.println("LANDMARK: " + landmark.getX());
+    }
+  }
+
+ private String getLocalIpAddress() throws UnknownHostException {
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        assert wifiManager != null;
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        int ipInt = wifiInfo.getIpAddress();
+        return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
+    }
+
+    //socket exists on this thread, socket gets started and persists here
+    class SocketThread implements Runnable {
+        @Override
+        public void run() {
+            Socket socket;
+            try {
+                serverSocket = new ServerSocket(SERVER_PORT);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+//                        tvMessages.setText("Not connected");
+//                        tvIP.setText("IP: " + SERVER_IP);
+//                        tvPort.setText("Port: " + String.valueOf(SERVER_PORT));
+                    }
+                });
+                try {
+                    socket = serverSocket.accept();
+                    mConnectionState = true;
+                    output = new PrintWriter(socket.getOutputStream(), true);
+                    input = new DataInputStream(new DataInputStream(socket.getInputStream()));
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+//                            tvMessages.setText("Connected\n");
+                        }
+                    });
+                    new Thread(new ReceiveThread()).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //receives messages
+    private class ReceiveThread implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                System.out.println("LISTENING FOR MESSAGES");
+                try {
+                    int length = input.readInt();                    // read length of incoming message
+                    byte[] raw_data = new byte[length];
+                    if(length>0) {
+                        input.readFully(raw_data, 0, raw_data.length); // read the message
+                    }
+
+                    if (raw_data != null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                //display image
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
+//                                Packet imagePacket = packetCreator.createRgbaImageFrame(yuv_converted_bimap);
+//                                wearcam_view.setImageBitmap(bitmap); //Must.jpg present in any of your drawable folders.
+                            }
+                        });
+                    } else {
+                        SocketThread = new Thread(new SocketThread());
+                        SocketThread.start();
+                        return;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+    }
+
+    //this sends messages
+    class SendThread implements Runnable {
+        private String message;
+        SendThread(String message) {
+            this.message = message;
+        }
+        @Override
+        public void run() {
+            if (mConnectionState) {
+                output.write(message + "\n");
+                output.flush();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+//                        tvMessages.append("server: " + message + "\n");
+//                        etMessage.setText("");
+                    }
+                });
+            }
+        }
+        }
 
 }
