@@ -14,9 +14,15 @@
 
 package com.google.mediapipe.apps.wearableai;
 
+import com.google.mediapipe.apps.wearableai.LandmarksTranslator;
+import com.google.mediapipe.apps.wearableai.SocialInteraction;
+
 import java.util.List;
 import java.util.ArrayList;
 
+import android.media.RingtoneManager;
+import android.media.Ringtone;
+import android.net.Uri;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -86,9 +92,18 @@ public class MainActivity extends AppCompatActivity {
     EditText etMessage;
     Button btnSend;
     ImageView wearcam_view;
+    
+    //ringtone for notification sound
+    private Ringtone r;
+    private Uri notification;
+    private int r_count = 0;
+    private boolean mRinging = false;
 
     //temp, update this on repeat and send to wearable to show connection is live
     private int count = 10;
+
+    //keep track of current interaction - to be moved to it's own class and instantiated for each interaction/face recognition
+    private SocialInteraction mSocialInteraction;
 
     //holds connection state
     private boolean mConnectionState = false;
@@ -186,29 +201,29 @@ public class MainActivity extends AppCompatActivity {
           (packet) -> {
             byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
             try {
-                System.out.println("FUCK1");
-                Log.v(TAG, "FUCK2");
               NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
               if (landmarks == null) {
                 Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
-                Log.v(TAG, "FUCK3");
                 return;
               }
-              Log.v(
-                  TAG,
-                  "[TS:"
-                      + packet.getTimestamp()
-                      + "] #Landmarks for face (including iris): "
-                      + landmarks.getLandmarkCount());
-              Log.v(TAG, getLandmarksDebugString(landmarks));
+//              Log.v(
+//                  TAG,
+//                  "[TS:"
+//                      + packet.getTimestamp()
+//                      + "] #Landmarks for face (including iris): "
+//                      + landmarks.getLandmarkCount());
+//              int maxLogSize = 500;
+//              printLandmarksDebugString(landmarks);
               processOutput(landmarks);
             } catch (InvalidProtocolBufferException e) {
-            Log.v(TAG, "FUCK4");
               Log.e(TAG, "Couldn't Exception received - " + e);
               return;
             }
           });
     }
+
+    //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
+    mSocialInteraction = new SocialInteraction();
 
     //moverio stuffs
     //create references to the UI
@@ -247,12 +262,13 @@ public class MainActivity extends AppCompatActivity {
 
     //start a thread which send random data to the moverio every n seconds, this is for testing
     final Handler handler = new Handler();
-    final int delay = 2000; // 2000 milliseconds == 2 second
+    final int delay = 100; // 100 milliseconds == 0.1 second
 
     handler.postDelayed(new Runnable() {
         public void run() {
             count = count + 1;
-            String message = "hello w0rLd!" + Integer.toString(count);
+            float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
+            String message = String.format("%.2f", eye_contact_percentage) + "%";
             new Thread(new SendThread(message)).start();
             handler.postDelayed(this, delay);
         }
@@ -401,39 +417,151 @@ public class MainActivity extends AppCompatActivity {
     return landmarksString;
   }
 
+    private static void printLandmarksDebugString(NormalizedLandmarkList landmarks) {
+        int landmarkIndex = 0;
+        for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
+            String landmarksString = "";
+          landmarksString +=
+              "\t\tLandmark["
+                  + landmarkIndex
+                  + "]: ("
+                  + landmark.getX()
+                  + ", "
+                  + landmark.getY()
+                  + ", "
+                  + landmark.getZ()
+                  + ")\n";
+          Log.v(TAG, landmarksString);
+          ++landmarkIndex;
+        }
+      }
+
   //mediapipe handles the AI processing of data, here we implement the hardcoded data processing
   private void processOutput(NormalizedLandmarkList landmarks){
-      System.out.println("Received output from mediapipe graph");
-//    List<NormalizedLandmark> rel = ; //landmarks for right eye
-//    List<NormalizedLandmark> lel = ; //landmarks for right eye
-    int leftEyeLocationStart = 469;
-    int leftEyeLocationEnd = 473;
-    int rightEyeLocationStart = 474;
-    int rightEyeLocationEnd = 478;
     //we convert from NormalizedLandmarks into an array list of them. I'm sure there is a great way of doing this within mediapipe, but I am pretty lost to where getLandmarkList even comes from? Can't find it if I search the whole repo. I assume it's generated, as NormalizedLandmark is generated. Need a google C++ guy to explain I guess? Well, this will work for now -cayden
-      List<NormalizedLandmark> lll = landmarks.getLandmarkList();
-      List<NormalizedLandmark> leftEyeLandmarks = new ArrayList<NormalizedLandmark>();
-      List<NormalizedLandmark> rightEyeLandmarks = new ArrayList<NormalizedLandmark>();
-      int landmarkIndex = 0;
-    for (NormalizedLandmark landmark : lll) {
-        if ((landmarkIndex >= leftEyeLocationStart) && (landmarkIndex <= leftEyeLocationEnd)){
-            leftEyeLandmarks.add(landmark);
-        }
-        else if ((landmarkIndex >= rightEyeLocationStart) && (landmarkIndex <= rightEyeLocationEnd)){
-            rightEyeLandmarks.add(landmark);
-        }
-        landmarkIndex++;
-    }
-    
-    processEyeContact(leftEyeLandmarks, rightEyeLandmarks);
+    List<NormalizedLandmark> landmarksList = landmarks.getLandmarkList();
+
+    boolean eye_contact = processEyeContact(landmarksList);
+
+    System.out.println("UPDATING EYE CONTACT");
+    mSocialInteraction.updateEyeContact(eye_contact);
+    float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
+    String message = "hello w0rLd! " + String.format("%.2f", eye_contact_percentage);
+    System.out.println(message);
   }
 
-  private void processEyeContact(List<NormalizedLandmark> leftEyeLandmarks, List<NormalizedLandmark> rightEyeLandmarks){
-      System.out.println("Processing eye contact from iris landmarks...");
-    for (NormalizedLandmark landmark : leftEyeLandmarks) {
-        System.out.println("LANDMARK: " + landmark.getX());
-    }
+  private boolean processEyeContact(List<NormalizedLandmark> landmarksList){
+//     Log.v(TAG, "Processing eye contact from face + iris landmarks...");
+     //get irises
+     NormalizedLandmark left_iris_center_landmark = landmarksList.get(LandmarksTranslator.left_iris_center);
+     NormalizedLandmark right_iris_center_landmark = landmarksList.get(LandmarksTranslator.right_iris_center);
+     //get eyes outer points
+     NormalizedLandmark right_eye_outer_center_landmark = landmarksList.get(LandmarksTranslator.right_eye_outer_center);
+     NormalizedLandmark left_eye_outer_center_landmark = landmarksList.get(LandmarksTranslator.left_eye_outer_center);
+     //get eyes inner points
+     NormalizedLandmark right_eye_inner_center_landmark = landmarksList.get(LandmarksTranslator.right_eye_inner_center);
+     NormalizedLandmark left_eye_inner_center_landmark = landmarksList.get(LandmarksTranslator.left_eye_inner_center);
+     //get nose
+     NormalizedLandmark nose_bottom_landmark = landmarksList.get(LandmarksTranslator.nose_bottom);
+
+     //x angles
+     //get head angle using distance from eyes to nose
+     //get distance between right eye and nose
+     float eye_nose_dist_right = nose_bottom_landmark.getX() - right_iris_center_landmark.getX();
+     float eye_nose_dist_left = left_iris_center_landmark.getX() - nose_bottom_landmark.getX();
+//     Log.v(TAG, "Distance right eye to nose: " + eye_nose_dist_right);
+//     Log.v(TAG, "Distance left eye to nose: " + eye_nose_dist_left);
+     //now we get ratio of the two. Let's add 2 to both distances to "normalize" (don't let any negative numbers, don't hit a divide by zero,  makes things easier)
+     float head_turn_ratio = (eye_nose_dist_right + 2) / (eye_nose_dist_left + 2);
+     Log.v(TAG, "head_turn_ratio = " + head_turn_ratio);
+     //if head_turn_ratio ~= 1.12 - head turn 75 degrees right - +75deg
+     //if head_turn_ratio ~= 0.88 - head turn 75 degrees left  - -75deg
+     //if head_turn_ratio ~= 1.00 - head turn straight ahead
+     //resting head position looking forward = 0 degrees
+     //convert to degrees turn
+     //
+     //get eye angle using ratio of distance of iris center to outermost point and iris center to innermost point
+     //inner
+     float left_eye_inner_dist = left_eye_inner_center_landmark.getX() - left_iris_center_landmark.getX();
+     float right_eye_inner_dist = right_iris_center_landmark.getX() - right_eye_inner_center_landmark.getX();
+     //outer
+     float left_eye_outer_dist = left_iris_center_landmark.getX() - left_eye_outer_center_landmark.getX();
+     float right_eye_outer_dist = right_eye_outer_center_landmark.getX() - right_iris_center_landmark.getX();
+     //ratios, again add 2 to make it all postive, no divide by 0 issue
+     float right_eye_turn_ratio =  (right_eye_inner_dist + 2) / (right_eye_outer_dist + 2);
+     float left_eye_turn_ratio =  (left_eye_inner_dist + 2) / (left_eye_outer_dist + 2);
+//     Log.v(TAG, "right_eye_turn_ratio= " + right_eye_turn_ratio);
+//     Log.v(TAG, "left_eye_turn_ratio= " + left_eye_turn_ratio);
+     //eyes ratio - [0.998,1.002] - straight ahead
+     //eyes ratio - 1.02 - full outside 30 degrees
+     //     -right - outside is +30deg
+     //     -left - outside is -30deg
+     //eyes ratio - 0.98 - full inside 30 degrees
+     //     -right - inside is -30deg
+     //     -left - inside is +30deg
+     //now we convert ratios to angles with linear functions - done on paper, y = mx+b and that shit
+     float head_angle = calculateHeadAngle(head_turn_ratio);
+     float right_eye_angle = calculateEyeAngle(right_eye_turn_ratio, false);
+     float left_eye_angle = calculateEyeAngle(left_eye_turn_ratio, true);
+     Log.v(TAG, "Head angle: " + head_angle);
+//     Log.v(TAG, "Right eye ratio: " + right_eye_turn_ratio);
+//     Log.v(TAG, "Left eye ratio: " + left_eye_turn_ratio);
+     Log.v(TAG, "Right eye angle: " + right_eye_angle);
+     Log.v(TAG, "Left eye angle: " + left_eye_angle);
+     //use whichever eye we can see better. So if head turns right, use left eye. If head turns left, use right eye
+     float closer_eye_angle;
+     if (head_angle > 0){
+         closer_eye_angle = left_eye_angle;
+     } else {
+         closer_eye_angle = right_eye_angle;
+     }
+     float line_of_sight_angle = head_angle + closer_eye_angle;
+     Log.v(TAG, "line_of_sight_angle is = " + line_of_sight_angle);
+     boolean eye_contact;
+     if (line_of_sight_angle < 9 && line_of_sight_angle > -9){
+         eye_contact = true;
+     } else {
+         eye_contact = false;
+     }
+     Log.v(TAG, "Eye contact is = " + eye_contact);
+     //if eye contact is made, play an alarm
+    if (eye_contact == true){
+        try {
+            if (r == null){
+                notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+                r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+            }
+            System.out.println("PLAYING SOUND + " + r_count);
+              if (!mRinging){
+                r.play();
+                mRinging = true;
+              }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+      } else {
+          if (mRinging){
+              r.stop();
+            mRinging = false;
+          }
+      }
+    return eye_contact;
   }
+
+  private float calculateHeadAngle(float ratio){
+     float y_angle_head = (750* ratio) - 750; //this was computed, and then changed through trial and error
+     return y_angle_head;
+  }
+
+  private float calculateEyeAngle(float ratio, boolean is_left){
+     float y_angle_eye = (3800* ratio) - 3800f; //this was computed, and then changed through trial and error
+     if (is_left){
+         y_angle_eye = -1f * y_angle_eye;
+     }
+
+     return y_angle_eye;
+  }
+
 
  private String getLocalIpAddress() throws UnknownHostException {
         WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
