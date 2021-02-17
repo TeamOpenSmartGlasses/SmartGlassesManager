@@ -1,5 +1,6 @@
 package com.example.wearableaidisplaymoverio;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import android.app.Activity;
@@ -22,16 +23,11 @@ import android.view.Window;
 import android.view.WindowManager;
 
 public class MainActivity extends Activity {
-    //socket class instance
-    ClientSocket clientsocket;
+    public String TAG = "WearableAiDisplay";
 
     //camera data
     private SurfaceView preview = null;
     private SurfaceHolder previewHolder = null;
-    private Camera camera = null;
-    private boolean inPreview = false;
-    private boolean cameraConfigured = false;
-
     private Button takePictureButton;
 
     @Override
@@ -52,59 +48,41 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        //create client socket and setup socket
-        clientsocket = ClientSocket.getInstance();
-        clientsocket.startSocket();
+        //create the camera service if it isn't already running
+        startService(new Intent(this, CameraService.class));
 
-        //setup camera preview
-        preview = (SurfaceView) findViewById(R.id.preview);
-        previewHolder = preview.getHolder();
-        previewHolder.addCallback(surfaceCallback);
-        previewHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+//        //setup camera preview
+//        preview = (SurfaceView) findViewById(R.id.preview);
+//        previewHolder = preview.getHolder();
+//        previewHolder.addCallback(surfaceCallback);
+//        previewHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
         //setup take picture button
-        takePictureButton = (Button) findViewById(R.id.captureImage);
-        takePictureButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                takeAndSendPicture();
-            }
-        });
-
-        //startup a task that will take and send a picture every 10 seconds
-        final Handler handler = new Handler();
-        final int init_camera_delay = 1000; // 1000 milliseconds
-        final int delay = 500; // 500 milliseconds ~= 2Hz
-
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        takeAndSendPicture();
-                        handler.postDelayed(this, delay);
-                    }
-                }, delay);
-            }
-        }, delay);
+//        takePictureButton = (Button) findViewById(R.id.captureImage);
+//        takePictureButton.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//                takeAndSendPicture();
+//            }
+//        });
     }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        camera = Camera.open();
-        startPreview();
+//        camera = Camera.open();
+//        startPreview();
     }
 
     @Override
     public void onPause() {
-        if (inPreview) {
-            camera.stopPreview();
-        }
-
-        camera.release();
-        camera = null;
-        inPreview = false;
+//        if (inPreview) {
+//            camera.stopPreview();
+//        }
+//
+//        camera.release();
+//        camera = null;
+//        inPreview = false;
 
         super.onPause();
     }
@@ -130,62 +108,63 @@ public class MainActivity extends Activity {
 
         return (result);
     }
-
-    private void initPreview(int width, int height) {
-        if (camera != null && previewHolder.getSurface() != null) {
-            try {
-                camera.setPreviewDisplay(previewHolder);
-            } catch (Throwable t) {
-                Log.e("PreviewDemo",
-                        "Exception in setPreviewDisplay()", t);
-                Toast
-                        .makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG)
-                        .show();
-            }
-
-            if (!cameraConfigured) {
-                Camera.Parameters parameters = camera.getParameters();
-                Camera.Size size = getBestPreviewSize(width, height,
-                        parameters);
-
-                if (size != null) {
-                    parameters.setPreviewSize(size.width, size.height);
-                    camera.setParameters(parameters);
-                    cameraConfigured = true;
-                }
-            }
-        }
-    }
-
-    private void startPreview() {
-        if (cameraConfigured && camera != null) {
-            camera.startPreview();
-            inPreview = true;
-        }
-    }
-
-    private void takeAndSendPicture() {
-        System.out.println("TAKE AND SEND PICTURE CALLED");
-        camera.takePicture(null, null, null, new PhotoHandler(getApplicationContext()));
-        startPreview();
-    }
-
-    SurfaceHolder.Callback surfaceCallback = new SurfaceHolder.Callback() {
-        public void surfaceCreated(SurfaceHolder holder) {
-            // no-op -- wait until surfaceChanged()
-        }
-
-        public void surfaceChanged(SurfaceHolder holder,
-                                   int format, int width,
-                                   int height) {
-            initPreview(width, height);
-            startPreview();
-        }
-
-        public void surfaceDestroyed(SurfaceHolder holder) {
-            // no-op
-        }
-    };
+//
+//    private void initPreview(int width, int height) {
+//        if (camera != null && previewHolder.getSurface() != null) {
+//            try {
+//                camera.setPreviewDisplay(previewHolder);
+//            } catch (Throwable t) {
+//                Log.e("PreviewDemo",
+//                        "Exception in setPreviewDisplay()", t);
+//                Toast
+//                        .makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG)
+//                        .show();
+//            }
+//
+//            if (!cameraConfigured) {
+//                Camera.Parameters parameters = camera.getParameters();
+//                parameters.setRecordingHint(true);
+//                Camera.Size size = getBestPreviewSize(width, height,
+//                        parameters);
+//
+//                if (size != null) {
+//                    parameters.setPreviewSize(size.width, size.height);
+//                    camera.setParameters(parameters);
+//                    cameraConfigured = true;
+//                }
+//            }
+//        }
+//    }
+//
+//    private void startPreview() {
+//        if (cameraConfigured && camera != null) {
+//            camera.startPreview();
+//            inPreview = true;
+//        }
+//    }
+//
+//    private void takeAndSendPicture() {
+//        System.out.println("TAKE AND SEND PICTURE CALLED");
+//        camera.takePicture(null, null, null, new PhotoHandler(getApplicationContext()));
+//        startPreview();
+//    }
+//
+//    SurfaceHolder.Callback surfaceCallback = new SurfaceHolder.Callback() {
+//        public void surfaceCreated(SurfaceHolder holder) {
+//            // no-op -- wait until surfaceChanged()
+//        }
+//
+//        public void surfaceChanged(SurfaceHolder holder,
+//                                   int format, int width,
+//                                   int height) {
+//            initPreview(width, height);
+//            startPreview();
+//        }
+//
+//        public void surfaceDestroyed(SurfaceHolder holder) {
+//            // no-op
+//        }
+//    };
 
 
 }

@@ -36,14 +36,15 @@ public class PhotoHandler implements PictureCallback {
     ClientSocket clientsocket;
 
     //camera data
-
     public PhotoHandler(Context context) {
         clientsocket = ClientSocket.getInstance();
         this.context = context;
+        System.out.println("MAKING PHOTO HANLDER");
     }
 
     @Override
     public void onPictureTaken(byte[] data, Camera camera) {
+        System.out.println("ONE PICTURE TAKEN");
         if (router == "web"){
             uploadImage(data);
         } else if (router =="file"){
@@ -56,6 +57,7 @@ public class PhotoHandler implements PictureCallback {
     private void uploadImage(byte[] image_data){
         //upload the image using async task
 //        new SendImage().execute(data);
+        System.out.println("UPLOADING IMAGE");
         clientsocket.sendBytes(image_data);
     }
 

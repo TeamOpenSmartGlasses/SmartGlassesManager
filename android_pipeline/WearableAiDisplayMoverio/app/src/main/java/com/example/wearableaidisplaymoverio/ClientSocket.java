@@ -41,7 +41,9 @@ public class ClientSocket {
         public void run() {
             Socket socket;
             try {
+                System.out.println("TRYING TO CONNECT");
                 socket = new Socket(SERVER_IP, SERVER_PORT);
+                System.out.println("CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 new Thread(new ReceiveThread()).start();
