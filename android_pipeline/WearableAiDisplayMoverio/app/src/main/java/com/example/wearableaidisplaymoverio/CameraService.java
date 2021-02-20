@@ -1,67 +1,196 @@
 package com.example.wearableaidisplaymoverio;
 
-import android.app.Service;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.os.Environment;
+import android.os.FileUtils;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.androidhiddencamera.CameraConfig;
+import com.androidhiddencamera.CameraError;
+import com.androidhiddencamera.HiddenCameraService;
+import com.androidhiddencamera.HiddenCameraUtils;
+import com.androidhiddencamera.config.CameraFacing;
+import com.androidhiddencamera.config.CameraFocus;
+import com.androidhiddencamera.config.CameraImageFormat;
+import com.androidhiddencamera.config.CameraResolution;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-public class CameraService extends Service {
-    public String TAG = "WearableAiDisplay";
-    //camera
-    private Camera camera = null;
-    private boolean camera_lock = false;
+/**
+ * Class strongly based on app example from : https://github.com/kevalpatel2106/android-hidden-camera, Created by Keval on 11-Nov-16 @author {@link 'https://github.com/kevalpatel2106'}
+ */
+
+public class CameraService extends HiddenCameraService {
+
+    //settings
+    private String router = "web";
 
     //socket class instance
     ClientSocket clientsocket;
 
+    //lock camera when picture is being taken
+    private boolean camera_lock = false;
+
+    //tag
+    private String TAG = "WearableAiDisplay";
+
+    @Override
+    public void onCreate(){
+        System.out.println("HIDDEN CAMERA SERVICE CREATED");
+        startSocket();
+        beginCamera();
+    }
+
+    @Override
+    public void onDestroy(){
+        System.out.println("HIDDEN CAMERA SERVICE DESTROYED");
+    }
+
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return null;
     }
 
-    void sendPictures() {
-        //start camera preview, must be done even though we are not showing a preview
-        camera.startPreview();
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
 
-        //startup a task that will take and send a picture every 10 seconds
-        final Handler handler = new Handler();
-        final int init_camera_delay = 5000; // 1000 milliseconds
-        final int delay = 5000; // = 2Hz
+        return START_NOT_STICKY;
+    }
 
-        handler.postDelayed(new
-            Runnable() {
-                public void run () {
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (!camera_lock) {
-                                camera_lock = true;
-                                takeAndSendPicture();
-                            }
-                            handler.postDelayed(this, delay);
+    private void beginCamera(){
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+
+            if (HiddenCameraUtils.canOverDrawOtherApps(this)) {
+                CameraConfig cameraConfig = new CameraConfig()
+                        .getBuilder(this)
+                        .setCameraFacing(CameraFacing.REAR_FACING_CAMERA)
+                        .setCameraResolution(CameraResolution.MEDIUM_RESOLUTION)
+                        .setImageFormat(CameraImageFormat.FORMAT_JPEG)
+                        .setCameraFocus(CameraFocus.NO_FOCUS)
+                        .build();
+
+                startCamera(cameraConfig);
+                //startup a task that will take and send a picture every 10 seconds
+                final Handler handler = new Handler();
+                final int init_camera_delay = 2000; // 1000 milliseconds
+                final int delay = 200; //5Hz
+
+                handler.postDelayed(new
+                    Runnable() {
+                        public void run () {
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (!camera_lock) {
+                                        takeAndSendPicture();
+                                    }
+                                    handler.postDelayed(this, delay);
+                                }
+                            }, delay);
                         }
-                    }, delay);
-                }
-            }, init_camera_delay);
+                    }, init_camera_delay);
+
+            } else {
+
+                //Open settings to grant permission for "Draw other apps".
+                HiddenCameraUtils.openDrawOverPermissionSetting(this);
+            }
+        } else {
+            //TODO Ask your parent activity for providing runtime permission
+            Toast.makeText(this, "Camera permission not available", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    private void takeAndSendPicture(){
+        camera_lock = true;
+        System.out.println("TRYING TO TAKE PICTURE");
+        takePicture(); //when succeeds, it will call the "onImageCapture" below
+        System.out.println("takePicture passed");
     }
 
     @Override
-    public void onCreate() {
-        Log.d(TAG, "FUUUUUUUUUUUUUUUUUUUUUUUUCCCCCCCCCCCCKKKKKKKKKKYYYYYYYYYYEEEEAAAAAAHHHHHHHh");
-        System.out.println("CAAAAAYYYYYYYYYYYYYYYY");
-        startSocket();
-        startCamera();
+    public void onImageCapture(@NonNull File imageFile) {
+        System.out.println("SUCCESSFULLY CAPTURED IMAGE");
+
+        //open back up camera lock
+        camera_lock = false;
+
+        //convert to bytes array
+        int size = (int) imageFile.length();
+        byte[] img = new byte[size];
+        try {
+            BufferedInputStream buf = new BufferedInputStream(new FileInputStream(imageFile));
+            buf.read(img, 0, img.length);
+            buf.close();
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        if (router == "web"){
+            uploadImage(img);
+        } else if (router =="file"){
+            System.out.println("SAVING IMAGE TO FILE");
+            savePicture(img);
+        } else {
+            uploadImage(img);
+        }
+
+        //stopSelf();
     }
 
     @Override
-    public void onDestroy() {
-        closeCamera();
-        //closeSocket();
+    public void onCameraError(@CameraError.CameraErrorCodes int errorCode) {
+        switch (errorCode) {
+            case CameraError.ERROR_CAMERA_OPEN_FAILED:
+                //Camera open failed. Probably because another application
+                //is using the camera
+                Toast.makeText(this, R.string.error_cannot_open, Toast.LENGTH_LONG).show();
+                break;
+            case CameraError.ERROR_IMAGE_WRITE_FAILED:
+                //Image write failed. Please check if you have provided WRITE_EXTERNAL_STORAGE permission
+                Toast.makeText(this, R.string.error_cannot_write, Toast.LENGTH_LONG).show();
+                break;
+            case CameraError.ERROR_CAMERA_PERMISSION_NOT_AVAILABLE:
+                //camera permission is not available
+                //Ask for the camera permission before initializing it.
+                Toast.makeText(this, R.string.error_cannot_get_permission, Toast.LENGTH_LONG).show();
+                break;
+            case CameraError.ERROR_DOES_NOT_HAVE_OVERDRAW_PERMISSION:
+                //Display information dialog to the user with steps to grant "Draw over other app"
+                //permission for the app.
+                HiddenCameraUtils.openDrawOverPermissionSetting(this);
+                break;
+            case CameraError.ERROR_DOES_NOT_HAVE_FRONT_CAMERA:
+                Toast.makeText(this, R.string.error_not_having_camera, Toast.LENGTH_LONG).show();
+                break;
+        }
+
+        stopSelf();
     }
 
     private void startSocket(){
@@ -70,47 +199,60 @@ public class CameraService extends Service {
         clientsocket.startSocket();
     }
 
-
-    private void takeAndSendPicture() {
-        System.out.println("TAKE AND SEND PICTURE CALLED");
-        camera.takePicture(null, null, null, new PhotoHandler(null));
+    public void onPictureTaken(byte[] data, Camera camera) {
+        System.out.println("ONE PICTURE TAKEN");
+        if (router == "web"){
+            uploadImage(data);
+        } else if (router =="file"){
+            System.out.println("SAVING IMAGE TO FILE");
+            savePicture(data);
+        } else {
+            uploadImage(data);
+        }
     }
 
-
-    void startCamera(){
-        camera = Camera.open();
-        Camera.Parameters parameters = camera.getParameters();
-        parameters.setRecordingHint(true);
-        parameters.setPreviewSize(640, 480);
-        camera.setParameters(parameters);
-        sendPictures();
+    private void uploadImage(byte[] image_data){
+        //upload the image using async task
+//        new SendImage().execute(data);
+        System.out.println("UPLOADING IMAGE");
+        clientsocket.sendBytes(image_data);
     }
 
-    void closeCamera(){
-            camera.release();
-            camera = null;
+    private void savePicture(byte[] data){
+//        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
+        File pictureFileDir = getDir();
+
+        if (!pictureFileDir.exists() && !pictureFileDir.mkdirs()) {
+
+            Log.d("PHOTO_HANDLER", "Can't create directory to save image.");
+            return;
+
         }
 
-    private Camera.Size getBestPreviewSize(int width, int height,
-                                           Camera.Parameters parameters) {
-        Camera.Size result = null;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmddhhmmss");
+        String date = dateFormat.format(new Date());
+        String photoFile = "Picture_" + date + ".jpg";
 
-        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
-            if (size.width <= width && size.height <= height) {
-                if (result == null) {
-                    result = size;
-                } else {
-                    int resultArea = result.width * result.height;
-                    int newArea = size.width * size.height;
+        String filename = pictureFileDir.getPath() + File.separator + photoFile;
 
-                    if (newArea > resultArea) {
-                        result = size;
-                    }
-                }
-            }
+        File pictureFile = new File(filename);
+
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            fos.write(data);
+            fos.close();
+        } catch (Exception error) {
+            Log.d(TAG, "File" + filename + "not saved: "
+                    + error.getMessage());
         }
-
-        return (result);
     }
+
+    private File getDir() {
+        File sdDir = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        return new File(sdDir, "CameraAPIDemo");
+    }
+
 
 }
+

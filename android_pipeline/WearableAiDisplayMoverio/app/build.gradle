@@ -2,6 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
@@ -9,8 +15,8 @@ android {
 
     defaultConfig {
         applicationId "com.example.wearableaidisplaymoverio"
-        minSdkVersion 15
-        targetSdkVersion 15
+        minSdkVersion 16
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
 
@@ -36,4 +42,15 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    //implementation'com.kevalpatel2106:hiddencamera:1.3.5'
+    //compile '/home/cayden/Tester/WearableAI/android_pipeline/WearableAiDisplayMoverio/android-hidden-camera/hiddencamera'
+//    implementation files("/home/cayden/Tester/WearableAI/android_pipeline/WearableAiDisplayMoverio/android-hidden-camera/hiddencamera") {
+//        builtBy 'compile'
+//    }
+    implementation  (name:'hiddencamera-release', ext:'aar')
+//    compile 'org.jacoco:jacoco-maven-plugin:0.7.9'
+//
+//    compile 'org.jacoco:org.jacoco.agent:0.7.9:runtime'
+
+
 }

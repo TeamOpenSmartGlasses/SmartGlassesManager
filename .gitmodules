@@ -16,3 +16,6 @@
 [submodule "android_pipeline/DeepSpeech"]
 	path = android_pipeline/DeepSpeech
 	url = https://github.com/mozilla/DeepSpeech
+[submodule "android_pipeline/WearableAiDisplayMoverio/android-hidden-camera"]
+	path = android_pipeline/WearableAiDisplayMoverio/android-hidden-camera
+	url = git@github.com:CaydenPierce/android-hidden-camera.git
