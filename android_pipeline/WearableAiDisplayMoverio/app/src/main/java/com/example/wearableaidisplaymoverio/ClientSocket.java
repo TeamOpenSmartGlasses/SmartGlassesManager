@@ -1,5 +1,7 @@
 package com.example.wearableaidisplaymoverio;
 
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -11,8 +13,10 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 
 //singleton clientsocket class
 public class ClientSocket {
@@ -53,7 +57,45 @@ public class ClientSocket {
         return clientsocket;
     }
 
-    public static void startSocket() {
+    public void startSocket(){
+        //start first socketThread
+        if (socket == null) {
+            mConnectState = 1;
+            Log.d(TAG, "onCreate starting");
+            SocketThread = new Thread(new SocketThread());
+            SocketThread.start();
+            Log.d(TAG, "STARTED");
+
+            //setup handler to handle keeping connection alive, all subsequent start of SocketThread
+            //start a new handler thread to send heartbeats
+            HandlerThread thread = new HandlerThread("HeartBeater");
+            thread.start();
+            Handler handler = new Handler(thread.getLooper());
+            final int delay = 1000;
+            final int min_delay = 3000;
+            final int max_delay = 4000;
+            Random rand = new Random();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+                    heartBeat();
+                    //random delay for heart beat so as to disallow synchronized failure between client and server
+                    int random_delay = rand.nextInt((max_delay - min_delay) + 1) + min_delay;
+                    handler.postDelayed(this, random_delay);
+                }
+            }, delay);
+        }
+    }
+
+    private void heartBeat(){
+        //check if we are still connected.
+        //if not , reconnect,
+        //we don't need to actively send heart beats from the client, as it's assumed that we are ALWAYS streaming data. Later, if we have periods of time where no data is sent, we will want to send a heart beat perhaps. but the client doesn't really need to, we just need to check if we are still connected
+        if (mConnectState == 0) {
+            restartSocket();
+        }
+    }
+
+    public static void restartSocket() {
         Log.d(TAG, "Restarting socket");
         mConnectState = 1;
         if (socket != null && (!socket.isClosed())){
@@ -66,16 +108,14 @@ public class ClientSocket {
             }
         }
 
-        //kill threads
-        stopThread(SendThread);
-        stopThread(ReceiveThread);
+
+//        //kill threads
+//        stopThread(SendThread);
+//        stopThread(ReceiveThread);
 
         //restart socket thread
         SocketThread = new Thread(new SocketThread());
         SocketThread.start();
-//        if (!startConnect()){ //recursively call until success - should do this in a handler/thread with delay
-//            startSocket();
-//        };
     }
 
     public static void stopThread(Thread thread){
@@ -90,35 +130,32 @@ public class ClientSocket {
     }
 
     public void sendBytes(byte [] data){
-        if (mConnectState == 2) {
-            Log.d(TAG, "SENDING DATA OF LENGTH: " + data.length);
-            //first, send hello
-            byte [] hello = {0x01, 0x02, 0x03};
-            //then send length of body
-            byte [] len = my_int_to_bb_be(data.length);
-            //then send data
-            byte [] body = data;
-            //then send end tag - eventually make this unique to the image
-            byte [] goodbye = {0x3, 0x2, 0x1};
-            //combine those into a payload
-            ByteArrayOutputStream outputStream;
-            try {
-                outputStream = new ByteArrayOutputStream();
-                outputStream.write(hello);
-                outputStream.write(len);
-                outputStream.write(body);
-                outputStream.write(goodbye);
-            } catch (IOException e){
-                return;
-            }
-            byte [] payload = outputStream.toByteArray( );
-
-            //send it in a background thread
-            //new Thread(new SendThread(payload)).start();
-            queue.add(payload);
-        } else if (mConnectState == 0){
-            clientsocket.startSocket();
+        Log.d(TAG, "QUEUEING DATA OF LENGTH: " + data.length);
+        //first, send hello
+        byte [] hello = {0x01, 0x02, 0x03};
+        //then send length of body
+        byte [] len = my_int_to_bb_be(data.length);
+        //then send data
+        byte [] body = data;
+        //then send end tag - eventually make this unique to the image
+        byte [] goodbye = {0x3, 0x2, 0x1};
+        //combine those into a payload
+        ByteArrayOutputStream outputStream;
+        try {
+            outputStream = new ByteArrayOutputStream();
+            outputStream.write(hello);
+            outputStream.write(len);
+            outputStream.write(body);
+            outputStream.write(goodbye);
+        } catch (IOException e){
+            mConnectState = 0;
+            return;
         }
+        byte [] payload = outputStream.toByteArray( );
+
+        //send it in a background thread
+        //new Thread(new SendThread(payload)).start();
+        queue.add(payload);
     }
 
     public int getConnected(){
@@ -137,42 +174,40 @@ public class ClientSocket {
                 mConnectState = 2;
                 Log.d(TAG, "SET MCONNECT STATE TO 2");
                 //make the threads that will send and receive
-                ReceiveThread = new Thread(new ReceiveThread());
-                ReceiveThread.start();
-                SendThread =  new Thread(new SendThread());
-                SendThread.start();
+                if (ReceiveThread == null) { //if the thread is null, make a new one (the first one)
+                    ReceiveThread = new Thread(new ReceiveThread());
+                    ReceiveThread.start();
+                } else if (!ReceiveThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
+                    Log.d(TAG, "IN SocketThread< WAITING FOR receive THREAD JOING");
+                    try {
+                        ReceiveThread.join(); //make sure socket thread has joined before throwing off a new one
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "receive JOINED");
+                    ReceiveThread = new Thread(new ReceiveThread());
+                    ReceiveThread.start();
+                }
+                if (SendThread == null) { //if the thread is null, make a new one (the first one)
+                    SendThread = new Thread(new SendThread());
+                    SendThread.start();
+                } else if (!SendThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
+                    Log.d(TAG, "IN SocketThread< WAITING FOR send THREAD JOING");
+                    try {
+                        SendThread.join(); //make sure socket thread has joined before throwing off a new one
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "send JOINED");
+                    SendThread =  new Thread(new SendThread());
+                    SendThread.start();
+                }
             } catch (IOException e) {
                 Log.d(TAG, "Connection Refused on socket");
                 e.printStackTrace();
-                //retry connection if we are still in "try to connect state"
-//                if (mConnectState == 1){
-//                    clientsocket.startSocket();
-//                }
+                mConnectState = 0;
             }
         }
-    }
-
-    private static boolean startConnect(){
-            try {
-                System.out.println("TRYING TO CONNECT");
-                socket = new Socket(SERVER_IP, SERVER_PORT);
-                System.out.println("CONNECTED!");
-                output = new DataOutputStream(socket.getOutputStream());
-                //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                input = new DataInputStream(new DataInputStream(socket.getInputStream()));
-                mConnectState = 2;
-                Log.d(TAG, "SET MCONNECT STATE TO 2");
-                //make the threads that will send and receive
-                ReceiveThread = new Thread(new ReceiveThread());
-                ReceiveThread.start();
-                SendThread =  new Thread(new SendThread());
-                SendThread.start();
-                return true;
-            } catch (IOException e) {
-                Log.d(TAG, "Connection Refused on socket");
-                e.printStackTrace();
-                return false;
-            }
     }
 
     static class ReceiveThread implements Runnable {
@@ -195,13 +230,12 @@ public class ClientSocket {
                         clientsocket.sendBytes(hb);
                     } else {
                         System.out.println("BAD SIGNAL, RECONNECT");
-                        clientsocket.startSocket();
+                        mConnectState = 0;
+                        break;
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    if (mConnectState == 2){
-                        clientsocket.startSocket();
-                    }
+                    mConnectState = 0;
                     break;
                 }
             }
@@ -212,14 +246,17 @@ public class ClientSocket {
         }
         @Override
         public void run() {
+            //clear queue so we don't have a buildup of images
+            queue.clear();
             while (true) {
                 if (packets_in_buf > 5) { //if 5 packets in buffer (NOT QUEUE, BUF NETWORK BUFFER), restart socket
-                    clientsocket.startSocket();
+                    break;
                 }
                 byte[] data;
                 try {
                     data = queue.take(); //block until there is something we can pull out to send
                 } catch (InterruptedException e){
+                    e.printStackTrace();
                     break;
                 }
                 try {
@@ -228,13 +265,11 @@ public class ClientSocket {
                     output.write(data);           // write the message
                     packets_in_buf--;
                 } catch (java.io.IOException e) {
-                    System.out.println(e);
+                    e.printStackTrace();
                     break;
                 }
             }
-            if (mConnectState == 2){
-                startSocket();
-            }
+            mConnectState = 0;
         }
     }
 

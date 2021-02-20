@@ -36,8 +36,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressLint("SetTextI18n")
 public class MainActivity extends AppCompatActivity {
@@ -90,11 +92,16 @@ public class MainActivity extends AppCompatActivity {
         HandlerThread thread = new HandlerThread("HeartBeater");
         thread.start();
         Handler handler = new Handler(thread.getLooper());
-        final int delay = 1000;
+        final int delay = 3000;
+        final int min_delay = 1000;
+        final int max_delay = 2000;
+        Random rand = new Random();
         handler.postDelayed(new Runnable() {
             public void run() {
                 heartBeat();
-                handler.postDelayed(this, delay);
+                //random delay for heart beat so as to disallow synchronized failure between client and server
+                int random_delay = rand.nextInt((max_delay - min_delay) + 1) + min_delay;
+                handler.postDelayed(this, random_delay);
             }
         }, delay);
 
@@ -141,17 +148,20 @@ public class MainActivity extends AppCompatActivity {
                             tvMessages.setText("Connected\n");
                         }
                     });
-                    if (ReceiveThread != null && !ReceiveThread.isAlive()) {
+                    if (ReceiveThread == null) { //if the thread is null, make a new one (the first one)
+                        ReceiveThread = new Thread(new ReceiveThread());
+                        ReceiveThread.start();
+                    } else if (!ReceiveThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
                         Log.d(TAG, "IN SocketThread< WAITING FOR receive THREAD JOING");
                         try {
                             ReceiveThread.join(); //make sure socket thread has joined before throwing off a new one
-                        } catch (InterruptedException e){
+                        } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                         Log.d(TAG, "receive JOINED");
+                        ReceiveThread = new Thread(new ReceiveThread());
+                        ReceiveThread.start();
                     }
-                    ReceiveThread = new Thread(new ReceiveThread());
-                    ReceiveThread.start();
                 } catch (IOException e) {
                     e.printStackTrace();
                     mConnectState = 0;
@@ -259,6 +269,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
                     Log.d(TAG, "FAILED TO RECEIVE");
                     break;
                 }

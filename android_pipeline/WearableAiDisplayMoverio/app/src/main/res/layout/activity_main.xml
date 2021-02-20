@@ -8,21 +8,6 @@
         android:layout_width="211dp"
         android:layout_height="589dp"></android.view.SurfaceView>
 
-    <Button
-        android:id="@+id/captureImage"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginLeft="284dp"
-        android:layout_marginTop="136dp"
-        android:layout_marginRight="15dp"
-        android:layout_marginBottom="547dp"
-        android:onClick="onClick"
-        android:text="Take Picture" />
-
     <TextView
         android:id="@+id/textView"
         android:layout_width="131dp"
