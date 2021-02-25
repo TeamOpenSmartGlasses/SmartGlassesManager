@@ -748,22 +748,28 @@ public class MainActivity extends AppCompatActivity {
                          } else if (len > 10000){ //must be an image if bigger than 10k
                             System.out.println("RECEIVED MESSAGE");
                             if (raw_data != null) {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        System.out.println("TRYING TO DISPLAY");
-                                        //display image
-                                        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
-                                        //wearcam_view.setImageBitmap(bitmap); //Must.jpg present in any of your drawable folders.
-                                        System.out.println("SET DISPLAYED");
-                                    }
-                                });
+//                                runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        System.out.println("TRYING TO DISPLAY");
+//                                        //display image
+//                                        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
+//                                        //wearcam_view.setImageBitmap(bitmap); //Must.jpg present in any of your drawable folders.
+//                                        System.out.println("SET DISPLAYED");
+//                                    }
+//                                });
 
                                 //ping back the client to let it know we received the message
                                 byte[] ack = {0x13, 0x37};
                                 new Thread(new SendThread(ack)).start();
+
+                                //convert to bitmap
+                                Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
+                                //send through mediapipe
+                                bitmapProducer.newFrame(bitmap);
+
                                 //save image
-                                savePicture(raw_data);
+                                //savePicture(raw_data);
                             }
                         }
                         byte goodbye1 = input.readByte(); // read goodbye of incoming message

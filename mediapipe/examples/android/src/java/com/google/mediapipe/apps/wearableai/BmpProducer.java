@@ -13,17 +13,26 @@ public class BmpProducer extends Thread {
     CustomFrameAvailableListener customFrameAvailableListener;
 
     public int height = 513,width = 513;
+    public boolean newFrame = false;
     Bitmap bmp;
     Boolean first;
 
     BmpProducer(Context context){
         first = false;
-        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.img2);
-        bmp = Bitmap.createScaledBitmap(bmp,480,640,true);
-        height = bmp.getHeight();
-        width = bmp.getWidth();
+//        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.img2);
+//        bmp = Bitmap.createScaledBitmap(bmp,480,640,true);
+//        height = bmp.getHeight();
+//        width = bmp.getWidth();
         start();
     }
+
+    public void newFrame(Bitmap b){
+        bmp = b;
+        height = bmp.getHeight();
+        width = bmp.getWidth();
+        newFrame = true;
+    }
+
 
     public void setCustomFrameAvailableListener(CustomFrameAvailableListener customFrameAvailableListener){
         this.customFrameAvailableListener = customFrameAvailableListener;
@@ -34,21 +43,18 @@ public class BmpProducer extends Thread {
     public void run() {
         super.run();
         while ((true)){
-            if(first == true || bmp==null || customFrameAvailableListener == null)
-                continue;
-            Log.d(TAG,"Writing frame");
-            first = true;
-            customFrameAvailableListener.onFrame(bmp);
-            /*OTMainActivity.imageView.post(new Runnable() {
-                @Override
-                public void run() {
-                    OTMainActivity.imageView.setImageBitmap(bg);
+            if(bmp==null || customFrameAvailableListener == null){
+                try{
+                    Thread.sleep(20);
+                }catch (Exception e){
+                    Log.d(TAG,e.toString());
                 }
-            });*/
-            try{
-                Thread.sleep(10);
-            }catch (Exception e){
-                Log.d(TAG,e.toString());
+                continue;
+            }
+            if (newFrame == true){
+                Log.d(TAG,"Writing frame");
+                customFrameAvailableListener.onFrame(bmp);
+                newFrame = false;
             }
         }
     }
