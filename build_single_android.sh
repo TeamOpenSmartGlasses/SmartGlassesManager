@@ -48,7 +48,7 @@ strip=true
 install_only=false
 app_dir="mediapipe/examples/android/src/java/com/google/mediapipe/apps"
 bin_dir="bazel-bin"
-declare -a default_bazel_flags=(build -c opt --config=android_arm64)
+declare -a default_bazel_flags=(build -c opt --config=android_arm64 --verbose_failures)
 
 #while [[ -n $1 ]]; do
 #  case $1 in

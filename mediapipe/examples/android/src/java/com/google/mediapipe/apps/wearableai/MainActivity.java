@@ -173,12 +173,6 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  // Sends camera-preview frames into a MediaPipe graph for processing, and displays the processed
-  // frames onto a {@link Surface}.
-  protected FrameProcessor processor;
-  // Handles camera access via the {@link CameraX} Jetpack support library.
-  protected CameraXPreviewHelper cameraHelper;
-  
   // {@link SurfaceTexture} where the camera-preview frames can be accessed.
   private SurfaceTexture previewFrameTexture;
   // {@link SurfaceView} that displays the camera-preview frames processed by a MediaPipe graph.
@@ -186,9 +180,15 @@ public class MainActivity extends AppCompatActivity {
 
   // Creates and manages an {@link EGLContext}.
   private EglManager eglManager;
-  // Converts the GL_TEXTURE_EXTERNAL_OES texture from Android camera into a regular texture to be
+      // Sends camera-preview frames into a MediaPipe graph for processing, and displays the processed
+    // frames onto a {@link Surface}.
+    private FrameProcessor processor;
+  // Converts the GL_TEXTURE_EXTERNAL_OES texture from our bitmap or Android camera into a regular texture to be
   // consumed by {@link FrameProcessor} and the underlying MediaPipe graph.
-  private ExternalTextureConverter converter;
+  private BitmapConverter converter;
+
+  //thread that we hand bitmaps and it converts them and passes to mediapipe
+  BmpProducer bitmapProducer;
 
   // ApplicationInfo for retrieving metadata defined in the manifest.
   private ApplicationInfo applicationInfo;
@@ -230,35 +230,44 @@ public class MainActivity extends AppCompatActivity {
         .setFlipY(
             applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
 
-    PermissionHelper.checkAndRequestCameraPermissions(this);
-    // To show verbose logging, run:
-    // adb shell setprop log.tag.MainActivity VERBOSE
-    if (Log.isLoggable(TAG, Log.VERBOSE)) {
-      processor.addPacketCallback(
-          OUTPUT_LANDMARKS_STREAM_NAME,
-          (packet) -> {
-            byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-            try {
-              NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-              if (landmarks == null) {
-                Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
-                return;
-              }
-//              Log.v(
-//                  TAG,
-//                  "[TS:"
-//                      + packet.getTimestamp()
-//                      + "] #Landmarks for face (including iris): "
-//                      + landmarks.getLandmarkCount());
-//              int maxLogSize = 500;
-//              printLandmarksDebugString(landmarks);
-              processOutput(landmarks);
-            } catch (InvalidProtocolBufferException e) {
-              Log.e(TAG, "Couldn't Exception received - " + e);
-              return;
-            }
-          });
+    //set processor focal length side packet for specific camera
+    float focalLength = 100; //random, I have no idea what this is supposed to be, TODO
+    Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
+    if (!haveAddedSidePackets) {
+        Map<String, Packet> inputSidePackets = new HashMap<>();
+        inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
+        processor.setInputSidePackets(inputSidePackets);
+        haveAddedSidePackets = true;
     }
+//    PermissionHelper.checkAndRequestCameraPermissions(this);
+//    // To show verbose logging, run:
+//    // adb shell setprop log.tag.MainActivity VERBOSE
+//    if (Log.isLoggable(TAG, Log.VERBOSE)) {
+//      processor.addPacketCallback(
+//          OUTPUT_LANDMARKS_STREAM_NAME,
+//          (packet) -> {
+//            byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+//            try {
+//              NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+//              if (landmarks == null) {
+//                Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
+//                return;
+//              }
+////              Log.v(
+////                  TAG,
+////                  "[TS:"
+////                      + packet.getTimestamp()
+////                      + "] #Landmarks for face (including iris): "
+////                      + landmarks.getLandmarkCount());
+////              int maxLogSize = 500;
+////              printLandmarksDebugString(landmarks);
+//              processOutput(landmarks);
+//            } catch (InvalidProtocolBufferException e) {
+//              Log.e(TAG, "Couldn't Exception received - " + e);
+//              return;
+//            }
+//          });
+//    }
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
@@ -328,16 +337,18 @@ public class MainActivity extends AppCompatActivity {
   @Override
   protected void onResume() {
     super.onResume();
-    converter =
-        new ExternalTextureConverter(
-            eglManager.getContext(),
-            applicationInfo.metaData.getInt("converterNumBuffers", NUM_BUFFERS));
-    converter.setFlipY(
-        applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
+//    converter =
+//        new ExternalTextureConverter(
+//            eglManager.getContext(),
+//            applicationInfo.metaData.getInt("converterNumBuffers", NUM_BUFFERS));
+//    converter.setFlipY(
+//        applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
+    converter = new BitmapConverter(eglManager.getContext());
     converter.setConsumer(processor);
-    if (PermissionHelper.cameraPermissionsGranted(this)) {
-      startCamera();
-    }
+    startProducer();
+//    if (PermissionHelper.cameraPermissionsGranted(this)) {
+//      startCamera();
+//    }
   }
 
   @Override
@@ -356,65 +367,65 @@ public class MainActivity extends AppCompatActivity {
     PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
   }
 
-  protected void onCameraStarted(SurfaceTexture surfaceTexture) {
-    previewFrameTexture = surfaceTexture;
-    // Make the display view visible to start showing the preview. This triggers the
-    // SurfaceHolder.Callback added to (the holder of) previewDisplayView.
-    previewDisplayView.setVisibility(View.VISIBLE);
+//  protected void onCameraStarted(SurfaceTexture surfaceTexture) {
+//    previewFrameTexture = surfaceTexture;
+//    // Make the display view visible to start showing the preview. This triggers the
+//    // SurfaceHolder.Callback added to (the holder of) previewDisplayView.
+//    previewDisplayView.setVisibility(View.VISIBLE);
+//
+//    // onCameraStarted gets called each time the activity resumes, but we only want to do this once.
+//    if (!haveAddedSidePackets) {
+//      float focalLength = cameraHelper.getFocalLengthPixels();
+//      if (focalLength != Float.MIN_VALUE) {
+//        Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
+//        Map<String, Packet> inputSidePackets = new HashMap<>();
+//        inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
+//        processor.setInputSidePackets(inputSidePackets);
+//      }
+//      haveAddedSidePackets = true;
+//    }
+//
+//  }
+//
+//  protected Size cameraTargetResolution() {
+//    return null; // No preference and let the camera (helper) decide.
+//  }
+//
+//  public void startCamera() {
+//    cameraHelper = new CameraXPreviewHelper();
+//    cameraHelper.setOnCameraStartedListener(
+//        surfaceTexture -> {
+//          onCameraStarted(surfaceTexture);
+//        });
+//    CameraHelper.CameraFacing cameraFacing =
+//        applicationInfo.metaData.getBoolean("cameraFacingFront", false)
+//            ? CameraHelper.CameraFacing.FRONT
+//            : CameraHelper.CameraFacing.BACK;
+//    cameraHelper.startCamera(
+//        this, cameraFacing, /*unusedSurfaceTexture=*/ null, cameraTargetResolution());
+//  }
+//
+//  protected Size computeViewSize(int width, int height) {
+//    return new Size(width, height);
+//  }
 
-    // onCameraStarted gets called each time the activity resumes, but we only want to do this once.
-    if (!haveAddedSidePackets) {
-      float focalLength = cameraHelper.getFocalLengthPixels();
-      if (focalLength != Float.MIN_VALUE) {
-        Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
-        Map<String, Packet> inputSidePackets = new HashMap<>();
-        inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
-        processor.setInputSidePackets(inputSidePackets);
-      }
-      haveAddedSidePackets = true;
-    }
-
-  }
-
-  protected Size cameraTargetResolution() {
-    return null; // No preference and let the camera (helper) decide.
-  }
-
-  public void startCamera() {
-    cameraHelper = new CameraXPreviewHelper();
-    cameraHelper.setOnCameraStartedListener(
-        surfaceTexture -> {
-          onCameraStarted(surfaceTexture);
-        });
-    CameraHelper.CameraFacing cameraFacing =
-        applicationInfo.metaData.getBoolean("cameraFacingFront", false)
-            ? CameraHelper.CameraFacing.FRONT
-            : CameraHelper.CameraFacing.BACK;
-    cameraHelper.startCamera(
-        this, cameraFacing, /*unusedSurfaceTexture=*/ null, cameraTargetResolution());
-  }
-
-  protected Size computeViewSize(int width, int height) {
-    return new Size(width, height);
-  }
-
-  protected void onPreviewDisplaySurfaceChanged(
-      SurfaceHolder holder, int format, int width, int height) {
-    // (Re-)Compute the ideal size of the camera-preview display (the area that the
-    // camera-preview frames get rendered onto, potentially with scaling and rotation)
-    // based on the size of the SurfaceView that contains the display.
-    Size viewSize = computeViewSize(width, height);
-    Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
-    boolean isCameraRotated = cameraHelper.isCameraRotated();
-
-    // Connect the converter to the camera-preview frames as its input (via
-    // previewFrameTexture), and configure the output width and height as the computed
-    // display size.
-    converter.setSurfaceTextureAndAttachToGLContext(
-        previewFrameTexture,
-        isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
-        isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
-  }
+//  protected void onPreviewDisplaySurfaceChanged(
+//      SurfaceHolder holder, int format, int width, int height) {
+//    // (Re-)Compute the ideal size of the camera-preview display (the area that the
+//    // camera-preview frames get rendered onto, potentially with scaling and rotation)
+//    // based on the size of the SurfaceView that contains the display.
+//    Size viewSize = computeViewSize(width, height);
+//    Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
+//    boolean isCameraRotated = cameraHelper.isCameraRotated();
+//
+//    // Connect the converter to the camera-preview frames as its input (via
+//    // previewFrameTexture), and configure the output width and height as the computed
+//    // display size.
+//    converter.setSurfaceTextureAndAttachToGLContext(
+//        previewFrameTexture,
+//        isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
+//        isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
+//  }
 
   private void setupPreviewDisplayView() {
     previewDisplayView.setVisibility(View.GONE);
@@ -432,7 +443,7 @@ public class MainActivity extends AppCompatActivity {
 
               @Override
               public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                onPreviewDisplaySurfaceChanged(holder, format, width, height);
+                bitmapProducer.setCustomFrameAvailableListener(converter);
               }
 
               @Override
@@ -441,6 +452,12 @@ public class MainActivity extends AppCompatActivity {
               }
             });
   }
+
+    private void startProducer(){
+        bitmapProducer = new BmpProducer(this);
+        previewDisplayView.setVisibility(View.VISIBLE);
+    }
+
   private static String getLandmarksDebugString(NormalizedLandmarkList landmarks) {
     int landmarkIndex = 0;
     String landmarksString = "";

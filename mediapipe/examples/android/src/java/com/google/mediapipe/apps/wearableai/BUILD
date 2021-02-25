@@ -72,9 +72,10 @@ android_binary(
         "//mediapipe/java/com/google/mediapipe/glutil",
         "//third_party:androidx_appcompat",
         "//third_party:androidx_constraint_layout",
+        "//third_party:androidx_legacy_support_v4",
+        "//third_party:androidx_material",
+        "//third_party:androidx_recyclerview",
         "//third_party:opencv",
-        "@maven//:androidx_concurrent_concurrent_futures",
-        "@maven//:com_google_guava_guava",
-
+        "//third_party:androidx_annotation",
     ],
 )
