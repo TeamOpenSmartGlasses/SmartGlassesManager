@@ -47,21 +47,15 @@ public class MainActivity extends AppCompatActivity {
     ServerSocket serverSocket;
     Thread SocketThread = null;
     static Thread ReceiveThread = null;
-    static Thread SendThread = null;
     TextView tvIP, tvPort;
     TextView tvMessages;
-    EditText etMessage;
-    Button btnSend;
     public static String SERVER_IP = "";
     public static final int SERVER_PORT = 4567;
-    String message;
     private DataOutputStream output;
     private DataInputStream input;
-    byte [] image_data_rcv_jpg;
     ImageView wearcam_view;
 
     private static int mConnectState = 0;
-
     private static int outbound_heart_beats = 0;
 
 
@@ -72,8 +66,6 @@ public class MainActivity extends AppCompatActivity {
         tvIP = findViewById(R.id.tvIP);
         tvPort = findViewById(R.id.tvPort);
         tvMessages = findViewById(R.id.tvMessages);
-        etMessage = findViewById(R.id.etMessage);
-        btnSend = findViewById(R.id.btnSend);
         try {
             SERVER_IP = getLocalIpAddress();
         } catch (UnknownHostException e) {
@@ -171,10 +163,6 @@ public class MainActivity extends AppCompatActivity {
                 mConnectState = 0;
             }
         }
-    }
-
-    public static int my_bb_to_int_le(byte [] byteBarray){
-        return ByteBuffer.wrap(byteBarray).order(ByteOrder.LITTLE_ENDIAN).getInt();
     }
 
     private void heartBeat(){

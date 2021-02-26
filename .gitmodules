@@ -19,3 +19,6 @@
 [submodule "android_pipeline/WearableAiDisplayMoverio/android-hidden-camera"]
 	path = android_pipeline/WearableAiDisplayMoverio/android-hidden-camera
 	url = git@github.com:CaydenPierce/android-hidden-camera.git
+[submodule "android_pipeline/Keras-VGG16-places365"]
+	path = android_pipeline/Keras-VGG16-places365
+	url = git@github.com:CaydenPierce/Keras-VGG16-places365.git

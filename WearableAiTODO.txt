@@ -1,0 +1,22 @@
+mediapipe issues - wrong timestamp
+    -move mediapipe interface to background service so the timestamp is never lost
+        -yes, could be solved by fixing the class to persist timestamp, but no point because we are moving to a service anyway for other reasons
+        
+mobile communication - can't connect without wifi
+    -try to run network extension app and proxy on vuzix blade to connect vuzix directly to mobile compute
+    -use Onplus7T hotspot and find IP on wearnet
+        -code right now is asking WIFI for our IP address - need to figure out what it is on local hotspot (maybe there is a function in android to get IP address regardless of source)
+    -use S7 as router
+    -only demo at home for now
+
+mobile compute can't run without application window open
+    -switch to always on background service
+    
+Vuzix battery issues - one hour battery not long enough
+    -wear 100Wh battery pack connected through shirt to vuzix
+        -should run for multiple days
+    -fix the battery draining software
+        - switch from single camaera snapshot to video
+            -grab intermittent frames and send with current socket system
+            -if possible, also record video at 1080p 24fps on the device
+            -test speed of transer - maybe send at 720p/640/480/less than original to mobile compute
