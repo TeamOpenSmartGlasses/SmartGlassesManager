@@ -6,4 +6,9 @@
     <string name="error_not_having_camera">Your device does not have front camera.</string>
     <string name="error_camera_permission_denied">Camera permission denied.</string>
     <string name="btn_tittle_capture_image">Capture image</string>
+    <string name="waiting_message">Waiting for data...</string>
+    <string name="title_eye_contact">Eye Contact: </string>
+    <string name="data_loading">...</string>
+    <string name="cam_on">START</string>
+    <string name="cam_off">STOP</string>
 </resources>

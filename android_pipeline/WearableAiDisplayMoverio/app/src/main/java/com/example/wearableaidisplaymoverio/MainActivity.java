@@ -1,6 +1,9 @@
 package com.example.wearableaidisplaymoverio;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import android.app.Activity;
@@ -9,6 +12,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -25,10 +29,10 @@ import android.view.WindowManager;
 public class MainActivity extends Activity {
     public String TAG = "WearableAiDisplay";
 
-    //camera data
-    private SurfaceView preview = null;
-    private SurfaceHolder previewHolder = null;
-    private Button takePictureButton;
+    //UI
+    TextView messageTextView;
+    TextView eyeContactMetricTextView;
+    Button toggleCameraButton;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,6 +51,11 @@ public class MainActivity extends Activity {
         win.setAttributes(winParams);
 
         setContentView(R.layout.activity_main);
+
+        //ui setup
+        messageTextView = (TextView) findViewById(R.id.message);
+        eyeContactMetricTextView = (TextView) findViewById(R.id.eye_contact_metric);
+        toggleCameraButton = (Button) findViewById(R.id.toggle_camera_button);
 
         //create the camera service if it isn't already running
         startService(new Intent(this, CameraService.class));
@@ -70,21 +79,15 @@ public class MainActivity extends Activity {
     public void onResume() {
         super.onResume();
 
-//        camera = Camera.open();
-//        startPreview();
+        registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
     }
 
     @Override
     public void onPause() {
-//        if (inPreview) {
-//            camera.stopPreview();
-//        }
-//
-//        camera.release();
-//        camera = null;
-//        inPreview = false;
-
         super.onPause();
+
+        //unregister receiver
+        unregisterReceiver(mComputeUpdateReceiver);
     }
 
     private Camera.Size getBestPreviewSize(int width, int height,
@@ -165,6 +168,30 @@ public class MainActivity extends Activity {
 //            // no-op
 //        }
 //    };
+//
+    public void receiveMessage(String message){
+        //see if the message is generic or one of the metrics to be displayed
+        messageTextView.setText("");
+        eyeContactMetricTextView.setText(message + "%");
+    }
+
+    private static IntentFilter makeComputeUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+        return intentFilter;
+    }
+
+    private final BroadcastReceiver mComputeUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (ClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
+                String message = intent.getStringExtra(ClientSocket.EXTRAS_MESSAGE);
+                receiveMessage(message);
+            }
+        }
+    };
+
 
 
 }

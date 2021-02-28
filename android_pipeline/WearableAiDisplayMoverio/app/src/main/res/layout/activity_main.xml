@@ -1,35 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:orientation="vertical"
+    android:background="@color/hud_bg"
+    android:gravity="center">
 
-    <android.view.SurfaceView
-        android:id="@+id/preview"
-        android:layout_width="211dp"
-        android:layout_height="589dp"></android.view.SurfaceView>
+    <!-- Include other widget or layout tags here. These are considered
+            "child views" or "children" of the linear layout -->
 
     <TextView
-        android:id="@+id/textView"
-        android:layout_width="131dp"
-        android:layout_height="137dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:text="AAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBb CCCCCCCCCCCCCCCCCCCCCc CAYDEND" />
-</RelativeLayout>
+        android:id="@+id/message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textColor="@color/hud_text"
+        android:textSize="32dp"
+        android:text="@string/waiting_message" />
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
 
-<!--<?xml version="1.0" encoding="utf-8"?>-->
-<!--<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--    android:layout_width="match_parent"-->
-<!--    android:layout_height="match_parent" >-->
-
-<!--    <Button-->
-<!--        android:id="@+id/captureFront"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_centerInParent="true"-->
-<!--        android:onClick="onClick"-->
-<!--        android:text="Make Photo" />-->
-
-<!--</RelativeLayout>-->
-
+        <TextView
+            android:id="@+id/eye_contact_title"
+            android:layout_width="184dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/title_eye_contact"
+            android:textColor="@color/hud_text"
+            android:textSize="42dp" />
+        <TextView
+            android:id="@+id/eye_contact_metric"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="42dp"
+            android:textColor="@color/hud_text"
+            android:text="@string/data_loading" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+            <Button
+                android:id="@+id/toggle_camera_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="32dp"
+                android:text="@string/cam_on" />
+    </LinearLayout>
+</LinearLayout>

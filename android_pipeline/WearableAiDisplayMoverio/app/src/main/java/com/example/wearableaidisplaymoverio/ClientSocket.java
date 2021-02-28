@@ -1,5 +1,7 @@
 package com.example.wearableaidisplaymoverio;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
@@ -20,6 +22,10 @@ import java.util.concurrent.ThreadLocalRandom;
 
 //singleton clientsocket class
 public class ClientSocket {
+    //broadcast intent string
+    public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_DATA";
+    public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
+
     public static String TAG = "WearableAiDisplayMoverio";
     //singleton instance
     private static ClientSocket clientsocket;
@@ -28,6 +34,13 @@ public class ClientSocket {
     static Thread ReceiveThread = null;
     static Thread SendThread = null;
     static private DataOutputStream output;
+    //ids of message types
+    static final byte [] eye_contact_info_id = {0x12, 0x13};
+    static final byte [] img_id = {0x01, 0x10}; //id for images
+    static final byte [] heart_beat_id = {0x19, 0x20}; //id for heart beat
+    static final byte [] ack_id = {0x13, 0x37};
+
+
     //static private BufferedReader input;
     static private DataInputStream input;
     static String SERVER_IP = "192.168.1.175"; //temporarily hardcoded
@@ -45,14 +58,27 @@ public class ClientSocket {
     //queue of data to send through the socket
     private static BlockingQueue<byte []> queue;
 
-    private ClientSocket(){
-        //create send queue and a thread to handle sendingo
+    //we need a reference to the context of whatever called this class so we can send broadcast updates on receving new info
+    private static Context mContext;
+
+    private ClientSocket(Context context){
+        //create send queue and a thread to handle sending
         queue = new ArrayBlockingQueue<byte[]>(50);
+
+        //service context set 
+        mContext = context;
+    }
+
+    public static ClientSocket getInstance(Context c){
+        if (clientsocket == null){
+            clientsocket = new ClientSocket(c);
+        }
+        return clientsocket;
     }
 
     public static ClientSocket getInstance(){
         if (clientsocket == null){
-            clientsocket = new ClientSocket();
+            return null;
         }
         return clientsocket;
     }
@@ -129,12 +155,18 @@ public class ClientSocket {
         return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(myInteger).array();
     }
 
-    public void sendBytes(byte [] data){
-        Log.d(TAG, "QUEUEING DATA OF LENGTH: " + data.length);
+    public void sendBytes(byte[] id, byte [] data){
         //first, send hello
         byte [] hello = {0x01, 0x02, 0x03};
         //then send length of body
-        byte [] len = my_int_to_bb_be(data.length);
+        byte[] len;
+        if (data != null) {
+             len = my_int_to_bb_be(data.length);
+        } else {
+            len = my_int_to_bb_be(0);
+        }
+        //then send id of message type
+        byte [] msg_id = id;
         //then send data
         byte [] body = data;
         //then send end tag - eventually make this unique to the image
@@ -145,13 +177,16 @@ public class ClientSocket {
             outputStream = new ByteArrayOutputStream();
             outputStream.write(hello);
             outputStream.write(len);
-            outputStream.write(body);
+            outputStream.write(msg_id);
+            if (body != null) {
+                outputStream.write(body);
+            }
             outputStream.write(goodbye);
         } catch (IOException e){
             mConnectState = 0;
             return;
         }
-        byte [] payload = outputStream.toByteArray( );
+        byte [] payload = outputStream.toByteArray();
 
         //send it in a background thread
         //new Thread(new SendThread(payload)).start();
@@ -210,6 +245,10 @@ public class ClientSocket {
         }
     }
 
+    public static int my_bb_to_int_be(byte [] byteBarray){
+        return ByteBuffer.wrap(byteBarray).order(ByteOrder.BIG_ENDIAN).getInt();
+    }
+
     static class ReceiveThread implements Runnable {
         @Override
         public void run() {
@@ -218,27 +257,72 @@ public class ClientSocket {
                     System.out.println("MCONNECTED IS FALSE IN REEIVE THREAD, BREAKING");
                     break;
                 }
+                byte b1, b2;
+                byte [] raw_data = null;
+                byte goodbye1, goodbye2, goodbye3;
+                //just read in data here
                 try {
-                    byte b1 = input.readByte();
-                    byte b2 = input.readByte();
-                    if ((b1 == 0x13) && (b2 == 0x37)){ //got ack response
-                        System.out.println("ACK RECEIVED");
-                        gotAck = true;
-                    } else if ((b1 == 0x19) && (b2 == 0x20)) { //heart beat check if alive
-                        //got heart beat, respond with heart beat
-                        byte [] hb = {0x19, 0x20};
-                        clientsocket.sendBytes(hb);
-                    } else {
-                        System.out.println("BAD SIGNAL, RECONNECT");
-                        mConnectState = 0;
+                    byte hello1 = input.readByte(); // read hello of incoming message
+                    byte hello2 = input.readByte(); // read hello of incoming message
+                    byte hello3 = input.readByte(); // read hello of incoming message
+
+                    //make sure header is verified
+                    if (hello1 != 0x01 || hello2 != 0x02 || hello3 != 0x03){
+                        Log.d(TAG, "Socket hello header broken, restarting socket");
                         break;
                     }
+                    //length of body
+                    int body_len = input.readInt();
+                    Log.d(TAG,"BODY LENGTH IS " + body_len);
+
+                    //read in message id bytes
+                    b1 = input.readByte();
+                    b2 = input.readByte();
+
+                    //read in message body (if there is one)
+                    if (body_len > 0){
+                        raw_data = new byte[body_len];
+                        input.readFully(raw_data, 0, body_len); // read the body
+                    }
+
+                    goodbye1 = input.readByte(); // read goodbye of incoming message
+                    goodbye2 = input.readByte(); // read goodbye of incoming message
+                    goodbye3 = input.readByte(); // read goodbye of incoming message
                 } catch (IOException e) {
                     e.printStackTrace();
                     mConnectState = 0;
                     break;
                 }
+
+                //make sure footer is verified
+                System.out.println("GOODBYE 1 IS " + goodbye1);
+                System.out.println("GOODBYE 2 IS " + goodbye2);
+                System.out.println("GOODBYE 3 IS " + goodbye3);
+                if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
+                    Log.d(TAG, "Socket stream - footer broken, restarting socket");
+                    break;
+                }
+
+                //then process the data
+                if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //got ack response
+                    System.out.println("ACK RECEIVED");
+                    gotAck = true;
+                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
+                    //got heart beat, respond with heart beat
+                    clientsocket.sendBytes(heart_beat_id, null);
+                } else if ((b1 == eye_contact_info_id[0]) && (b2 == eye_contact_info_id[1])){ //we got a message with information to display
+                    String message = Integer.toString(my_bb_to_int_be(raw_data));
+                    final Intent intent = new Intent();
+                    intent.putExtra(ClientSocket.EXTRAS_MESSAGE, message);
+                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                }else {
+                    System.out.println("BAD SIGNAL, RECONNECT");
+                    mConnectState = 0;
+                    break;
+                }
             }
+            mConnectState = 0;
         }
     }
     static class SendThread implements Runnable {
@@ -261,7 +345,6 @@ public class ClientSocket {
                 }
                 try {
                     packets_in_buf++;
-                    output.writeInt(data.length); // write length of the message
                     output.write(data);           // write the message
                     packets_in_buf--;
                 } catch (java.io.IOException e) {
@@ -272,5 +355,4 @@ public class ClientSocket {
             mConnectState = 0;
         }
     }
-
 }
