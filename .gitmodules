@@ -11,7 +11,7 @@
 	path = python_pipeline/places365
 	url = https://github.com/CSAILVision/places365
 [submodule "mediapipe"]
-	path = android_pipeline/mediapipe
+	path = android_pipeline/mediapipeprivate
 	url = https://github.com/CaydenPierce/mediapipeprivate
 [submodule "android_pipeline/DeepSpeech"]
 	path = android_pipeline/DeepSpeech
