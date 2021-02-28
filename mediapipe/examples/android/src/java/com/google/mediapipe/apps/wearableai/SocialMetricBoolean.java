@@ -39,9 +39,9 @@ class SocialMetricBoolean {
         } else{
             percentage = -1f;
         }
-        System.out.println("ONTIME " + Long.toString(on_time));
-        System.out.println("OFFTIME " + Long.toString(off_time));
-        System.out.println("percentage" + Float.toString(percentage));
+//        System.out.println("ONTIME " + Long.toString(on_time));
+//        System.out.println("OFFTIME " + Long.toString(off_time));
+//        System.out.println("percentage" + Float.toString(percentage));
         return percentage;
     }
 

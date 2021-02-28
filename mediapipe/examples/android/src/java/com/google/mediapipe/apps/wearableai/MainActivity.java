@@ -1,3 +1,9 @@
+//NOTES:
+//there is a race condition in how the sockets are setup
+//if we restartSocket() then SendThread or ReceiveThread fails, it will set the mConnectState back to 0 even though we are currently trying to connect
+//need to have some handler that only send mConnectState = 0 if it's currently = 2. If it's =1, then don't change it
+
+
 // Copyright 2019 The MediaPipe Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +26,9 @@ import com.google.mediapipe.apps.wearableai.SocialInteraction;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import android.os.Environment;
@@ -38,9 +47,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import com.google.mediapipe.components.CameraHelper;
-import com.google.mediapipe.components.CameraXPreviewHelper;
-import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
 import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
@@ -115,23 +121,39 @@ import java.util.Random;
 
 /** Main activity of MediaPipe basic app. */
 public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "WearableAi";
+    private  final String TAG = "WearableAi";
 
-    //socket stuff
+    //SOCKET STUFF
+    //acutal socket
     ServerSocket serverSocket;
+    Socket socket;
+    //socket threads
     Thread SocketThread = null;
-    static Thread ReceiveThread = null;
+    Thread ReceiveThread = null;
+    Thread SendThread = null;
+    //queue of data to send through the socket
+    private  BlockingQueue<byte []> queue;
+    //address info
+    public  String SERVER_IP = "";
+    public  final int SERVER_PORT = 4567;
+    //i/o
+    private  DataOutputStream output;
+    private  DataInputStream input;
+    //state information
+    private  int mConnectState = 0;
+    private  int outbound_heart_beats = 0;
+    //socket message ids
+    final byte [] eye_contact_info_id = {0x12, 0x13};
+    final byte [] ack_id = {0x13, 0x37};
+    final byte [] heart_beat_id = {0x19, 0x20};
+    final byte [] img_id = {0x01, 0x10}; //id for images
+
+    //UI
     TextView tvIP, tvPort;
     TextView tvMessages;
-    public static String SERVER_IP = "";
-    public static final int SERVER_PORT = 4567;
-    private DataOutputStream output;
-    private DataInputStream input;
     ImageView wearcam_view;
-    private static int mConnectState = 0;
-    private static int outbound_heart_beats = 0;
 
-    //ringtone for notification sound
+    //ringtone for notification sound - testing/feedback
     private Ringtone r;
     private Uri notification;
     private int r_count = 0;
@@ -152,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
   // the bottom-left corner, whereas MediaPipe in general assumes the image origin is at the
   // top-left corner.
   // NOTE: use "flipFramesVertically" in manifest metadata to override this behavior.
-  private static final boolean FLIP_FRAMES_VERTICALLY = true;
+  private  final boolean FLIP_FRAMES_VERTICALLY = true;
 
   // Number of output frames allocated in ExternalTextureConverter.
   // NOTE: use "converterNumBuffers" in manifest metadata to override number of buffers. For
@@ -160,9 +182,9 @@ public class MainActivity extends AppCompatActivity {
   // least `max_in_flight + max_in_queue + 1` (where max_in_flight and max_in_queue are used in
   // FlowLimiterCalculator options). That's because we need buffers for all the frames that are in
   // flight/queue plus one for the next frame from the camera.
-  private static final int NUM_BUFFERS = 2;
+  private  final int NUM_BUFFERS = 2;
 
-  static {
+   {
     // Load all native libraries needed by the app.
     System.loadLibrary("mediapipe_jni");
     try {
@@ -193,8 +215,8 @@ public class MainActivity extends AppCompatActivity {
   // ApplicationInfo for retrieving metadata defined in the manifest.
   private ApplicationInfo applicationInfo;
 
-  private static final String FOCAL_LENGTH_STREAM_NAME = "focal_length_pixel";
-  private static final String OUTPUT_LANDMARKS_STREAM_NAME = "face_landmarks_with_iris";
+  private  final String FOCAL_LENGTH_STREAM_NAME = "focal_length_pixel";
+  private  final String OUTPUT_LANDMARKS_STREAM_NAME = "face_landmarks_with_iris";
 
   private boolean haveAddedSidePackets = false;
 
@@ -239,48 +261,34 @@ public class MainActivity extends AppCompatActivity {
         processor.setInputSidePackets(inputSidePackets);
         haveAddedSidePackets = true;
     }
-//    PermissionHelper.checkAndRequestCameraPermissions(this);
-//    // To show verbose logging, run:
-//    // adb shell setprop log.tag.MainActivity VERBOSE
-//    if (Log.isLoggable(TAG, Log.VERBOSE)) {
-//      processor.addPacketCallback(
-//          OUTPUT_LANDMARKS_STREAM_NAME,
-//          (packet) -> {
-//            byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-//            try {
-//              NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-//              if (landmarks == null) {
-//                Log.v(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
-//                return;
-//              }
-////              Log.v(
-////                  TAG,
-////                  "[TS:"
-////                      + packet.getTimestamp()
-////                      + "] #Landmarks for face (including iris): "
-////                      + landmarks.getLandmarkCount());
-////              int maxLogSize = 500;
-////              printLandmarksDebugString(landmarks);
-//              processOutput(landmarks);
-//            } catch (InvalidProtocolBufferException e) {
-//              Log.e(TAG, "Couldn't Exception received - " + e);
-//              return;
-//            }
-//          });
-//    }
+
+    //add a callback to process the output of the mediapipe perception pipeline
+    processor.addPacketCallback(
+      OUTPUT_LANDMARKS_STREAM_NAME,
+      (packet) -> {
+        Log.d(TAG, "PACKET CALLBACK");
+        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+        try {
+          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+          if (landmarks == null) {
+            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
+            return;
+          } else {
+              processOutput(landmarks);
+          }
+        } catch (InvalidProtocolBufferException e) {
+          Log.e(TAG, "Couldn't Exception received - " + e);
+          return;
+        }
+      });
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
 
-    //moverio stuffs
-    //create references to the UI
-    ////comment for now because we are using the mediapipe UI
-//    tvIP = findViewById(R.id.tvIP);
-//    tvPort = findViewById(R.id.tvPort);
-//    tvMessages = findViewById(R.id.tvMessages);
-//    etMessage = findViewById(R.id.etMessage);
-//    btnSend = findViewById(R.id.btnSend);
-//    
+    //create a new queue to hold outbound message
+    queue = new ArrayBlockingQueue<byte[]>(50);
+
+    //get IP address
     try {
         SERVER_IP = getLocalIpAddress();
     } catch (UnknownHostException e) {
@@ -288,45 +296,72 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //start first socketThread
-    mConnectState = 1;
-    Log.d(TAG, "onCreate starting");
-    SocketThread = new Thread(new SocketThread());
-    SocketThread.start();
-    Log.d(TAG, "STARTED");
-
-    //setup handler to handle keeping connection alive, all subsequent start of SocketThread
-    //start a new handler thread to send heartbeats
-    HandlerThread thread = new HandlerThread("HeartBeater");
-    thread.start();
-    Handler handler = new Handler(thread.getLooper());
-    final int delay = 3000;
-    final int min_delay = 1000;
-    final int max_delay = 2000;
-    Random rand = new Random();
-    handler.postDelayed(new Runnable() {
-        public void run() {
-            heartBeat();
-            //random delay for heart beat so as to disallow synchronized failure between client and server
-            int random_delay = rand.nextInt((max_delay - min_delay) + 1) + min_delay;
-            handler.postDelayed(this, random_delay);
-        }
-    }, delay);
-
-    //start a thread which send computed social data to the moverio every n seconds
-//    final Handler handler = new Handler();
-//    final int delay = 100; // 100 milliseconds == 0.1 second
-//
-//    handler.postDelayed(new Runnable() {
-//        public void run() {
-//            count = count + 1;
-//            float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
-//            String message = String.format("%.2f", eye_contact_percentage) + "%";
-//            new Thread(new SendThread(message)).start();
-//            handler.postDelayed(this, delay);
-//        }
-//    }, delay);
-//
+    startSocket();
   }
+
+  public void startSocket(){
+        //start first socketThread
+        if (socket == null) {
+            mConnectState = 1;
+            Log.d(TAG, "starting socket");
+            SocketThread = new Thread(new SocketThread());
+            SocketThread.start();
+            Log.d(TAG, "SOCKET STARTED");
+
+            //setup handler to handle keeping connection alive, all subsequent start of SocketThread
+            //start a new handler thread to send heartbeats
+            HandlerThread thread = new HandlerThread("HeartBeater");
+            thread.start();
+            Handler heart_beat_handler = new Handler(thread.getLooper());
+            final int hb_delay = 3000;
+            final int min_hb_delay = 1000;
+            final int max_hb_delay = 2000;
+            Random rand = new Random();
+            heart_beat_handler.postDelayed(new Runnable() {
+                public void run() {
+                    heartBeat();
+                    //random hb_delay for heart beat so as to disallow synchronized failure between client and server
+                    int random_hb_delay = rand.nextInt((max_hb_delay - min_hb_delay) + 1) + min_hb_delay;
+                    heart_beat_handler.postDelayed(this, random_hb_delay);
+                }
+            }, hb_delay);
+
+            //start a thread which send computed social data to the moverio every n seconds
+            final Handler metrics_handler = new Handler();
+            final int metrics_delay = 3000;
+
+            metrics_handler.postDelayed(new Runnable() {
+                public void run() {
+                    count = count + 1;
+                    float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
+                    int round_eye_contact_percentage = Math.round(eye_contact_percentage);
+                    byte [] data_send = my_int_to_bb_be(round_eye_contact_percentage);
+                    if (mConnectState == 2){
+                        sendBytes(eye_contact_info_id, data_send);
+                    }
+                    metrics_handler.postDelayed(this, metrics_delay);
+                }
+            }, metrics_delay);
+        }
+
+    }
+
+//  public  void restartSocket() {
+//        Log.d(TAG, "Restarting socket");
+//        mConnectState = 1;
+//        if (socket != null && (!socket.isClosed())){
+//            try {
+//                output.close();
+//                input.close();
+//                socket.close();
+//            } catch (IOException e) {
+//                System.out.println("FAILED TO CLOSE SOCKET, SOMETHING IS WRONG");
+//            }
+//        }
+//        SocketThread = new Thread(new SocketThread());
+//        SocketThread.start();
+//    }
+
 
   // Used to obtain the content view for this application. If you are extending this class, and
   // have a custom layout, override this method and return the custom layout.
@@ -346,9 +381,7 @@ public class MainActivity extends AppCompatActivity {
     converter = new BitmapConverter(eglManager.getContext());
     converter.setConsumer(processor);
     startProducer();
-//    if (PermissionHelper.cameraPermissionsGranted(this)) {
-//      startCamera();
-//    }
+
   }
 
   @Override
@@ -366,66 +399,6 @@ public class MainActivity extends AppCompatActivity {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
   }
-
-//  protected void onCameraStarted(SurfaceTexture surfaceTexture) {
-//    previewFrameTexture = surfaceTexture;
-//    // Make the display view visible to start showing the preview. This triggers the
-//    // SurfaceHolder.Callback added to (the holder of) previewDisplayView.
-//    previewDisplayView.setVisibility(View.VISIBLE);
-//
-//    // onCameraStarted gets called each time the activity resumes, but we only want to do this once.
-//    if (!haveAddedSidePackets) {
-//      float focalLength = cameraHelper.getFocalLengthPixels();
-//      if (focalLength != Float.MIN_VALUE) {
-//        Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
-//        Map<String, Packet> inputSidePackets = new HashMap<>();
-//        inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
-//        processor.setInputSidePackets(inputSidePackets);
-//      }
-//      haveAddedSidePackets = true;
-//    }
-//
-//  }
-//
-//  protected Size cameraTargetResolution() {
-//    return null; // No preference and let the camera (helper) decide.
-//  }
-//
-//  public void startCamera() {
-//    cameraHelper = new CameraXPreviewHelper();
-//    cameraHelper.setOnCameraStartedListener(
-//        surfaceTexture -> {
-//          onCameraStarted(surfaceTexture);
-//        });
-//    CameraHelper.CameraFacing cameraFacing =
-//        applicationInfo.metaData.getBoolean("cameraFacingFront", false)
-//            ? CameraHelper.CameraFacing.FRONT
-//            : CameraHelper.CameraFacing.BACK;
-//    cameraHelper.startCamera(
-//        this, cameraFacing, /*unusedSurfaceTexture=*/ null, cameraTargetResolution());
-//  }
-//
-//  protected Size computeViewSize(int width, int height) {
-//    return new Size(width, height);
-//  }
-
-//  protected void onPreviewDisplaySurfaceChanged(
-//      SurfaceHolder holder, int format, int width, int height) {
-//    // (Re-)Compute the ideal size of the camera-preview display (the area that the
-//    // camera-preview frames get rendered onto, potentially with scaling and rotation)
-//    // based on the size of the SurfaceView that contains the display.
-//    Size viewSize = computeViewSize(width, height);
-//    Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
-//    boolean isCameraRotated = cameraHelper.isCameraRotated();
-//
-//    // Connect the converter to the camera-preview frames as its input (via
-//    // previewFrameTexture), and configure the output width and height as the computed
-//    // display size.
-//    converter.setSurfaceTextureAndAttachToGLContext(
-//        previewFrameTexture,
-//        isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
-//        isCameraRotated ? displaySize.getWidth() : displaySize.getHeight());
-//  }
 
   private void setupPreviewDisplayView() {
     previewDisplayView.setVisibility(View.GONE);
@@ -458,7 +431,7 @@ public class MainActivity extends AppCompatActivity {
         previewDisplayView.setVisibility(View.VISIBLE);
     }
 
-  private static String getLandmarksDebugString(NormalizedLandmarkList landmarks) {
+  private  String getLandmarksDebugString(NormalizedLandmarkList landmarks) {
     int landmarkIndex = 0;
     String landmarksString = "";
     for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
@@ -477,7 +450,7 @@ public class MainActivity extends AppCompatActivity {
     return landmarksString;
   }
 
-    private static void printLandmarksDebugString(NormalizedLandmarkList landmarks) {
+    private  void printLandmarksDebugString(NormalizedLandmarkList landmarks) {
         int landmarkIndex = 0;
         for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
             String landmarksString = "";
@@ -635,17 +608,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             Log.d(TAG, "STARTED NEW SOCKET THREAD");
-            Socket socket;
             try {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-//                        tvMessages.setText("Not connected");
-//                        tvIP.setText("IP: " + SERVER_IP);
-//                        tvPort.setText("Port: " + String.valueOf(SERVER_PORT));
-                    }
-                });
-
                 Log.d(TAG, "LISTENING FOR CONNECTIONS");
                 serverSocket = new ServerSocket(SERVER_PORT);
                 Log.d(TAG, "SOCKET MADE");
@@ -656,12 +619,6 @@ public class MainActivity extends AppCompatActivity {
                     output = new DataOutputStream(socket.getOutputStream());
                     input = new DataInputStream(new DataInputStream(socket.getInputStream()));
                     mConnectState = 2;
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-//                            tvMessages.setText("Connected\n");
-                        }
-                    });
                     if (ReceiveThread == null) { //if the thread is null, make a new one (the first one)
                         ReceiveThread = new Thread(new ReceiveThread());
                         ReceiveThread.start();
@@ -676,6 +633,20 @@ public class MainActivity extends AppCompatActivity {
                         ReceiveThread = new Thread(new ReceiveThread());
                         ReceiveThread.start();
                     }
+                    if (SendThread == null) { //if the thread is null, make a new one (the first one)
+                    SendThread = new Thread(new SendThread());
+                    SendThread.start();
+                } else if (!SendThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
+                    Log.d(TAG, "IN SocketThread< WAITING FOR send THREAD JOING");
+                    try {
+                        SendThread.join(); //make sure socket thread has joined before throwing off a new one
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "send JOINED");
+                    SendThread =  new Thread(new SendThread());
+                    SendThread.start();
+                }
                 } catch (IOException e) {
                     e.printStackTrace();
                     mConnectState = 0;
@@ -688,7 +659,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //receives messages
-        private void heartBeat(){
+    private void heartBeat(){
         //check if we are still connected.
         //if not , reconnect,
         //if we are connected, send a heart beat to make sure we are still connected
@@ -705,15 +676,12 @@ public class MainActivity extends AppCompatActivity {
             outbound_heart_beats++;
 
             //send heart beat
-            byte[] hb = {0x19, 0x20};
-            new Thread(new SendThread(hb)).start();
+            sendBytes(heart_beat_id, null);
         }
-    }
+}
 
     //receives messages
-    private class ReceiveThread implements Runnable {
-        boolean firstTime = true;
-        boolean abort = false;
+    private  class ReceiveThread implements Runnable {
         @Override
         public void run() {
             System.out.println("Receive Started, mconnect: " + mConnectState);
@@ -721,78 +689,76 @@ public class MainActivity extends AppCompatActivity {
                 if (mConnectState != 2){
                     break;
                 }
-                System.out.println("LISTENING FOR MESSAGES" + firstTime);
-                firstTime = false;
+                System.out.println("LISTENING FOR MESSAGES");
+                byte b1, b2;
+                byte [] raw_data = null;
+                byte goodbye1, goodbye2, goodbye3;
                 try {
-                    int claimed_length = input.readInt();
-                    Log.d(TAG,"CLAIMED LENGTH IS " + claimed_length);
                     byte hello1 = input.readByte(); // read hello of incoming message
                     byte hello2 = input.readByte(); // read hello of incoming message
                     byte hello3 = input.readByte(); // read hello of incoming message
+
+                    //make sure header is verified
                     if (hello1 != 0x01 || hello2 != 0x02 || hello3 != 0x03){
-                        Log.d(TAG, "JPG stream - header broken, restarting socket");
+                        Log.d(TAG, "Socket hello header broken, restarting socket");
                         break;
                     }
-                    byte [] len_b = new byte[4];
-                    int len = input.readInt(); // read length of incoming message, integer, so 4 bytes
-                    //int len = my_bb_to_int_le(len_b);
-                    System.out.println("LENGTH IS " + len);
-                    if (len > 0){
-                        byte[] raw_data = new byte[len];
-                        input.readFully(raw_data, 0, len); // read the body
-                        if (len <= 10000){ //heart beat or other information sending, not an image
-                            if ((raw_data[0] == 0x19) && (raw_data[1] == 0x20)){
-                                Log.d(TAG, "HEART BEAT RECEIVED");
-                                outbound_heart_beats--;
-                            }
-                         } else if (len > 10000){ //must be an image if bigger than 10k
-                            System.out.println("RECEIVED MESSAGE");
-                            if (raw_data != null) {
-//                                runOnUiThread(new Runnable() {
-//                                    @Override
-//                                    public void run() {
-//                                        System.out.println("TRYING TO DISPLAY");
-//                                        //display image
-//                                        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
-//                                        //wearcam_view.setImageBitmap(bitmap); //Must.jpg present in any of your drawable folders.
-//                                        System.out.println("SET DISPLAYED");
-//                                    }
-//                                });
+                    //length of body
+                    int body_len = input.readInt();
+                    Log.d(TAG,"BODY LENGTH IS " + body_len);
 
-                                //ping back the client to let it know we received the message
-                                byte[] ack = {0x13, 0x37};
-                                new Thread(new SendThread(ack)).start();
+                    //read in message id bytes
+                    b1 = input.readByte();
+                    b2 = input.readByte();
 
-                                //convert to bitmap
-                                Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
-                                //send through mediapipe
-                                bitmapProducer.newFrame(bitmap);
-
-                                //save image
-                                //savePicture(raw_data);
-                            }
-                        }
-                        byte goodbye1 = input.readByte(); // read goodbye of incoming message
-                        byte goodbye2 = input.readByte(); // read goodbye of incoming message
-                        byte goodbye3 = input.readByte(); // read goodbye of incoming message
-                        System.out.println("GOODBYE 1 IS " + goodbye1);
-                        System.out.println("GOODBYE 2 IS " + goodbye2);
-                        System.out.println("GOODBYE 3 IS " + goodbye3);
-                        if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
-                            Log.d(TAG, "JPG stream - footer broken, restarting socket");
-                            break;
-                        }
-                    } else {
-                        break;
+                    //read in message body (if there is one)
+                    if (body_len > 0){
+                        raw_data = new byte[body_len];
+                        input.readFully(raw_data, 0, body_len); // read the body
                     }
+                    goodbye1 = input.readByte(); // read goodbye of incoming message
+                    goodbye2 = input.readByte(); // read goodbye of incoming message
+                    goodbye3 = input.readByte(); // read goodbye of incoming message
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.d(TAG, "FAILED TO RECEIVE");
                     break;
                 }
 
+                //make sure footer is verified
+                System.out.println("GOODBYE 1 IS " + goodbye1);
+                System.out.println("GOODBYE 2 IS " + goodbye2);
+                System.out.println("GOODBYE 3 IS " + goodbye3);
+                if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
+                    Log.d(TAG, "Socket stream footer broken, restarting socket");
+                    break;
+                }
+
+                //now process the data that was sent to us
+                if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])){ //heart beat id tag
+                    Log.d(TAG, "HEART BEAT RECEIVED");
+                    outbound_heart_beats--;
+                } else if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //an ack id
+                    Log.d(TAG, "ACK RECEIVED");
+                } else if ((b1 == img_id[0]) && (b2 == img_id[1])){ //an img id
+                    System.out.println("RECEIVED IMAGE");
+                    if (raw_data != null) {
+                        //ping back the client to let it know we received the message
+                        sendBytes(ack_id, null);
+
+                        //convert to bitmap
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
+                        //send through mediapipe
+                        bitmapProducer.newFrame(bitmap);
+
+                        //save image
+                        //savePicture(raw_data);
+                    }
+                } else {
+                    break;
+                }
             }
-            mConnectState = 0;
+            throwBrokenSocket();
         }
     }
 
@@ -808,6 +774,7 @@ public class MainActivity extends AppCompatActivity {
                 output.close();
                 input.close();
                 serverSocket.close();
+                socket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -827,25 +794,81 @@ public class MainActivity extends AppCompatActivity {
         SocketThread.start();
     }
 
+    public   byte[] my_int_to_bb_be(int myInteger){
+        return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(myInteger).array();
+    }
+
+    public void sendBytes(byte[] id, byte [] data){
+        //first, send hello
+        byte [] hello = {0x01, 0x02, 0x03};
+        //then send length of body
+        byte[] len;
+        if (data != null) {
+             len = my_int_to_bb_be(data.length);
+        } else {
+            len = my_int_to_bb_be(0);
+        }
+        //then send id of message type
+        byte [] msg_id = id;
+        //then send data
+        byte [] body = data;
+        //then send end tag - eventually make this unique to the image
+        byte [] goodbye = {0x3, 0x2, 0x1};
+        //combine those into a payload
+        ByteArrayOutputStream outputStream;
+        try {
+            outputStream = new ByteArrayOutputStream();
+            outputStream.write(hello);
+            outputStream.write(len);
+            outputStream.write(msg_id);
+            if (body != null) {
+                outputStream.write(body);
+            }
+            outputStream.write(goodbye);
+        } catch (IOException e){
+            mConnectState = 0;
+            return;
+        }
+        byte [] payload = outputStream.toByteArray();
+
+        //send it in a background thread
+        //new Thread(new SendThread(payload)).start();
+        queue.add(payload);
+    }
+
     //this sends messages
-    class SendThread implements Runnable {
-        private byte [] message;
-        SendThread(byte [] message) {
-            this.message = message;
+     class SendThread implements Runnable {
+        SendThread() {
         }
         @Override
         public void run() {
-            try {
-                output.write(message);
-                output.flush();
-            } catch (IOException e){
-                Log.d(TAG, "SOCKET DEAD - FAILED TO WRITE OUT DATA");
-                mConnectState = 0; //set to "trying" state if this fails
+            queue.clear();
+            while (true){
+                if (mConnectState != 2){
+                    break;
+                }
+                if (queue.size() > 10){
+                    break;
+                }
+                byte [] data;
+                try {
+                    data = queue.take(); //block until there is something we can pull out to send
+                } catch (InterruptedException e){
+                    e.printStackTrace();
+                    break;
+                }
+                try {
+                    output.write(data);           // write the message
+                } catch (java.io.IOException e) {
+                    e.printStackTrace();
+                    break;
+                }
             }
+            throwBrokenSocket();
         }
     }
 
-    private void savePicture(byte[] data){
+    private  void savePicture(byte[] data){
 //        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
         File pictureFileDir = getDir();
         System.out.println("TRYING TO SAVE AT LOCATION: " + pictureFileDir.toString());
@@ -874,9 +897,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private File getDir() {
+    private  File getDir() {
         File sdDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         return sdDir; //new File(sdDir, "WearableAiMobileCompute");
+    }
+
+    private  void throwBrokenSocket(){
+        if (mConnectState == 2){
+            mConnectState = 0;
+        }
     }
 
 }
