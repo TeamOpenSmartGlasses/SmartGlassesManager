@@ -10,9 +10,6 @@
 [submodule "places365"]
 	path = python_pipeline/places365
 	url = https://github.com/CSAILVision/places365
-[submodule "mediapipe"]
-	path = android_pipeline/mediapipeprivate
-	url = https://github.com/CaydenPierce/mediapipeprivate
 [submodule "android_pipeline/DeepSpeech"]
 	path = android_pipeline/DeepSpeech
 	url = https://github.com/mozilla/DeepSpeech
@@ -22,3 +19,6 @@
 [submodule "android_pipeline/Keras-VGG16-places365"]
 	path = android_pipeline/Keras-VGG16-places365
 	url = git@github.com:CaydenPierce/Keras-VGG16-places365.git
+[submodule "android_pipeline/mediapipe"]
+	path = android_pipeline/mediapipe
+	url = https://github.com/CaydenPierce/mediapipeprivate
