@@ -1,19 +1,30 @@
 package com.example.wearableaidisplaymoverio;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Handler;
 import android.os.IBinder;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicYuvToRGB;
+import android.renderscript.Type;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import android.hardware.Camera;
 import com.androidhiddencamera.CameraConfig;
 import com.androidhiddencamera.CameraError;
 import com.androidhiddencamera.HiddenCameraService;
@@ -24,6 +35,7 @@ import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,6 +51,8 @@ import java.util.Date;
  */
 
 public class CameraService extends HiddenCameraService {
+
+    private int img_count = 0;
 
     //id of packet
     static final byte [] img_id = {0x01, 0x10}; //id for images
@@ -250,12 +264,66 @@ public class CameraService extends HiddenCameraService {
         }
     }
 
+    private byte [] bmpToJpg(Bitmap bmp){
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        byte[] byteArrayJpg = stream.toByteArray();
+        return byteArrayJpg;
+    }
+
     private File getDir() {
         File sdDir = Environment
                 .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         return new File(sdDir, "CameraAPIDemo");
     }
 
+    @Override
+    public void onPreviewFrame(byte [] data, Camera camera){
+//        Log.d(TAG, "onPreviewFrame called");
+//        int width = camera.getParameters().getPreviewSize().width;
+//        int height = camera.getParameters().getPreviewSize().width;
+//        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+//        Allocation bmData = renderScriptNV21ToRGBA8888(
+//                this, width, height, data);
+//        bmData.copyTo(bitmap);
+//        Log.d(TAG, "got bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
+        Camera.Parameters parameters = camera.getParameters();
+        int width = parameters.getPreviewSize().width;
+        int height = parameters.getPreviewSize().height;
+
+        YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+
+        byte[] bytes = out.toByteArray();
+        final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        Log.d(TAG, "got bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
+        if ((img_count % 60) == 0) {
+            Log.d(TAG, "saving image");
+            byte[] jpg = bmpToJpg(bitmap);
+            savePicture(jpg);
+        }
+
+        img_count++;
+    }
+
+    public Allocation renderScriptNV21ToRGBA8888(Context context, int width, int height, byte[] nv21) {
+        RenderScript rs = RenderScript.create(context);
+        ScriptIntrinsicYuvToRGB yuvToRgbIntrinsic = ScriptIntrinsicYuvToRGB.create(rs, Element.U8_4(rs));
+
+        Type.Builder yuvType = new Type.Builder(rs, Element.U8(rs)).setX(nv21.length);
+        Allocation in = Allocation.createTyped(rs, yuvType.create(), Allocation.USAGE_SCRIPT);
+
+        Type.Builder rgbaType = new Type.Builder(rs, Element.RGBA_8888(rs)).setX(width).setY(height);
+        Allocation out = Allocation.createTyped(rs, rgbaType.create(), Allocation.USAGE_SCRIPT);
+
+        in.copyFrom(nv21);
+
+        yuvToRgbIntrinsic.setInput(in);
+        yuvToRgbIntrinsic.forEach(out);
+        return out;
+    }
 
 }
 
