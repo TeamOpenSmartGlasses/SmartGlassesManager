@@ -40,6 +40,8 @@ public class ClientSocket {
     static final byte [] heart_beat_id = {0x19, 0x20}; //id for heart beat
     static final byte [] ack_id = {0x13, 0x37};
 
+    //
+
 
     //static private BufferedReader input;
     static private DataInputStream input;
@@ -56,14 +58,18 @@ public class ClientSocket {
     private static int packets_in_buf = 0;
 
     //queue of data to send through the socket
-    private static BlockingQueue<byte []> queue;
+    private static BlockingQueue<byte []> data_queue;
+    private static BlockingQueue<String> type_queue;
+    private static int queue_size = 50;
+    private static int image_buf_size = 0;
 
     //we need a reference to the context of whatever called this class so we can send broadcast updates on receving new info
     private static Context mContext;
 
     private ClientSocket(Context context){
         //create send queue and a thread to handle sending
-        queue = new ArrayBlockingQueue<byte[]>(50);
+        data_queue = new ArrayBlockingQueue<byte[]>(queue_size);
+        type_queue = new ArrayBlockingQueue<String>(queue_size);
 
         //service context set 
         mContext = context;
@@ -90,7 +96,6 @@ public class ClientSocket {
             Log.d(TAG, "onCreate starting");
             SocketThread = new Thread(new SocketThread());
             SocketThread.start();
-            Log.d(TAG, "STARTED");
 
             //setup handler to handle keeping connection alive, all subsequent start of SocketThread
             //start a new handler thread to send heartbeats
@@ -155,7 +160,11 @@ public class ClientSocket {
         return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(myInteger).array();
     }
 
-    public void sendBytes(byte[] id, byte [] data){
+    public void sendBytes(byte[] id, byte [] data, String type){
+        //handle different types differently
+        if (type == "image"){
+            image_buf_size++;
+        }
         //first, send hello
         byte [] hello = {0x01, 0x02, 0x03};
         //then send length of body
@@ -190,7 +199,31 @@ public class ClientSocket {
 
         //send it in a background thread
         //new Thread(new SendThread(payload)).start();
-        queue.add(payload);
+        boolean try_send;
+        if (type == "image"){
+            if (data_queue.size() < (queue_size / 2)){ //if our queue is over half full, don't keep adding images to queue
+                try_send = true;
+            } else {
+                try_send = false;
+            }
+        } else { //if not an image, try to send anyway
+            try_send = true;
+        }
+
+        //add the data to the send queue
+        if (try_send) {
+            try {
+                data_queue.add(payload);
+                type_queue.add(type);
+            } catch (IllegalStateException e) {
+                Log.d(TAG, "Queue is full, skipping this one");
+            }
+        }
+    }
+
+    //returns how many images are in the buffer
+    public int getImageBuf(){
+        return image_buf_size;
     }
 
     public int getConnected(){
@@ -207,13 +240,12 @@ public class ClientSocket {
                 //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 input = new DataInputStream(new DataInputStream(socket.getInputStream()));
                 mConnectState = 2;
-                Log.d(TAG, "SET MCONNECT STATE TO 2");
                 //make the threads that will send and receive
                 if (ReceiveThread == null) { //if the thread is null, make a new one (the first one)
                     ReceiveThread = new Thread(new ReceiveThread());
                     ReceiveThread.start();
                 } else if (!ReceiveThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
-                    Log.d(TAG, "IN SocketThread< WAITING FOR receive THREAD JOING");
+                    Log.d(TAG, "IN SocketThread, WAITING FOR receive THREAD JOING");
                     try {
                         ReceiveThread.join(); //make sure socket thread has joined before throwing off a new one
                     } catch (InterruptedException e) {
@@ -227,7 +259,7 @@ public class ClientSocket {
                     SendThread = new Thread(new SendThread());
                     SendThread.start();
                 } else if (!SendThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
-                    Log.d(TAG, "IN SocketThread< WAITING FOR send THREAD JOING");
+                    Log.d(TAG, "IN SocketThread, WAITING FOR send THREAD JOING");
                     try {
                         SendThread.join(); //make sure socket thread has joined before throwing off a new one
                     } catch (InterruptedException e) {
@@ -273,7 +305,6 @@ public class ClientSocket {
                     }
                     //length of body
                     int body_len = input.readInt();
-                    Log.d(TAG,"BODY LENGTH IS " + body_len);
 
                     //read in message id bytes
                     b1 = input.readByte();
@@ -295,9 +326,6 @@ public class ClientSocket {
                 }
 
                 //make sure footer is verified
-                System.out.println("GOODBYE 1 IS " + goodbye1);
-                System.out.println("GOODBYE 2 IS " + goodbye2);
-                System.out.println("GOODBYE 3 IS " + goodbye3);
                 if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
                     Log.d(TAG, "Socket stream - footer broken, restarting socket");
                     break;
@@ -305,11 +333,10 @@ public class ClientSocket {
 
                 //then process the data
                 if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //got ack response
-                    System.out.println("ACK RECEIVED");
                     gotAck = true;
                 } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
                     //got heart beat, respond with heart beat
-                    clientsocket.sendBytes(heart_beat_id, null);
+                    clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
                 } else if ((b1 == eye_contact_info_id[0]) && (b2 == eye_contact_info_id[1])){ //we got a message with information to display
                     String message = Integer.toString(my_bb_to_int_be(raw_data));
                     final Intent intent = new Intent();
@@ -331,25 +358,31 @@ public class ClientSocket {
         @Override
         public void run() {
             //clear queue so we don't have a buildup of images
-            queue.clear();
+            data_queue.clear();
+            type_queue.clear();
             while (true) {
                 if (packets_in_buf > 5) { //if 5 packets in buffer (NOT QUEUE, BUF NETWORK BUFFER), restart socket
                     break;
                 }
                 byte[] data;
+                String type;
                 try {
-                    data = queue.take(); //block until there is something we can pull out to send
+                    data = data_queue.take(); //block until there is something we can pull out to send
+                    type = type_queue.take();
                 } catch (InterruptedException e){
                     e.printStackTrace();
                     break;
                 }
                 try {
-                    packets_in_buf++;
                     output.write(data);           // write the message
-                    packets_in_buf--;
                 } catch (java.io.IOException e) {
                     e.printStackTrace();
                     break;
+                }
+
+                //handle different types of sends differently
+                if (type == "image"){
+                    image_buf_size--;
                 }
             }
             mConnectState = 0;

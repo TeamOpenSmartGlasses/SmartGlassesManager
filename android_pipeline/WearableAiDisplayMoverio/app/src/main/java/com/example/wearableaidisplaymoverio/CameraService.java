@@ -52,7 +52,10 @@ import java.util.Date;
 
 public class CameraService extends HiddenCameraService {
 
+    //image stream handling
     private int img_count = 0;
+    private long last_sent_time = 0;
+    private int fps_to_send = 3; //speed we send HD frames from wearable to mobile compute unit
 
     //id of packet
     static final byte [] img_id = {0x01, 0x10}; //id for images
@@ -112,20 +115,20 @@ public class CameraService extends HiddenCameraService {
                 final int init_camera_delay = 2000; // 1000 milliseconds
                 final int delay = 200; //5Hz
 
-                handler.postDelayed(new
-                    Runnable() {
-                        public void run () {
-                            handler.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (!camera_lock) {
-                                        takeAndSendPicture();
-                                    }
-                                    handler.postDelayed(this, delay);
-                                }
-                            }, delay);
-                        }
-                    }, init_camera_delay);
+//                handler.postDelayed(new
+//                    Runnable() {
+//                        public void run () {
+//                            handler.postDelayed(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    if (!camera_lock) {
+//                                        takeAndSendPicture();
+//                                    }
+//                                    handler.postDelayed(this, delay);
+//                                }
+//                            }, delay);
+//                        }
+//                    }, init_camera_delay);
 
             } else {
 
@@ -231,8 +234,7 @@ public class CameraService extends HiddenCameraService {
     private void uploadImage(byte[] image_data){
         //upload the image using async task
 //        new SendImage().execute(data);
-        System.out.println("UPLOADING IMAGE");
-        clientsocket.sendBytes(img_id, image_data);
+        clientsocket.sendBytes(img_id, image_data, "image");
     }
 
     private void savePicture(byte[] data){
@@ -258,6 +260,7 @@ public class CameraService extends HiddenCameraService {
             FileOutputStream fos = new FileOutputStream(pictureFile);
             fos.write(data);
             fos.close();
+            Log.d(TAG, "File saved: " + filename);
         } catch (Exception error) {
             Log.d(TAG, "File" + filename + "not saved: "
                     + error.getMessage());
@@ -279,32 +282,29 @@ public class CameraService extends HiddenCameraService {
 
     @Override
     public void onPreviewFrame(byte [] data, Camera camera){
-//        Log.d(TAG, "onPreviewFrame called");
-//        int width = camera.getParameters().getPreviewSize().width;
-//        int height = camera.getParameters().getPreviewSize().width;
-//        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-//        Allocation bmData = renderScriptNV21ToRGBA8888(
-//                this, width, height, data);
-//        bmData.copyTo(bitmap);
-//        Log.d(TAG, "got bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
-        Camera.Parameters parameters = camera.getParameters();
-        int width = parameters.getPreviewSize().width;
-        int height = parameters.getPreviewSize().height;
+        long curr_time = System.currentTimeMillis();
+        float now_frame_rate = (1 / (curr_time - last_sent_time));
+        if (now_frame_rate <= fps_to_send) {
+            Camera.Parameters parameters = camera.getParameters();
+            int width = parameters.getPreviewSize().width;
+            int height = parameters.getPreviewSize().height;
 
-        YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
+            YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
 
-        byte[] bytes = out.toByteArray();
-        final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        Log.d(TAG, "got bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight());
-        if ((img_count % 60) == 0) {
-            Log.d(TAG, "saving image");
+            byte[] bytes = out.toByteArray();
+            final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             byte[] jpg = bmpToJpg(bitmap);
-            savePicture(jpg);
+            Log.d(TAG, "sending image");
+            uploadImage(jpg);
+            int q_size = clientsocket.getImageBuf();
+            Log.d(TAG, "Image queue size: " + q_size);
+            //Log.d(TAG, "saving image");
+            //savePicture(jpg);
+            last_sent_time = curr_time;
         }
-
         img_count++;
     }
 
