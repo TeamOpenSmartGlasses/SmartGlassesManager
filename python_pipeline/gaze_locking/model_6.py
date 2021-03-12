@@ -13,20 +13,21 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
 from keras.utils import to_categorical
+from sklearn.metrics import classification_report, confusion_matrix
 
 seed_val = 1999
 np.random.seed(seed_val)
 
 categorical = True
 images_folder = "dataset"
-train_percent = 0.85
+train_percent = 0.9
 trimmed = True
-ec = 512
+ec = 2**13 #2048*12
 if trimmed:
     lr = 0.0001
     num_inputs = 48
 else: 
-    lr = 0.00001
+    lr = 0.0001
     num_inputs = 956
 
 columns = ["label", "v", "h"]
@@ -99,12 +100,36 @@ for image_folder in os.listdir(images_folder):
 #                        label = 0
 #                    elif abs(v) == 10 and abs(h) == 10:
 #                        label = 0
-                    if h == -15:
+                    if v == 10 and h == -15:
                         label = 0
-                    elif h == 0:
+                    elif v == 10 and h == -5:
                         label = 1
-                    elif h == 15:
+                    elif v == 10 and h == 0:
                         label = 2
+                    elif v == 10 and h == 5:
+                        label = 3
+                    elif v == 10 and h == 15:
+                        label = 4
+                    elif v == 0 and h == -15:
+                        label = 5
+                    elif v == 0 and h == -5:
+                        label = 6
+                    elif v == 0 and h == 0:
+                        label = 7
+                    elif v == 0 and h == 5:
+                        label = 8
+                    elif v == 0 and h == 15:
+                        label = 9
+                    elif v == -10 and h == -15:
+                        label = 10
+                    elif v == -10 and h == -5:
+                        label = 11
+                    elif v == -10 and h == 0:
+                        label = 12
+                    elif v == -10 and h == 5:
+                        label = 13
+                    elif v == -10 and h == 15:
+                        label = 14
                     else:
                         continue
                     #get vectors
@@ -172,7 +197,7 @@ model = Sequential()
 #model = multi_gpu_model(model, gpus=2)
 model.add(Dense(12, input_dim=num_inputs, activation='relu'))
 model.add(Dense(40, activation='relu'))
-model.add(Dense(3, activation='sigmoid'))
+model.add(Dense(15, activation='sigmoid'))
 
 # compile the keras model
 opt = keras.optimizers.Adam(learning_rate=lr)
@@ -211,3 +236,6 @@ axs[1].set_title('model loss')
 axs[1].set(xlabel='epoch', ylabel='loss')
 
 plt.show()
+
+#get confusion matrixgg
+

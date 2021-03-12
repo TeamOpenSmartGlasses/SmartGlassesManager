@@ -2,29 +2,30 @@ package com.example.wearableaimobilecompute;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+<<<<<<< Updated upstream
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
+=======
+import android.os.Handler;
+>>>>>>> Stashed changes
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -41,11 +42,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
-@SuppressLint("SetTextI18n")
 public class MainActivity extends AppCompatActivity {
     public String TAG = "WearableAiMobileCompute";
     ServerSocket serverSocket;
     Thread SocketThread = null;
+<<<<<<< Updated upstream
     static Thread ReceiveThread = null;
     TextView tvIP, tvPort;
     TextView tvMessages;
@@ -53,7 +54,25 @@ public class MainActivity extends AppCompatActivity {
     public static final int SERVER_PORT = 4567;
     private DataOutputStream output;
     private DataInputStream input;
+=======
+    String message;
+    public static String SERVER_IP = "";
+    public static final int SERVER_PORT = 4567;
+    private PrintWriter output;
+    private DataInputStream input;
+    byte [] image_data_rcv_jpg;
+    TextView tvIP, tvPort;
+    TextView tvMessages;
+    EditText etMessage;
+    Button btnSend;
+>>>>>>> Stashed changes
     ImageView wearcam_view;
+    private int count = 10;
+
+    //holds connection state
+    private boolean mConnectionState = false;
+
+//    SocketHandler mSocket;
 
     private static int mConnectState = 0;
     private static int outbound_heart_beats = 0;
@@ -63,18 +82,33 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //create references to the UI
         tvIP = findViewById(R.id.tvIP);
         tvPort = findViewById(R.id.tvPort);
         tvMessages = findViewById(R.id.tvMessages);
+<<<<<<< Updated upstream
+=======
+        etMessage = findViewById(R.id.etMessage);
+        btnSend = findViewById(R.id.btnSend);
+
+        //get local IP
+>>>>>>> Stashed changes
         try {
             SERVER_IP = getLocalIpAddress();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
 
+<<<<<<< Updated upstream
         //start first socketThread
         mConnectState = 1;
         Log.d(TAG, "onCreate starting");
+=======
+//        //create socket handler
+//        mSocket = new SocketHandler();
+
+>>>>>>> Stashed changes
         SocketThread = new Thread(new SocketThread());
         SocketThread.start();
         Log.d(TAG, "STARTED");
@@ -98,7 +132,25 @@ public class MainActivity extends AppCompatActivity {
         }, delay);
 
         //setup image view
+<<<<<<< Updated upstream
         wearcam_view = (ImageView)findViewById(R.id.imageView);
+=======
+        // New Code
+        wearcam_view = (ImageView)findViewById(R.id.imageView); //Assuming an ImgView is there in your layout activity_main
+
+        //start a thread which send random data to the moverio every n seconds, this is for testing
+        final Handler handler = new Handler();
+        final int delay = 2000; // 2000 milliseconds == 2 second
+
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                count = count + 1;
+                String message = "hello w0rLd!" + Integer.toString(count);
+                new Thread(new SendThread(message)).start();
+                handler.postDelayed(this, delay);
+            }
+        }, delay);
+>>>>>>> Stashed changes
     }
 
     private String getLocalIpAddress() throws UnknownHostException {
@@ -109,6 +161,10 @@ public class MainActivity extends AppCompatActivity {
         return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
     }
 
+<<<<<<< Updated upstream
+=======
+    //socket exists on this thread, socket gets started and persists here
+>>>>>>> Stashed changes
     class SocketThread implements Runnable {
         @Override
         public void run() {
@@ -129,9 +185,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "SOCKET MADE");
                 try {
                     socket = serverSocket.accept();
+<<<<<<< Updated upstream
                     Log.d(TAG, "CONNECTION MADE");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
+=======
+                    mConnectionState = true;
+                    output = new PrintWriter(socket.getOutputStream(), true);
+>>>>>>> Stashed changes
                     input = new DataInputStream(new DataInputStream(socket.getInputStream()));
                     mConnectState = 2;
                     runOnUiThread(new Runnable() {
@@ -306,6 +367,7 @@ public class MainActivity extends AppCompatActivity {
         }
         @Override
         public void run() {
+<<<<<<< Updated upstream
             try {
                 output.write(message);
                 output.flush();
@@ -350,5 +412,21 @@ public class MainActivity extends AppCompatActivity {
                 .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         return sdDir; //new File(sdDir, "WearableAiMobileCompute");
     }
+=======
+            if (mConnectionState) {
+                output.write(message + "\n");
+                output.flush();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tvMessages.append("server: " + message + "\n");
+                        etMessage.setText("");
+                    }
+                });
+            }
+        }
+        }
+
+>>>>>>> Stashed changes
 }
 
