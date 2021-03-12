@@ -19,9 +19,9 @@ np.random.seed(seed_val)
 
 categorical = True
 images_folder = "dataset"
-train_percent = 0.85
+train_percent = 0.9
 trimmed = True
-ec = 512
+ec = 2048
 if trimmed:
     lr = 0.0001
     num_inputs = 48
@@ -99,12 +99,24 @@ for image_folder in os.listdir(images_folder):
 #                        label = 0
 #                    elif abs(v) == 10 and abs(h) == 10:
 #                        label = 0
-                    if h == -15:
+                    if v == 10 and h == -15:
                         label = 0
-                    elif h == 0:
+                    elif v == 10 and h == 0:
                         label = 1
-                    elif h == 15:
+                    elif v == 10 and h == 15:
                         label = 2
+                    elif v == 0 and h == -15:
+                        label = 3
+                    elif v == 0 and h == 0:
+                        label = 4
+                    elif v == 0 and h == 15:
+                        label = 5
+                    elif v == -10 and h == -15:
+                        label = 6
+                    elif v == -10 and h == 0:
+                        label = 7
+                    elif v == -10 and h == 15:
+                        label = 8
                     else:
                         continue
                     #get vectors
@@ -172,7 +184,7 @@ model = Sequential()
 #model = multi_gpu_model(model, gpus=2)
 model.add(Dense(12, input_dim=num_inputs, activation='relu'))
 model.add(Dense(40, activation='relu'))
-model.add(Dense(3, activation='sigmoid'))
+model.add(Dense(9, activation='sigmoid'))
 
 # compile the keras model
 opt = keras.optimizers.Adam(learning_rate=lr)
