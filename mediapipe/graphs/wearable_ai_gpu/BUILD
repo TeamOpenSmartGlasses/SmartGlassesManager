@@ -53,6 +53,7 @@ cc_library(
         "//mediapipe/graphs/iris_tracking/calculators:update_face_landmarks_calculator",
         "//mediapipe/graphs/iris_tracking/subgraphs:iris_and_depth_renderer_gpu",
         "//mediapipe/modules/iris_landmark:iris_landmark_left_and_right_gpu",
+        "//mediapipe/modules/facial_emotion_recognition:facial_emotion_rec",
     ],
 )
 

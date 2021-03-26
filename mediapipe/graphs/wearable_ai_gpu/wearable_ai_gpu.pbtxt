@@ -10,6 +10,9 @@ output_stream: "output_video"
 # Face landmarks with iris. (NormalizedLandmarkList)
 output_stream: "face_landmarks_with_iris"
 
+#facial emotion neural network output
+output_stream: "face_emotion"
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
 # (calculators and subgraphs) in the graph to finish their tasks before it
@@ -79,6 +82,14 @@ node {
   output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
   output_stream: "FACE_RECT:face_rect"
   output_stream: "FACE_DETECTIONS:face_detections"
+}
+
+#facial emotion recognition
+node {
+  calculator: "FaceEmotionRecGpu"
+  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "FACE_RECT:face_rect"
+  output_stream: "FACE_EMOTION:face_emotion"
 }
 
 #IRIS tracking - get left and right eye landmarks

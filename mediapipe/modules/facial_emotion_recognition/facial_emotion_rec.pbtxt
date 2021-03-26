@@ -1,0 +1,77 @@
+# MediaPipe subgraph to calculate iris landmarks and eye contour landmarks for # a single eye. (GPU input, and inference is executed on GPU.)
+#
+# It is required that "iris_landmark.tflite" is available at
+# "mediapipe/modules/iris_landmark/iris_landmark.tflite"
+# path during execution.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceEmotionRecGpu"
+#     input_stream: "IMAGE:image"
+#     input_stream: "FACE_RECT:face_rect"
+#     output_stream: "FACE_EMOTION:face_emotion"
+#   }
+#
+#   FACE_EMOTION is a 1d array of floats. Output from the model encoded as:
+#
+#   ['Angry', 'Disgusted', 'Fearful', 'Happy', 'Sad', 'Surprised', 'Neutral']
+#
+#
+
+type: "FaceEmotionRecGpu"
+
+# GPU buffer. (GpuBuffer)
+input_stream: "IMAGE:image"
+# ROI (region of interest) within the given image where the face is located.
+# (NormalizedRect)
+input_stream: "FACE_RECT:face_rect"
+
+# 5 normalized iris landmarks. (NormalizedLandmarkList)
+output_stream: "FACE_EMOTION:face_emotion"
+
+node {
+  calculator: "ImageCroppingCalculator"
+  input_stream: "IMAGE_GPU:image"
+  input_stream: "RECT:face_rect"
+  output_stream: "IMAGE_GPU:face_emotion"
+  options: {
+    [mediapipe.ImageCroppingCalculatorOptions.ext] {
+    }
+  }
+}
+
+# Converts the transformed input image on GPU into an image tensor stored as a
+# TfLiteTensor.
+#node {
+#  calculator: "TfLiteConverterCalculator"
+#  input_stream: "IMAGE_GPU:face_image"
+##output_stream: "TENSORS_GPU:image_tensor"
+#  output_stream: "TENSORS:face_emotion"
+#  options: {
+#    [mediapipe.TfLiteConverterCalculatorOptions.ext] {
+#    }
+#  }
+#}
+
+## Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+## vector of tensors representing, for instance, detection boxes/keypoints and
+## scores.
+##node {
+##  calculator: "TfLiteInferenceCalculator"
+##  input_stream: "TENSORS_GPU:image_tensor"
+##  output_stream: "TENSORS:output_tensors"
+##  options: {
+##    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+##      model_path: "mediapipe/modules/face_emotion/facial_emotion_rec_model_susantabiswas.tflite"
+##    }
+##  }
+##}
+#
+##Convert output to simple float vector
+#node {
+#   calculator: "TfLiteTensorsToFloatsCalculator"
+##input_stream: "TENSORS:output_tensors"
+#input_stream: "TENSORS:image_tensor"
+#  output_stream: "FLOATS:face_emotion"
+#}
+#
