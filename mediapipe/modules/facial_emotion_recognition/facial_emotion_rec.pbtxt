@@ -26,52 +26,68 @@ input_stream: "IMAGE:image"
 # (NormalizedRect)
 input_stream: "FACE_RECT:face_rect"
 
-# 5 normalized iris landmarks. (NormalizedLandmarkList)
 output_stream: "FACE_EMOTION:face_emotion"
+
+output_stream: "cropped_scaled_image"
 
 node {
   calculator: "ImageCroppingCalculator"
   input_stream: "IMAGE_GPU:image"
-  input_stream: "RECT:face_rect"
-  output_stream: "IMAGE_GPU:face_emotion"
+  input_stream: "NORM_RECT:face_rect"
+  output_stream: "IMAGE_GPU:cropped_image"
+
   options: {
     [mediapipe.ImageCroppingCalculatorOptions.ext] {
+      border_mode: BORDER_REPLICATE
     }
   }
 }
 
-# Converts the transformed input image on GPU into an image tensor stored as a
-# TfLiteTensor.
-#node {
-#  calculator: "TfLiteConverterCalculator"
-#  input_stream: "IMAGE_GPU:face_image"
-##output_stream: "TENSORS_GPU:image_tensor"
-#  output_stream: "TENSORS:face_emotion"
-#  options: {
-#    [mediapipe.TfLiteConverterCalculatorOptions.ext] {
-#    }
-#  }
-#}
+#scale down to the size needed for our model
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE_GPU:cropped_image"
+  output_stream: "IMAGE_GPU:cropped_scaled_image"
+  options: {
+    [mediapipe.ImageTransformationCalculatorOptions.ext] {
+      output_width: 64
+      output_height: 64
+      scale_mode: FIT
+    }
+  }
+}
 
-## Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
-## vector of tensors representing, for instance, detection boxes/keypoints and
-## scores.
-##node {
-##  calculator: "TfLiteInferenceCalculator"
-##  input_stream: "TENSORS_GPU:image_tensor"
-##  output_stream: "TENSORS:output_tensors"
-##  options: {
-##    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
-##      model_path: "mediapipe/modules/face_emotion/facial_emotion_rec_model_susantabiswas.tflite"
-##    }
-##  }
-##}
-#
-##Convert output to simple float vector
-#node {
-#   calculator: "TfLiteTensorsToFloatsCalculator"
-##input_stream: "TENSORS:output_tensors"
-#input_stream: "TENSORS:image_tensor"
-#  output_stream: "FLOATS:face_emotion"
-#}
-#
+node {
+  calculator: "TfLiteConverterCalculator"
+  input_stream: "IMAGE_GPU:cropped_scaled_image"
+  output_stream: "TENSORS_GPU:image_tensor"
+#output_stream: "TENSORS:face_emotion"
+  options: {
+    [mediapipe.TfLiteConverterCalculatorOptions.ext] {
+      zero_center: false
+    }
+  }
+}
+
+# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS_GPU:image_tensor"
+  output_stream: "TENSORS:output_tensors"
+  options: {
+    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+#model_path: "mediapipe/modules/facial_emotion_recognition/facial_emotion_rec_model_susantabiswas.tflite"
+    model_path: "mediapipe/modules/facial_emotion_recognition/iris_landmark.tflite"
+    }
+  }
+}
+
+###Convert output to simple float vector
+node {
+   calculator: "TfLiteTensorsToFloatsCalculator"
+  input_stream: "TENSORS:output_tensors"
+  output_stream: "FLOATS:face_emotion"
+}
+

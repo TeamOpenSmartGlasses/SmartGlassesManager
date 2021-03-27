@@ -21,21 +21,26 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(
+    srcs = [
+        #"facial_emotion_rec_model_susantabiswas.tflite"
+        "iris_landmark.tflite"
+    ],
+)
+
 mediapipe_simple_subgraph(
     name = "facial_emotion_rec",
     graph = "facial_emotion_rec.pbtxt",
     register_as = "FaceEmotionRecGpu",
     deps = [
         "//mediapipe/calculators/image:image_cropping_calculator",
+        "//mediapipe/calculators/image:image_transformation_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/tflite:tflite_converter_calculator",
         "//mediapipe/calculators/tflite:tflite_inference_calculator",
         "//mediapipe/calculators/tflite:tflite_tensors_to_floats_calculator",
+        "//mediapipe/calculators/image:scale_image_calculator",
     ],
 )
 
-exports_files(
-    srcs = [
-        "facial_emotion_rec_model_susantabiswas.tflite",
-    ],
-)
+

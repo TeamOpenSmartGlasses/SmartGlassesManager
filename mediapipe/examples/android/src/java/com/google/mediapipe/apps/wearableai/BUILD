@@ -58,7 +58,7 @@ android_binary(
         "cameraFacingFront": "True",
         "binaryGraphName": "wearable_ai_gpu.binarypb",
         "inputVideoStreamName": "input_video",
-        "outputVideoStreamName": "output_video",
+        "outputVideoStreamName": "cropped_scaled_image",
         "flipFramesVertically": "True",
         "converterNumBuffers": "2",
     },

@@ -217,6 +217,7 @@ public class MainActivity extends AppCompatActivity {
 
   private  final String FOCAL_LENGTH_STREAM_NAME = "focal_length_pixel";
   private  final String OUTPUT_LANDMARKS_STREAM_NAME = "face_landmarks_with_iris";
+  private  final String OUTPUT_FACE_EMOTION_STREAM_NAME = "face_emotion";
 
   private boolean haveAddedSidePackets = false;
 
@@ -263,24 +264,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //add a callback to process the output of the mediapipe perception pipeline
+//    processor.addPacketCallback(
+//      OUTPUT_LANDMARKS_STREAM_NAME,
+//      (packet) -> {
+//        Log.d(TAG, "PACKET CALLBACK");
+//        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+//        try {
+//          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+//          if (landmarks == null) {
+//            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
+//            return;
+//          } else {
+//              processOutput(landmarks);
+//          }
+//        } catch (InvalidProtocolBufferException e) {
+//          Log.e(TAG, "Couldn't Exception received - " + e);
+//          return;
+//        }
+//      });
+
+    //add a callback to process the output of the mediapipe perception pipeline
     processor.addPacketCallback(
-      OUTPUT_LANDMARKS_STREAM_NAME,
+      OUTPUT_FACE_EMOTION_STREAM_NAME,
       (packet) -> {
-        Log.d(TAG, "PACKET CALLBACK");
-        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-        try {
-          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-          if (landmarks == null) {
-            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
-            return;
-          } else {
-              processOutput(landmarks);
-          }
-        } catch (InvalidProtocolBufferException e) {
-          Log.e(TAG, "Couldn't Exception received - " + e);
-          return;
-        }
+        Log.d(TAG, "FACE EMOTION CALLBACK");
       });
+
+
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
@@ -607,14 +617,10 @@ public class MainActivity extends AppCompatActivity {
     class SocketThread implements Runnable {
         @Override
         public void run() {
-            Log.d(TAG, "STARTED NEW SOCKET THREAD");
             try {
-                Log.d(TAG, "LISTENING FOR CONNECTIONS");
                 serverSocket = new ServerSocket(SERVER_PORT);
-                Log.d(TAG, "SOCKET MADE");
                 try {
                     socket = serverSocket.accept();
-                    Log.d(TAG, "CONNECTION MADE");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
                     input = new DataInputStream(new DataInputStream(socket.getInputStream()));
@@ -689,7 +695,6 @@ public class MainActivity extends AppCompatActivity {
                 if (mConnectState != 2){
                     break;
                 }
-                System.out.println("LISTENING FOR MESSAGES");
                 byte b1, b2;
                 byte [] raw_data = null;
                 byte goodbye1, goodbye2, goodbye3;
@@ -726,9 +731,6 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 //make sure footer is verified
-                System.out.println("GOODBYE 1 IS " + goodbye1);
-                System.out.println("GOODBYE 2 IS " + goodbye2);
-                System.out.println("GOODBYE 3 IS " + goodbye3);
                 if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
                     Log.d(TAG, "Socket stream footer broken, restarting socket");
                     break;
@@ -736,12 +738,9 @@ public class MainActivity extends AppCompatActivity {
 
                 //now process the data that was sent to us
                 if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])){ //heart beat id tag
-                    Log.d(TAG, "HEART BEAT RECEIVED");
                     outbound_heart_beats--;
                 } else if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //an ack id
-                    Log.d(TAG, "ACK RECEIVED");
                 } else if ((b1 == img_id[0]) && (b2 == img_id[1])){ //an img id
-                    System.out.println("RECEIVED IMAGE");
                     if (raw_data != null) {
                         //ping back the client to let it know we received the message
                         sendBytes(ack_id, null);

@@ -179,7 +179,6 @@ public class BitmapConverter implements TextureFrameProducer, CustomFrameAvailab
                         AppTextureFrame outputFrame = nextOutputFrame(bitmap);
                         updateOutputFrame(outputFrame);
                         frameUpdated = true;
-                        Log.d(TAG,"Frame updated ");
                         if (consumer != null) {
                             if (Log.isLoggable(TAG, Log.VERBOSE)) {
                                 Log.v(
@@ -191,7 +190,6 @@ public class BitmapConverter implements TextureFrameProducer, CustomFrameAvailab
                                                 outputFrame.getHeight()));
                             }
                             outputFrame.setInUse();
-                            Log.d(TAG,"Frame sending to consumer");
                             consumer.onNewFrame(outputFrame);
                         }
                     }

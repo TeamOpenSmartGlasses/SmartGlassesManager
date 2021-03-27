@@ -5,6 +5,7 @@ input_stream: "input_video"
 
 # GPU image with rendered results. (GpuBuffer)
 output_stream: "output_video"
+output_stream: "cropped_scaled_image"
 
 # TODO turn this into a full holistic landmarks output stream
 # Face landmarks with iris. (NormalizedLandmarkList)
@@ -90,6 +91,8 @@ node {
   input_stream: "IMAGE:throttled_input_video"
   input_stream: "FACE_RECT:face_rect"
   output_stream: "FACE_EMOTION:face_emotion"
+  output_stream: "cropped_scaled_image"
+
 }
 
 #IRIS tracking - get left and right eye landmarks
