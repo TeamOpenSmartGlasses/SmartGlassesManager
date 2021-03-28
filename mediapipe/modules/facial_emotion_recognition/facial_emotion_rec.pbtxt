@@ -28,7 +28,7 @@ input_stream: "FACE_RECT:face_rect"
 
 output_stream: "FACE_EMOTION:face_emotion"
 
-output_stream: "cropped_scaled_image"
+output_stream: "face_in_img"
 
 node {
   calculator: "ImageCroppingCalculator"
@@ -47,24 +47,48 @@ node {
 node: {
   calculator: "ImageTransformationCalculator"
   input_stream: "IMAGE_GPU:cropped_image"
-  output_stream: "IMAGE_GPU:cropped_scaled_image"
+  output_stream: "IMAGE_GPU:cropped_scaled_image_gpu"
   options: {
     [mediapipe.ImageTransformationCalculatorOptions.ext] {
-      output_width: 64
-      output_height: 64
+      output_width: 48 
+      output_height: 48
       scale_mode: FIT
     }
   }
 }
 
+#convert to CPU (because the facial emotion net can't run on gpu apparently, it throws the error "Read buffer does not match write buffer size." if run on GPU)
+node {
+    calculator: "GpuBufferToImageFrameCalculator"
+    input_stream: "cropped_scaled_image_gpu"
+    output_stream: "cropped_scaled_image_cpu"
+}
+
+#convert to grayscale
+node{
+    calculator: "ColorConvertCalculator"
+    input_stream : "RGB_IN:cropped_scaled_image_cpu"
+    output_stream : "GRAY_OUT:cropped_scaled_grayscale_image_cpu"
+}
+
+#output the cropped, resized, grayscale image
+node { 
+    calculator: "ImageFrameToGpuBufferCalculator"
+    input_stream: "cropped_scaled_grayscale_image_cpu"
+    output_stream: "face_in_img"
+}
+
+#convert grayscale image cpu to tensorflowlite tensor
 node {
   calculator: "TfLiteConverterCalculator"
-  input_stream: "IMAGE_GPU:cropped_scaled_image"
-  output_stream: "TENSORS_GPU:image_tensor"
+  input_stream: "IMAGE:cropped_scaled_grayscale_image_cpu"
+  output_stream: "TENSORS:image_tensor"
 #output_stream: "TENSORS:face_emotion"
   options: {
     [mediapipe.TfLiteConverterCalculatorOptions.ext] {
-      zero_center: false
+       use_custom_normalization: true,
+       custom_div: 1, #hack to not normalize at all
+       custom_sub: 0 #hack to not normalize at all
     }
   }
 }
@@ -74,12 +98,13 @@ node {
 # scores.
 node {
   calculator: "TfLiteInferenceCalculator"
-  input_stream: "TENSORS_GPU:image_tensor"
+  input_stream: "TENSORS:image_tensor"
   output_stream: "TENSORS:output_tensors"
   options: {
     [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
 #model_path: "mediapipe/modules/facial_emotion_recognition/facial_emotion_rec_model_susantabiswas.tflite"
-    model_path: "mediapipe/modules/facial_emotion_recognition/iris_landmark.tflite"
+#model_path: "mediapipe/modules/facial_emotion_recognition/face_emotion.tflite"
+    model_path: "mediapipe/modules/facial_emotion_recognition/face_emotion.tflite"
     }
   }
 }

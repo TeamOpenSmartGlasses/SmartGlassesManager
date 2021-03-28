@@ -24,7 +24,9 @@ package(default_visibility = ["//visibility:public"])
 exports_files(
     srcs = [
         #"facial_emotion_rec_model_susantabiswas.tflite"
-        "iris_landmark.tflite"
+        "face_emotion.tflite",
+        "test_emotion.tflite",
+        "iris_landmark_two.tflite"
     ],
 )
 
@@ -40,6 +42,9 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/tflite:tflite_inference_calculator",
         "//mediapipe/calculators/tflite:tflite_tensors_to_floats_calculator",
         "//mediapipe/calculators/image:scale_image_calculator",
+        "//mediapipe/calculators/image:color_convert_calculator",
+        "//mediapipe/gpu:gpu_buffer_to_image_frame_calculator",
+        "//mediapipe/gpu:image_frame_to_gpu_buffer_calculator"
     ],
 )
 

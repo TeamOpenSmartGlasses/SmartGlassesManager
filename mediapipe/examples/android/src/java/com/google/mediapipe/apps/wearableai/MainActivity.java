@@ -223,6 +223,9 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+      //make screen stay on for demos
+      //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
       //mediapipe stuffs
     super.onCreate(savedInstanceState);
     setContentView(getContentViewLayoutResId());
@@ -288,9 +291,11 @@ public class MainActivity extends AppCompatActivity {
       OUTPUT_FACE_EMOTION_STREAM_NAME,
       (packet) -> {
         Log.d(TAG, "FACE EMOTION CALLBACK");
+        float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
+        for (int i = 0; i < face_emotion_vector.length; i++){
+            Log.d(TAG, "Face emotion model output at " + i + "::: " + face_emotion_vector[i]);
+        }
       });
-
-
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
