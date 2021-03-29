@@ -266,27 +266,27 @@ public class MainActivity extends AppCompatActivity {
         haveAddedSidePackets = true;
     }
 
-    //add a callback to process the output of the mediapipe perception pipeline
-//    processor.addPacketCallback(
-//      OUTPUT_LANDMARKS_STREAM_NAME,
-//      (packet) -> {
-//        Log.d(TAG, "PACKET CALLBACK");
-//        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-//        try {
-//          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-//          if (landmarks == null) {
-//            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
-//            return;
-//          } else {
-//              processOutput(landmarks);
-//          }
-//        } catch (InvalidProtocolBufferException e) {
-//          Log.e(TAG, "Couldn't Exception received - " + e);
-//          return;
-//        }
-//      });
+    //add a callback to process the holistic + iris output of the mediapipe perception pipeline
+    processor.addPacketCallback(
+      OUTPUT_LANDMARKS_STREAM_NAME,
+      (packet) -> {
+        Log.d(TAG, "PACKET CALLBACK");
+        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+        try {
+          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+          if (landmarks == null) {
+            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
+            return;
+          } else {
+              processOutput(landmarks);
+          }
+        } catch (InvalidProtocolBufferException e) {
+          Log.e(TAG, "Couldn't Exception received - " + e);
+          return;
+        }
+      });
 
-    //add a callback to process the output of the mediapipe perception pipeline
+    //add a callback to process the facial emotion output of the mediapipe perception pipeline
     processor.addPacketCallback(
       OUTPUT_FACE_EMOTION_STREAM_NAME,
       (packet) -> {
