@@ -30,25 +30,16 @@
             android:layout_width="184dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-<<<<<<< Updated upstream
-            android:text="@string/title_eye_contact"
             android:textColor="@color/hud_text"
-            android:textSize="42dp" />
-=======
-            android:textSize="92dp"
+            android:textSize="32dp"
             android:text="@string/title_eye_contact" />
->>>>>>> Stashed changes
         <TextView
             android:id="@+id/eye_contact_metric"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-<<<<<<< Updated upstream
-            android:textSize="42dp"
             android:textColor="@color/hud_text"
-=======
-            android:textSize="92dp"
->>>>>>> Stashed changes
+            android:textSize="52dp"
             android:text="@string/data_loading" />
     </LinearLayout>
     <LinearLayout
