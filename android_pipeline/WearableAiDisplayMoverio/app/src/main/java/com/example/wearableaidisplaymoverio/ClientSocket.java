@@ -45,7 +45,7 @@ public class ClientSocket {
 
     //static private BufferedReader input;
     static private DataInputStream input;
-    static String SERVER_IP = "192.168.1.175"; //temporarily hardcoded
+    static String SERVER_IP = "0.0.0.0"; //gets updated
     static int SERVER_PORT = 4567;
     private static int mConnectState = 0;
 
@@ -80,6 +80,10 @@ public class ClientSocket {
             clientsocket = new ClientSocket(c);
         }
         return clientsocket;
+    }
+
+    public static void setIp(String ip){
+        SERVER_IP = ip;
     }
 
     public static ClientSocket getInstance(){

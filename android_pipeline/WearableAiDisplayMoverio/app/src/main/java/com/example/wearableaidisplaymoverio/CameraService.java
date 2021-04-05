@@ -41,6 +41,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -57,6 +60,10 @@ public class CameraService extends HiddenCameraService {
     private long last_sent_time = 0;
     private int fps_to_send = 3; //speed we send HD frames from wearable to mobile compute unit
 
+    //socket
+    String compute_module_address;
+    String adv_key = "WearableAiCyborg";
+
     //id of packet
     static final byte [] img_id = {0x01, 0x10}; //id for images
 
@@ -72,9 +79,66 @@ public class CameraService extends HiddenCameraService {
     //tag
     private String TAG = "WearableAiDisplay";
 
+    public int PORT_NUM = 8891;
+    public DatagramSocket socket;
+
+    private Context mContext;
+
+    Thread adv_thread;
+
     @Override
     public void onCreate(){
         System.out.println("HIDDEN CAMERA SERVICE CREATED");
+        //first we have to listen for the UDP broadcast from the compute module so we know the IP address to connect to. Once we get that , we will connect to it on a socket and starting sending pictures
+        Thread adv_thread = new Thread(new ReceiveAdvThread());
+        adv_thread.start();
+
+        mContext = this;
+    }
+
+    class ReceiveAdvThread extends Thread {
+        public void run(){
+            receiveUdpBroadcast();
+        }
+    }
+
+    public void receiveUdpBroadcast(){
+        try {
+            //Keep a socket open to listen to all the UDP trafic that is destined for this port
+            socket = new DatagramSocket(PORT_NUM, InetAddress.getByName("0.0.0.0"));
+            socket.setBroadcast(true);
+
+            while (true) {
+                Log.i(TAG,"Ready to receive broadcast packets!");
+
+                //Receive a packet
+                byte[] recvBuf = new byte[2600];
+                DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
+                socket.receive(packet);
+
+                //Packet received
+                Log.i(TAG, "Packet received from: " + compute_module_address);
+                String data = new String(packet.getData()).trim();
+                Log.i(TAG, "Packet received; data: " + data);
+                if (data.equals(adv_key)) {
+                    compute_module_address = packet.getAddress().getHostAddress();
+                    //start socket and camera on main service thread
+                    // Get a handler that can be used to post to the main thread
+                    Handler mainHandler = new Handler(mContext.getMainLooper());
+                    Runnable myStarterRunnable = new Runnable() {
+                        @Override
+                        public void run() { starter(); }
+                    };
+                    mainHandler.post(myStarterRunnable);
+                    break;
+                } //if not true, listen for the next packet
+            }
+        } catch (IOException ex) {
+            Log.d(TAG, "Exception: " + ex);
+        }
+    }
+
+    public void starter(){
         startSocket();
         beginCamera();
     }
@@ -216,6 +280,7 @@ public class CameraService extends HiddenCameraService {
     private void startSocket(){
         //create client socket and setup socket
         clientsocket = ClientSocket.getInstance(this);
+        clientsocket.setIp(compute_module_address);
         clientsocket.startSocket();
     }
 

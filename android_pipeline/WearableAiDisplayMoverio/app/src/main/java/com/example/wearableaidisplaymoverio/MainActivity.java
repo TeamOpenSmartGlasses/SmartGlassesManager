@@ -50,6 +50,11 @@ public class MainActivity extends Activity {
         winParams.flags |= FLAG_SMARTFULLSCREEN;
         win.setAttributes(winParams);
 
+        //keep the screen on throughout
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //hint, use this to allow it to turn off:
+
+
         setContentView(R.layout.activity_main);
 
         //ui setup
