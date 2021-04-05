@@ -8,6 +8,7 @@
     <string name="btn_tittle_capture_image">Capture image</string>
     <string name="waiting_message">Waiting for data...</string>
     <string name="title_eye_contact">Eye Contact: </string>
+    <string name="title_facial_emotion">Face Emo.: </string>
     <string name="data_loading">...</string>
     <string name="cam_on">START</string>
     <string name="cam_off">STOP</string>

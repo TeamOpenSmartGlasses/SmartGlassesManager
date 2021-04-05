@@ -56,3 +56,8 @@ Use cases:
 
 WearableAiDisplayMoverio - runs on Epson Moverio BT 200. Takes images repeatedly, send them over a socket to the compute module, receives a response and displays that response on the Moverio screen
 WearableAiComputeModule - runs on Oneplus7T, or other modern Android with good CPU+GPU. Receives images from Moverio, puts them through processing pipeline, and sends back results
+
+## Demo
+
+Install `scrcpy`: https://github.com/Genymobile/scrcpy
+Run `scrcpy`
