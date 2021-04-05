@@ -162,7 +162,7 @@ public class BitmapConverter implements TextureFrameProducer, CustomFrameAvailab
 
         @Override
         public void onFrame(Bitmap bitmap) {
-            Log.d(TAG,"New Frame");
+//            Log.d(TAG,"New Frame");
             this.bitmap = bitmap;
 
             handler.post(() -> renderNext());

@@ -153,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
     private  int outbound_heart_beats = 0;
     //socket message ids
     final byte [] eye_contact_info_id = {0x12, 0x13};
+    final byte [] facial_emotion_info_id = {0x12, 0x14};
     final byte [] ack_id = {0x13, 0x37};
     final byte [] heart_beat_id = {0x19, 0x20};
     final byte [] img_id = {0x01, 0x10}; //id for images
@@ -182,6 +183,10 @@ public class MainActivity extends AppCompatActivity {
     public String adv_key = "WearableAiCyborg";
 
     private Context mContext;
+
+    //social metrics
+    //facial_emotion_list
+    String [] facial_emotion_list = {"Angry", "Disgusted", "Fearful", "Happy", "Sad", "Surprised", "Neutral"};
 
   // Flips the camera-preview frames vertically by default, before sending them into FrameProcessor
   // to be processed in a MediaPipe graph, and flips the processed frames back when they are
@@ -285,15 +290,15 @@ public class MainActivity extends AppCompatActivity {
     processor.addPacketCallback(
       OUTPUT_LANDMARKS_STREAM_NAME,
       (packet) -> {
-        Log.d(TAG, "PACKET CALLBACK");
+//        Log.d(TAG, "PACKET CALLBACK");
         byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
         try {
           NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
           if (landmarks == null) {
-            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
+//            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
             return;
           } else {
-              processOutput(landmarks);
+              processWearableAiOutput(landmarks, packet.getTimestamp());
           }
         } catch (InvalidProtocolBufferException e) {
           Log.e(TAG, "Couldn't Exception received - " + e);
@@ -305,11 +310,20 @@ public class MainActivity extends AppCompatActivity {
     processor.addPacketCallback(
       OUTPUT_FACE_EMOTION_STREAM_NAME,
       (packet) -> {
-        Log.d(TAG, "FACE EMOTION CALLBACK");
-        float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
-        for (int i = 0; i < face_emotion_vector.length; i++){
-            Log.d(TAG, "Face emotion model output at " + i + "::: " + face_emotion_vector[i]);
-        }
+          //extract face_emotion_vector from packet
+          
+            float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
+            //update face emotion
+            mSocialInteraction.updateFaceEmotion(face_emotion_vector, packet.getTimestamp());
+
+            //get facial emotion
+//           int most_frequent_facial_emotion = mSocialInteraction.getFacialEmotionMostFrequent(30);
+//           Log.d(TAG, "FACE EMO F. : " + most_frequent_facial_emotion);
+
+//        Log.d(TAG, "FACE EMOTION CALLBACK");
+//        for (int i = 0; i < face_emotion_vector.length; i++){
+//            Log.d(TAG, "Face emotion model output at " + i + "::: " + face_emotion_vector[i]);
+//        }
       });
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
@@ -350,10 +364,8 @@ public class MainActivity extends AppCompatActivity {
         //start first socketThread
         if (socket == null) {
             mConnectState = 1;
-            Log.d(TAG, "starting socket");
             SocketThread = new Thread(new SocketThread());
             SocketThread.start();
-            Log.d(TAG, "SOCKET STARTED");
 
             //setup handler to handle keeping connection alive, all subsequent start of SocketThread
             //start a new handler thread to send heartbeats
@@ -373,7 +385,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }, hb_delay);
 
-            //start a thread which send computed social data to the moverio every n seconds
+            //start a thread which send computed social data to smart glasses display every n seconds
             final Handler metrics_handler = new Handler();
             final int metrics_delay = 3000;
 
@@ -381,10 +393,13 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     count = count + 1;
                     float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
+                    int facial_emotion_idx = mSocialInteraction.getFacialEmotionMostFrequent(30);
                     int round_eye_contact_percentage = Math.round(eye_contact_percentage);
-                    byte [] data_send = my_int_to_bb_be(round_eye_contact_percentage);
+                    byte [] eye_contact_data_send = my_int_to_bb_be(round_eye_contact_percentage);
+                    byte [] facial_emotion_data_send = facial_emotion_list[facial_emotion_idx].getBytes();
                     if (mConnectState == 2){
-                        sendBytes(eye_contact_info_id, data_send);
+                        sendBytes(eye_contact_info_id, eye_contact_data_send);
+                        sendBytes(facial_emotion_info_id, facial_emotion_data_send);
                     }
                     metrics_handler.postDelayed(this, metrics_delay);
                 }
@@ -517,14 +532,14 @@ public class MainActivity extends AppCompatActivity {
       }
 
   //mediapipe handles the AI processing of data, here we implement the hardcoded data processing
-  private void processOutput(NormalizedLandmarkList landmarks){
+  private void processWearableAiOutput(NormalizedLandmarkList landmarks, long timestamp){
     //we convert from NormalizedLandmarks into an array list of them. I'm sure there is a great way of doing this within mediapipe, but I am pretty lost to where getLandmarkList even comes from? Can't find it if I search the whole repo. I assume it's generated, as NormalizedLandmark is generated. Need a google C++ guy to explain I guess? Well, this will work for now -cayden
     List<NormalizedLandmark> landmarksList = landmarks.getLandmarkList();
 
     boolean eye_contact = processEyeContact(landmarksList);
 
-    System.out.println("UPDATING EYE CONTACT");
-    mSocialInteraction.updateEyeContact(eye_contact);
+    System.out.println("UPDATING EYE CONTACT " + eye_contact);
+    mSocialInteraction.updateEyeContact(eye_contact, timestamp);
     float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
     String message = "hello w0rLd! " + String.format("%.2f", eye_contact_percentage);
     System.out.println(message);
@@ -553,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
 //     Log.v(TAG, "Distance left eye to nose: " + eye_nose_dist_left);
      //now we get ratio of the two. Let's add 2 to both distances to "normalize" (don't let any negative numbers, don't hit a divide by zero,  makes things easier)
      float head_turn_ratio = (eye_nose_dist_right + 2) / (eye_nose_dist_left + 2);
-     Log.v(TAG, "head_turn_ratio = " + head_turn_ratio);
+//     Log.v(TAG, "head_turn_ratio = " + head_turn_ratio);
      //if head_turn_ratio ~= 1.12 - head turn 75 degrees right - +75deg
      //if head_turn_ratio ~= 0.88 - head turn 75 degrees left  - -75deg
      //if head_turn_ratio ~= 1.00 - head turn straight ahead
@@ -583,11 +598,11 @@ public class MainActivity extends AppCompatActivity {
      float head_angle = calculateHeadAngle(head_turn_ratio);
      float right_eye_angle = calculateEyeAngle(right_eye_turn_ratio, false);
      float left_eye_angle = calculateEyeAngle(left_eye_turn_ratio, true);
-     Log.v(TAG, "Head angle: " + head_angle);
+//     Log.v(TAG, "Head angle: " + head_angle);
 //     Log.v(TAG, "Right eye ratio: " + right_eye_turn_ratio);
 //     Log.v(TAG, "Left eye ratio: " + left_eye_turn_ratio);
-     Log.v(TAG, "Right eye angle: " + right_eye_angle);
-     Log.v(TAG, "Left eye angle: " + left_eye_angle);
+//     Log.v(TAG, "Right eye angle: " + right_eye_angle);
+//     Log.v(TAG, "Left eye angle: " + left_eye_angle);
      //use whichever eye we can see better. So if head turns right, use left eye. If head turns left, use right eye
      float closer_eye_angle;
      if (head_angle > 0){
@@ -596,34 +611,34 @@ public class MainActivity extends AppCompatActivity {
          closer_eye_angle = right_eye_angle;
      }
      float line_of_sight_angle = head_angle + closer_eye_angle;
-     Log.v(TAG, "line_of_sight_angle is = " + line_of_sight_angle);
+//     Log.v(TAG, "line_of_sight_angle is = " + line_of_sight_angle);
      boolean eye_contact;
      if (line_of_sight_angle < 9 && line_of_sight_angle > -9){
          eye_contact = true;
      } else {
          eye_contact = false;
      }
-     Log.v(TAG, "Eye contact is = " + eye_contact);
+//     Log.v(TAG, "Eye contact is = " + eye_contact);
      //if eye contact is made, play an alarm
     if (eye_contact == true){
         try {
-            if (r == null){
-                notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-                r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-            }
-            System.out.println("PLAYING SOUND + " + r_count);
-              if (!mRinging){
-                r.play();
-                mRinging = true;
-              }
+//            if (r == null){
+//                notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+//                r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+//            }
+//            System.out.println("PLAYING SOUND + " + r_count);
+//              if (!mRinging){
+//                r.play();
+//                mRinging = true;
+//              }
         } catch (Exception e) {
             e.printStackTrace();
         }
       } else {
-          if (mRinging){
-              r.stop();
-            mRinging = false;
-          }
+//          if (mRinging){
+//              r.stop();
+//            mRinging = false;
+//          }
       }
     return eye_contact;
   }
@@ -666,13 +681,11 @@ public class MainActivity extends AppCompatActivity {
                         ReceiveThread = new Thread(new ReceiveThread());
                         ReceiveThread.start();
                     } else if (!ReceiveThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
-                        Log.d(TAG, "IN SocketThread< WAITING FOR receive THREAD JOING");
                         try {
                             ReceiveThread.join(); //make sure socket thread has joined before throwing off a new one
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        Log.d(TAG, "receive JOINED");
                         ReceiveThread = new Thread(new ReceiveThread());
                         ReceiveThread.start();
                     }
@@ -680,13 +693,11 @@ public class MainActivity extends AppCompatActivity {
                     SendThread = new Thread(new SendThread());
                     SendThread.start();
                 } else if (!SendThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
-                    Log.d(TAG, "IN SocketThread< WAITING FOR send THREAD JOING");
                     try {
                         SendThread.join(); //make sure socket thread has joined before throwing off a new one
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    Log.d(TAG, "send JOINED");
                     SendThread =  new Thread(new SendThread());
                     SendThread.start();
                 }
@@ -742,12 +753,10 @@ public class MainActivity extends AppCompatActivity {
 
                     //make sure header is verified
                     if (hello1 != 0x01 || hello2 != 0x02 || hello3 != 0x03){
-                        Log.d(TAG, "Socket hello header broken, restarting socket");
                         break;
                     }
                     //length of body
                     int body_len = input.readInt();
-                    Log.d(TAG,"BODY LENGTH IS " + body_len);
 
                     //read in message id bytes
                     b1 = input.readByte();
@@ -763,13 +772,11 @@ public class MainActivity extends AppCompatActivity {
                     goodbye3 = input.readByte(); // read goodbye of incoming message
                 } catch (IOException e) {
                     e.printStackTrace();
-                    Log.d(TAG, "FAILED TO RECEIVE");
                     break;
                 }
 
                 //make sure footer is verified
                 if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
-                    Log.d(TAG, "Socket stream footer broken, restarting socket");
                     break;
                 }
 
@@ -799,7 +806,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void restartSocket(){
-        Log.d(TAG, "RESARTING SOCKET");
         mConnectState = 1;
 
         outbound_heart_beats = 0;
@@ -817,13 +823,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //make sure socket thread has joined before throwing off a new one
-        Log.d(TAG, "IN RESTART< WAITING FOR SOCKET THREAD JOING");
         try {
             SocketThread.join();
         } catch (InterruptedException e){
             e.printStackTrace();
         }
-        Log.d(TAG, "JOINED");
 
         //start a new socket thread
         SocketThread = new Thread(new SocketThread());
@@ -910,7 +914,6 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("TRYING TO SAVE AT LOCATION: " + pictureFileDir.toString());
 
         if (!pictureFileDir.exists() && !pictureFileDir.mkdirs()) {
-            Log.d("PHOTO_HANDLER", "Can't create directory to save image.");
             return;
 
         }
@@ -928,8 +931,8 @@ public class MainActivity extends AppCompatActivity {
             fos.write(data);
             fos.close();
         } catch (Exception error) {
-            Log.d(TAG, "File" + filename + "not saved: "
-                    + error.getMessage());
+//            Log.d(TAG, "File" + filename + "not saved: "
+//                    + error.getMessage());
         }
     }
 

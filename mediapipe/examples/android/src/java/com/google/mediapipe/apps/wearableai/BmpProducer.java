@@ -52,7 +52,7 @@ public class BmpProducer extends Thread {
                 continue;
             }
             if (newFrame == true){
-                Log.d(TAG,"Writing frame");
+//                Log.d(TAG,"Writing frame");
                 customFrameAvailableListener.onFrame(bmp);
                 newFrame = false;
             }
