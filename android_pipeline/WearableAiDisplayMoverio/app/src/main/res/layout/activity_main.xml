@@ -26,20 +26,43 @@
         android:gravity="center">
 
         <TextView
-            android:id="@+id/eye_contact_title"
-            android:layout_width="184dp"
+            android:id="@+id/facial_emotion_title"
+            android:layout_width="16dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/title_facial_emotion"
+            android:textColor="@color/hud_text"
+            android:textSize="26dp" />
+        <TextView
+            android:id="@+id/facial_emotion_metric"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/hud_text"
-            android:textSize="32dp"
-            android:text="@string/title_eye_contact" />
+            android:textSize="36dp"
+            android:text="@string/data_loading" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/eye_contact_title"
+            android:layout_width="16dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/title_eye_contact"
+            android:textColor="@color/hud_text"
+            android:textSize="26dp" />
         <TextView
             android:id="@+id/eye_contact_metric"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="@color/hud_text"
-            android:textSize="52dp"
+            android:textSize="36dp"
             android:text="@string/data_loading" />
     </LinearLayout>
     <LinearLayout

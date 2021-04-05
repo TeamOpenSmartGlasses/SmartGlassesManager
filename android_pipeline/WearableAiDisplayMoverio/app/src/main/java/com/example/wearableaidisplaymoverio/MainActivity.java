@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
     //UI
     TextView messageTextView;
     TextView eyeContactMetricTextView;
+    TextView facialEmotionMetricTextView;
     Button toggleCameraButton;
 
     @Override
@@ -60,6 +61,7 @@ public class MainActivity extends Activity {
         //ui setup
         messageTextView = (TextView) findViewById(R.id.message);
         eyeContactMetricTextView = (TextView) findViewById(R.id.eye_contact_metric);
+        facialEmotionMetricTextView = (TextView) findViewById(R.id.facial_emotion_metric);
         toggleCameraButton = (Button) findViewById(R.id.toggle_camera_button);
 
         //create the camera service if it isn't already running
@@ -174,10 +176,16 @@ public class MainActivity extends Activity {
 //        }
 //    };
 //
-    public void receiveMessage(String message){
+    public void receiveEyeContactMessage(String message){
         //see if the message is generic or one of the metrics to be displayed
         messageTextView.setText("");
         eyeContactMetricTextView.setText(message + "%");
+    }
+
+    public void receiveFacialEmotionMessage(String message){
+        //see if the message is generic or one of the metrics to be displayed
+        messageTextView.setText("");
+        facialEmotionMetricTextView.setText(message);
     }
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
@@ -191,8 +199,13 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (ClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
-                String message = intent.getStringExtra(ClientSocket.EXTRAS_MESSAGE);
-                receiveMessage(message);
+                if (intent.hasExtra(ClientSocket.EYE_CONTACT_MESSAGE)) {
+                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_MESSAGE);
+                    receiveEyeContactMessage(message);
+                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_MESSAGE)){
+                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_MESSAGE);
+                    receiveFacialEmotionMessage(message);
+                }
             }
         }
     };
