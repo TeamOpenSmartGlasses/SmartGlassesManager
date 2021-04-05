@@ -119,6 +119,15 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
+import android.content.Context;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import android.net.DhcpInfo;
+import android.net.wifi.WifiManager;
+import android.os.StrictMode;
+
 /** Main activity of MediaPipe basic app. */
 public class MainActivity extends AppCompatActivity {
     private  final String TAG = "WearableAi";
@@ -167,6 +176,12 @@ public class MainActivity extends AppCompatActivity {
 
     //holds connection state
     private boolean mConnectionState = false;
+
+    public int PORT_NUM = 8891;
+    public DatagramSocket adv_socket;
+    public String adv_key = "WearableAiCyborg";
+
+    private Context mContext;
 
   // Flips the camera-preview frames vertically by default, before sending them into FrameProcessor
   // to be processed in a MediaPipe graph, and flips the processed frames back when they are
@@ -309,6 +324,23 @@ public class MainActivity extends AppCompatActivity {
     } catch (UnknownHostException e) {
         e.printStackTrace();
     }
+
+    //start advertising socket thread which tells smart glasses which IP to connect to
+    mContext = this;
+
+    //open the UDP socket to broadcast our ip address
+    openSocket();
+
+    //send broadcast
+    final Handler adv_handler = new Handler();
+    final int delay = 1000; // 1000 milliseconds == 1 second
+
+    adv_handler.postDelayed(new Runnable() {
+        public void run() {
+            new Thread(new SendAdvThread()).start();
+            adv_handler.postDelayed(this, delay);
+        }
+    }, delay);
 
     //start first socketThread
     startSocket();
@@ -909,6 +941,54 @@ public class MainActivity extends AppCompatActivity {
     private  void throwBrokenSocket(){
         if (mConnectState == 2){
             mConnectState = 0;
+        }
+    }
+
+    InetAddress getBroadcastAddress() throws IOException {
+        WifiManager wifi = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+        DhcpInfo dhcp = wifi.getDhcpInfo();
+        // handle null somehow
+
+        int broadcast = (dhcp.ipAddress & dhcp.netmask) | ~dhcp.netmask;
+        byte[] quads = new byte[4];
+        for (int k = 0; k < 4; k++)
+            quads[k] = (byte) ((broadcast >> k * 8) & 0xFF);
+        return InetAddress.getByAddress(quads);
+    }
+
+    public void sendBroadcast(String messageStr){
+        try {
+            byte[] sendData = messageStr.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, getBroadcastAddress(), PORT_NUM);
+            adv_socket.send(sendPacket);
+            System.out.println(getClass().getName() + "Broadcast packet sent to: " + getBroadcastAddress().getHostAddress());
+        } catch (IOException e){
+            return ;
+        }
+    }
+
+    public void openSocket() {
+        // Hack Prevent crash (sending should be done using an async task)
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        try {
+            //Open a random port to send the package
+            adv_socket = new DatagramSocket();
+            adv_socket.setBroadcast(true);
+        } catch (IOException e) {
+            Log.e(TAG, "IOException: " + e.getMessage());
+        }
+    }
+
+    class SendAdvThread extends Thread {
+        public void run() {
+            Log.d(TAG, "SENDING");
+            //send three times as the Vuzix sucks at receiving - hit it hard and fast lol - cayden
+            sendBroadcast(adv_key);
+            sendBroadcast(adv_key);
+            sendBroadcast(adv_key);
+            Log.d(TAG, "SENT");
         }
     }
 
