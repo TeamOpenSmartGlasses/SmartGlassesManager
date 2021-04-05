@@ -22,3 +22,6 @@
 [submodule "android_pipeline/mediapipe"]
 	path = android_pipeline/mediapipe
 	url = https://github.com/CaydenPierce/mediapipeprivate
+[submodule "python_pipeline/facenet"]
+	path = python_pipeline/facenet
+	url = https://github.com/davidsandberg/facenet
