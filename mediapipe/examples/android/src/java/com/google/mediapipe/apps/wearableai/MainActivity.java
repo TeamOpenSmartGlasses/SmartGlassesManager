@@ -128,7 +128,7 @@ import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
 import android.os.StrictMode;
 
-/** Main activity of MediaPipe basic app. */
+/** Main activity of WearableAI compute module android app. */
 public class MainActivity extends AppCompatActivity {
     private  final String TAG = "WearableAi";
 
@@ -298,7 +298,8 @@ public class MainActivity extends AppCompatActivity {
 //            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
             return;
           } else {
-              processWearableAiOutput(landmarks, packet.getTimestamp());
+//            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] Timestamp.");
+              processWearableAiOutput(landmarks, System.currentTimeMillis());
           }
         } catch (InvalidProtocolBufferException e) {
           Log.e(TAG, "Couldn't Exception received - " + e);
@@ -314,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
           
             float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
             //update face emotion
-            mSocialInteraction.updateFaceEmotion(face_emotion_vector, packet.getTimestamp());
+            mSocialInteraction.updateFaceEmotion(face_emotion_vector, System.currentTimeMillis());
 
             //get facial emotion
 //           int most_frequent_facial_emotion = mSocialInteraction.getFacialEmotionMostFrequent(30);
@@ -387,14 +388,30 @@ public class MainActivity extends AppCompatActivity {
 
             //start a thread which send computed social data to smart glasses display every n seconds
             final Handler metrics_handler = new Handler();
-            final int metrics_delay = 3000;
+            final int metrics_delay = 1000;
 
             metrics_handler.postDelayed(new Runnable() {
                 public void run() {
                     count = count + 1;
-                    float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
-                    int facial_emotion_idx = mSocialInteraction.getFacialEmotionMostFrequent(30);
+                    //get time and start times of metrics
+                    long curr_time = System.currentTimeMillis();
+                    long start_time_2 = curr_time - 2000; //30000 milliseconds == 30 seconds
+
+//                    long start_time_eye_contact_30 = curr_time - 30000; //30000 milliseconds == 30 seconds
+//                    long start_time_facial_emotion_30 = curr_time - 30000; //30000 milliseconds == 30 seconds
+//
+//                    long start_time_eye_contact_long = curr_time - (5 * 60 * 1000); //5 mins
+//                    long start_time_facial_emotion_long = curr_time - (5 * 60 * 1000);
+//
+//
+//                    //get predicted metrics
+                    float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage(start_time_2);
                     int round_eye_contact_percentage = Math.round(eye_contact_percentage);
+                    int facial_emotion_idx = mSocialInteraction.getFacialEmotionMostFrequent(start_time_2);
+                    Log.d(TAG, "facial_emotion_idx : " + facial_emotion_idx);
+                    Log.d(TAG, "ecp: " +  eye_contact_percentage);
+
+                    //load payloads and send
                     byte [] eye_contact_data_send = my_int_to_bb_be(round_eye_contact_percentage);
                     byte [] facial_emotion_data_send = facial_emotion_list[facial_emotion_idx].getBytes();
                     if (mConnectState == 2){
@@ -538,11 +555,11 @@ public class MainActivity extends AppCompatActivity {
 
     boolean eye_contact = processEyeContact(landmarksList);
 
-    System.out.println("UPDATING EYE CONTACT " + eye_contact);
+    //System.out.println("UPDATING EYE CONTACT " + eye_contact);
     mSocialInteraction.updateEyeContact(eye_contact, timestamp);
-    float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
-    String message = "hello w0rLd! " + String.format("%.2f", eye_contact_percentage);
-    System.out.println(message);
+//    float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage();
+//    String message = "hello w0rLd! " + String.format("%.2f", eye_contact_percentage);
+//    System.out.println(message);
   }
 
   private boolean processEyeContact(List<NormalizedLandmark> landmarksList){
@@ -738,7 +755,7 @@ public class MainActivity extends AppCompatActivity {
     private  class ReceiveThread implements Runnable {
         @Override
         public void run() {
-            System.out.println("Receive Started, mconnect: " + mConnectState);
+            //System.out.println("Receive Started, mconnect: " + mConnectState);
             while (true) {
                 if (mConnectState != 2){
                     break;
@@ -911,7 +928,7 @@ public class MainActivity extends AppCompatActivity {
     private  void savePicture(byte[] data){
 //        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
         File pictureFileDir = getDir();
-        System.out.println("TRYING TO SAVE AT LOCATION: " + pictureFileDir.toString());
+        //System.out.println("TRYING TO SAVE AT LOCATION: " + pictureFileDir.toString());
 
         if (!pictureFileDir.exists() && !pictureFileDir.mkdirs()) {
             return;
@@ -964,7 +981,7 @@ public class MainActivity extends AppCompatActivity {
             byte[] sendData = messageStr.getBytes();
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, getBroadcastAddress(), PORT_NUM);
             adv_socket.send(sendPacket);
-            System.out.println(getClass().getName() + "Broadcast packet sent to: " + getBroadcastAddress().getHostAddress());
+            //System.out.println(getClass().getName() + "Broadcast packet sent to: " + getBroadcastAddress().getHostAddress());
         } catch (IOException e){
             return ;
         }
@@ -986,12 +1003,10 @@ public class MainActivity extends AppCompatActivity {
 
     class SendAdvThread extends Thread {
         public void run() {
-            Log.d(TAG, "SENDING");
             //send three times as the Vuzix sucks at receiving - hit it hard and fast lol - cayden
             sendBroadcast(adv_key);
             sendBroadcast(adv_key);
             sendBroadcast(adv_key);
-            Log.d(TAG, "SENT");
         }
     }
 

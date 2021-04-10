@@ -37,9 +37,9 @@ class SocialMetricBoolean {
     }
 
     //return percentage of time Boolean metric is true
-    public float getMetricPercentage(){
+    public float getMetricPercentage(long start_time){
         float percentage;
-        List<Object> times = this.getMetricsTime();
+        List<Object> times = this.getMetricsTime(start_time);
         long total_time = (long) times.get(0);
         long on_time = (long) times.get(1);
 
@@ -52,15 +52,28 @@ class SocialMetricBoolean {
         return percentage;
     }
 
-    private List<Object> getMetricsTime(){
+    private List<Object> getMetricsTime(long start_time){
         float percentage;
         long total_time = 0;
         long on_time = 0;
         
         //add up on and off times
-        for (int i = 0; i < this.metrics.size(); i++){
+        for (int i = (this.metrics.size() - 1); i > 0; i--){
             //get time
             long it = this.timestamps.get(i);
+
+
+            //ensure we haven't gone further into the past than our start time permits
+            Log.d(TAG, "Eye contact start_time then it then i");
+            Log.d(TAG, Long.toString(start_time));
+            Log.d(TAG, Long.toString(it));
+            Log.d(TAG, Long.toString(i));
+
+            if (it < start_time){
+                break;
+            }
+            Log.d(TAG, "Adding");
+
             //add to proper sum
             if (this.metrics.get(i)){
                 on_time += it;

@@ -17,16 +17,12 @@ class SocialInteraction {
         this.facial_emotion = new SocialMetricClass(7, 3000);
     }
 
-    public float getEyeContactPercentage(){
-        return this.eye_contact.getMetricPercentage();
+    public float getEyeContactPercentage(long start_time){
+        return this.eye_contact.getMetricPercentage(start_time);
     }
 
-    public int getFacialEmotionMostFrequent(long seconds){
-        return this.facial_emotion.getMostFrequent(seconds);
-    }
-
-    public float getEyeContactPercentage(int window){ //window is number of seconds into the past to average over
-        return this.eye_contact.getMetricPercentage();
+    public int getFacialEmotionMostFrequent(long start_time){
+        return this.facial_emotion.getMostFrequent(start_time);
     }
 
     //updaters are different than just setters - because we will save the last state to a running sum of previous states based on how long it's been since last update

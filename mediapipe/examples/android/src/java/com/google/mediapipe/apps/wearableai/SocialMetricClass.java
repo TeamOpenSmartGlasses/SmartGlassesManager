@@ -35,25 +35,30 @@ class SocialMetricClass {
     }
 
     //return percentage of time Boolean metric is true
-    public int getMostFrequent(long seconds){
-        List<Object> times = this.getMetricsTime();
+    public int getMostFrequent(long start_time){
+        List<Object> times = this.getMetricsTime(start_time);
         long total_time = (long) times.get(0);
         long [] class_times = (long []) times.get(1);
 
         return this.getMaxIdxLong(class_times);
     }
 
-    private List<Object> getMetricsTime(){
+    private List<Object> getMetricsTime(long start_time){
         float percentage;
         long total_time = 0;
-        long [] class_times = new long[this.num_classes];
+        long [] class_times = new long[this.num_classes]; //count the amount of time when each prediction is true
 
         //for each data point, find prediction (largest float) and add up times
-        for (int i = 0; i < this.metrics.size(); i++){
+        for (int i = (this.metrics.size() - 1); i > 0; i--){
             //get time
             long it = this.timestamps.get(i);
 
-            //add to proper sum
+            //ensure we haven't gone further into the past than our start time permits
+            if (it < start_time ){
+                break;
+            }
+
+            //add to sum in predictions counter vector
             int predict_idx = this.getMaxIdxFloat(this.metrics.get(i));
             class_times[predict_idx] += it;
 
