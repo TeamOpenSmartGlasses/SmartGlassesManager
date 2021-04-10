@@ -152,8 +152,15 @@ public class MainActivity extends AppCompatActivity {
     private  int mConnectState = 0;
     private  int outbound_heart_beats = 0;
     //socket message ids
-    final byte [] eye_contact_info_id = {0x12, 0x13};
-    final byte [] facial_emotion_info_id = {0x12, 0x14};
+    //metrics
+    final byte [] eye_contact_info_id_5 = {0x12, 0x01};
+    final byte [] eye_contact_info_id_30 = {0x12, 0x02};
+    final byte [] eye_contact_info_id_300 = {0x12, 0x03};
+    final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
+    final byte [] facial_emotion_info_id_30 = {0x13, 0x02};
+    final byte [] facial_emotion_info_id_300 = {0x13, 0x03};
+
+    //other
     final byte [] ack_id = {0x13, 0x37};
     final byte [] heart_beat_id = {0x19, 0x20};
     final byte [] img_id = {0x01, 0x10}; //id for images
@@ -394,29 +401,39 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     count = count + 1;
                     //get time and start times of metrics
+                    //WOW need to make this programmatic with time windows somehow - just hard coding as we don't
+                    //even know what this will end up being - cayden
                     long curr_time = System.currentTimeMillis();
-                    long start_time_2 = curr_time - 2000; //30000 milliseconds == 30 seconds
+                    long start_time_5 = curr_time - 5000; //5 seconds window
+                    long start_time_30 = curr_time - 30000; //30 seconds window
+                    long start_time_300 = curr_time - 300000; //5 minutes
 
-//                    long start_time_eye_contact_30 = curr_time - 30000; //30000 milliseconds == 30 seconds
-//                    long start_time_facial_emotion_30 = curr_time - 30000; //30000 milliseconds == 30 seconds
-//
-//                    long start_time_eye_contact_long = curr_time - (5 * 60 * 1000); //5 mins
-//                    long start_time_facial_emotion_long = curr_time - (5 * 60 * 1000);
-//
-//
-//                    //get predicted metrics
-                    float eye_contact_percentage = mSocialInteraction.getEyeContactPercentage(start_time_2);
-                    int round_eye_contact_percentage = Math.round(eye_contact_percentage);
-                    int facial_emotion_idx = mSocialInteraction.getFacialEmotionMostFrequent(start_time_2);
-                    Log.d(TAG, "facial_emotion_idx : " + facial_emotion_idx);
-                    Log.d(TAG, "ecp: " +  eye_contact_percentage);
+                    //get predicted metrics
+                    float eye_contact_percentage_5 = mSocialInteraction.getEyeContactPercentage(start_time_5);
+                    float eye_contact_percentage_30 = mSocialInteraction.getEyeContactPercentage(start_time_30);
+                    float eye_contact_percentage_300 = mSocialInteraction.getEyeContactPercentage(start_time_300);
+                    int round_eye_contact_percentage_5 = Math.round(eye_contact_percentage_5);
+                    int round_eye_contact_percentage_30 = Math.round(eye_contact_percentage_30);
+                    int round_eye_contact_percentage_300 = Math.round(eye_contact_percentage_300);
+                    int facial_emotion_idx_5 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_5);
+                    int facial_emotion_idx_30 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_30);
+                    int facial_emotion_idx_300 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_300);
 
                     //load payloads and send
-                    byte [] eye_contact_data_send = my_int_to_bb_be(round_eye_contact_percentage);
-                    byte [] facial_emotion_data_send = facial_emotion_list[facial_emotion_idx].getBytes();
+                    byte [] eye_contact_data_send_5 = my_int_to_bb_be(round_eye_contact_percentage_5);
+                    byte [] eye_contact_data_send_30 = my_int_to_bb_be(round_eye_contact_percentage_30);
+                    byte [] eye_contact_data_send_300 = my_int_to_bb_be(round_eye_contact_percentage_300);
+                    byte [] facial_emotion_data_send_5 = facial_emotion_list[facial_emotion_idx_5].getBytes();
+                    byte [] facial_emotion_data_send_30 = facial_emotion_list[facial_emotion_idx_30].getBytes();
+                    byte [] facial_emotion_data_send_300 = facial_emotion_list[facial_emotion_idx_300].getBytes();
                     if (mConnectState == 2){
-                        sendBytes(eye_contact_info_id, eye_contact_data_send);
-                        sendBytes(facial_emotion_info_id, facial_emotion_data_send);
+                        Log.d(TAG, "SENDING EYE CONTACT 5");
+                        sendBytes(eye_contact_info_id_5, eye_contact_data_send_5);
+                        sendBytes(eye_contact_info_id_30, eye_contact_data_send_30);
+                        sendBytes(eye_contact_info_id_300, eye_contact_data_send_300);
+                        sendBytes(facial_emotion_info_id_5, facial_emotion_data_send_5);
+                        sendBytes(facial_emotion_info_id_30, facial_emotion_data_send_30);
+                        sendBytes(facial_emotion_info_id_300, facial_emotion_data_send_300);
                     }
                     metrics_handler.postDelayed(this, metrics_delay);
                 }
