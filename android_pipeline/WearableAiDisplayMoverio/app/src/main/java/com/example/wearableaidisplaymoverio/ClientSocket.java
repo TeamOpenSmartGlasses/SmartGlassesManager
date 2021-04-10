@@ -25,8 +25,12 @@ public class ClientSocket {
     //broadcast intent string
     public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_DATA";
     public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
-    public final static String EYE_CONTACT_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT";
-    public final static String FACIAL_EMOTION_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_MESSAGE";
+    public final static String EYE_CONTACT_5_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_5";
+    public final static String EYE_CONTACT_30_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_30";
+    public final static String EYE_CONTACT_300_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_300";
+    public final static String FACIAL_EMOTION_5_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_5";
+    public final static String FACIAL_EMOTION_30_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_30";
+    public final static String FACIAL_EMOTION_300_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_300";
 
     public static String TAG = "WearableAiDisplayMoverio";
     //singleton instance
@@ -37,14 +41,18 @@ public class ClientSocket {
     static Thread SendThread = null;
     static private DataOutputStream output;
     //ids of message types
-    static final byte [] eye_contact_info_id = {0x12, 0x13};
-    static final byte [] facial_emotion_info_id = {0x12, 0x14};
+    //socket message ids
+    //metrics
+    static final byte [] eye_contact_info_id_5 = {0x12, 0x01};
+    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
+    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
+    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
+    static final byte [] facial_emotion_info_id_30 = {0x13, 0x02};
+    static final byte [] facial_emotion_info_id_300 = {0x13, 0x03};
+
     static final byte [] img_id = {0x01, 0x10}; //id for images
     static final byte [] heart_beat_id = {0x19, 0x20}; //id for heart beat
     static final byte [] ack_id = {0x13, 0x37};
-
-    //
-
 
     //static private BufferedReader input;
     static private DataInputStream input;
@@ -344,19 +352,44 @@ public class ClientSocket {
                 } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
                     //got heart beat, respond with heart beat
                     clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
-                } else if ((b1 == eye_contact_info_id[0]) && (b2 == eye_contact_info_id[1])) { //we got a message with information to display
+                } else if ((b1 == eye_contact_info_id_5[0]) && (b2 == eye_contact_info_id_5[1])) { //we got a message with information to display
+                    Log.d(TAG, "eye contact info 5");
                     String message = Integer.toString(my_bb_to_int_be(raw_data));
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.EYE_CONTACT_MESSAGE, message);
+                    intent.putExtra(ClientSocket.EYE_CONTACT_5_MESSAGE, message);
                     intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                } else if ((b1 == facial_emotion_info_id[0]) && (b2 == facial_emotion_info_id[1])) {
+                } else if ((b1 == eye_contact_info_id_30[0]) && (b2 == eye_contact_info_id_30[1])) { //we got a message with information to display
+                    String message = Integer.toString(my_bb_to_int_be(raw_data));
+                    final Intent intent = new Intent();
+                    intent.putExtra(ClientSocket.EYE_CONTACT_30_MESSAGE, message);
+                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                } else if ((b1 == eye_contact_info_id_300[0]) && (b2 == eye_contact_info_id_300[1])) { //we got a message with information to display
+                    String message = Integer.toString(my_bb_to_int_be(raw_data));
+                    final Intent intent = new Intent();
+                    intent.putExtra(ClientSocket.EYE_CONTACT_300_MESSAGE, message);
+                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                } else if ((b1 == facial_emotion_info_id_5[0]) && (b2 == facial_emotion_info_id_5[1])) {
                     String message = new String(raw_data);
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.FACIAL_EMOTION_MESSAGE, message);
+                    intent.putExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE, message);
                     intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                }else {
+                }  else if ((b1 == facial_emotion_info_id_30[0]) && (b2 == facial_emotion_info_id_30[1])) {
+                    String message = new String(raw_data);
+                    final Intent intent = new Intent();
+                    intent.putExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE, message);
+                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                }  else if ((b1 == facial_emotion_info_id_300[0]) && (b2 == facial_emotion_info_id_300[1])) {
+                    String message = new String(raw_data);
+                    final Intent intent = new Intent();
+                    intent.putExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE, message);
+                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                } else {
                     System.out.println("BAD SIGNAL, RECONNECT");
                     mConnectState = 0;
                     break;
