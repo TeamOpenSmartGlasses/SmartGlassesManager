@@ -32,7 +32,11 @@ public class MainActivity extends Activity {
     //UI
     TextView messageTextView;
     TextView eyeContactMetricTextView;
+    TextView eyeContact5MetricTextView;
+    TextView eyeContact30MetricTextView;
     TextView facialEmotionMetricTextView;
+    TextView facialEmotion5MetricTextView;
+    TextView facialEmotion30MetricTextView;
     Button toggleCameraButton;
 
     @Override
@@ -52,7 +56,7 @@ public class MainActivity extends Activity {
         win.setAttributes(winParams);
 
         //keep the screen on throughout
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //hint, use this to allow it to turn off:
 
 
@@ -61,8 +65,12 @@ public class MainActivity extends Activity {
         //ui setup
         messageTextView = (TextView) findViewById(R.id.message);
         eyeContactMetricTextView = (TextView) findViewById(R.id.eye_contact_metric);
+        eyeContact5MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_5);
+        eyeContact30MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_30);
         facialEmotionMetricTextView = (TextView) findViewById(R.id.facial_emotion_metric);
-        toggleCameraButton = (Button) findViewById(R.id.toggle_camera_button);
+        facialEmotion5MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_5);
+        facialEmotion30MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_30);
+//        toggleCameraButton = (Button) findViewById(R.id.toggle_camera_button);
 
         //create the camera service if it isn't already running
         startService(new Intent(this, CameraService.class));
@@ -176,10 +184,10 @@ public class MainActivity extends Activity {
 //        }
 //    };
 //
-    public void receiveEyeContactMessage(String message){
+    public void setGuiMessage(String message, TextView tv, String postfix){
         //see if the message is generic or one of the metrics to be displayed
-        messageTextView.setText("");
-        eyeContactMetricTextView.setText(message + "%");
+       messageTextView.setText("");
+       tv.setText(message + postfix);
     }
 
     public void receiveFacialEmotionMessage(String message){
@@ -199,12 +207,24 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (ClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
-                if (intent.hasExtra(ClientSocket.EYE_CONTACT_MESSAGE)) {
-                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_MESSAGE);
-                    receiveEyeContactMessage(message);
-                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_MESSAGE)){
-                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_MESSAGE);
-                    receiveFacialEmotionMessage(message);
+                if (intent.hasExtra(ClientSocket.EYE_CONTACT_5_MESSAGE)) {
+                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_5_MESSAGE);
+                    setGuiMessage(message, eyeContact5MetricTextView, "%");
+                } else if (intent.hasExtra(ClientSocket.EYE_CONTACT_30_MESSAGE)) {
+                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_30_MESSAGE);
+                    setGuiMessage(message, eyeContact30MetricTextView, "%");
+                } else if (intent.hasExtra(ClientSocket.EYE_CONTACT_300_MESSAGE)) {
+                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_300_MESSAGE);
+                    setGuiMessage(message, eyeContactMetricTextView, "%");
+                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE)){
+                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE);
+                    setGuiMessage(message, facialEmotion5MetricTextView, "");
+                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE)){
+                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE);
+                    setGuiMessage(message, facialEmotion30MetricTextView, "");
+                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE)){
+                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE);
+                    setGuiMessage(message, facialEmotionMetricTextView, "");
                 }
             }
         }

