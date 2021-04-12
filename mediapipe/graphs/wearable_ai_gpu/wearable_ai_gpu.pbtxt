@@ -14,6 +14,9 @@ output_stream: "face_landmarks_with_iris"
 #facial emotion neural network output
 output_stream: "face_emotion"
 
+#pose, left hand, right hand - for detecting body language
+output_stream: "body_language_landmarks"
+
 # Throttles the images flowing downstream for flow control. It passes through
 # the very first incoming image unaltered, and waits for downstream nodes
 # (calculators and subgraphs) in the graph to finish their tasks before it
@@ -194,7 +197,18 @@ node {
   calculator: "ConcatenateNormalizedLandmarkListCalculator"
   input_stream: "updated_face_landmarks"
   input_stream: "iris_landmarks"
+
   output_stream: "face_landmarks_with_iris"
+}
+
+#make a landmark list for body language detection
+node {
+  calculator: "ConcatenateNormalizedLandmarkListCalculator"
+  input_stream: "pose_landmarks"
+  input_stream: "left_hand_landmarks"
+  input_stream: "right_hand_landmarks"
+
+  output_stream: "body_language_landmarks"
 }
 
 #draws holistic tracking keypoints - TODO add this in alongside iris

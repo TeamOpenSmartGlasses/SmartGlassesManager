@@ -34,7 +34,7 @@ cc_library(
 
 android_binary(
     name = "wearableai",
-    srcs = glob(["*.java"]),
+    srcs = glob(["*.java", "LandmarksTranslate/*.java"]),
     assets = [
         "//mediapipe/graphs/wearable_ai_gpu:wearable_ai_gpu.binarypb",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",

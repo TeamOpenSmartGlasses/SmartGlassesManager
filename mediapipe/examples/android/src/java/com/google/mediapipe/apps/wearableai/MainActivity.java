@@ -245,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
   private  final String FOCAL_LENGTH_STREAM_NAME = "focal_length_pixel";
   private  final String OUTPUT_LANDMARKS_STREAM_NAME = "face_landmarks_with_iris";
   private  final String OUTPUT_FACE_EMOTION_STREAM_NAME = "face_emotion";
+  private  final String OUTPUT_BODY_LANGUAGE_LANDMARKS_STREAM_NAME = "body_language_landmarks";
 
   private boolean haveAddedSidePackets = false;
 
@@ -334,6 +335,25 @@ public class MainActivity extends AppCompatActivity {
 //        }
       });
 
+    //add a callback to process the pose + left hand + right hand body language
+    processor.addPacketCallback(
+      OUTPUT_BODY_LANGUAGE_LANDMARKS_STREAM_NAME,
+      (packet) -> {
+        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+        try {
+//              NormalizedLandmarkList landmarks = PacketGetter.getProto(packet, NormalizedLandmarkList.class);
+          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+          if (landmarks == null) {
+            return;
+          } else {
+                mSocialInteraction.updateBodyLanguageLandmarks(landmarks, System.currentTimeMillis());
+          }
+        } catch (InvalidProtocolBufferException e) {
+          Log.e(TAG, "Couldn't Exception received - " + e);
+          return;
+        }
+      });
+
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
 
@@ -395,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
 
             //start a thread which send computed social data to smart glasses display every n seconds
             final Handler metrics_handler = new Handler();
-            final int metrics_delay = 1000;
+            final int metrics_delay = 2500;
 
             metrics_handler.postDelayed(new Runnable() {
                 public void run() {
@@ -418,6 +438,10 @@ public class MainActivity extends AppCompatActivity {
                     int facial_emotion_idx_5 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_5);
                     int facial_emotion_idx_30 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_30);
                     int facial_emotion_idx_300 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_300);
+
+
+                    int head_touch = mSocialInteraction.getBodyLanguage(start_time_300);
+                    Log.d(TAG, "HEAD_TOUCHMAINACTIVITY: " + head_touch);
 
                     //load payloads and send
                     byte [] eye_contact_data_send_5 = my_int_to_bb_be(round_eye_contact_percentage_5);
