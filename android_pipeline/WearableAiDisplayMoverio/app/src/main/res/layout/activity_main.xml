@@ -108,6 +108,15 @@
             android:textSize="30dp"
             android:text="@string/data_loading" />
     </LinearLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+        <com.github.mikephil.charting.charts.PieChart
+            android:id="@+id/stress_confidence_chart"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </RelativeLayout>
 <!--    <LinearLayout-->
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content">-->

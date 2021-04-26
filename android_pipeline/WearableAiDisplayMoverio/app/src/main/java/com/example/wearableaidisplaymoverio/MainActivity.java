@@ -4,14 +4,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
+
+import android.graphics.Typeface;
 
 import android.app.Activity;
 import android.hardware.Camera;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,11 +28,25 @@ import android.view.SurfaceView;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.ArrayList;
+
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.github.mikephil.charting.animation.Easing;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.PercentFormatter;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
+
 public class MainActivity extends Activity {
     public String TAG = "WearableAiDisplay";
+
+    //tmp
 
     //UI
     TextView messageTextView;
@@ -38,6 +57,12 @@ public class MainActivity extends Activity {
     TextView facialEmotion5MetricTextView;
     TextView facialEmotion30MetricTextView;
     Button toggleCameraButton;
+    private PieChart chart;
+
+    //metrics
+    float eye_contact_30 = 0;
+    String facial_emotion_30 = "";
+    String facial_emotion_5 = "";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,8 +83,6 @@ public class MainActivity extends Activity {
         //keep the screen on throughout
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //hint, use this to allow it to turn off:
-
-
         setContentView(R.layout.activity_main);
 
         //ui setup
@@ -70,7 +93,12 @@ public class MainActivity extends Activity {
         facialEmotionMetricTextView = (TextView) findViewById(R.id.facial_emotion_metric);
         facialEmotion5MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_5);
         facialEmotion30MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_30);
-//        toggleCameraButton = (Button) findViewById(R.id.toggle_camera_button);
+
+        //handle chart
+        chart = findViewById(R.id.stress_confidence_chart);
+        chart.setBackgroundColor(Color.BLACK);
+        moveOffScreen(); //not sure what this does really
+        setupChart();
 
         //create the camera service if it isn't already running
         startService(new Intent(this, CameraService.class));
@@ -213,15 +241,19 @@ public class MainActivity extends Activity {
                 } else if (intent.hasExtra(ClientSocket.EYE_CONTACT_30_MESSAGE)) {
                     String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_30_MESSAGE);
                     setGuiMessage(message, eyeContact30MetricTextView, "%");
+                    eye_contact_30 = Float.parseFloat(message);
+                    setChartData();
                 } else if (intent.hasExtra(ClientSocket.EYE_CONTACT_300_MESSAGE)) {
                     String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_300_MESSAGE);
                     setGuiMessage(message, eyeContactMetricTextView, "%");
                 } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE)){
                     String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE);
                     setGuiMessage(message, facialEmotion5MetricTextView, "");
+                    facial_emotion_5 = message;
                 } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE)){
                     String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE);
                     setGuiMessage(message, facialEmotion30MetricTextView, "");
+                    facial_emotion_30 = message;
                 } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE)){
                     String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE);
                     setGuiMessage(message, facialEmotionMetricTextView, "");
@@ -229,6 +261,105 @@ public class MainActivity extends Activity {
             }
         }
     };
+
+    //stuff for the charts
+    private void setChartData() {
+
+        float max = 100;
+        ArrayList<PieEntry> values = new ArrayList<>();
+
+        //temporary method of deducing stress
+        float input = (max - eye_contact_30);
+        if ((facial_emotion_30 == "Happy") || (facial_emotion_5 == "Happy")){
+            input = Math.max(0, input - 20);
+        }
+
+//        for (int i = 0; i < count; i++) {
+//            values.add(new PieEntry((float) ((Math.random() * range) + range / 5), "Stress"));
+//        }
+        values.add(new PieEntry((float) (input), ""));
+        values.add(new PieEntry((float) (max - input), ""));
+
+        PieDataSet dataSet = new PieDataSet(values, "Election Results");
+        dataSet.setSliceSpace(3f);
+        dataSet.setSelectionShift(5f);
+        dataSet.setDrawValues(false);
+
+        //dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        dataSet.setColors(Color.RED, Color.BLACK);
+        //dataSet.setSelectionShift(0f);
+
+        PieData data = new PieData(dataSet);
+        data.setValueFormatter(new PercentFormatter());
+        data.setValueTextSize(24f);
+        data.setValueTextColor(Color.BLACK);
+        //data.setValueTypeface(tfLight);
+        chart.setData(data);
+        //chart.animateY(1400, Easing.EaseInOutQuad);
+
+        chart.invalidate();
+    }
+
+    private void moveOffScreen() {
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+        int height = displayMetrics.heightPixels;
+
+        int offset = (int)(height * 0.65); /* percent to move */
+
+        RelativeLayout.LayoutParams rlParams =
+                (RelativeLayout.LayoutParams) chart.getLayoutParams();
+        rlParams.setMargins(0, 0, 0, -offset);
+        chart.setLayoutParams(rlParams);
+    }
+
+    private void setupChart(){
+        chart.setUsePercentValues(false);
+        chart.getDescription().setEnabled(false);
+
+        //chart.setCenterTextTypeface(tfLight);
+
+        chart.setDrawHoleEnabled(true);
+        chart.setHoleColor(Color.BLACK);
+
+        chart.setTransparentCircleColor(Color.BLACK);
+        chart.setTransparentCircleAlpha(110);
+
+        chart.setHoleRadius(58f);
+        chart.setTransparentCircleRadius(61f);
+
+        chart.setDrawCenterText(true);
+
+        chart.setRotationEnabled(false);
+        chart.setHighlightPerTapEnabled(false);
+
+        chart.setMaxAngle(180f); // HALF CHART
+        chart.setRotationAngle(180f);
+        chart.setCenterTextOffset(0, -20);
+        chart.setCenterTextColor(Color.WHITE);
+        chart.setCenterTextSize(28);
+        chart.setCenterText("Stress");
+
+        setChartData();
+
+        chart.animateY(1400, Easing.EaseInOutQuad);
+
+//        Legend l = chart.getLegend();
+//        l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+//        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+//        l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+//        l.setDrawInside(false);
+//        l.setXEntrySpace(7f);
+//        l.setYEntrySpace(0f);
+//        l.setYOffset(0f);
+//
+//        // entry label styling
+        chart.setEntryLabelColor(Color.BLACK);
+        //chart.setEntryLabelTypeface(tfRegular);
+        chart.setEntryLabelTextSize(19f);
+    }
 
 
 
