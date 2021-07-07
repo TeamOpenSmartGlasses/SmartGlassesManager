@@ -50,6 +50,7 @@ from six.moves import queue
 
 #config file(s)
 wake_words_file = "./wakewords.txt"
+voice_memories_file = "./data/voice_memories.csv"
 
 #set API key
 import os
@@ -72,7 +73,7 @@ with open(wake_words_file) as f:
 
 #define voice commands functions
 
-def add_wake_word(args):
+def add_wake_word(transcript, args):
     try: 
         wake_word = args
         with open(wake_words_file, "a") as f:
@@ -83,6 +84,20 @@ def add_wake_word(args):
         print(e)
         return False
 
+def save_memory(transcript, args):
+    try: 
+        ctime = time.time()
+        memory = args
+        with open(voice_memories_file, "a") as f:
+            # Append new wake word at the end of file
+            f.write(str(ctime) + ",\"" + transcript + "\"\n")
+        return 1
+    except Exception as e:
+        print(e)
+        return False
+
+
+
 #define the possible voice commands (only found if the wake word is detected)
 voice_commands = {
         "exit" : {"function" : None, "voice_sounds" : ["exit loop", "quit loop"]}, #end the program loop running (voice rec continues to run)
@@ -91,7 +106,9 @@ voice_commands = {
         "go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         "shell" : {"function" : None, "voice_sounds" : ["CLI", "shell", "bash", "zee shell", "zsh", "z shell"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "add wake word" : {"function" : add_wake_word, "voice_sounds" : ["add wake word", "new wake word"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
+        "save memory" : {"function" : save_memory, "voice_sounds" : ["save memory", "save speech", "mxt cache"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         }
+
 def find_commands(transcript):
     """
     Search through a transcript for wake words and predefined voice commands
@@ -135,7 +152,7 @@ def find_commands(transcript):
             #run commands funcs
             voice_command_func = voice_commands[command_name]["function"]
             if voice_command_func is not None:
-                res = voice_commands[command_name]["function"](command_args)
+                res = voice_command_func(transcript, command_args)
                 if res:
                     print("COMMAND COMPLETED SUCCESSFULLY")
                 else:
