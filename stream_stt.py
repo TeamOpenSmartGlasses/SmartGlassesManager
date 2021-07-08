@@ -34,6 +34,8 @@ To install using pip:
 Example usage:
     python transcribe_streaming_infinite.py
 """
+import requests
+import urllib
 
 # Function to find all close matches of
 # input string in given list of possible strings
@@ -51,6 +53,7 @@ from six.moves import queue
 #config file(s)
 wake_words_file = "./wakewords.txt"
 voice_memories_file = "./data/voice_memories.csv"
+wolfram_api_key_file = "./wolfram_api_key.txt"
 
 #set API key
 import os
@@ -69,14 +72,17 @@ YELLOW = "\033[0;33m"
 #wake_words = ["licklider", "mxt", "mxd", "mxc", "mind extension", "mind expansion", "wearable AI"]
 wake_words = []
 with open(wake_words_file) as f:
-    wake_words = [word for line in f for word in line.split()]
+    #wake_words = [word for line in f for word in line.split()]
+    wake_words = [line.strip() for line in f]
+print("Active wake words: {}".format(wake_words))
 
 #define voice commands functions
 
 def add_wake_word(transcript, args):
     try: 
         wake_word = args
-        with open(wake_words_file, "a") as f:
+        wake_words.append(args) #add it to our locally loaded object
+        with open(wake_words_file, "a") as f: #add it to the wake words file for next load too
             # Append new wake word at the end of file
             f.write(args + "\n")
         return 1
@@ -96,22 +102,48 @@ def save_memory(transcript, args):
         print(e)
         return False
 
+def ask_wolfram(transcript, args):
+    print("ASKING WOLFRAM: {}".format(args))
+    res = wolfram_conversational_query(args)
+    print("WOLFRAM RESPONSE:")
+    print(res)
+    return res
 
+#Wolfram API key - this loads from a plain text file containing only one string - your APP id key
+wolframApiKey = None
+with open(wolfram_api_key_file) as f:
+    wolframApiKey = [line.strip() for line in f][0]
+
+#API that returns short form responses
+def wolfram_conversational_query(query):
+    #encode query
+    query_enc = urllib.parse.quote_plus(query)
+
+    #build request
+    getString = "https://api.wolframalpha.com/v1/result?appid={}&i={}".format(wolframApiKey, query_enc)
+    response = requests.get(getString)
+
+    if response.status_code == 200:
+        return str(response.content, 'utf-8')
+    else:
+        return None
 
 #define the possible voice commands (only found if the wake word is detected)
 voice_commands = {
         "exit" : {"function" : None, "voice_sounds" : ["exit loop", "quit loop"]}, #end the program loop running (voice rec continues to run)
         "start" : {"function" : None, "voice_sounds" : ["start loop", "begin loop"]}, #start the program loop running
         "stop listening" : {"function" : None, "voice_sounds" : ["stop listening", "go deaf"]}, #end the program loop running (voice rec continues to run)
-        "go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         "shell" : {"function" : None, "voice_sounds" : ["CLI", "shell", "bash", "zee shell", "zsh", "z shell"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "add wake word" : {"function" : add_wake_word, "voice_sounds" : ["add wake word", "new wake word"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "save memory" : {"function" : save_memory, "voice_sounds" : ["save memory", "save speech", "mxt cache"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
+        "ask Wolfram" : {"function" : ask_wolfram, "voice_sounds" : ["Wolfram", "Wolfram Alpha", "ask Wolfram"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
+        "go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         }
 
 def find_commands(transcript):
     """
-    Search through a transcript for wake words and predefined voice commands
+    Search through a transcript for wake words and predefined voice commands - strict mode commands first (not natural language)
+
     """
     # closest wake word detection
     wake_words_found = [] #list of fuzzysearch Match objects
@@ -119,47 +151,65 @@ def find_commands(transcript):
     for option in wake_words:
         wake_words_found.extend(find_near_matches(option, transcript_l, max_l_dist=1))
 
-    #try to parse hard command - strict mode commands first (not natural language)
+    #if we found a wake word, tell the user
+    found_wake_word = False
+    wake_word = None
+    command_match = None
+    command_name = None
+    command_args = None
+    possible_command = None
     if len(wake_words_found) > 0:
-        print("DETECTED WAKE WORD")
-        possible_command = transcript_l[wake_words_found[-1].end+1:] #+1 removes following space
+        found_wake_word = True
+        wake_word = transcript_l[wake_words_found[-1].start:wake_words_found[-1].end]
+        print("DETECTED WAKE WORD: {}".format(wake_word))
 
-        #run through possible commands
-        #stop at first match - that must be our command
-        command_match = None
-        command_name = None
+        #first, parse the wake word to see if it overlaps with a command
         looping = True
+        found_command = False
         for comm_key in voice_commands.keys():
-            print("comm key")
-            print(comm_key)
             for voice_sound in voice_commands[comm_key]["voice_sounds"]:
-                print("voice_sound")
-                print(voice_sound)
-                matched = find_near_matches(voice_sound, possible_command, max_l_dist=1)
-                print("matched")
-                print(matched)
+                matched = find_near_matches(voice_sound, wake_word, max_l_dist=1)
                 if len(matched) > 0:
                     command_match = matched[-1]
                     command_name = comm_key
+                    found_command = True
+                    command_args = transcript_l[wake_words_found[-1].end:]
                     looping = False
                     break
             if not looping:
                 break
 
-        if command_match is not None:
-            command_args = possible_command[command_match.end + 1:] #+1 removes following space
+    #if wake word was found but wasn't a command, try to parse the text after the wake word for a command    
+    if found_wake_word and not found_command:
+        possible_command = transcript_l[wake_words_found[-1].end+1:] #+1 removes following space
 
-            #run commands funcs
-            voice_command_func = voice_commands[command_name]["function"]
-            if voice_command_func is not None:
-                res = voice_command_func(transcript, command_args)
-                if res:
-                    print("COMMAND COMPLETED SUCCESSFULLY")
-                else:
-                    print("COMMAND FAILED")
+        #run through possible commands
+        #stop at first match - that must be our command
+        looping = True
+        for comm_key in voice_commands.keys():
+            for voice_sound in voice_commands[comm_key]["voice_sounds"]:
+                matched = find_near_matches(voice_sound, possible_command, max_l_dist=1)
+                if len(matched) > 0:
+                    command_match = matched[-1]
+                    command_name = comm_key
+                    looping = False
+                    found_command = True
+                    command_args = possible_command[command_match.end + 1:] #+1 removes following space
+                    break
+            if not looping:
+                break
 
+    if command_match is not None:
+        print("RECEIVED COMMAND: {}".format(command_name))
 
-
+        #run commands funcs
+        voice_command_func = voice_commands[command_name]["function"]
+        if voice_command_func is not None:
+            res = voice_command_func(transcript, command_args)
+            if res:
+                print("COMMAND COMPLETED SUCCESSFULLY")
+            else:
+                print("COMMAND FAILED")
 
 def get_current_time():
     """Return Current Time in MS."""
