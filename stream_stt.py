@@ -10,6 +10,7 @@ Based on the google speech file provided by Google
 """
 
 #Copyright for the Google STT streaming code
+#https://github.com/googleapis/python-speech/blob/master/samples/microphone/transcribe_streaming_infinite.py
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,15 +37,17 @@ from google.cloud import speech
 import pyaudio
 from six.moves import queue
 
-#config file(s)
+#config files
 wake_words_file = "./wakewords.txt"
 voice_memories_file = "./data/voice_memories.csv"
 wolfram_api_key_file = "./wolfram_api_key.txt"
+
+#pre-generated text to speech sound files
 command_success_sound = "./speech_pre_rendered/command_success.wav"
 generic_failure_sound = "./speech_pre_rendered/command_failed.wav"
 wolfram_failure_sound = "./speech_pre_rendered/wolfram_query_failed.wav"
 
-#set API key
+#set gcloud API key
 import os
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=os.path.join(os.path.dirname(__file__), "creds.json")
 
@@ -53,12 +56,12 @@ STREAMING_LIMIT = 240000 * 10 # 40 minutes
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
+#terminal printing colors
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
 #define phrases/word that will wake the system to search the current speech for voice commands
-#wake_words = ["licklider", "mxt", "mxd", "mxc", "mind extension", "mind expansion", "wearable AI"]
 wake_words = []
 with open(wake_words_file) as f:
     #wake_words = [word for line in f for word in line.split()]
@@ -66,7 +69,6 @@ with open(wake_words_file) as f:
 print("Active wake words: {}".format(wake_words))
 
 #define voice commands functions
-
 def add_wake_word(transcript, args):
     try: 
         wake_word = args
@@ -106,7 +108,7 @@ wolframApiKey = None
 with open(wolfram_api_key_file) as f:
     wolframApiKey = [line.strip() for line in f][0]
 
-#API that returns short form responses
+#API that returns short conversational responses - can be extended in future to be conversational using returned "conversationID" key
 def wolfram_conversational_query(query):
     #encode query
     query_enc = urllib.parse.quote_plus(query)
@@ -136,11 +138,14 @@ voice_commands = {
         "go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         }
 
-def find_commands(transcript):
+def find_commands(transcript, stream):
     """
     Search through a transcript for wake words and predefined voice commands - strict mode commands first (not natural language)
 
     """
+    #stop listening while we parse command and TTS (say) the result
+    stream.deaf = True
+
     # closest wake word detection
     wake_words_found = [] #list of fuzzysearch Match objects
     transcript_l = transcript.lower()
@@ -219,6 +224,9 @@ def find_commands(transcript):
                     playsound(generic_failure_sound)
                     print("COMMAND FAILED")
 
+    #start listening again after we have parsed command, run command, and given user response with TTS
+    stream.deaf = False
+
 def get_current_time():
     """Return Current Time in MS."""
 
@@ -230,6 +238,7 @@ class ResumableMicrophoneStream:
 
     def __init__(self, rate, chunk_size):
         self._rate = rate
+        self.deaf = False #if set to true, we go deaf to incoming data
         self.chunk_size = chunk_size
         self._num_channels = 1
         self._buff = queue.Queue()
@@ -275,7 +284,12 @@ class ResumableMicrophoneStream:
     def _fill_buffer(self, in_data, *args, **kwargs):
         """Continuously collect data from the audio stream, into the buffer."""
 
-        self._buff.put(in_data)
+        #if we are deaf, save data as zeros
+        if not self.deaf:
+            self._buff.put(in_data)
+        else:
+            self._buff.put(bytes(len(in_data)))
+
         return None, pyaudio.paContinue
 
     def generator(self):
@@ -394,8 +408,8 @@ def listen_print_loop(responses, stream):
             stream.is_final_end_time = stream.result_end_time
             stream.last_transcript_was_final = True
 
-            #sent transcription responses to our voice command
-            find_commands(transcript)
+            #send transcription responses to our voice command
+            find_commands(transcript, stream)
         else:
             sys.stdout.write(RED)
             sys.stdout.write("\033[K")
@@ -423,12 +437,11 @@ def main():
     mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
     print(mic_manager.chunk_size)
     sys.stdout.write(YELLOW)
-    sys.stdout.write('\nListening, say "Quit" or "Exit" to stop.\n\n')
+    sys.stdout.write('\nListening, begin entering voice commands now.\n\n')
     sys.stdout.write("End (ms)       Transcript Results/Status\n")
     sys.stdout.write("=====================================================\n")
 
     with mic_manager as stream:
-
         while not stream.closed:
             sys.stdout.write(YELLOW)
             sys.stdout.write(
@@ -456,11 +469,9 @@ def main():
             stream.audio_input = []
             stream.restart_counter = stream.restart_counter + 1
 
-
             if not stream.last_transcript_was_final:
                 sys.stdout.write("\n")
             stream.new_stream = True
-
 
 if __name__ == "__main__":
     main()
