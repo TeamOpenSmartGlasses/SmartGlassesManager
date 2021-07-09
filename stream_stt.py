@@ -37,6 +37,8 @@ Example usage:
 import requests
 import urllib
 
+import subprocess
+
 # Function to find all close matches of
 # input string in given list of possible strings
 from difflib import get_close_matches
@@ -104,10 +106,10 @@ def save_memory(transcript, args):
 
 def ask_wolfram(transcript, args):
     print("ASKING WOLFRAM: {}".format(args))
-    res = wolfram_conversational_query(args)
+    result, convo_id = wolfram_conversational_query(args)
     print("WOLFRAM RESPONSE:")
-    print(res)
-    return res
+    print(result)
+    return result
 
 #Wolfram API key - this loads from a plain text file containing only one string - your APP id key
 wolframApiKey = None
@@ -120,13 +122,17 @@ def wolfram_conversational_query(query):
     query_enc = urllib.parse.quote_plus(query)
 
     #build request
-    getString = "https://api.wolframalpha.com/v1/result?appid={}&i={}".format(wolframApiKey, query_enc)
+    getString = "https://api.wolframalpha.com/v1/conversation.jsp?appid={}&i={}".format(wolframApiKey, query_enc)
     response = requests.get(getString)
 
     if response.status_code == 200:
-        return str(response.content, 'utf-8')
+        parsed_res = response.json()
+        if "error" in parsed_res:
+            return None, None
+        print(parsed_res)
+        return parsed_res["result"], parsed_res["conversationID"]
     else:
-        return None
+        return None, None
 
 #define the possible voice commands (only found if the wake word is detected)
 voice_commands = {
@@ -206,8 +212,14 @@ def find_commands(transcript):
         voice_command_func = voice_commands[command_name]["function"]
         if voice_command_func is not None:
             res = voice_command_func(transcript, command_args)
-            if res:
+            if type(res) == int and res == 1:
                 print("COMMAND COMPLETED SUCCESSFULLY")
+            elif type(res) == str:
+                print("COMMAND COMPLETED SUCCESSFULLY")
+                print("NOW SAYING: {}".format(res))
+                #subprocess.Popen("say {}".format(res), close_fds=True)
+                subprocess.call(['say',res])
+
             else:
                 print("COMMAND FAILED")
 
