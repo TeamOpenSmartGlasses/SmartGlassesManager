@@ -1,2 +1,4 @@
 creds.json
 wolfram_api_key.txt
+__pycache__/
+venv/
