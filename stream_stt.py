@@ -9,6 +9,7 @@ Right now just shoving everything into this file and will modularize as the prog
 Based on the google speech file provided by Google
 """
 
+#Copyright for the Google STT streaming code
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,31 +24,14 @@ Based on the google speech file provided by Google
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Google Cloud Speech API sample application using the streaming API.
-
-NOTE: This module requires the dependencies `pyaudio` and `termcolor`.
-To install using pip:
-
-    pip install pyaudio
-    pip install termcolor
-
-Example usage:
-    python transcribe_streaming_infinite.py
-"""
 import requests
 import urllib
-
+from playsound import playsound
 import subprocess
-
-# Function to find all close matches of
-# input string in given list of possible strings
-from difflib import get_close_matches
 from fuzzysearch import find_near_matches
-
 import re
 import sys
 import time
-
 from google.cloud import speech
 import pyaudio
 from six.moves import queue
@@ -56,13 +40,16 @@ from six.moves import queue
 wake_words_file = "./wakewords.txt"
 voice_memories_file = "./data/voice_memories.csv"
 wolfram_api_key_file = "./wolfram_api_key.txt"
+command_success_sound = "./speech_pre_rendered/command_success.wav"
+generic_failure_sound = "./speech_pre_rendered/command_failed.wav"
+wolfram_failure_sound = "./speech_pre_rendered/wolfram_query_failed.wav"
 
 #set API key
 import os
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=os.path.join(os.path.dirname(__file__), "creds.json")
 
 # Audio recording parameters
-STREAMING_LIMIT = 240000  # 4 minutes
+STREAMING_LIMIT = 240000 * 10 # 40 minutes
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
@@ -111,6 +98,9 @@ def ask_wolfram(transcript, args):
     print(result)
     return result
 
+def wolfram_failed():
+    playsound(wolfram_failure_sound)
+
 #Wolfram API key - this loads from a plain text file containing only one string - your APP id key
 wolframApiKey = None
 with open(wolfram_api_key_file) as f:
@@ -141,8 +131,8 @@ voice_commands = {
         "stop listening" : {"function" : None, "voice_sounds" : ["stop listening", "go deaf"]}, #end the program loop running (voice rec continues to run)
         "shell" : {"function" : None, "voice_sounds" : ["CLI", "shell", "bash", "zee shell", "zsh", "z shell"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "add wake word" : {"function" : add_wake_word, "voice_sounds" : ["add wake word", "new wake word"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
-        "save memory" : {"function" : save_memory, "voice_sounds" : ["save memory", "save speech", "mxt cache"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
-        "ask Wolfram" : {"function" : ask_wolfram, "voice_sounds" : ["Wolfram", "Wolfram Alpha", "ask Wolfram"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
+        "save memory" : {"function" : save_memory, "voice_sounds" : ["save memory", "save speech", "mxt cache", "mxt remember"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
+        "ask wolfram" : {"function" : ask_wolfram, "fail_function" : wolfram_failed, "voice_sounds" : ["Wolfram", "Wolfram Alpha", "ask Wolfram"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         }
 
@@ -158,14 +148,12 @@ def find_commands(transcript):
         wake_words_found.extend(find_near_matches(option, transcript_l, max_l_dist=1))
 
     #if we found a wake word, tell the user
-    found_wake_word = False
     wake_word = None
     command_match = None
     command_name = None
     command_args = None
     possible_command = None
     if len(wake_words_found) > 0:
-        found_wake_word = True
         wake_word = transcript_l[wake_words_found[-1].start:wake_words_found[-1].end]
         print("DETECTED WAKE WORD: {}".format(wake_word))
 
@@ -185,43 +173,51 @@ def find_commands(transcript):
             if not looping:
                 break
 
-    #if wake word was found but wasn't a command, try to parse the text after the wake word for a command    
-    if found_wake_word and not found_command:
-        possible_command = transcript_l[wake_words_found[-1].end+1:] #+1 removes following space
+        #if wake word was found but wasn't a command, try to parse the text after the wake word for a command    
+        if not found_command:
+            possible_command = transcript_l[wake_words_found[-1].end+1:] #+1 removes following space
 
-        #run through possible commands
-        #stop at first match - that must be our command
-        looping = True
-        for comm_key in voice_commands.keys():
-            for voice_sound in voice_commands[comm_key]["voice_sounds"]:
-                matched = find_near_matches(voice_sound, possible_command, max_l_dist=1)
-                if len(matched) > 0:
-                    command_match = matched[-1]
-                    command_name = comm_key
-                    looping = False
-                    found_command = True
-                    command_args = possible_command[command_match.end + 1:] #+1 removes following space
+            #run through possible commands
+            #stop at first match - that must be our command
+            looping = True
+            for comm_key in voice_commands.keys():
+                for voice_sound in voice_commands[comm_key]["voice_sounds"]:
+                    matched = find_near_matches(voice_sound, possible_command, max_l_dist=1)
+                    if len(matched) > 0:
+                        command_match = matched[-1]
+                        command_name = comm_key
+                        looping = False
+                        found_command = True
+                        command_args = possible_command[command_match.end + 1:] #+1 removes following space
+                        break
+                if not looping:
                     break
-            if not looping:
-                break
 
-    if command_match is not None:
+        #if we found a wake word but no hard coded command was found, pass the query to wolfram
+        if command_match is None:
+            command_name = "ask wolfram"
+            command_args = transcript_l[wake_words_found[-1].end:]
+            
         print("RECEIVED COMMAND: {}".format(command_name))
 
         #run commands funcs
         voice_command_func = voice_commands[command_name]["function"]
+
         if voice_command_func is not None:
             res = voice_command_func(transcript, command_args)
             if type(res) == int and res == 1:
                 print("COMMAND COMPLETED SUCCESSFULLY")
+                playsound(command_success_sound)
             elif type(res) == str:
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 print("NOW SAYING: {}".format(res))
-                #subprocess.Popen("say {}".format(res), close_fds=True)
                 subprocess.call(['say',res])
-
             else:
-                print("COMMAND FAILED")
+                if "fail_function" in voice_commands[command_name]:
+                    voice_commands[command_name]["fail_function"]()
+                else:
+                    playsound(generic_failure_sound)
+                    print("COMMAND FAILED")
 
 def get_current_time():
     """Return Current Time in MS."""
