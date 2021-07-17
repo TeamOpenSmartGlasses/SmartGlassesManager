@@ -20,8 +20,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
-//singleton clientsocket class
-public class ClientSocket {
+//singleton clientsocket class for connecting to ASP
+public class ASPClientSocket {
     //broadcast intent string
     public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_DATA";
     public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
@@ -34,7 +34,7 @@ public class ClientSocket {
 
     public static String TAG = "WearableAiDisplayMoverio";
     //singleton instance
-    private static ClientSocket clientsocket;
+    private static ASPClientSocket clientsocket;
     //socket data
     static Thread SocketThread = null;
     static Thread ReceiveThread = null;
@@ -77,7 +77,7 @@ public class ClientSocket {
     //we need a reference to the context of whatever called this class so we can send broadcast updates on receving new info
     private static Context mContext;
 
-    private ClientSocket(Context context){
+    private ASPClientSocket(Context context){
         //create send queue and a thread to handle sending
         data_queue = new ArrayBlockingQueue<byte[]>(queue_size);
         type_queue = new ArrayBlockingQueue<String>(queue_size);
@@ -86,9 +86,9 @@ public class ClientSocket {
         mContext = context;
     }
 
-    public static ClientSocket getInstance(Context c){
+    public static ASPClientSocket getInstance(Context c){
         if (clientsocket == null){
-            clientsocket = new ClientSocket(c);
+            clientsocket = new ASPClientSocket(c);
         }
         return clientsocket;
     }
@@ -97,7 +97,7 @@ public class ClientSocket {
         SERVER_IP = ip;
     }
 
-    public static ClientSocket getInstance(){
+    public static ASPClientSocket getInstance(){
         if (clientsocket == null){
             return null;
         }
@@ -356,38 +356,38 @@ public class ClientSocket {
                     Log.d(TAG, "eye contact info 5");
                     String message = Integer.toString(my_bb_to_int_be(raw_data));
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.EYE_CONTACT_5_MESSAGE, message);
-                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    intent.putExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE, message);
+                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 } else if ((b1 == eye_contact_info_id_30[0]) && (b2 == eye_contact_info_id_30[1])) { //we got a message with information to display
                     String message = Integer.toString(my_bb_to_int_be(raw_data));
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.EYE_CONTACT_30_MESSAGE, message);
-                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    intent.putExtra(ASPClientSocket.EYE_CONTACT_30_MESSAGE, message);
+                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 } else if ((b1 == eye_contact_info_id_300[0]) && (b2 == eye_contact_info_id_300[1])) { //we got a message with information to display
                     String message = Integer.toString(my_bb_to_int_be(raw_data));
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.EYE_CONTACT_300_MESSAGE, message);
-                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    intent.putExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE, message);
+                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 } else if ((b1 == facial_emotion_info_id_5[0]) && (b2 == facial_emotion_info_id_5[1])) {
                     String message = new String(raw_data);
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE, message);
-                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    intent.putExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE, message);
+                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 }  else if ((b1 == facial_emotion_info_id_30[0]) && (b2 == facial_emotion_info_id_30[1])) {
                     String message = new String(raw_data);
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE, message);
-                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    intent.putExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE, message);
+                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 }  else if ((b1 == facial_emotion_info_id_300[0]) && (b2 == facial_emotion_info_id_300[1])) {
                     String message = new String(raw_data);
                     final Intent intent = new Intent();
-                    intent.putExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE, message);
-                    intent.setAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+                    intent.putExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE, message);
+                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 } else {
                     System.out.println("BAD SIGNAL, RECONNECT");

@@ -53,25 +53,34 @@ import java.util.Date;
  * Class strongly based on app example from : https://github.com/kevalpatel2106/android-hidden-camera, Created by Keval on 11-Nov-16 @author {@link 'https://github.com/kevalpatel2106'}
  */
 
-public class CameraService extends HiddenCameraService {
+//handles all of the background stuff like
+    //-socket connection to ASP
+    //-socket connection to GLBox
+    //-receiving data from both ASP and GLBox
+    //-locally running the camera in the background (Android Hidden camera: https://github.com/kevalpatel2106/android-hidden-camera)
+    //-whatever else we need in the background
+public class WearableAiService extends HiddenCameraService {
 
     //image stream handling
     private int img_count = 0;
     private long last_sent_time = 0;
     private int fps_to_send = 3; //speed we send HD frames from wearable to mobile compute unit
 
-    //socket
-    String compute_module_address;
-    String adv_key = "WearableAiCyborg";
+    //ASP socket
+    ASPClientSocket asp_client_socket;
+    String asp_address;
+    String asp_adv_key = "WearableAiCyborg";
+
+    //GLBOX socket
+    GlboxClientSocket glbox_client_socket;
+    String glbox_address = "192.168.43.188";
+    String glbox_adv_key = "WearableAiCyborgGLBOX";
 
     //id of packet
     static final byte [] img_id = {0x01, 0x10}; //id for images
 
     //settings
     private String router = "web";
-
-    //socket class instance
-    ClientSocket clientsocket;
 
     //lock camera when picture is being taken
     private boolean camera_lock = false;
@@ -117,17 +126,17 @@ public class CameraService extends HiddenCameraService {
                 socket.receive(packet);
 
                 //Packet received
-                Log.i(TAG, "Packet received from: " + compute_module_address);
+                Log.i(TAG, "Packet received from: " + asp_address);
                 String data = new String(packet.getData()).trim();
                 Log.i(TAG, "Packet received; data: " + data);
-                if (data.equals(adv_key)) {
-                    compute_module_address = packet.getAddress().getHostAddress();
+                if (data.equals(asp_adv_key)) {
+                    asp_address = packet.getAddress().getHostAddress();
                     //start socket and camera on main service thread
                     // Get a handler that can be used to post to the main thread
                     Handler mainHandler = new Handler(mContext.getMainLooper());
                     Runnable myStarterRunnable = new Runnable() {
                         @Override
-                        public void run() { starter(); }
+                        public void run() { asp_starter(); }
                     };
                     mainHandler.post(myStarterRunnable);
                     break;
@@ -138,9 +147,15 @@ public class CameraService extends HiddenCameraService {
         }
     }
 
-    public void starter(){
-        startSocket();
+    public void asp_starter(){
+        startAspSocket();
+        startGlboxSocket();
         beginCamera();
+    }
+
+
+    public void glbox_starter(){
+        startGlboxSocket();
     }
 
     @Override
@@ -277,12 +292,21 @@ public class CameraService extends HiddenCameraService {
         stopSelf();
     }
 
-    private void startSocket(){
+    private void startAspSocket(){
         //create client socket and setup socket
-        clientsocket = ClientSocket.getInstance(this);
-        clientsocket.setIp(compute_module_address);
-        clientsocket.startSocket();
+        asp_client_socket = ASPClientSocket.getInstance(this);
+        asp_client_socket.setIp(asp_address);
+        asp_client_socket.startSocket();
     }
+
+    private void startGlboxSocket(){
+        //create client socket and setup socket
+        System.out.println("STARTING GLBOX SOCKET");
+        glbox_client_socket = GlboxClientSocket.getInstance(this);
+        glbox_client_socket.setIp(glbox_address);
+        glbox_client_socket.startSocket();
+    }
+
 
     public void onPictureTaken(byte[] data, Camera camera) {
         System.out.println("ONE PICTURE TAKEN");
@@ -299,7 +323,7 @@ public class CameraService extends HiddenCameraService {
     private void uploadImage(byte[] image_data){
         //upload the image using async task
 //        new SendImage().execute(data);
-        clientsocket.sendBytes(img_id, image_data, "image");
+        asp_client_socket.sendBytes(img_id, image_data, "image");
     }
 
     private void savePicture(byte[] data){
@@ -363,7 +387,7 @@ public class CameraService extends HiddenCameraService {
             final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             byte[] jpg = bmpToJpg(bitmap);
             uploadImage(jpg);
-            int q_size = clientsocket.getImageBuf();
+            int q_size = asp_client_socket.getImageBuf();
             //Log.d(TAG, "saving image");
             //savePicture(jpg);
             last_sent_time = curr_time;
