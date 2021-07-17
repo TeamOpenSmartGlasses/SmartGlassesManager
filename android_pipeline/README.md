@@ -61,3 +61,19 @@ WearableAiComputeModule - runs on Oneplus7T, or other modern Android with good C
 
 Install `scrcpy`: https://github.com/Genymobile/scrcpy
 Run `scrcpy`
+
+## Plan for LiveLifeCaptions
+
+- make new socket in CameraService with GNUBOX
+- very simple to start - receive string of transcription text, send ACK back
+- once working, change "CameraService" to "WearableAiService"
+- upgrade socket to have better error checking
+- upgrade IP address system to use the same as we used with the ASP and ASG connection (lots of different byte codes for different type of things)
+
+## Abbreviations
+
+ASP - Android Smart Phone  
+ASG - Android Smart Glasses  
+GLBOX - Gnu/Linux 'Single Board Computer'/Laptop  
+
+^^^ the main components of the current system

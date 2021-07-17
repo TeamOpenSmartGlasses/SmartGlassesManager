@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".CameraService"
+            android:name=".WearableAiService"
             android:label="CameraService" >
         </service>
     </application>

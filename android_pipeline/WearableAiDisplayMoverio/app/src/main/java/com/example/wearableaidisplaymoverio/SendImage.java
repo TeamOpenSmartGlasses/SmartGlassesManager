@@ -21,7 +21,7 @@ import java.util.List;
 class SendImage extends AsyncTask<byte [], Void, Void> {
 
     private final String urlServer = "http://192.168.1.165:45678";
-    ClientSocket clientsocket;
+    ASPClientSocket clientsocket;
 
     @Override
     protected Void doInBackground(byte []... data){

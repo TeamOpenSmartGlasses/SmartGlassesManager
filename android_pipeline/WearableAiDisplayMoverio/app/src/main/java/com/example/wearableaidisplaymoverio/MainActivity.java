@@ -7,27 +7,13 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Bundle;
 
-import android.graphics.Typeface;
-
 import android.app.Activity;
 import android.hardware.Camera;
-import android.os.Handler;
 import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.PrintWriter;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Socket;
 import java.util.ArrayList;
 
 import android.view.Window;
@@ -35,12 +21,10 @@ import android.view.WindowManager;
 
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
 
 
 public class MainActivity extends Activity {
@@ -101,7 +85,7 @@ public class MainActivity extends Activity {
         setupChart();
 
         //create the camera service if it isn't already running
-        startService(new Intent(this, CameraService.class));
+        startService(new Intent(this, WearableAiService.class));
 
 //        //setup camera preview
 //        preview = (SurfaceView) findViewById(R.id.preview);
@@ -226,7 +210,7 @@ public class MainActivity extends Activity {
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ClientSocket.ACTION_RECEIVE_MESSAGE);
+        intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
         return intentFilter;
     }
 
@@ -234,28 +218,28 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if (ClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
-                if (intent.hasExtra(ClientSocket.EYE_CONTACT_5_MESSAGE)) {
-                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_5_MESSAGE);
+            if (ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
+                if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
+                    String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
                     setGuiMessage(message, eyeContact5MetricTextView, "%");
-                } else if (intent.hasExtra(ClientSocket.EYE_CONTACT_30_MESSAGE)) {
-                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_30_MESSAGE);
+                } else if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_30_MESSAGE)) {
+                    String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_30_MESSAGE);
                     setGuiMessage(message, eyeContact30MetricTextView, "%");
                     eye_contact_30 = Float.parseFloat(message);
                     setChartData();
-                } else if (intent.hasExtra(ClientSocket.EYE_CONTACT_300_MESSAGE)) {
-                    String message = intent.getStringExtra(ClientSocket.EYE_CONTACT_300_MESSAGE);
+                } else if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE)) {
+                    String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE);
                     setGuiMessage(message, eyeContactMetricTextView, "%");
-                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE)){
-                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_5_MESSAGE);
+                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE)){
+                    String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE);
                     setGuiMessage(message, facialEmotion5MetricTextView, "");
                     facial_emotion_5 = message;
-                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE)){
-                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_30_MESSAGE);
+                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE)){
+                    String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE);
                     setGuiMessage(message, facialEmotion30MetricTextView, "");
                     facial_emotion_30 = message;
-                } else if (intent.hasExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE)){
-                    String message = intent.getStringExtra(ClientSocket.FACIAL_EMOTION_300_MESSAGE);
+                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE)){
+                    String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE);
                     setGuiMessage(message, facialEmotionMetricTextView, "");
                 }
             }
