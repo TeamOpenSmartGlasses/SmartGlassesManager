@@ -52,6 +52,7 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         //print a bunch of stuff we can see in logcat
         for(int i = 0; i < 20; i++){
             System.out.println("WEARABLEAI");
@@ -84,7 +85,7 @@ public class MainActivity extends Activity {
         moveOffScreen(); //not sure what this does really
         setupChart();
 
-        //create the camera service if it isn't already running
+        //create the WearableAI service if it isn't already running
         startService(new Intent(this, WearableAiService.class));
 
 //        //setup camera preview
@@ -100,6 +101,12 @@ public class MainActivity extends Activity {
 //                takeAndSendPicture();
 //            }
 //        });
+        //switchMode();
+    }
+
+
+    private void switchMode(){
+        setContentView(R.layout.live_life_caption_text);
     }
 
     @Override
@@ -344,6 +351,7 @@ public class MainActivity extends Activity {
         //chart.setEntryLabelTypeface(tfRegular);
         chart.setEntryLabelTextSize(19f);
     }
+
 
 
 
