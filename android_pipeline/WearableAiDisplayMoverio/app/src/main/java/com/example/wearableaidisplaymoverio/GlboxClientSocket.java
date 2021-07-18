@@ -57,7 +57,7 @@ public class GlboxClientSocket {
     //static private BufferedReader input;
     static private DataInputStream input;
     static String SERVER_IP = "0.0.0.0"; //gets updated
-    static int SERVER_PORT = 4568;
+    static int SERVER_PORT = 8989;
     private static int mConnectState = 0;
 
     private static boolean gotAck = false;
@@ -109,6 +109,7 @@ public class GlboxClientSocket {
         if (socket == null) {
             mConnectState = 1;
             Log.d(TAG, "onCreate starting");
+            Log.d(TAG, "starting socket");
             SocketThread = new Thread(new SocketThread());
             SocketThread.start();
 
@@ -160,6 +161,7 @@ public class GlboxClientSocket {
 //        stopThread(ReceiveThread);
 
         //restart socket thread
+        Log.d(TAG, "starting socket");
         SocketThread = new Thread(new SocketThread());
         SocketThread.start();
     }
@@ -248,9 +250,9 @@ public class GlboxClientSocket {
     static class SocketThread implements Runnable {
         public void run() {
             try {
-                System.out.println("TRYING TO CONNECT");
+                System.out.println("TRYING TO CONNECT GLBOX");
                 socket = new Socket(SERVER_IP, SERVER_PORT);
-                System.out.println("CONNECTED!");
+                System.out.println("GLBOX CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 input = new DataInputStream(new DataInputStream(socket.getInputStream()));
@@ -299,6 +301,7 @@ public class GlboxClientSocket {
     static class ReceiveThread implements Runnable {
         @Override
         public void run() {
+            Log.d(TAG, "GLBOX starting ReceiveThread");
             while (true) {
                 if (mConnectState != 2){
                     System.out.println("MCONNECTED IS FALSE IN REEIVE THREAD, BREAKING");
@@ -306,8 +309,13 @@ public class GlboxClientSocket {
                 }
 
                 try {
-                    String transcript = input.readUTF();
+                    System.out.println("GLBOX PRETRANSCRIPT:");
+                    String transcript = readLine(input);
+                    System.out.println("GLBOX TRANSCRIPT:");
                     System.out.println(transcript);
+//                    Byte transcript = input.readByte();
+//                    System.out.println("GLBOX TRANSCRIPT:");
+//                    System.out.println(Byte.toString(transcript));
                 } catch (IOException e) {
                     System.out.println("IOException getting transcript string.");
                 }
@@ -412,6 +420,7 @@ public class GlboxClientSocket {
         @Override
         public void run() {
             //clear queue so we don't have a buildup of images
+            Log.d(TAG, "GLBOX starting SendThread");
             data_queue.clear();
             type_queue.clear();
             while (true) {
@@ -441,5 +450,21 @@ public class GlboxClientSocket {
             }
             mConnectState = 0;
         }
+    }
+
+    /** Reads UTF-8 character data; lines are terminated with '\n' */
+    public static String readLine(DataInputStream in) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        while (true) {
+            int b = in.readByte();
+            if (b < 0) {
+                throw new IOException("Data truncated");
+            }
+            if (b == 0x0A) {
+                break;
+            }
+            buffer.write(b);
+        }
+        return new String(buffer.toByteArray(), "UTF-8");
     }
 }
