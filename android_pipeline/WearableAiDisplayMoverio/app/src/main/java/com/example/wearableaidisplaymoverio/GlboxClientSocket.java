@@ -23,9 +23,9 @@ import java.util.concurrent.ThreadLocalRandom;
 //singleton clientsocket class for connecting to ASP
 public class GlboxClientSocket {
     //broadcast intent string
-//    public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_DATA";
+    public final static String ACTION_RECEIVE_TEXT = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_TEXT";
 //    public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
-//    public final static String EYE_CONTACT_5_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_5";
+    public final static String REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.REGULAR_TRANSCRIPT";
 //    public final static String EYE_CONTACT_30_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_30";
 //    public final static String EYE_CONTACT_300_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_300";
 //    public final static String FACIAL_EMOTION_5_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_5";
@@ -313,6 +313,10 @@ public class GlboxClientSocket {
                     String transcript = readLine(input);
                     System.out.println("GLBOX TRANSCRIPT:");
                     System.out.println(transcript);
+                    final Intent intent = new Intent();
+                    intent.putExtra(GlboxClientSocket.REGULAR_TRANSCRIPT, transcript);
+                    intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
 //                    Byte transcript = input.readByte();
 //                    System.out.println("GLBOX TRANSCRIPT:");
 //                    System.out.println(Byte.toString(transcript));
