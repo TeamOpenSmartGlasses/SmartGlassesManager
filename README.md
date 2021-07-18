@@ -1,11 +1,13 @@
 ## TODO
 
-- clean code so it's modular
+x - clean code so it's modular
 - provide interface that always pushes the latest live captions
 - make server in python that will connect to the Android Vuzix WearableAI server
 - System.out log the closed captions in vuzix blade
 - make GUI in vuzix blade to display the captions
 - get running on pocket worn SBC with bluetooth headset microphone and speaker
+- add VAD so we don't waste our time, bandwidth, and money transcriving non-speech
+    - Google webRTC VAD is one of the best and well supported for python 4 : https://github.com/wiseman/py-webrtcvad
 
 
 ## Improve
