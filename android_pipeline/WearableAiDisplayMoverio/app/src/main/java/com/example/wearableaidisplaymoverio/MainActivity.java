@@ -32,7 +32,7 @@ public class MainActivity extends Activity {
 
     //tmp
 
-    //UI
+    //social UI
     TextView messageTextView;
     TextView eyeContactMetricTextView;
     TextView eyeContact5MetricTextView;
@@ -42,6 +42,9 @@ public class MainActivity extends Activity {
     TextView facialEmotion30MetricTextView;
     Button toggleCameraButton;
     private PieChart chart;
+
+    //live life captions ui
+    TextView liveLifeCaptionsText;
 
     //metrics
     float eye_contact_30 = 0;
@@ -70,7 +73,7 @@ public class MainActivity extends Activity {
         //hint, use this to allow it to turn off:
         setContentView(R.layout.activity_main);
 
-        //ui setup
+        //social mode ui setup
         messageTextView = (TextView) findViewById(R.id.message);
         eyeContactMetricTextView = (TextView) findViewById(R.id.eye_contact_metric);
         eyeContact5MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_5);
@@ -78,6 +81,7 @@ public class MainActivity extends Activity {
         facialEmotionMetricTextView = (TextView) findViewById(R.id.facial_emotion_metric);
         facialEmotion5MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_5);
         facialEmotion30MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_30);
+
 
         //handle chart
         chart = findViewById(R.id.stress_confidence_chart);
@@ -101,7 +105,9 @@ public class MainActivity extends Activity {
 //                takeAndSendPicture();
 //            }
 //        });
-        //switchMode();
+        switchMode();
+        //live life captions mode gui setup
+        liveLifeCaptionsText = (TextView) findViewById(R.id.livelifecaptionstextview);
     }
 
 
@@ -218,6 +224,7 @@ public class MainActivity extends Activity {
     private static IntentFilter makeComputeUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
+        intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
         return intentFilter;
     }
 
@@ -225,6 +232,7 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
+            messageTextView.setText("");
             if (ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
                 if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
@@ -249,6 +257,13 @@ public class MainActivity extends Activity {
                     String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE);
                     setGuiMessage(message, facialEmotionMetricTextView, "");
                 }
+            } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)){
+                if (intent.hasExtra(GlboxClientSocket.REGULAR_TRANSCRIPT)){
+                    String transcript = intent.getStringExtra(GlboxClientSocket.REGULAR_TRANSCRIPT);
+                    System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
+                    liveLifeCaptionsText.setText(transcript);
+                }
+
             }
         }
     };

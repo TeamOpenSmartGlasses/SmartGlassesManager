@@ -13,7 +13,7 @@
 
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/livelifecaptionstextview"
         android:layout_width="384dp"
         android:layout_height="705dp"
         android:text="TextView man dude"
