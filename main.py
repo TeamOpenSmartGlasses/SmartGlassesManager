@@ -29,7 +29,7 @@ generic_failure_sound = "./speech_pre_rendered/command_failed.wav"
 wolfram_failure_sound = "./speech_pre_rendered/wolfram_query_failed.wav"
 
 # Audio recording parameters
-STREAMING_LIMIT = 240000 # 4 minutes
+STREAMING_LIMIT = 3 * 5 * 240000 # 1 hour
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
