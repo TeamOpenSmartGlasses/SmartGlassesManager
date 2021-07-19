@@ -17,6 +17,7 @@ import sys
 import time
 
 from utils.gcp_stt import run_google_stt
+from utils.asg_socket_server import ASGSocket
 
 #config files
 wake_words_file = "./wakewords.txt"
@@ -44,6 +45,13 @@ with open(wake_words_file) as f:
     #wake_words = [word for line in f for word in line.split()]
     wake_words = [line.strip() for line in f]
 print("Active wake words: {}".format(wake_words))
+
+#start a socket connection to the android smart glasses
+asg_socket = ASGSocket()
+asg_socket.start_conn()
+
+def GUI_receive(transcript):
+    asg_socket.send_string(transcript)
 
 #define voice commands functions
 def add_wake_word(transcript, args):
@@ -209,9 +217,11 @@ def get_current_time():
 
     return int(round(time.time() * 1000))
 
-
 def parse_transcriptions(responses, stream):
-    """Iterates through server responses and prints them.
+    """Iterates through STT server responses.
+
+    First sends them to whatever GUI we are using (ASG, send over a socket).
+    Then, if the request is a "final request", parse for wake words and commands
 
     The responses passed is a generator that will block until a response
     is provided by the server.
@@ -260,6 +270,11 @@ def parse_transcriptions(responses, stream):
         )
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
+
+        print("--- " + transcript)
+
+        #send transcription responses to our GUI
+        GUI_receive(transcript)
 
         if result.is_final:
             sys.stdout.write(GREEN)
