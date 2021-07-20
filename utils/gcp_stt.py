@@ -1,5 +1,7 @@
+#Emex Labs, cayden
+
+#Much code borrwed from https://github.com/googleapis/python-speech/blob/master/samples/microphone/transcribe_streaming_infinite.py
 #Copyright for the Google STT streaming code
-#https://github.com/googleapis/python-speech/blob/master/samples/microphone/transcribe_streaming_infinite.py
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,24 +15,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 
-
 from google.cloud import speech
 import os
 import sys
+import time
 from utils.ResumableMicrophoneStream import ResumableMicrophoneStream
-
 
 STREAMING_LIMIT = 240000 # 4 minutes
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
-
 
 #terminal printing colors
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
-def run_google_stt(parse_cb):
+def run_google_stt(transcript_q, parse_cb):
     """start bidirectional streaming from microphone input to speech API"""
 
     #set gcloud API key
@@ -73,7 +73,7 @@ def run_google_stt(parse_cb):
             responses = client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            parse_cb(responses, stream)
+            parse_cb(transcript_q, responses, stream)
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
