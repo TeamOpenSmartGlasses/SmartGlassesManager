@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import android.app.Activity;
 import android.hardware.Camera;
+import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.widget.Button;
 import android.widget.RelativeLayout;
@@ -108,6 +109,7 @@ public class MainActivity extends Activity {
         switchMode();
         //live life captions mode gui setup
         liveLifeCaptionsText = (TextView) findViewById(R.id.livelifecaptionstextview);
+        liveLifeCaptionsText.setMovementMethod(new ScrollingMovementMethod());
     }
 
 
@@ -262,6 +264,13 @@ public class MainActivity extends Activity {
                     String transcript = intent.getStringExtra(GlboxClientSocket.REGULAR_TRANSCRIPT);
                     System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
                     liveLifeCaptionsText.setText(transcript);
+                    liveLifeCaptionsText.scrollTo(0, liveLifeCaptionsText.getBottom());
+                    final int scrollAmount = liveLifeCaptionsText.getLayout().getLineTop(liveLifeCaptionsText.getLineCount()) - liveLifeCaptionsText.getHeight();
+                    // if there is no need to scroll, scrollAmount will be <=0
+                    if (scrollAmount > 0)
+                        liveLifeCaptionsText.scrollTo(0, scrollAmount);
+                    else
+                        liveLifeCaptionsText.scrollTo(0, 0);
                 }
 
             }
