@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 
 """
-Streams in always on microphone, sends to GCP to be transcribed, receives live transcription, runs results through function to find user defined wake words and commands.
+Streams in always on microphone, transcribes (speech (audio) to text), runs results through function to find user defined wake words and commands.
 
-Right now just shoving everything into this file and will modularize as the program form develops
+Main components:
+    -STT - GCP 
+    -server - TCP socket
 
-@author: Cayden Pierce
-Based on the google speech file provided by Google
+Both of these are IO-bound, both of them need to run all the time. We need be asynchronous, for now that's with multithreading.
+
+STT fills a queue of transcripts - both intermediate and final transcripts
+server goes through that queue and processes/send to the wearable
+
+@author: Cayden Pierce, Emex Labs
 """
 import requests
 import urllib
@@ -15,6 +21,9 @@ import subprocess
 from fuzzysearch import find_near_matches
 import sys
 import time
+
+from queue import Queue
+from threading import Thread
 
 from utils.gcp_stt import run_google_stt
 from utils.asg_socket_server import ASGSocket
@@ -45,13 +54,6 @@ with open(wake_words_file) as f:
     #wake_words = [word for line in f for word in line.split()]
     wake_words = [line.strip() for line in f]
 print("Active wake words: {}".format(wake_words))
-
-#start a socket connection to the android smart glasses
-asg_socket = ASGSocket()
-asg_socket.start_conn()
-
-def GUI_receive(transcript):
-    asg_socket.send_string(transcript)
 
 #define voice commands functions
 def add_wake_word(transcript, args):
@@ -217,7 +219,7 @@ def get_current_time():
 
     return int(round(time.time() * 1000))
 
-def parse_transcriptions(responses, stream):
+def receive_transcriptions(transcript_q, responses, stream):
     """Iterates through STT server responses.
 
     First sends them to whatever GUI we are using (ASG, send over a socket).
@@ -274,7 +276,10 @@ def parse_transcriptions(responses, stream):
         print("--- " + transcript)
 
         #send transcription responses to our GUI
-        GUI_receive(transcript)
+        #GUI_receive(transcript)
+        #add transcript to queue
+        print("PUTTING INTO TRANSCRIPT Q")
+        transcript_q.put(transcript)
 
         if result.is_final:
             sys.stdout.write(GREEN)
@@ -293,11 +298,39 @@ def parse_transcriptions(responses, stream):
 
             stream.last_transcript_was_final = False
 
+def run_server(transcript_q):
+
+    def GUI_receive(transcript): #soon run_server will be a class, and this will be a method
+            asg_socket.send_string(transcript)
+
+    #start a socket connection to the android smart glasses
+    asg_socket = ASGSocket()
+    asg_socket.start_conn()
+    while True: #main server loop
+        try:
+            #blocking call, only run event when we have a transript, in future this might just check and continue if there are other data streams to check from
+            transcript = transcript_q.get()
+            GUI_receive(transcript)
+        except BrokenPipeError as e: #if error on socket at any point, restart connection and return to loop
+            print("Connection broken, listening again")
+            asg_socket.start_conn()
 
 def main():
+    # Create the shared queue and launch both threads
+    transcript_q = Queue()
+    server_thread = Thread(target = run_server, args = (transcript_q, ))
+    stt_thread = Thread(target = run_google_stt, args = (transcript_q, receive_transcriptions))
+    server_thread.start()
     #run speech to text, pass every result to the callback function passed in
     #in the future if we use different STT libs, we can just change that right here
-    run_google_stt(parse_transcriptions)
+    stt_thread.start()
+
+    #debug loop
+    i = 0
+    while True:
+        print("--- EHLHO WHARLD * {}".format(i))
+        i += 1
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
