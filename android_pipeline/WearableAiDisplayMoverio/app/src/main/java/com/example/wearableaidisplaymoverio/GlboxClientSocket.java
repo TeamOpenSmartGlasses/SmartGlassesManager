@@ -115,21 +115,21 @@ public class GlboxClientSocket {
 
             //setup handler to handle keeping connection alive, all subsequent start of SocketThread
             //start a new handler thread to send heartbeats
-//            HandlerThread thread = new HandlerThread("HeartBeater");
-//            thread.start();
-//            Handler handler = new Handler(thread.getLooper());
-//            final int delay = 1000;
-//            final int min_delay = 3000;
-//            final int max_delay = 4000;
-//            Random rand = new Random();
-//            handler.postDelayed(new Runnable() {
-//                public void run() {
-//                    heartBeat();
-//                    //random delay for heart beat so as to disallow synchronized failure between client and server
-//                    int random_delay = rand.nextInt((max_delay - min_delay) + 1) + min_delay;
-//                    handler.postDelayed(this, random_delay);
-//                }
-//            }, delay);
+            HandlerThread thread = new HandlerThread("HeartBeater");
+            thread.start();
+            Handler handler = new Handler(thread.getLooper());
+            final int delay = 1000;
+            final int min_delay = 3000;
+            final int max_delay = 4000;
+            Random rand = new Random();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+                    heartBeat();
+                    //random delay for heart beat so as to disallow synchronized failure between client and server
+                    int random_delay = rand.nextInt((max_delay - min_delay) + 1) + min_delay;
+                    handler.postDelayed(this, random_delay);
+                }
+            }, delay);
         }
     }
 
@@ -322,6 +322,8 @@ public class GlboxClientSocket {
 //                    System.out.println(Byte.toString(transcript));
                 } catch (IOException e) {
                     System.out.println("IOException getting transcript string.");
+                    mConnectState = 0;
+                    break;
                 }
 
 //                byte b1, b2;
