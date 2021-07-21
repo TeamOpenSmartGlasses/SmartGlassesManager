@@ -21,7 +21,7 @@ import sys
 import time
 from utils.ResumableMicrophoneStream import ResumableMicrophoneStream
 
-STREAMING_LIMIT = 240000 # 4 minutes
+#STREAMING_LIMIT = 240000 # 4 minutes
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
@@ -58,9 +58,9 @@ def run_google_stt(transcript_q, parse_cb):
     with mic_manager as stream:
         while not stream.closed:
             sys.stdout.write(YELLOW)
-            sys.stdout.write(
-                "\n" + str(STREAMING_LIMIT * stream.restart_counter) + ": NEW REQUEST\n"
-            )
+#            sys.stdout.write(
+#                "\n" + str(STREAMING_LIMIT * stream.restart_counter) + ": NEW REQUEST\n"
+#            )
 
             stream.audio_input = []
             audio_generator = stream.generator()
