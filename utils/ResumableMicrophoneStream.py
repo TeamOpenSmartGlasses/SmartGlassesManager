@@ -2,6 +2,7 @@ import pyaudio
 from six.moves import queue
 import time
 
+STREAMING_LIMIT = 300000 #YOU HAVE TO CHANGE THIS IN main.py AS WELL NO TIME TO SETUP SHARED CONFIG FILES (YAML) #also, no more than 300 seconds or GCP will error - cayden
 def get_current_time():
     """Return Current Time in MS."""
 

@@ -39,7 +39,7 @@ generic_failure_sound = "./speech_pre_rendered/command_failed.wav"
 wolfram_failure_sound = "./speech_pre_rendered/wolfram_query_failed.wav"
 
 # Audio recording parameters
-STREAMING_LIMIT = 3 * 5 * 240000 # 1 hour
+STREAMING_LIMIT = 300000 #YOU HAVE TO CHANGE THIS IN ./utils/ResumableMicInput.py AS WELL NO TIME TO SETUP SHARED CONFIG FILES (YAML) #also, no more than 300 seconds or GCP will error - cayden
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
