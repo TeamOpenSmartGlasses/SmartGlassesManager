@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -25,7 +26,8 @@ public class GlboxClientSocket {
     //broadcast intent string
     public final static String ACTION_RECEIVE_TEXT = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_TEXT";
 //    public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
-    public final static String REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.REGULAR_TRANSCRIPT";
+    public final static String FINAL_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.FINAL_REGULAR_TRANSCRIPT";
+    public final static String INTERMEDIATE_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.INTERMEDIATE_REGULAR_TRANSCRIPT";
 //    public final static String EYE_CONTACT_30_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_30";
 //    public final static String EYE_CONTACT_300_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_300";
 //    public final static String FACIAL_EMOTION_5_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_5";
@@ -43,7 +45,8 @@ public class GlboxClientSocket {
     //ids of message types
     //socket message ids
     //metrics
-//    static final byte [] eye_contact_info_id_5 = {0x12, 0x01};
+    static final byte [] intermediate_transcript_cid = {0xC, 0x01};
+    static final byte [] final_transcript_cid = {0xC, 0x02};
 //    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
 //    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
 //    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
@@ -308,69 +311,96 @@ public class GlboxClientSocket {
                     break;
                 }
 
-                try {
-                    System.out.println("GLBOX PRETRANSCRIPT:");
-                    String transcript = readLine(input);
-                    System.out.println("GLBOX TRANSCRIPT:");
-                    System.out.println(transcript);
-                    final Intent intent = new Intent();
-                    intent.putExtra(GlboxClientSocket.REGULAR_TRANSCRIPT, transcript);
-                    intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+//                try {
+//                    System.out.println("GLBOX PRETRANSCRIPT:");
+
+//                    String transcript = readLine(input);
+//                    System.out.println("GLBOX TRANSCRIPT:");
+//                    System.out.println(transcript);
+//                    final Intent intent = new Intent();
+//                    intent.putExtra(GlboxClientSocket.REGULAR_TRANSCRIPT, transcript);
+//                    intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+//                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+
 //                    Byte transcript = input.readByte();
 //                    System.out.println("GLBOX TRANSCRIPT:");
 //                    System.out.println(Byte.toString(transcript));
+//                } catch (IOException e) {
+//                    System.out.println("IOException getting transcript string.");
+//                    mConnectState = 0;
+//                    break;
+//                }
+
+                byte b1, b2;
+                byte [] raw_data = null;
+                byte goodbye1, goodbye2, goodbye3;
+                //just read in data here
+                try {
+                    byte hello1 = input.readByte(); // read hello of incoming message
+                    byte hello2 = input.readByte(); // read hello of incoming message
+                    byte hello3 = input.readByte(); // read hello of incoming message
+
+                    //make sure header is verified
+                    if (hello1 != 0x01 || hello2 != 0x02 || hello3 != 0x03){
+                        Log.d(TAG, "Socket hello header broken, restarting socket");
+                        break;
+                    } else {
+                        Log.d(TAG, "RECEIVED HELLO");
+                    }
+                    //length of body
+                    int body_len = input.readInt();
+
+                    //read in message id bytes
+                    b1 = input.readByte();
+                    b2 = input.readByte();
+
+                    //read in message body (if there is one)
+                    if (body_len > 0){
+                        raw_data = new byte[body_len];
+                        input.readFully(raw_data, 0, body_len); // read the body
+                    }
+
+                    goodbye1 = input.readByte(); // read goodbye of incoming message
+                    goodbye2 = input.readByte(); // read goodbye of incoming message
+                    goodbye3 = input.readByte(); // read goodbye of incoming message
                 } catch (IOException e) {
-                    System.out.println("IOException getting transcript string.");
+                    e.printStackTrace();
                     mConnectState = 0;
                     break;
                 }
 
-//                byte b1, b2;
-//                byte [] raw_data = null;
-//                byte goodbye1, goodbye2, goodbye3;
-//                //just read in data here
-//                try {
-//                    byte hello1 = input.readByte(); // read hello of incoming message
-//                    byte hello2 = input.readByte(); // read hello of incoming message
-//                    byte hello3 = input.readByte(); // read hello of incoming message
-//
-//                    //make sure header is verified
-//                    if (hello1 != 0x01 || hello2 != 0x02 || hello3 != 0x03){
-//                        Log.d(TAG, "Socket hello header broken, restarting socket");
-//                        break;
-//                    }
-//                    //length of body
-//                    int body_len = input.readInt();
-//
-//                    //read in message id bytes
-//                    b1 = input.readByte();
-//                    b2 = input.readByte();
-//
-//                    //read in message body (if there is one)
-//                    if (body_len > 0){
-//                        raw_data = new byte[body_len];
-//                        input.readFully(raw_data, 0, body_len); // read the body
-//                    }
-//
-//                    goodbye1 = input.readByte(); // read goodbye of incoming message
-//                    goodbye2 = input.readByte(); // read goodbye of incoming message
-//                    goodbye3 = input.readByte(); // read goodbye of incoming message
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                    mConnectState = 0;
-//                    break;
-//                }
-//
-//                //make sure footer is verified
-//                if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
-//                    Log.d(TAG, "Socket stream - footer broken, restarting socket");
-//                    break;
-//                }
+                //make sure footer is verified
+                if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
+                    Log.d(TAG, "Socket stream - footer broken, restarting socket");
+                    break;
+                } else {
+                    Log.d(TAG, "RECEIVED GOODBYE");
+                }
 
-//                //then process the data
-//                if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //got ack response
-//                    gotAck = true;
+                //then process the data
+                //if ((b1 == ack_id[0]) && (b2 == ack_id[1])) { //got ack response
+                Log.d(TAG, "b1: " + b1);
+                Log.d(TAG, "b2: " + b2);
+
+                Log.d(TAG, "ftc0: " + final_transcript_cid[0]);
+                Log.d(TAG, "ftc1: " + final_transcript_cid[1]);
+                if ((b1 == final_transcript_cid[0]) && (b2 == final_transcript_cid[1])) { //got ack response
+                    Log.d(TAG, "final_transcript_cid received");
+                    String final_transcript = new String(raw_data, StandardCharsets.US_ASCII);
+                    final Intent intent = new Intent();
+                    intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, final_transcript);
+                    intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                    Log.d(TAG, "F. Transcript is: " + final_transcript);
+                } else if ((b1 == intermediate_transcript_cid[0]) && (b2 == intermediate_transcript_cid[1])) { //got ack response
+                    Log.d(TAG, "intermediate_transcript_cid received");
+                    String intermediate_transcript = new String(raw_data, StandardCharsets.US_ASCII);
+                    final Intent intent = new Intent();
+                    intent.putExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT, intermediate_transcript);
+                    intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                    Log.d(TAG, "I. Transcript is: " + intermediate_transcript);
+                }
 //                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
 //                    //got heart beat, respond with heart beat
 //                    clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
