@@ -278,10 +278,13 @@ def receive_transcriptions(transcript_q, responses, stream):
         #send transcription responses to our GUI
         #GUI_receive(transcript)
         #add transcript to queue
-        print("PUTTING INTO TRANSCRIPT Q")
-        transcript_q.put(transcript)
+        transcript_obj = dict()
+        transcript_obj["transcript"] = transcript
+        transcript_obj["is_final"] = False
 
         if result.is_final:
+            transcript_obj["is_final"] = True
+            transcript_q.put(transcript_obj)
             sys.stdout.write(GREEN)
             sys.stdout.write("\033[K")
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
@@ -292,6 +295,7 @@ def receive_transcriptions(transcript_q, responses, stream):
             #send transcription responses to our voice command
             find_commands(transcript, stream)
         else:
+            transcript_q.put(transcript_obj)
             sys.stdout.write(RED)
             sys.stdout.write("\033[K")
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\r")
@@ -300,8 +304,11 @@ def receive_transcriptions(transcript_q, responses, stream):
 
 def run_server(transcript_q):
 
-    def GUI_receive(transcript): #soon run_server will be a class, and this will be a method
-            asg_socket.send_string(transcript)
+    def GUI_receive_final_transcript(transcript): #soon run_server will be a class, and this will be a method
+            asg_socket.send_final_transcript(transcript)
+
+    def GUI_receive_intermediate_transcript(transcript): #soon run_server will be a class, and this will be a method
+            asg_socket.send_intermediate_transcript(transcript)
 
     #start a socket connection to the android smart glasses
     asg_socket = ASGSocket()
@@ -309,8 +316,12 @@ def run_server(transcript_q):
     while True: #main server loop
         try:
             #blocking call, only run event when we have a transript, in future this might just check and continue if there are other data streams to check from
-            transcript = transcript_q.get()
-            GUI_receive(transcript)
+            transcript_obj = transcript_q.get()
+            transcript = transcript_obj["transcript"]
+            if transcript_obj["is_final"] == True:
+                GUI_receive_final_transcript(transcript)
+            else:
+                GUI_receive_intermediate_transcript(transcript)
         except BrokenPipeError as e: #if error on socket at any point, restart connection and return to loop
             print("Connection broken, listening again")
             asg_socket.start_conn()
@@ -330,7 +341,7 @@ def main():
     while True:
         print("--- EHLHO WHARLD * {}".format(i))
         i += 1
-        time.sleep(1)
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()
