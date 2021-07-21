@@ -45,6 +45,7 @@ public class MainActivity extends Activity {
     private PieChart chart;
 
     //live life captions ui
+    ArrayList<String> transcriptsHolder = new ArrayList<>();
     TextView liveLifeCaptionsText;
 
     //metrics
@@ -260,10 +261,22 @@ public class MainActivity extends Activity {
                     setGuiMessage(message, facialEmotionMetricTextView, "");
                 }
             } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)){
-                if (intent.hasExtra(GlboxClientSocket.REGULAR_TRANSCRIPT)){
-                    String transcript = intent.getStringExtra(GlboxClientSocket.REGULAR_TRANSCRIPT);
+                if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)){
+                    String transcript = intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT);
                     System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
-                    liveLifeCaptionsText.setText(transcript);
+                    transcriptsHolder.add(transcript.trim());
+                    liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
+                    liveLifeCaptionsText.scrollTo(0, liveLifeCaptionsText.getBottom());
+                    final int scrollAmount = liveLifeCaptionsText.getLayout().getLineTop(liveLifeCaptionsText.getLineCount()) - liveLifeCaptionsText.getHeight();
+                    // if there is no need to scroll, scrollAmount will be <=0
+                    if (scrollAmount > 0)
+                        liveLifeCaptionsText.scrollTo(0, scrollAmount);
+                    else
+                        liveLifeCaptionsText.scrollTo(0, 0);
+                } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)){
+                    String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
+                    System.out.println("I. TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + intermediate_transcript);
+                    liveLifeCaptionsText.setText(getCurrentTranscriptScrollText() + "\n" + intermediate_transcript.trim());
                     liveLifeCaptionsText.scrollTo(0, liveLifeCaptionsText.getBottom());
                     final int scrollAmount = liveLifeCaptionsText.getLayout().getLineTop(liveLifeCaptionsText.getLineCount()) - liveLifeCaptionsText.getHeight();
                     // if there is no need to scroll, scrollAmount will be <=0
@@ -272,10 +285,17 @@ public class MainActivity extends Activity {
                     else
                         liveLifeCaptionsText.scrollTo(0, 0);
                 }
-
             }
         }
     };
+
+    private String getCurrentTranscriptScrollText(){
+        String current_transcript_scroll = "";
+        for (int i = 0; i < transcriptsHolder.size(); i++){
+            current_transcript_scroll = current_transcript_scroll + transcriptsHolder.get(i) + "\n" + "\n";
+        }
+        return current_transcript_scroll;
+    }
 
     //stuff for the charts
     private void setChartData() {

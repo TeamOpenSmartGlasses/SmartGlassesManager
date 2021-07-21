@@ -20,7 +20,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
-//singleton clientsocket class for connecting to ASP
+//singleton clientsocket class for connecting o ASP
 public class ASPClientSocket {
     //broadcast intent string
     public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_DATA";
