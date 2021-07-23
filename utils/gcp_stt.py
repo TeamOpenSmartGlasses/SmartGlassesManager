@@ -30,7 +30,7 @@ RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
-def run_google_stt(transcript_q, parse_cb):
+def run_google_stt(transcript_q, cmd_q, parse_cb):
     """start bidirectional streaming from microphone input to speech API"""
 
     #set gcloud API key
@@ -73,7 +73,7 @@ def run_google_stt(transcript_q, parse_cb):
             responses = client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            parse_cb(transcript_q, responses, stream)
+            parse_cb(transcript_q, cmd_q, responses, stream)
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time

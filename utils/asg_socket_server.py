@@ -21,6 +21,13 @@ class ASGSocket:
         #save command ids (CID)
         self.final_transcript_cid = bytearray([12, 2]) 
         self.intermediate_transcript_cid = bytearray([12, 1]) 
+        self.switch_mode_cid = bytearray([12, 3]) 
+        self.mode_ids = {
+                            "social" : bytearray([15, 0]),
+                            "llc" : bytearray([15, 1]), #live life captions
+                            "blank" : bytearray([15, 3]) #blank display
+                        }
+
 
     def start_conn(self):
         print("Attempting to start connection...")
@@ -32,6 +39,16 @@ class ASGSocket:
 
     def send_final_transcript(self, message_str):
         self.send_bytes(self.final_transcript_cid, bytes(message_str + "\n",'UTF-8'))
+
+    def send_intermediate_transcript(self, message_str):
+        self.send_bytes(self.intermediate_transcript_cid, bytes(message_str + "\n",'UTF-8'))
+
+    def send_switch_mode(self, mode):
+        """
+        mode (str): Name of the mode user wants to enter
+        """
+        mode_id = self.mode_ids[mode]
+        self.send_bytes(self.switch_mode_cid, mode_id) #send the mode_id to ASG and the ASG changes to that mode
 
     def send_intermediate_transcript(self, message_str):
         self.send_bytes(self.intermediate_transcript_cid, bytes(message_str + "\n",'UTF-8'))
