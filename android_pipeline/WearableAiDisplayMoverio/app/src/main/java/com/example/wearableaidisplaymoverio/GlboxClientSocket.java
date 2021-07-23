@@ -28,6 +28,9 @@ public class GlboxClientSocket {
 //    public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
     public final static String FINAL_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.FINAL_REGULAR_TRANSCRIPT";
     public final static String INTERMEDIATE_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.INTERMEDIATE_REGULAR_TRANSCRIPT";
+
+    public final static String COMMAND_SWITCH_MODE = "com.example.wearableaidisplaymoverio.COMMAND_SWITCH_MODE";
+    public final static String COMMAND_ARG = "com.example.wearableaidisplaymoverio.COMMAND_ARG";
 //    public final static String EYE_CONTACT_30_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_30";
 //    public final static String EYE_CONTACT_300_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_300";
 //    public final static String FACIAL_EMOTION_5_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_5";
@@ -47,6 +50,10 @@ public class GlboxClientSocket {
     //metrics
     static final byte [] intermediate_transcript_cid = {0xC, 0x01};
     static final byte [] final_transcript_cid = {0xC, 0x02};
+    static final byte [] switch_mode_cid = {0xC, 0x03};
+
+    static final byte [] social_mode_id = {0xF, 0x00};
+    static final byte [] llc_mode_id = {0xF, 0x01};
 //    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
 //    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
 //    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
@@ -400,6 +407,22 @@ public class GlboxClientSocket {
                     intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                     Log.d(TAG, "I. Transcript is: " + intermediate_transcript);
+                } else if ((b1 == switch_mode_cid[0]) && (b2 == switch_mode_cid[1])) { //got ack response
+                    Log.d(TAG, "switch mode found");
+                    Log.d(TAG, raw_data.toString());
+                    if ((raw_data[0] == social_mode_id[0]) && (raw_data[1] == social_mode_id[1])) { //got ack response
+                        Log.d(TAG, "SWITCHING TO SOCIAL MODE");
+                        final Intent intent = new Intent();
+                        intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
+                        intent.putExtra(GlboxClientSocket.COMMAND_ARG, "social");
+                        mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                    } else if ((raw_data[0] == llc_mode_id[0]) && (raw_data[1] == llc_mode_id[1])) { //got ack response
+                        Log.d(TAG, "SWITCHING TO LLC MODE");
+                        final Intent intent = new Intent();
+                        intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
+                        intent.putExtra(GlboxClientSocket.COMMAND_ARG, "llc");
+                        mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                    }
                 }
 //                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
 //                    //got heart beat, respond with heart beat

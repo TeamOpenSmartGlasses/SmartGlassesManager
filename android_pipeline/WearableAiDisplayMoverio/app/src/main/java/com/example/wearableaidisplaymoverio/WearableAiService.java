@@ -73,7 +73,8 @@ public class WearableAiService extends HiddenCameraService {
 
     //GLBOX socket
     GlboxClientSocket glbox_client_socket;
-    String glbox_address = "10.42.0.185";
+    //String glbox_address = "10.42.0.185";
+    String glbox_address = "192.168.43.188";
     String glbox_adv_key = "WearableAiCyborgGLBOX";
 
     //id of packet
@@ -102,12 +103,22 @@ public class WearableAiService extends HiddenCameraService {
         Thread adv_thread = new Thread(new ReceiveAdvThread());
         adv_thread.start();
 
+        //then start a thread to connect to the glbox
+        Thread glbox_thread = new Thread(new StartGlbox());
+        glbox_thread.start();
+
         mContext = this;
     }
 
     class ReceiveAdvThread extends Thread {
         public void run(){
             receiveUdpBroadcast();
+        }
+    }
+
+    class StartGlbox extends Thread {
+        public void run(){
+            glbox_starter();
         }
     }
 
@@ -149,7 +160,6 @@ public class WearableAiService extends HiddenCameraService {
 
     public void asp_starter(){
         startAspSocket();
-        startGlboxSocket();
         beginCamera();
     }
 
