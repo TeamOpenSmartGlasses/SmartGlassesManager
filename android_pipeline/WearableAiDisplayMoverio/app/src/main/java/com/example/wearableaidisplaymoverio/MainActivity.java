@@ -9,8 +9,11 @@ import android.os.Bundle;
 
 import android.app.Activity;
 import android.hardware.Camera;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -53,13 +56,16 @@ public class MainActivity extends Activity {
     String facial_emotion_30 = "";
     String facial_emotion_5 = "";
 
+    //save current mode
+    String curr_mode;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
         //print a bunch of stuff we can see in logcat
-        for(int i = 0; i < 20; i++){
+        for (int i = 0; i < 20; i++) {
             System.out.println("WEARABLEAI");
         }
 
@@ -73,23 +79,7 @@ public class MainActivity extends Activity {
         //keep the screen on throughout
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         //hint, use this to allow it to turn off:
-        setContentView(R.layout.activity_main);
 
-        //social mode ui setup
-        messageTextView = (TextView) findViewById(R.id.message);
-        eyeContactMetricTextView = (TextView) findViewById(R.id.eye_contact_metric);
-        eyeContact5MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_5);
-        eyeContact30MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_30);
-        facialEmotionMetricTextView = (TextView) findViewById(R.id.facial_emotion_metric);
-        facialEmotion5MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_5);
-        facialEmotion30MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_30);
-
-
-        //handle chart
-        chart = findViewById(R.id.stress_confidence_chart);
-        chart.setBackgroundColor(Color.BLACK);
-        moveOffScreen(); //not sure what this does really
-        setupChart();
 
         //create the WearableAI service if it isn't already running
         startService(new Intent(this, WearableAiService.class));
@@ -107,19 +97,72 @@ public class MainActivity extends Activity {
 //                takeAndSendPicture();
 //            }
 //        });
-        switchMode();
-        //live life captions mode gui setup
-        liveLifeCaptionsText = (TextView) findViewById(R.id.livelifecaptionstextview);
-        liveLifeCaptionsText.setMovementMethod(new ScrollingMovementMethod());
+        switchMode("llc");
     }
 
 
-    private void switchMode(){
+    private void switchMode(String mode) {
+        Log.d(TAG, "SWITCH MODE RUNNING WITH NEW MODE: " + mode);
+        switch (mode) {
+            case "social":
+                setupSocialIntelligenceUi();
+                break;
+            case "llc":
+                setupLlcUi();
+                break;
+        }
+        curr_mode = mode;
+    }
+
+    private void setupLlcUi() {
+        //live life captions mode gui setup
         setContentView(R.layout.live_life_caption_text);
+        registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
+        liveLifeCaptionsText = (TextView) findViewById(R.id.livelifecaptionstextview);
+        liveLifeCaptionsText.setMovementMethod(new ScrollingMovementMethod());
+        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
+
+        liveLifeCaptionsText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                scrollToBottom(liveLifeCaptionsText);
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        scrollToBottom(liveLifeCaptionsText);
+    }
+
+    private void setupSocialIntelligenceUi() {
+        //social mode ui setup
+        setContentView(R.layout.social_intelligence_activity);
+        messageTextView = (TextView) findViewById(R.id.message);
+        eyeContactMetricTextView = (TextView) findViewById(R.id.eye_contact_metric);
+        eyeContact5MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_5);
+        eyeContact30MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_30);
+        facialEmotionMetricTextView = (TextView) findViewById(R.id.facial_emotion_metric);
+        facialEmotion5MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_5);
+        facialEmotion30MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_30);
+
+        //handle chart
+        chart = findViewById(R.id.stress_confidence_chart);
+        chart.setBackgroundColor(Color.BLACK);
+        moveOffScreen(); //not sure what this does really
+        setupChart();
     }
 
     @Override
     public void onResume() {
+        Log.d(TAG, "onResumerunning");
         super.onResume();
 
         registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
@@ -127,6 +170,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onPause() {
+        Log.d(TAG, "onPause running");
         super.onPause();
 
         //unregister receiver
@@ -154,7 +198,8 @@ public class MainActivity extends Activity {
 
         return (result);
     }
-//
+
+    //
 //    private void initPreview(int width, int height) {
 //        if (camera != null && previewHolder.getSurface() != null) {
 //            try {
@@ -212,22 +257,25 @@ public class MainActivity extends Activity {
 //        }
 //    };
 //
-    public void setGuiMessage(String message, TextView tv, String postfix){
+    public void setGuiMessage(String message, TextView tv, String postfix) {
         //see if the message is generic or one of the metrics to be displayed
-       messageTextView.setText("");
-       tv.setText(message + postfix);
+        messageTextView.setText("");
+        tv.setText(message + postfix);
     }
 
-    public void receiveFacialEmotionMessage(String message){
+    public void receiveFacialEmotionMessage(String message) {
         //see if the message is generic or one of the metrics to be displayed
         messageTextView.setText("");
         facialEmotionMetricTextView.setText(message);
     }
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
+
+        Log.d("WearableAI", "makeComputUpdateIntentFilter");
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
         intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+        intentFilter.addAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
         return intentFilter;
     }
 
@@ -235,8 +283,8 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            messageTextView.setText("");
-            if (ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
+            Log.d(TAG, "GOT ACTION: " + action);
+            if (curr_mode == "social" && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
                 if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
                     setGuiMessage(message, eyeContact5MetricTextView, "%");
@@ -248,50 +296,47 @@ public class MainActivity extends Activity {
                 } else if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE);
                     setGuiMessage(message, eyeContactMetricTextView, "%");
-                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE)){
+                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE);
                     setGuiMessage(message, facialEmotion5MetricTextView, "");
                     facial_emotion_5 = message;
-                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE)){
+                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE);
                     setGuiMessage(message, facialEmotion30MetricTextView, "");
                     facial_emotion_30 = message;
-                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE)){
+                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE);
                     setGuiMessage(message, facialEmotionMetricTextView, "");
                 }
-            } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)){
-                if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)){
+            } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)) {
+                if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)) {
                     String transcript = intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT);
                     System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
+                    System.out.println("curr_mode: " + curr_mode);
                     transcriptsHolder.add(transcript.trim());
-                    liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
-                    liveLifeCaptionsText.scrollTo(0, liveLifeCaptionsText.getBottom());
-                    final int scrollAmount = liveLifeCaptionsText.getLayout().getLineTop(liveLifeCaptionsText.getLineCount()) - liveLifeCaptionsText.getHeight();
-                    // if there is no need to scroll, scrollAmount will be <=0
-                    if (scrollAmount > 0)
-                        liveLifeCaptionsText.scrollTo(0, scrollAmount);
-                    else
-                        liveLifeCaptionsText.scrollTo(0, 0);
-                } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)){
+                    if (curr_mode.equals("llc")) {
+                        System.out.println("TEXTSET");
+                        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
+                        //scrollToBottom(liveLifeCaptionsText);
+                    }
+                } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
                     String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
                     System.out.println("I. TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + intermediate_transcript);
-                    liveLifeCaptionsText.setText(getCurrentTranscriptScrollText() + "\n" + intermediate_transcript.trim());
-                    liveLifeCaptionsText.scrollTo(0, liveLifeCaptionsText.getBottom());
-                    final int scrollAmount = liveLifeCaptionsText.getLayout().getLineTop(liveLifeCaptionsText.getLineCount()) - liveLifeCaptionsText.getHeight();
-                    // if there is no need to scroll, scrollAmount will be <=0
-                    if (scrollAmount > 0)
-                        liveLifeCaptionsText.scrollTo(0, scrollAmount);
-                    else
-                        liveLifeCaptionsText.scrollTo(0, 0);
+                    if (curr_mode.equals("llc")) {
+                        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText() + "\n" + intermediate_transcript.trim());
+                        //scrollToBottom(liveLifeCaptionsText);
+                    }
                 }
+            } else if (GlboxClientSocket.COMMAND_SWITCH_MODE.equals(action)) {
+                switchMode(intent.getStringExtra(GlboxClientSocket.COMMAND_ARG));
             }
         }
     };
 
-    private String getCurrentTranscriptScrollText(){
+
+    private String getCurrentTranscriptScrollText() {
         String current_transcript_scroll = "";
-        for (int i = 0; i < transcriptsHolder.size(); i++){
+        for (int i = 0; i < transcriptsHolder.size(); i++) {
             current_transcript_scroll = current_transcript_scroll + transcriptsHolder.get(i) + "\n" + "\n";
         }
         return current_transcript_scroll;
@@ -305,7 +350,7 @@ public class MainActivity extends Activity {
 
         //temporary method of deducing stress
         float input = (max - eye_contact_30);
-        if ((facial_emotion_30 == "Happy") || (facial_emotion_5 == "Happy")){
+        if ((facial_emotion_30 == "Happy") || (facial_emotion_5 == "Happy")) {
             input = Math.max(0, input - 20);
         }
 
@@ -342,7 +387,7 @@ public class MainActivity extends Activity {
 
         int height = displayMetrics.heightPixels;
 
-        int offset = (int)(height * 0.65); /* percent to move */
+        int offset = (int) (height * 0.65); /* percent to move */
 
         RelativeLayout.LayoutParams rlParams =
                 (RelativeLayout.LayoutParams) chart.getLayoutParams();
@@ -350,7 +395,7 @@ public class MainActivity extends Activity {
         chart.setLayoutParams(rlParams);
     }
 
-    private void setupChart(){
+    private void setupChart() {
         chart.setUsePercentValues(false);
         chart.getDescription().setEnabled(false);
 
@@ -394,6 +439,28 @@ public class MainActivity extends Activity {
         chart.setEntryLabelColor(Color.BLACK);
         //chart.setEntryLabelTypeface(tfRegular);
         chart.setEntryLabelTextSize(19f);
+    }
+
+    private void scrollToBottom(TextView tv) {
+        tv.post(new Runnable() {
+            @Override
+            public void run() {
+                int lc = tv.getLineCount();
+                Log.d(TAG, "LCLCLC is: " + lc);
+                if (lc == 0){
+                    return;
+                }
+                Log.d(TAG, "getLineCount is : " + tv.getLineCount());
+                tv.scrollTo(0, tv.getBottom());
+                int scrollAmount = tv.getLayout().getLineTop(lc) - tv.getHeight();
+                // if there is no need to scroll, scrollAmount will be <=0
+                if (scrollAmount > 0)
+                    tv.scrollTo(0, scrollAmount);
+                else
+                    tv.scrollTo(0, 0);
+            }
+        });
+
     }
 
 
