@@ -22,7 +22,7 @@ from fuzzysearch import find_near_matches
 import sys
 import time
 
-from queue import Queue
+from queue import Queue, Empty
 from threading import Thread
 
 from utils.gcp_stt import run_google_stt
@@ -56,7 +56,7 @@ with open(wake_words_file) as f:
 print("Active wake words: {}".format(wake_words))
 
 #define voice commands functions
-def add_wake_word(transcript, args):
+def add_wake_word(transcript, args, cmd_q):
     try: 
         wake_word = args
         wake_words.append(args) #add it to our locally loaded object
@@ -68,7 +68,7 @@ def add_wake_word(transcript, args):
         print(e)
         return False
 
-def save_memory(transcript, args):
+def save_memory(transcript, args, cmd_q):
     try: 
         ctime = time.time()
         memory = args
@@ -80,7 +80,24 @@ def save_memory(transcript, args):
         print(e)
         return False
 
-def ask_wolfram(transcript, args):
+def switch_mode(transcript, args, cmd_q):
+    print("RUNNING SWITCH MODE")
+    modes = {"social" : ["social", "social mode"],
+            "llc" : ["LLC", "live life captions"],
+            "blank" : ["blank mode", "blank screen"]
+            }
+
+    transcript_l = transcript.lower()
+    for k in modes:
+        for voice_command in modes[k]:
+            matches = find_near_matches(voice_command, transcript_l, max_l_dist=1)
+            if len(matches) > 0:
+                print("USER COMMAND: SWITCH TO MODE: {}".format(k))
+                cmd_q.put(("switch mode", k))
+                break
+    return 1
+
+def ask_wolfram(transcript, args, cmd_q):
     print("ASKING WOLFRAM: {}".format(args))
     result, convo_id = wolfram_conversational_query(args)
     print("WOLFRAM RESPONSE:")
@@ -123,9 +140,10 @@ voice_commands = {
         "save memory" : {"function" : save_memory, "voice_sounds" : ["save memory", "save speech", "mxt cache", "mxt remember", "remember speech"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "ask wolfram" : {"function" : ask_wolfram, "fail_function" : wolfram_failed, "voice_sounds" : ["Wolfram", "Wolfram Alpha", "ask Wolfram"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
+        "switch mode"  : {"function" : switch_mode, "voice_sounds" : ["switch mode"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         }
 
-def find_commands(transcript, stream):
+def find_commands(transcript, stream, cmd_q):
     """
     Search through a transcript for wake words and predefined voice commands - strict mode commands first (not natural language)
 
@@ -196,7 +214,8 @@ def find_commands(transcript, stream):
         voice_command_func = voice_commands[command_name]["function"]
 
         if voice_command_func is not None:
-            res = voice_command_func(transcript, command_args)
+            #run the voice command
+            res = voice_command_func(transcript, command_args, cmd_q)
             if type(res) == int and res == 1:
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 playsound(command_success_sound)
@@ -219,7 +238,7 @@ def get_current_time():
 
     return int(round(time.time() * 1000))
 
-def receive_transcriptions(transcript_q, responses, stream):
+def receive_transcriptions(transcript_q, cmd_q, responses, stream):
     """Iterates through STT server responses.
 
     First sends them to whatever GUI we are using (ASG, send over a socket).
@@ -293,7 +312,7 @@ def receive_transcriptions(transcript_q, responses, stream):
             stream.last_transcript_was_final = True
 
             #send transcription responses to our voice command
-            find_commands(transcript, stream)
+            find_commands(transcript, stream, cmd_q)
         else:
             transcript_q.put(transcript_obj)
             sys.stdout.write(RED)
@@ -302,7 +321,7 @@ def receive_transcriptions(transcript_q, responses, stream):
 
             stream.last_transcript_was_final = False
 
-def run_server(transcript_q):
+def run_server(transcript_q, cmd_q):
 
     def GUI_receive_final_transcript(transcript): #soon run_server will be a class, and this will be a method
             asg_socket.send_final_transcript(transcript)
@@ -322,15 +341,24 @@ def run_server(transcript_q):
                 GUI_receive_final_transcript(transcript)
             else:
                 GUI_receive_intermediate_transcript(transcript)
+            try:
+                cmd, args = cmd_q.get(block = False)
+                print("CMD RECEIVEEEDDDD************************************** {} {}".format(cmd, args))
+                #need to make a switch block here for different commands and their associated function, but for now it's just switch mode - cayden
+                asg_socket.send_switch_mode(args)
+                print("SENT SWITCH MODE")
+            except Empty as e:
+                pass
         except BrokenPipeError as e: #if error on socket at any point, restart connection and return to loop
             print("Connection broken, listening again")
             asg_socket.start_conn()
 
 def main():
     # Create the shared queue and launch both threads
-    transcript_q = Queue()
-    server_thread = Thread(target = run_server, args = (transcript_q, ))
-    stt_thread = Thread(target = run_google_stt, args = (transcript_q, receive_transcriptions))
+    transcript_q = Queue() #to share raw transcriptions
+    cmd_q = Queue() #to share parsed commands (currently voice command is running in run_google_stt)
+    server_thread = Thread(target = run_server, args = (transcript_q, cmd_q))
+    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, receive_transcriptions))
     server_thread.start()
     #run speech to text, pass every result to the callback function passed in
     #in the future if we use different STT libs, we can just change that right here
