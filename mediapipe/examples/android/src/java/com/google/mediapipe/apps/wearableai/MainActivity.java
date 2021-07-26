@@ -78,10 +78,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.InterfaceAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Enumeration;
 
 //lots of repeat imports...
 import android.graphics.Bitmap;
@@ -1005,27 +1011,122 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    InetAddress getBroadcastAddress() throws IOException {
-        WifiManager wifi = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-        DhcpInfo dhcp = wifi.getDhcpInfo();
-        // handle null somehow
+    public InetAddress getBroadcast(InetAddress inetAddr) {
 
-        int broadcast = (dhcp.ipAddress & dhcp.netmask) | ~dhcp.netmask;
-        byte[] quads = new byte[4];
-        for (int k = 0; k < 4; k++)
-            quads[k] = (byte) ((broadcast >> k * 8) & 0xFF);
-        return InetAddress.getByAddress(quads);
+        NetworkInterface temp;
+        InetAddress iAddr = null;
+        try {
+            temp = NetworkInterface.getByInetAddress(inetAddr);
+            List<InterfaceAddress> addresses = temp.getInterfaceAddresses();
+
+            for (InterfaceAddress inetAddress: addresses)
+
+                iAddr = inetAddress.getBroadcast();
+            Log.d(TAG, "iAddr=" + iAddr);
+            return iAddr;
+
+        } catch (SocketException e) {
+
+            e.printStackTrace();
+            Log.d(TAG, "getBroadcast" + e.getMessage());
+        }
+        return null;
     }
 
+    public boolean isHotspotOn(){
+        WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        Method[] wmMethods = wifi.getClass().getDeclaredMethods();
+        for (Method method: wmMethods) {
+            if (method.getName().equals("isWifiApEnabled")) {
+
+                try {
+                    if ((Boolean) method.invoke(wifi)) {
+//                        isInetConnOn = true;
+//                        iNetMode = 2;
+                        Log.d(TAG, "WifiTether ON");
+                        return true;
+                    } else {
+                        Log.d(TAG, "WifiTether OFF");
+                        return false;
+                    }
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+        return false;
+    }
+
+    public InetAddress getIpAddress() {
+      InetAddress inetAddress = null;
+      InetAddress myAddr = null;
+
+      try {
+        for (Enumeration<NetworkInterface> networkInterface = NetworkInterface
+          .getNetworkInterfaces(); networkInterface.hasMoreElements();) {
+
+          NetworkInterface singleInterface = networkInterface.nextElement();
+
+          for (Enumeration<InetAddress> IpAddresses = singleInterface.getInetAddresses(); IpAddresses
+            .hasMoreElements();) {
+            inetAddress = IpAddresses.nextElement();
+
+            if (!inetAddress.isLoopbackAddress() && (singleInterface.getDisplayName()
+                .contains("wlan0") ||
+                singleInterface.getDisplayName().contains("eth0") ||
+                singleInterface.getDisplayName().contains("ap0"))) {
+
+              myAddr = inetAddress;
+            }
+          }
+        }
+
+      } catch (SocketException ex) {
+        Log.e(TAG, ex.toString());
+      }
+      return myAddr;
+    }
+
+    public InetAddress getBroadcastAddress(InetAddress inetAddr) {
+
+        NetworkInterface temp;
+        InetAddress iAddr = null;
+        try {
+            temp = NetworkInterface.getByInetAddress(inetAddr);
+            List<InterfaceAddress> addresses = temp.getInterfaceAddresses();
+
+            for (InterfaceAddress inetAddress: addresses)
+
+                iAddr = inetAddress.getBroadcast();
+            Log.d(TAG, "iAddr=" + iAddr);
+            return iAddr;
+
+        } catch (SocketException e) {
+
+            e.printStackTrace();
+            Log.d(TAG, "getBroadcast" + e.getMessage());
+        }
+        return null;
+    }
+    
     public void sendBroadcast(String messageStr){
+        Log.d(TAG, "SENDING BROADCAST");
         try {
             byte[] sendData = messageStr.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, getBroadcastAddress(), PORT_NUM);
+            InetAddress my_ip = getIpAddress();
+            InetAddress bca_ip = getBroadcastAddress(my_ip);
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, bca_ip, PORT_NUM);
             adv_socket.send(sendPacket);
-            //System.out.println(getClass().getName() + "Broadcast packet sent to: " + getBroadcastAddress().getHostAddress());
         } catch (IOException e){
+            Log.d(TAG, "FAILED TO SEND BROADCAST");
             return ;
         }
+        Log.d(TAG, "ATTEMPTED TO SEND BROADCAST");
     }
 
     public void openSocket() {
