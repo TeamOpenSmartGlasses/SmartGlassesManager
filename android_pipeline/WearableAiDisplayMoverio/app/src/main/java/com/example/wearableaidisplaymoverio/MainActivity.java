@@ -112,12 +112,12 @@ public class MainActivity extends Activity {
                 break;
         }
         curr_mode = mode;
+        //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
     }
 
     private void setupLlcUi() {
         //live life captions mode gui setup
         setContentView(R.layout.live_life_caption_text);
-        registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
         liveLifeCaptionsText = (TextView) findViewById(R.id.livelifecaptionstextview);
         liveLifeCaptionsText.setMovementMethod(new ScrollingMovementMethod());
         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             Log.d(TAG, "GOT ACTION: " + action);
-            if (curr_mode == "social" && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
+            if (curr_mode.equals("social") && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
                 if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
                     setGuiMessage(message, eyeContact5MetricTextView, "%");
