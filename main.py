@@ -155,7 +155,10 @@ def find_commands(transcript, stream, cmd_q):
     wake_words_found = [] #list of fuzzysearch Match objects
     transcript_l = transcript.lower()
     for option in wake_words:
-        wake_words_found.extend(find_near_matches(option, transcript_l, max_l_dist=1))
+        try:
+            wake_words_found.extend(find_near_matches(option, transcript_l, max_l_dist=1))
+        except ValueError as e:
+            pass
 
     #if we found a wake word, tell the user
     wake_word = None
@@ -334,15 +337,21 @@ def run_server(transcript_q, cmd_q):
     asg_socket.start_conn()
     while True: #main server loop
         try:
-            #blocking call, only run event when we have a transript, in future this might just check and continue if there are other data streams to check from
-            transcript_obj = transcript_q.get()
-            transcript = transcript_obj["transcript"]
-            if transcript_obj["is_final"] == True:
-                GUI_receive_final_transcript(transcript)
-            else:
-                GUI_receive_intermediate_transcript(transcript)
+            #check and continue if there are other data streams to check from
+            #check for transcripts
             try:
-                cmd, args = cmd_q.get(block = False)
+                transcript_obj = transcript_q.get(timeout=0.1)
+                if transcript_obj:
+                    transcript = transcript_obj["transcript"]
+                    if transcript_obj["is_final"] == True:
+                        GUI_receive_final_transcript(transcript)
+                    else:
+                        GUI_receive_intermediate_transcript(transcript)
+            except Empty as e:
+                pass
+            #check for commands
+            try:
+                cmd, args = cmd_q.get(timeout=0.1)
                 print("CMD RECEIVEEEDDDD************************************** {} {}".format(cmd, args))
                 #need to make a switch block here for different commands and their associated function, but for now it's just switch mode - cayden
                 asg_socket.send_switch_mode(args)
