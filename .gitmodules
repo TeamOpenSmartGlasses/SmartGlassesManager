@@ -4,6 +4,3 @@
 [submodule "android_pipeline/WearableAiDisplayMoverio/android-hidden-camera"]
 	path = android_smart_glasses/smart_glasses_app/android-hidden-camera
 	url = git@github.com:CaydenPierce/android-hidden-camera.git
-[submodule "android_pipeline/mediapipe"]
-	path = android_smart_phone/mediapipe
-	url = https://github.com/CaydenPierce/mediapipeprivate
