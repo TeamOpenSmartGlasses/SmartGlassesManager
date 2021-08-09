@@ -102,6 +102,8 @@ def ask_wolfram(transcript, args, cmd_q):
     result, convo_id = wolfram_conversational_query(args)
     print("WOLFRAM RESPONSE:")
     print(result)
+    if result is None:
+        return 0
     return result
 
 def wolfram_failed():
@@ -125,7 +127,6 @@ def wolfram_conversational_query(query):
         parsed_res = response.json()
         if "error" in parsed_res:
             return None, None
-        print(parsed_res)
         return parsed_res["result"], parsed_res["conversationID"]
     else:
         return None, None
@@ -135,15 +136,15 @@ voice_commands = {
         "exit" : {"function" : None, "voice_sounds" : ["exit loop", "quit loop"]}, #end the program loop running (voice rec continues to run)
         "start" : {"function" : None, "voice_sounds" : ["start loop", "begin loop"]}, #start the program loop running
         "stop listening" : {"function" : None, "voice_sounds" : ["stop listening", "go deaf"]}, #end the program loop running (voice rec continues to run)
-        "shell" : {"function" : None, "voice_sounds" : ["CLI", "shell", "bash", "zee shell", "zsh", "z shell"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
+        "shell" : {"function" : None, "voice_sounds" : ["CLI", "computer shell", "zee shell", "z shell"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "add wake word" : {"function" : add_wake_word, "voice_sounds" : ["add wake word", "new wake word"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         "save memory" : {"function" : save_memory, "voice_sounds" : ["save memory", "save speech", "mxt cache", "mxt remember", "remember speech"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
-        "ask wolfram" : {"function" : ask_wolfram, "fail_function" : wolfram_failed, "voice_sounds" : ["Wolfram", "Wolfram Alpha", "ask Wolfram"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
-        "go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
+        "ask wolfram" : {"function" : ask_wolfram, "fail_function" : None, "voice_sounds" : ["Wolfram Alpha", "ask Wolfram"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
+        #"go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         "switch mode"  : {"function" : switch_mode, "voice_sounds" : ["switch mode"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         }
 
-def find_commands(transcript, stream, cmd_q):
+def find_commands(transcript, stream, cmd_q, obj_q):
     """
     Search through a transcript for wake words and predefined voice commands - strict mode commands first (not natural language)
 
@@ -221,16 +222,20 @@ def find_commands(transcript, stream, cmd_q):
             res = voice_command_func(transcript, command_args, cmd_q)
             if type(res) == int and res == 1:
                 print("COMMAND COMPLETED SUCCESSFULLY")
+                obj_q.put({"type" : "cmd_success", "data" : True})
                 playsound(command_success_sound)
             elif type(res) == str:
                 print("COMMAND COMPLETED SUCCESSFULLY")
+                print("COMMAND OUTPUT SAVING TO QUEUE")
+                obj_q.put({"type" : "cmd_response", "data" : res})
                 print("NOW SAYING: {}".format(res))
                 subprocess.call(['say',res])
             else:
-                if "fail_function" in voice_commands[command_name]:
+                if voice_commands[command_name]["fail_function"] is not None:
                     voice_commands[command_name]["fail_function"]()
                 else:
                     playsound(generic_failure_sound)
+                    obj_q.put({"type" : "cmd_success", "data" : False})
                     print("COMMAND FAILED")
 
     #start listening again after we have parsed command, run command, and given user response with TTS
@@ -241,7 +246,7 @@ def get_current_time():
 
     return int(round(time.time() * 1000))
 
-def receive_transcriptions(transcript_q, cmd_q, responses, stream):
+def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream):
     """Iterates through STT server responses.
 
     First sends them to whatever GUI we are using (ASG, send over a socket).
@@ -295,8 +300,6 @@ def receive_transcriptions(transcript_q, cmd_q, responses, stream):
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
 
-        print("--- " + transcript)
-
         #send transcription responses to our GUI
         #GUI_receive(transcript)
         #add transcript to queue
@@ -315,7 +318,7 @@ def receive_transcriptions(transcript_q, cmd_q, responses, stream):
             stream.last_transcript_was_final = True
 
             #send transcription responses to our voice command
-            find_commands(transcript, stream, cmd_q)
+            find_commands(transcript, stream, cmd_q, obj_q)
         else:
             transcript_q.put(transcript_obj)
             sys.stdout.write(RED)
@@ -324,13 +327,17 @@ def receive_transcriptions(transcript_q, cmd_q, responses, stream):
 
             stream.last_transcript_was_final = False
 
-def run_server(transcript_q, cmd_q):
+def run_server(transcript_q, cmd_q, obj_q):
 
     def GUI_receive_final_transcript(transcript): #soon run_server will be a class, and this will be a method
             asg_socket.send_final_transcript(transcript)
 
     def GUI_receive_intermediate_transcript(transcript): #soon run_server will be a class, and this will be a method
-            asg_socket.send_intermediate_transcript(transcript)
+        #pass
+        asg_socket.send_intermediate_transcript(transcript)
+
+    def GUI_receive_command_output(output): #soon run_server will be a class, and this will be a method
+            asg_socket.send_command_output(output)
 
     #start a socket connection to the android smart glasses
     asg_socket = ASGSocket()
@@ -340,7 +347,7 @@ def run_server(transcript_q, cmd_q):
             #check and continue if there are other data streams to check from
             #check for transcripts
             try:
-                transcript_obj = transcript_q.get(timeout=0.1)
+                transcript_obj = transcript_q.get(timeout=0.001)
                 if transcript_obj:
                     transcript = transcript_obj["transcript"]
                     if transcript_obj["is_final"] == True:
@@ -351,13 +358,29 @@ def run_server(transcript_q, cmd_q):
                 pass
             #check for commands
             try:
-                cmd, args = cmd_q.get(timeout=0.1)
+                cmd, args = cmd_q.get(timeout=0.001)
                 print("CMD RECEIVEEEDDDD************************************** {} {}".format(cmd, args))
                 #need to make a switch block here for different commands and their associated function, but for now it's just switch mode - cayden
                 asg_socket.send_switch_mode(args)
                 print("SENT SWITCH MODE")
             except Empty as e:
                 pass
+            #check for command responses
+            try:
+                obj = obj_q.get(timeout=0.001)
+                if obj["type"] == "cmd_response":
+                    command_output = obj["data"]
+                    print("CMD RESPONSE RECEIVEEEDDDD************************************** {}".format(command_output))
+                    GUI_receive_command_output(command_output)
+                    print("SENT COMMAND OUTPUT ")
+                elif obj["type"] == "cmd_success":
+                    if obj["data"]:
+                        GUI_receive_command_output("COMMAND SUCCESS")
+                    else:
+                        GUI_receive_command_output("COMMAND FAILED")
+            except Empty as e:
+                pass
+
         except BrokenPipeError as e: #if error on socket at any point, restart connection and return to loop
             print("Connection broken, listening again")
             asg_socket.start_conn()
@@ -366,8 +389,9 @@ def main():
     # Create the shared queue and launch both threads
     transcript_q = Queue() #to share raw transcriptions
     cmd_q = Queue() #to share parsed commands (currently voice command is running in run_google_stt)
-    server_thread = Thread(target = run_server, args = (transcript_q, cmd_q))
-    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, receive_transcriptions))
+    obj_q = Queue() #generic object queue to pass anything, of type: {"type" : "transcript" : "data" : "hello world"} or similiar
+    server_thread = Thread(target = run_server, args = (transcript_q, cmd_q, obj_q))
+    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, obj_q, receive_transcriptions))
     server_thread.start()
     #run speech to text, pass every result to the callback function passed in
     #in the future if we use different STT libs, we can just change that right here
@@ -379,6 +403,10 @@ def main():
         print("--- EHLHO WHARLD * {}".format(i))
         i += 1
         time.sleep(10)
+    server_thread.kill()
+    stt_thread.kill()
+    server_thread.join()
+    stt_thread.join()
 
 if __name__ == "__main__":
     main()

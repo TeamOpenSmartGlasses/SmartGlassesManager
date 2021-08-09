@@ -22,6 +22,7 @@ class ASGSocket:
         self.final_transcript_cid = bytearray([12, 2]) 
         self.intermediate_transcript_cid = bytearray([12, 1]) 
         self.switch_mode_cid = bytearray([12, 3]) 
+        self.command_output_cid = bytearray([12, 4]) 
         self.mode_ids = {
                             "social" : bytearray([15, 0]),
                             "llc" : bytearray([15, 1]), #live life captions
@@ -38,10 +39,14 @@ class ASGSocket:
         return self.conn, self.addr
 
     def send_final_transcript(self, message_str):
+        print("SENDING FINAL")
         self.send_bytes(self.final_transcript_cid, bytes(message_str + "\n",'UTF-8'))
 
     def send_intermediate_transcript(self, message_str):
         self.send_bytes(self.intermediate_transcript_cid, bytes(message_str + "\n",'UTF-8'))
+
+    def send_command_output(self, message_str):
+        self.send_bytes(self.command_output_cid, bytes(message_str + "\n",'UTF-8'))
 
     def send_switch_mode(self, mode):
         """
@@ -75,8 +80,6 @@ class ASGSocket:
         goodbye = bytearray([3, 2, 1]);
         #combine those into a payload
         payload_packet = hello + message_len + msg_id + body + goodbye
-        print("PAYLOAD")
-        print(payload_packet)
         self.conn.send(payload_packet)
 
 if __name__ == "__main__":

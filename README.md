@@ -1,10 +1,12 @@
+# Live Life Captions
+
 ## TODO
 
 x - clean code so it's modular
-- provide interface that always pushes the latest live captions
-- make server in python that will connect to the Android Vuzix WearableAI server
-- System.out log the closed captions in vuzix blade
-- make GUI in vuzix blade to display the captions
+x - provide interface that always pushes the latest live captions
+x - make server in python that will connect to the Android Vuzix WearableAI server
+x - System.out log the closed captions in vuzix blade
+x - make GUI in vuzix blade to display the captions
 - get running on pocket worn SBC with bluetooth headset microphone and speaker
 - add VAD so we don't waste our time, bandwidth, and money transcriving non-speech
     - Google webRTC VAD is one of the best and well supported for python 4 : https://github.com/wiseman/py-webrtcvad
@@ -19,7 +21,8 @@ x - clean code so it's modular
 
 1. Clone this repo
 2. Make a virtualenv
-3. Install requirements (`pip3 install -r requirements.txt`)
-4. Make file `./wolfram_api_key.txt` and paste your WolframOne App Id in there
-5. Setup GCP to allow Speech to Text, make credentials for it, and place your JSON credentials at `./utils/creds.json`
-6. Run `main.py`
+3. `sudo apt install portaudio19-dev python3-pyaudio`
+4. Install requirements (`pip3 install -r requirements.txt`)
+5. Make file `./wolfram_api_key.txt` and paste your WolframOne App Id in there
+6. Setup GCP to allow Speech to Text, make credentials for it, and place your JSON credentials at `./utils/creds.json`
+7. Run `main.py`
