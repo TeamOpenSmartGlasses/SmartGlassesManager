@@ -1,104 +1,81 @@
-# Wearable Intelligence Enhancement 
+Working on mediapipe Android now:
 
-## PLAN
+-pose tracknig
+-hand tracking
+-iris tracking
+-face detection
+-face landmark detection
+(much of this is in the mediapipe Holistic example)
 
-AI is getting really, really good at interpreting sensor data. There seems to be a ton of networks that people make, and they work really well, but there are not many applications of those networks.
+What we are adding/doing:
 
-### 1 - Use
+-voice recognition - deep speech (easy to get going on android)
+    -live display showing transcript of the current converstation
+        -bluetooth ring to scroll back in the conversation if you missed a point/word, or forget where you were at
+        -combine with face rec to make speech bubble appear when looking at someone
+    -pipe this into some NLP/text classification (like https://www.tensorflow.org/lite/models/text_classification/overview) to understand emotinn/tone behind what is being said (and pair with facial emotion, body language (from pose), etc).
+-scene recognition (Places365 is pretty insane, see https://github.com/CSAILVision/places365 and here for a tf port: https://github.com/GKalliatakis/Keras-VGG16-places365)
+-face recognition + personal face database (mediapipe has face detection, but not recognition, need to use face_detection in mediapipe to crop ROI and feed to face rec net that is ported into mediapipe)
+    -search linkedin/twitter/facebook for people/names/faces, live display overlay of the conversation partner's posts, information, occupation, etc
+-object recognition (already in mediapipe, but kinda shit. Start with mediapipe's for now and find something better in tf that can be brought into mediapipe)
+-emotion recognition
+    -from face landmakrs
+    -from hand movements
+    -from pose
+    -from voice sounds
+    -from voice content (speech)
+    -combine all the above together
+-gender recognition
+    -useful for memory extension tags
+    -useful for higher level network training
+-race recognition
+    -useful for memory extension tags
+    -useful for higher level network training
+-age recognition 
+    -useful on its own - I want to know how old someone is
+    -useful for memory extension tags
+    -useful for higher level network training
+-raw data: weather, time, gps, accelerometer, raw audio, raw video, temperature, magnetometer raw, gyroscope raw, barometer raw 
 
-Epson Moverio 200 BT running an assortment of AI models on an Android phone. Overload vision of machine intellgience extracting insights about the environment we are in and providing us with a live stream of information taht is immediatly useful to us. Examples include: lie detection, emotion detection, stress and confidence responses, comfort and discomfort responses, personal memory expansion (memorize everything and recall it naturally).
+Use cases:
 
-## 2 - Learning
-My plan is to take many, many networks and run them on a wearable computers sensor stream. As well, we should take information that isn't a direct sensor reading, but easy to pull in (i.e. time of day, time of year, weather, light levels, etc. etc.). Make a giant output vector with as much environment/contextual information as possible, and train another deep NN on that, on the high level input vector... this could make possible many high level metric classification that currently is not possible when pulling it out form the low level data. This approaches somewhat Kurzweils theory of mind and how our cognition is models on models.
+-enhanced emotional intelligence
+-enhanced understanding and retention of information
+    -live display showing transcript of the current converstation
+-wearable lie detector
+-wearable emotion detector
+    -stress vs. confidence
+    -comfort vs. discomfort
+-extended memory
+    -all memories are tagged with high level information about the scene
+    -recall memory using high level tags - e.g. "we were in the park downtown about two weeks ago, it ws in the afternoon and I was with John and Steve, there were people there doing tai chi" - instant flash back to the raw data of that moment, read the transcipt of the conversation, etc.
+    
+# HOW TO USE
 
-VIDEO
+The system requires three things:
 
-Object Recognitin - > 
-Dense Object Recogniton - > TensorMask -> https://github.com/facebookresearch/detectron2/tree/master/projects/TensorMask
-Pose estimation - DensePose - https://github.com/facebookresearch/detectron2/tree/master/projects/DensePose
+ASP - Android Smart Phone (Tested: OnePlus 7T)
+ASG - Android Smart Glasses (Tested: Vuzix Blade, Epson Moverio)
+GLBOX - Gnu/Linux Single-Board-Computer/Laptop (Tested: Lenovo Legion Y540 w/ Ubuntu 20) 
 
-3D object mesh estimation: Mesh R-CNN -> https://github.com/facebookresearch/meshrcnn
-
-Image segmentation: PointRend -> https://github.com/facebookresearch/detectron2/tree/master/projects/PointRend
-
-NOT ACTUALLY OPEN, DON't USE, THEY OWN ALL COPIES OF THE PROGRAM -> Face landmark detection : OpenFace -> https://github.com/TadasBaltrusaitis/OpenFace
-
-Room classification: https://github.com/bartkowiaktomasz/microsoft-cntk-room-classifier
-
-Gender classification: https://github.com/arunponnusamy/gender-detection-keras
-Gender + race classification: https://github.com/wondonghyeon/face-classification
-Speech from video and audio: https://github.com/astorfi/lip-reading-deeplearning 
-Speech from video: https://github.com/afourast/deep_lip_reading
-
-DeepFace -> EMotino, age, reace, and gender from image: https://github.com/serengil/deepface
-
-Heart rate from video: https://github.com/erdewit/heartwave
-Heart rate from video: https://github.com/habom2310/Heart-rate-measurement-using-camera
-
-AUDIO
-
-Gender recogntion: https://github.com/SuperKogito/Voice-based-gender-recognition
-VOice recognition: DeepSpeech : https://github.com/mozilla/DeepSpeech
-
-OTHER
-
-Encodings/vectorization in general: https://github.com/vector-ai/vectorhub
-Other data to use: IMU, GPS, time (of day, day of week, time of year, seperate), weather, temperature, barometer, 
-
-INTERESTING CHAINS
-
--voice recognition engine -> Language encoding network (BERT)
--
-
-WHAT IS THE OUTPUT?
-
--lie detection
--danger detection
--"awkwardness"?
--emotion detection - better than face emotion detection
-    -in individuals (via facial recognition)
-    -in a scene (general mood of the group of people, often called the "environment" when reffering to the social environment)
-
-PLAN
-
-1. Get a few pre-trained nets doing inference on images or audio chunks
-x -Deepspeech
-x-object recognition
-x-face information
-x-pose estimation
--vectorize 
-    -image with vector hub
-    -audioo with vector hub
-    -make one class to wrap vectorhub funcs? Or just do in main...
--room detection - MS CLNK
-    -install CNTK
-    -clone : https://github.com/TreeLLi/CNTK-Hotel-pictures-classificator
-    -get running in main.py
-
-2. Get them all running on the same data stream
-
-3. Run mobile (laptop with USB camera).
-4.  -run in cloud with GPUs?
-5. -run on ANdroid somehow?
-6. -run on smart glasses? WHich ones? - not vuzix
- 
-7. Train network on them.
-
-
-
-## Instructions
-RUNNING TENSORMASK
-
+1. Turn on the WiFi hotspot on the ASP.
+2. Connect the GLBOX and ASG to the ASP WiFi hotspot.
+3. Start the life_live_captions Python server on the GLBOX.
 ```
-cd detectron2
-python projects/TensorMask/train_net.py 0 --config-file projects/TensorMask/configs/tensormask_R_50_FPN_6x.yaml --eval-only MODEL.WEIGHTS projects/TensorMask/models/model_final_higher_ap.pkl
+cd life_cc
+source venv/bin/activate #activate virtual environment
+python3 main.py
 ```
+5. Start the Mobile Compute app on the ASP.
+6. Start the smart glasses app on the ASG.
 
-# Install
+## Demo
 
-There's a lot of pretrained models here that you'll need to download. If one is missing, go find it on Github and make a README.md PR.
+Install `scrcpy`: https://github.com/Genymobile/scrcpy
+Run `scrcpy`
 
-Detectron2 prebuilt models, to be saved in detectron2/models: https://github.com/facebookresearch/detectron2/blob/master/MODEL_ZOO.md
+## Abbreviations
 
-# Ideas
--when walking down street, read every sign and look it up on google maps with current GPS coordinates
+ASP - Android Smart Phone  
+ASG - Android Smart Glasses  
+GLBOX - Gnu/Linux 'Single Board Computer'/Laptop  

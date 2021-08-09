@@ -1,1 +1,0 @@
-print(__file__)
