@@ -1,0 +1,118 @@
+# MediaPipe subgraph to calculate iris landmarks and eye contour landmarks for # a single eye. (GPU input, and inference is executed on GPU.)
+#
+# It is required that "iris_landmark.tflite" is available at
+# "mediapipe/modules/iris_landmark/iris_landmark.tflite"
+# path during execution.
+#
+# EXAMPLE:
+#   node {
+#     calculator: "FaceEmotionRecGpu"
+#     input_stream: "IMAGE:image"
+#     input_stream: "FACE_RECT:face_rect"
+#     output_stream: "FACE_EMOTION:face_emotion"
+#   }
+#
+#   FACE_EMOTION is a 1d array of floats. Output from the model encoded as:
+#
+#   ['Angry', 'Disgusted', 'Fearful', 'Happy', 'Sad', 'Surprised', 'Neutral']
+#
+#
+
+type: "FaceEmotionRecGpu"
+
+# GPU buffer. (GpuBuffer)
+input_stream: "IMAGE:image"
+# ROI (region of interest) within the given image where the face is located.
+# (NormalizedRect)
+input_stream: "FACE_RECT:face_rect"
+
+output_stream: "FACE_EMOTION:face_emotion"
+
+output_stream: "face_in_img"
+
+node {
+  calculator: "ImageCroppingCalculator"
+  input_stream: "IMAGE_GPU:image"
+  input_stream: "NORM_RECT:face_rect"
+  output_stream: "IMAGE_GPU:cropped_image"
+
+  options: {
+    [mediapipe.ImageCroppingCalculatorOptions.ext] {
+      border_mode: BORDER_REPLICATE
+    }
+  }
+}
+
+#scale down to the size needed for our model
+node: {
+  calculator: "ImageTransformationCalculator"
+  input_stream: "IMAGE_GPU:cropped_image"
+  output_stream: "IMAGE_GPU:cropped_scaled_image_gpu"
+  options: {
+    [mediapipe.ImageTransformationCalculatorOptions.ext] {
+      output_width: 48 
+      output_height: 48
+      scale_mode: FIT
+    }
+  }
+}
+
+#convert to CPU (because the facial emotion net can't run on gpu apparently, it throws the error "Read buffer does not match write buffer size." if run on GPU)
+node {
+    calculator: "GpuBufferToImageFrameCalculator"
+    input_stream: "cropped_scaled_image_gpu"
+    output_stream: "cropped_scaled_image_cpu"
+}
+
+#convert to grayscale
+node{
+    calculator: "ColorConvertCalculator"
+    input_stream : "RGB_IN:cropped_scaled_image_cpu"
+    output_stream : "GRAY_OUT:cropped_scaled_grayscale_image_cpu"
+}
+
+#output the cropped, resized, grayscale image
+node { 
+    calculator: "ImageFrameToGpuBufferCalculator"
+    input_stream: "cropped_scaled_grayscale_image_cpu"
+    output_stream: "face_in_img"
+}
+
+#convert grayscale image cpu to tensorflowlite tensor
+node {
+  calculator: "TfLiteConverterCalculator"
+  input_stream: "IMAGE:cropped_scaled_grayscale_image_cpu"
+  output_stream: "TENSORS:image_tensor"
+#output_stream: "TENSORS:face_emotion"
+  options: {
+    [mediapipe.TfLiteConverterCalculatorOptions.ext] {
+       use_custom_normalization: true,
+       custom_div: 1, #hack to not normalize at all
+       custom_sub: 0 #hack to not normalize at all
+    }
+  }
+}
+
+# Runs a TensorFlow Lite model on GPU that takes an image tensor and outputs a
+# vector of tensors representing, for instance, detection boxes/keypoints and
+# scores.
+node {
+  calculator: "TfLiteInferenceCalculator"
+  input_stream: "TENSORS:image_tensor"
+  output_stream: "TENSORS:output_tensors"
+  options: {
+    [mediapipe.TfLiteInferenceCalculatorOptions.ext] {
+#model_path: "mediapipe/modules/facial_emotion_recognition/facial_emotion_rec_model_susantabiswas.tflite"
+#model_path: "mediapipe/modules/facial_emotion_recognition/face_emotion.tflite"
+    model_path: "mediapipe/modules/facial_emotion_recognition/face_emotion.tflite"
+    }
+  }
+}
+
+###Convert output to simple float vector
+node {
+   calculator: "TfLiteTensorsToFloatsCalculator"
+  input_stream: "TENSORS:output_tensors"
+  output_stream: "FLOATS:face_emotion"
+}
+
