@@ -1,56 +1,23 @@
-Working on mediapipe Android now:
+# Wearable Intelligence System
 
--pose tracknig
--hand tracking
--iris tracking
--face detection
--face landmark detection
-(much of this is in the mediapipe Holistic example)
+The Wearable Intelligence System is personal intelligence amplification tool. 
 
-What we are adding/doing:
+The Wearable Intelligence System has been built from the ground up to be a software framework for developing cognitive extension systems on the the coming wave of consumer ready Android smart glasses. 
 
--voice recognition - deep speech (easy to get going on android)
-    -live display showing transcript of the current converstation
-        -bluetooth ring to scroll back in the conversation if you missed a point/word, or forget where you were at
-        -combine with face rec to make speech bubble appear when looking at someone
-    -pipe this into some NLP/text classification (like https://www.tensorflow.org/lite/models/text_classification/overview) to understand emotinn/tone behind what is being said (and pair with facial emotion, body language (from pose), etc).
--scene recognition (Places365 is pretty insane, see https://github.com/CSAILVision/places365 and here for a tf port: https://github.com/GKalliatakis/Keras-VGG16-places365)
--face recognition + personal face database (mediapipe has face detection, but not recognition, need to use face_detection in mediapipe to crop ROI and feed to face rec net that is ported into mediapipe)
-    -search linkedin/twitter/facebook for people/names/faces, live display overlay of the conversation partner's posts, information, occupation, etc
--object recognition (already in mediapipe, but kinda shit. Start with mediapipe's for now and find something better in tf that can be brought into mediapipe)
--emotion recognition
-    -from face landmakrs
-    -from hand movements
-    -from pose
-    -from voice sounds
-    -from voice content (speech)
-    -combine all the above together
--gender recognition
-    -useful for memory extension tags
-    -useful for higher level network training
--race recognition
-    -useful for memory extension tags
-    -useful for higher level network training
--age recognition 
-    -useful on its own - I want to know how old someone is
-    -useful for memory extension tags
-    -useful for higher level network training
--raw data: weather, time, gps, accelerometer, raw audio, raw video, temperature, magnetometer raw, gyroscope raw, barometer raw 
+Alongside the technical foundation, the current system features a number of functional intelligence tools:
 
-Use cases:
+- social/emotional intelligence amplification system
+- memory expansion tools
+- conversational intelligence enhancement
+- command and natural language voice control
 
--enhanced emotional intelligence
--enhanced understanding and retention of information
-    -live display showing transcript of the current converstation
--wearable lie detector
--wearable emotion detector
-    -stress vs. confidence
-    -comfort vs. discomfort
--extended memory
-    -all memories are tagged with high level information about the scene
-    -recall memory using high level tags - e.g. "we were in the park downtown about two weeks ago, it ws in the afternoon and I was with John and Steve, there were people there doing tai chi" - instant flash back to the raw data of that moment, read the transcipt of the conversation, etc.
-    
-# HOW TO USE
+## Technical Description
+
+This system provides the foundation for a wearable computing suite consisting of connected Android Smart Glasses (ASG), Android Smart Phone (ASP) and a Gnu/Linux box (GLBOX).
+
+The ASG acts as wearable sensors (camera, microphone, etc.) and wearable display (waveguides, birdbath, etc.). The ASP is running a MediaPipe machine learning pipeline on wearable POV video. The GLBOX handles transcription, voice command, and programmatic control of the ASG from within a Linux development environment.
+
+# How To Use
 
 The system requires three things:
 
@@ -58,24 +25,80 @@ ASP - Android Smart Phone (Tested: OnePlus 7T)
 ASG - Android Smart Glasses (Tested: Vuzix Blade, Epson Moverio)
 GLBOX - Gnu/Linux Single-Board-Computer/Laptop (Tested: Lenovo Legion Y540 w/ Ubuntu 20) 
 
+Please see the "Subcomponents" section for more details on how to complete each step.
+
 1. Turn on the WiFi hotspot on the ASP.
 2. Connect the GLBOX and ASG to the ASP WiFi hotspot.
 3. Start the life_live_captions Python server on the GLBOX.
-```
-cd life_cc
-source venv/bin/activate #activate virtual environment
-python3 main.py
-```
 5. Start the Mobile Compute app on the ASP.
 6. Start the smart glasses app on the ASG.
 
+## System Components  
+
+### GNU/Linux Box
+
+1. Follow *Setup* in gnu_linux_box/glbox_main_app/README.md
+2. Activate virtualenv and launch app
+
+```
+cd gnu_linux_box
+source venv/bin/activate #activate virtualenv
+python3 main.py
+```
+
+The GLBOX (Gnu/Linux Box (a computer running a Gnu/Linux distribution operation system)) is part of the the Wearable Intelligence System that handles transcription, running commands, and saving memories.
+
+Live Linux programmatic control of Android smart glasses running the Wearable Intelligence System app.
+
+Run this on any laptop or single-board-computer running Gnu/Linux and see the main repo:  for instructions on how to get the system running on the accompanying required Android Smart Glasses (ASG) and Android Smart Phone (ASP).
+
+### Android Smart Glasses
+
+1. Open android_smart_glasses/smart_glasses_app Android app in Android studio.
+2. Plug in Android Smart Glasses and build + flash to device using Android Studio.
+
+The latest system is developed on a Vuzix Blade 1.5.
+
+Running on another pair of Android AR/MR glasses could work without issue or porting could happen in 48 hours if the hardware is supplied.
+
+### Android Smart Phone
+
+1. Follow commands here to setup MediaPipe: <https://google.github.io/mediapipe/getting_started/install.html#installing-on-debian-and-ubuntu>
+2. 
+Run the following commands to build and run the app for the ASP:
+```
+cd android_smart_phone/mediapipe
+./build_single_android.sh mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai
+```
+3. Run the android_smart_phone/mobile_compute_app on any modern-ish Android smart phone (a good CPU/GPU is reccomended for MediaPipe graph) that can make a WiFi hotspot.
+
+## TODO
+
+x - clean code so it's modular
+x - provide interface that always pushes the latest live captions
+x - make server in python that will connect to the Android Vuzix WearableAI server
+x - System.out log the closed captions in vuzix blade
+x - make GUI in vuzix blade to display the captions
+- get running on pocket worn SBC with bluetooth headset microphone and speaker
+- add VAD so we don't waste our time, bandwidth, and money transcriving non-speech
+    - Google webRTC VAD is one of the best and well supported for python 4 : https://github.com/wiseman/py-webrtcvad
+
+## Improve
+-get good open source TTS running
+    -coqui tts works great but can we get it running in a script real time on the GPU?
+    -other faster option?
+    
 ## Demo
 
-Install `scrcpy`: https://github.com/Genymobile/scrcpy
-Run `scrcpy`
+1. Install `scrcpy`: https://github.com/Genymobile/scrcpy
+2. Run `scrcpy`
 
 ## Abbreviations
 
 ASP - Android Smart Phone  
 ASG - Android Smart Glasses  
 GLBOX - Gnu/Linux 'Single Board Computer'/Laptop  
+
+## Authors
+
+Cayden Pierce - <caydenpierce.com>, <emexwearables.com>
