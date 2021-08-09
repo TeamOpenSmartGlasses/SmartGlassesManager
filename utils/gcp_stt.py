@@ -25,12 +25,30 @@ from utils.ResumableMicrophoneStream import ResumableMicrophoneStream
 SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
+import webrtcvad
+vad = webrtcvad.Vad(3)
+vad_time = 30 #ms
+vad_num = 320 # (vad_time * SAMPLE_RATE) / 1000
+
 #terminal printing colors
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
-def run_google_stt(transcript_q, cmd_q, parse_cb):
+def try_transcribe(content):
+    #vad_frame = bytes(bytearray(content)[-vad_num:])
+    vad_frame = content[-vad_num:]
+    valid_vad = webrtcvad.valid_rate_and_frame_length(SAMPLE_RATE, len(vad_frame))
+
+    if valid_vad:
+        try:
+            speech_detected = vad.is_speech(vad_frame, SAMPLE_RATE)
+        except Exception as e:
+            print(e)
+    return speech.StreamingRecognizeRequest(audio_content=content)
+
+
+def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb):
     """start bidirectional streaming from microphone input to speech API"""
 
     #set gcloud API key
@@ -66,14 +84,14 @@ def run_google_stt(transcript_q, cmd_q, parse_cb):
             audio_generator = stream.generator()
 
             requests = (
-                speech.StreamingRecognizeRequest(audio_content=content)
+                try_transcribe(content)
                 for content in audio_generator
             )
 
             responses = client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            parse_cb(transcript_q, cmd_q, responses, stream)
+            parse_cb(transcript_q, cmd_q, obj_q, responses, stream)
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
@@ -83,6 +101,6 @@ def run_google_stt(transcript_q, cmd_q, parse_cb):
             stream.audio_input = []
             stream.restart_counter = stream.restart_counter + 1
 
-            if not stream.last_transcript_was_final:
-                sys.stdout.write("\n")
+#            if not stream.last_transcript_was_final:
+#                sys.stdout.write("\n")
             stream.new_stream = True
