@@ -87,4 +87,4 @@ GLBOX - GNU/Linux 'Single Board Computer'/Laptop
 
 ## Authors
 
-Cayden Pierce - [emexwearables.com](emexwearables.com)
+Cayden Pierce - [emexwearables.com](https://emexwearables.com)
