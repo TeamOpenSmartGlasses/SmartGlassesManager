@@ -1,15 +1,19 @@
+** THIS DOC IS A WIP **
+
+
 mediapipe issues - wrong timestamp
     -move mediapipe interface to background service so the timestamp is never lost
         -yes, could be solved by fixing the class to persist timestamp, but no point because we are moving to a service anyway for other reasons
         
-mobile communication - can't connect without wifi
+
+SOLVED - mobile communication - can't connect without wifi
     -try to run network extension app and proxy on vuzix blade to connect vuzix directly to mobile compute
     -use Onplus7T hotspot and find IP on wearnet
         -code right now is asking WIFI for our IP address - need to figure out what it is on local hotspot (maybe there is a function in android to get IP address regardless of source)
     -use S7 as router
     -only demo at home for now
 
-mobile compute can't run without application window open
+IMPORTANT - mobile compute can't run without application window open
     -switch to always on background service
     
 Vuzix battery issues - one hour battery not long enough
@@ -20,3 +24,32 @@ Vuzix battery issues - one hour battery not long enough
             -grab intermittent frames and send with current socket system
             -if possible, also record video at 1080p 24fps on the device
             -test speed of transer - maybe send at 720p/640/480/less than original to mobile compute
+
+
+
+## TODO
+
+#### Low level
+- get running on pocket worn SBC with bluetooth headset microphone and speaker
+- add VAD (voice activity detection) to voice command so we don't waste our time, bandwidth, and money transcribing non-speech
+    - Google webRTC VAD is one of the best and well supported for python 4 : https://github.com/wiseman/py-webrtcvad
+- multiple people running through WearableAI mediapipe graph
+- stream video + audio from ASG to GLBOX
+
+#### High level
+- add "mountain bike mode"
+- life live captions
+    - live NLP
+- personal person database on GLBOX
+    - facial recognition 
+- advance memory extension system on GLBOX
+    - video + audio saving
+    - natural language recall
+    - memory database
+
+## Improve
+-get good open source TTS running
+    -coqui tts works great but can we get it running in a script real time on the GPU?
+    -other faster option?
+    
+
