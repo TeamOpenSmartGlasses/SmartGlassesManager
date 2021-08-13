@@ -15,17 +15,17 @@ The Wearable Intelligence System is:
  
 ## Technical Description
 
-This system provides the foundation for a wearable computing suite consisting of connected Android Smart Glasses (ASG), Android Smart Phone (ASP) and a Gnu/Linux box (GLBOX).
+This system provides the foundation for a wearable computing suite consisting of connected Android Smart Glasses (ASG), Android Smart Phone (ASP) and a GNU/Linux box (GLBOX).
 
-The ASG acts as wearable sensors (camera, microphone, etc.) and wearable display (waveguides, birdbath, etc.). The ASP is running a MediaPipe machine learning pipeline on wearable POV video. The GLBOX handles transcription, voice command, and programmatic control of the ASG from within a Linux development environment.
+The ASG acts as wearable sensors (camera, microphone, etc.) and wearable display (waveguides, birdbath, etc.). The ASP is running a server which the ASG connects to and streams POV camera video over Wifi. The ASP also is running a MediaPipe machine learning pipeline on incoming sensory data. The GLBOX also connects to the ASG using a TCP socket and it handles transcription, voice command, and programmatic control of the ASG from within a Linux development environment.
 
 # How To Use
 
 The system *currently* requires three pieces of hardware:
 
-ASP - Android Smart Phone (Tested: OnePlus 7T)
-ASG - Android Smart Glasses (Tested: Vuzix Blade, Epson Moverio)
-GLBOX - Gnu/Linux Single-Board-Computer/Laptop (Tested: Lenovo Legion Y540 w/ Ubuntu 20) 
+- ASP - Android Smart Phone (Tested: OnePlus 7T)
+- ASG - Android Smart Glasses (Tested: Vuzix Blade, Epson Moverio)
+- GLBOX - GNU/Linux Single-Board-Computer/Laptop (Tested: Lenovo Legion Y540 w/ Ubuntu 20) 
 
 #### **Please see the "Subcomponents" section for more details on how to complete each step.**
 
@@ -48,11 +48,11 @@ source venv/bin/activate #activate virtualenv
 python3 main.py
 ```
 
-The GLBOX (Gnu/Linux Box (a computer running a Gnu/Linux distribution operation system)) is part of the the Wearable Intelligence System that handles transcription, running commands, and saving memories.
+The GLBOX (GNU/Linux Box (a computer running a GNU/Linux distribution operation system)) is part of the the Wearable Intelligence System that handles transcription, running commands, and saving memories.
 
 Live Linux programmatic control of Android smart glasses running the Wearable Intelligence System app.
 
-Run this on any laptop or single-board-computer running Gnu/Linux.
+Run this on any laptop or single-board-computer running GNU/Linux.
 
 ### Android Smart Glasses
 
@@ -83,8 +83,8 @@ cd android_smart_phone/mediapipe
 
 ASP - Android Smart Phone  
 ASG - Android Smart Glasses  
-GLBOX - Gnu/Linux 'Single Board Computer'/Laptop  
+GLBOX - GNU/Linux 'Single Board Computer'/Laptop  
 
 ## Authors
 
-Cayden Pierce - <caydenpierce.com> <emexwearables.com>
+Cayden Pierce - [emexwearables.com](emexwearables.com)
