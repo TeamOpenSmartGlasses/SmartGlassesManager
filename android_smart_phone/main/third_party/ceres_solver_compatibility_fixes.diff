@@ -1,0 +1,14 @@
+diff --git a/bazel/ceres.bzl b/bazel/ceres.bzl
+index ce170b2..bb5aa82 100644
+--- a/bazel/ceres.bzl
++++ b/bazel/ceres.bzl
+@@ -204,7 +204,7 @@ def ceres_library(name,
+         ],
+         visibility = ["//visibility:public"],
+         deps = [
+-            "@com_gitlab_libeigen_eigen//:eigen",
+-            "@com_github_google_glog//:glog",
++            "@eigen_archive//:eigen",  # from TensorFlow
++            "@com_github_glog_glog//:glog",
+         ],
+     )

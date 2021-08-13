@@ -1,16 +1,18 @@
 # Wearable Intelligence System
 
-The Wearable Intelligence System is personal intelligence amplification tool. 
+The Wearable Intelligence System is a personal intelligence amplification tool. This project and codebase is currently in stage alpha and is most valuable to developers, super users, and individuals in the XR and wearables industry. 
 
-The Wearable Intelligence System has been built from the ground up to be a software framework for developing cognitive extension systems on the the coming wave of consumer ready Android smart glasses. 
+The Wearable Intelligence System is:
 
-Alongside the technical foundation, the current system features a number of functional intelligence tools:
+1. A fully functional, wearable, intelligence amplification system featuring a number of intelligence tools:
 
 - social/emotional intelligence amplification system
 - memory expansion tools
 - conversational intelligence enhancement
-- command and natural language voice control
+- voice control with command and natural language interface
 
+2. A software framework for developing cognitive extension systems on the the coming wave of consumer ready Android smart glasses. 
+ 
 ## Technical Description
 
 This system provides the foundation for a wearable computing suite consisting of connected Android Smart Glasses (ASG), Android Smart Phone (ASP) and a Gnu/Linux box (GLBOX).
@@ -19,13 +21,13 @@ The ASG acts as wearable sensors (camera, microphone, etc.) and wearable display
 
 # How To Use
 
-The system requires three things:
+The system *currently* requires three pieces of hardware:
 
 ASP - Android Smart Phone (Tested: OnePlus 7T)
 ASG - Android Smart Glasses (Tested: Vuzix Blade, Epson Moverio)
 GLBOX - Gnu/Linux Single-Board-Computer/Laptop (Tested: Lenovo Legion Y540 w/ Ubuntu 20) 
 
-Please see the "Subcomponents" section for more details on how to complete each step.
+#### **Please see the "Subcomponents" section for more details on how to complete each step.**
 
 1. Turn on the WiFi hotspot on the ASP.
 2. Connect the GLBOX and ASG to the ASP WiFi hotspot.
@@ -50,7 +52,7 @@ The GLBOX (Gnu/Linux Box (a computer running a Gnu/Linux distribution operation 
 
 Live Linux programmatic control of Android smart glasses running the Wearable Intelligence System app.
 
-Run this on any laptop or single-board-computer running Gnu/Linux and see the main repo:  for instructions on how to get the system running on the accompanying required Android Smart Glasses (ASG) and Android Smart Phone (ASP).
+Run this on any laptop or single-board-computer running Gnu/Linux.
 
 ### Android Smart Glasses
 
@@ -72,22 +74,6 @@ cd android_smart_phone/mediapipe
 ```
 3. Run the android_smart_phone/mobile_compute_app on any modern-ish Android smart phone (a good CPU/GPU is reccomended for MediaPipe graph) that can make a WiFi hotspot.
 
-## TODO
-
-x - clean code so it's modular
-x - provide interface that always pushes the latest live captions
-x - make server in python that will connect to the Android Vuzix WearableAI server
-x - System.out log the closed captions in vuzix blade
-x - make GUI in vuzix blade to display the captions
-- get running on pocket worn SBC with bluetooth headset microphone and speaker
-- add VAD so we don't waste our time, bandwidth, and money transcriving non-speech
-    - Google webRTC VAD is one of the best and well supported for python 4 : https://github.com/wiseman/py-webrtcvad
-
-## Improve
--get good open source TTS running
-    -coqui tts works great but can we get it running in a script real time on the GPU?
-    -other faster option?
-    
 ## Demo
 
 1. Install `scrcpy`: https://github.com/Genymobile/scrcpy
@@ -101,4 +87,4 @@ GLBOX - Gnu/Linux 'Single Board Computer'/Laptop
 
 ## Authors
 
-Cayden Pierce - <caydenpierce.com>, <emexwearables.com>
+Cayden Pierce - <caydenpierce.com> <emexwearables.com>
