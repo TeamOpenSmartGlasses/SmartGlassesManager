@@ -6,21 +6,21 @@ __pycache__
 *mp3
 *mp4
 *.png
-data/
+# data/
 
 # models
 models/
 *.pkl
 *.h5
 *.scorer
-*.tflite
+#*.tflite
 *.pbmm
 *.pth
 *.pt
 *.tar
 
 #other
-data/
+# data/
 
 #ANDROID
 # Built application files
