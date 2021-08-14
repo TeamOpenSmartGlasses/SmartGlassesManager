@@ -10,6 +10,9 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.hardware.Camera;
 import android.text.Editable;
+import android.text.Html;
+import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
@@ -48,7 +51,7 @@ public class MainActivity extends Activity {
     private PieChart chart;
 
     //live life captions ui
-    ArrayList<String> transcriptsHolder = new ArrayList<>();
+    ArrayList<Spanned> textHolder = new ArrayList<>();
     TextView liveLifeCaptionsText;
 
     //metrics
@@ -166,6 +169,10 @@ public class MainActivity extends Activity {
         super.onResume();
 
         registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
+
+        if (curr_mode == "llc"){
+            scrollToBottom(liveLifeCaptionsText);
+        }
     }
 
     @Override
@@ -313,18 +320,23 @@ public class MainActivity extends Activity {
                     String transcript = intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT);
                     System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
                     System.out.println("curr_mode: " + curr_mode);
-                    transcriptsHolder.add(transcript.trim());
+                    textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
                     if (curr_mode.equals("llc")) {
                         System.out.println("TEXTSET");
                         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
-                        //scrollToBottom(liveLifeCaptionsText);
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
                     String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
                     System.out.println("I. TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + intermediate_transcript);
                     if (curr_mode.equals("llc")) {
-                        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText() + "\n" + intermediate_transcript.trim());
-                        //scrollToBottom(liveLifeCaptionsText);
+                        liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
+                    }
+                } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
+                    String command_response_text = intent.getStringExtra(GlboxClientSocket.COMMAND_RESPONSE);
+                    System.out.println("COMMAND_RESPONSE RECEIVED IN MAIN ACTIVITY: " + command_response_text);
+                    textHolder.add(Html.fromHtml("<p><font color='#EE0000'>" + command_response_text.trim() + "</font></p>"));
+                    if (curr_mode.equals("llc")) {
+                        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                     }
                 }
             } else if (GlboxClientSocket.COMMAND_SWITCH_MODE.equals(action)) {
@@ -334,10 +346,15 @@ public class MainActivity extends Activity {
     };
 
 
-    private String getCurrentTranscriptScrollText() {
-        String current_transcript_scroll = "";
-        for (int i = 0; i < transcriptsHolder.size(); i++) {
-            current_transcript_scroll = current_transcript_scroll + transcriptsHolder.get(i) + "\n" + "\n";
+    private Spanned getCurrentTranscriptScrollText() {
+        Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
+        for (int i = 0; i < textHolder.size(); i++) {
+            //current_transcript_scroll = current_transcript_scroll + textHolder.get(i) + "\n" + "\n";
+            if (i == 0) {
+                current_transcript_scroll = textHolder.get(i);
+            } else {
+                current_transcript_scroll = (Spanned) TextUtils.concat(current_transcript_scroll, textHolder.get(i));
+            }
         }
         return current_transcript_scroll;
     }

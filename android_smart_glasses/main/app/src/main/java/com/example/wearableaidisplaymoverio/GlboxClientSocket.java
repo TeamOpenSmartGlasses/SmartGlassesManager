@@ -28,9 +28,11 @@ public class GlboxClientSocket {
 //    public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
     public final static String FINAL_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.FINAL_REGULAR_TRANSCRIPT";
     public final static String INTERMEDIATE_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.INTERMEDIATE_REGULAR_TRANSCRIPT";
+    public final static String COMMAND_RESPONSE = "com.example.wearableaidisplaymoverio.COMMAND_RESPONSE";
 
     public final static String COMMAND_SWITCH_MODE = "com.example.wearableaidisplaymoverio.COMMAND_SWITCH_MODE";
     public final static String COMMAND_ARG = "com.example.wearableaidisplaymoverio.COMMAND_ARG";
+    //public final static String COMMAND_RESPONSE_TEXT = "com.example.wearableaidisplaymoverio.COMMAND_RESPONSE_TEXT";
 //    public final static String EYE_CONTACT_30_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_30";
 //    public final static String EYE_CONTACT_300_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_300";
 //    public final static String FACIAL_EMOTION_5_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_5";
@@ -51,6 +53,7 @@ public class GlboxClientSocket {
     static final byte [] intermediate_transcript_cid = {0xC, 0x01};
     static final byte [] final_transcript_cid = {0xC, 0x02};
     static final byte [] switch_mode_cid = {0xC, 0x03};
+    static final byte [] command_response_cid = {0xC, 0x04};
 
     static final byte [] social_mode_id = {0xF, 0x00};
     static final byte [] llc_mode_id = {0xF, 0x01};
@@ -423,7 +426,15 @@ public class GlboxClientSocket {
                         intent.putExtra(GlboxClientSocket.COMMAND_ARG, "llc");
                         mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                     }
+                } else if ((b1 == command_response_cid[0]) && (b2 == command_response_cid[1])) { //got command response
+                    Log.d(TAG, "command_response_cid received");
+                    String response_string = new String(raw_data, StandardCharsets.US_ASCII);
+                    final Intent intent = new Intent();
+                    intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, response_string);
+                    intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 }
+
 //                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
 //                    //got heart beat, respond with heart beat
 //                    clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
