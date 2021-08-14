@@ -8,6 +8,10 @@ You can either use the officially released APK (on Github or <emexwearables.com>
 ./build_single_android.sh mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai
 ```
 
+### Wearable AI Pipeline
+
+[Google MediaPipe](https://github.com/google/mediapipe) is way to define intellgience graphs ("perception pipelines") which take input, do intelligence processing (by creating flow of data between machine learning models and hard coded functions known as "Calculators"). This app is built on the Google MediaPipe even though ./main/ is not currently tracking Google MediaPipe repo. In the future, if we want to pull in new work from the main MediaPipe repository, we will set things up again to track Google Mediapipe.
+
 ### Note
 
 There may be some issues with hard links to Android Studio executables in some Bazel configs in main/ app. We are working on making everything easy for dev setup, but if you get weird errors on running the above command, make an issue on Github or reach out to cayden@emexwearables.com
