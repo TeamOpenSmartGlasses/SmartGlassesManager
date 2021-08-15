@@ -113,6 +113,9 @@ public class MainActivity extends Activity {
             case "llc":
                 setupLlcUi();
                 break;
+            case "blank":
+                blankUi();
+                break;
         }
         curr_mode = mode;
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
@@ -161,6 +164,11 @@ public class MainActivity extends Activity {
         chart.setBackgroundColor(Color.BLACK);
         moveOffScreen(); //not sure what this does really
         setupChart();
+    }
+
+
+    private void blankUi() {
+        setContentView(R.layout.blank_screen);
     }
 
     @Override
