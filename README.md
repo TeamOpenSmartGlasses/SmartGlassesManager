@@ -27,11 +27,18 @@ The system *currently* requires three pieces of hardware:
 - ASG - Android Smart Glasses (Tested: Vuzix Blade, Epson Moverio)
 - GLBOX - GNU/Linux Single-Board-Computer/Laptop (Tested: Lenovo Legion Y540 w/ Ubuntu 20) 
 
+## Install / Setup
+
 #### **Please see the "Subcomponents" section for more details on how to complete each step.**
 
-1. Turn on the WiFi hotspot on the ASP.
-2. Connect the GLBOX and ASG to the ASP WiFi hotspot.
-3. Start the life_live_captions Python server on the GLBOX.
+1. Clone this repo:
+```
+git clone git@github.com:emexlabs/WearableIntelligenceSystem.git #clone main repo
+git submodule update --init --recursive #clone submodules
+```
+2. Turn on the WiFi hotspot on the ASP.
+3. Connect the GLBOX and ASG to the ASP WiFi hotspot.
+4. Start the life_live_captions Python server on the GLBOX.
 5. Start the Mobile Compute app on the ASP.
 6. Start the smart glasses app on the ASG.
 
