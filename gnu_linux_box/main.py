@@ -28,6 +28,13 @@ from threading import Thread
 from utils.gcp_stt import run_google_stt
 from utils.asg_socket_server import ASGSocket
 
+from utils.english_pronouns_list import english_pronouns
+
+import spacy
+
+# NLP - Load English tokenizer, tagger, parser, NER and word vectors
+nlp = spacy.load("en_core_web_trf")
+
 #config files
 wake_words_file = "./wakewords.txt"
 voice_memories_file = "./data/voice_memories.csv"
@@ -84,7 +91,7 @@ def switch_mode(transcript, args, cmd_q):
     print("RUNNING SWITCH MODE")
     modes = {"social" : ["social", "social mode"],
             "llc" : ["LLC", "live life captions"],
-            "blank" : ["blank mode", "blank screen"]
+            "blank" : ["blank mode", "blank screen", "blank", "Blanc"]
             }
 
     transcript_l = transcript.lower()
@@ -327,10 +334,31 @@ def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream):
 
             stream.last_transcript_was_final = False
 
+def run_nlp(string):
+    doc = nlp(string)
+
+    # Analyze syntax
+    nouns = [chunk for chunk in doc.noun_chunks if chunk.text not in english_pronouns] #don't include pronouns
+    #print("Verbs:", [token.lemma_ for token in doc if token.pos_ == "VERB"])
+
+    # Find named entities, phrases and concepts
+#    for entity in doc.ents:
+#        print(entity.text, entity.label_)
+
+    nouns_list = []
+    for noun in nouns:
+        new_noun = {"noun" : noun.text, "start" : noun.start_char, "end" : noun.end_char}
+        nouns_list.append(new_noun)
+
+    nlp_out = { "nouns" : nouns_list}
+
+    return nlp_out
+
+
 def run_server(transcript_q, cmd_q, obj_q):
 
-    def GUI_receive_final_transcript(transcript): #soon run_server will be a class, and this will be a method
-            asg_socket.send_final_transcript(transcript)
+    def GUI_receive_final_transcript_object(transcript_object): #soon run_server will be a class, and this will be a method
+            asg_socket.send_final_transcript_object(transcript_object)
 
     def GUI_receive_intermediate_transcript(transcript): #soon run_server will be a class, and this will be a method
         #pass
@@ -351,7 +379,10 @@ def run_server(transcript_q, cmd_q, obj_q):
                 if transcript_obj:
                     transcript = transcript_obj["transcript"]
                     if transcript_obj["is_final"] == True:
-                        GUI_receive_final_transcript(transcript)
+                        #run nlp on the final transcript
+                        nlp_out = run_nlp(transcript)
+                        transcript_obj["nlp"] = nlp_out
+                        GUI_receive_final_transcript_object(transcript_obj)
                     else:
                         GUI_receive_intermediate_transcript(transcript)
             except Empty as e:

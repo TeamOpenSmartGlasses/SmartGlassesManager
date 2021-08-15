@@ -1,6 +1,7 @@
 import socket
 import time
 import struct
+import json
 
 class ASGSocket:
     def __init__(self, PORT=8989):
@@ -38,9 +39,11 @@ class ASGSocket:
         print("Connected")
         return self.conn, self.addr
 
-    def send_final_transcript(self, message_str):
+    def send_final_transcript_object(self, t_obj):
         print("SENDING FINAL")
-        self.send_bytes(self.final_transcript_cid, bytes(message_str + "\n",'UTF-8'))
+        encoded_message = json.dumps(t_obj).encode('utf-8')
+        #s.sendall(b)
+        self.send_bytes(self.final_transcript_cid, encoded_message)
 
     def send_intermediate_transcript(self, message_str):
         self.send_bytes(self.intermediate_transcript_cid, bytes(message_str + "\n",'UTF-8'))

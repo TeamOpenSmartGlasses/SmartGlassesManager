@@ -6,6 +6,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -397,12 +400,17 @@ public class GlboxClientSocket {
                 Log.d(TAG, "ftc1: " + final_transcript_cid[1]);
                 if ((b1 == final_transcript_cid[0]) && (b2 == final_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "final_transcript_cid received");
-                    String final_transcript = new String(raw_data, StandardCharsets.US_ASCII);
-                    final Intent intent = new Intent();
-                    intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, final_transcript);
-                    intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                    Log.d(TAG, "F. Transcript is: " + final_transcript);
+                    String final_transcript_json_string = new String(raw_data, StandardCharsets.US_ASCII);
+                    JSONObject transcript_object;
+                    try {
+                        transcript_object = new JSONObject(final_transcript_json_string);
+                        final Intent intent = new Intent();
+                        intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, transcript_object.toString());
+                        intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                        mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                        Log.d(TAG, "F. Transcript is: " + transcript_object.getString("transcript"));
+                    } catch (JSONException e) {
+                    }
                 } else if ((b1 == intermediate_transcript_cid[0]) && (b2 == intermediate_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "intermediate_transcript_cid received");
                     String intermediate_transcript = new String(raw_data, StandardCharsets.US_ASCII);

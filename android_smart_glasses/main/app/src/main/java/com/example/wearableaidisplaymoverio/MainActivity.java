@@ -33,6 +33,10 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 
 public class MainActivity extends Activity {
     public String TAG = "WearableAiDisplay";
@@ -325,13 +329,59 @@ public class MainActivity extends Activity {
                 }
             } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)) {
                 if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)) {
-                    String transcript = intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT);
-                    System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
-                    System.out.println("curr_mode: " + curr_mode);
-                    textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
-                    if (curr_mode.equals("llc")) {
-                        System.out.println("TEXTSET");
-                        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
+                    try {
+                        JSONObject transcript_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT));
+                        JSONObject nlp = transcript_object.getJSONObject("nlp");
+                        JSONArray nouns = nlp.getJSONArray("nouns");
+                        String transcript = transcript_object.getString("transcript");
+                        System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
+                        System.out.println("TRANSCRIPT OBJECT IN MAIN ACTIVITY: " + transcript_object);
+                        System.out.println("nouns " + nouns);
+                        if ((nouns.length() == 0)){
+                            System.out.println("fail");
+                            textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
+                        } else {
+                            System.out.println("run dee else");
+                            System.out.println("nouns length: " + nouns.length());
+                            //add text to a string and highlight properly the things we want to highlight (e.g. proper nouns)
+                            String textBuilder = "<p>";
+                            int prev_end = 0;
+                            for (int i = 0; i < nouns.length(); i++) {
+                                System.out.println("run dee loop");
+                                String noun = nouns.getJSONObject(i).getString("noun");
+                                int start = nouns.getJSONObject(i).getInt("start");
+                                int end = nouns.getJSONObject(i).getInt("end");
+
+                                //dont' drop the words before the first noun
+                                if (i == 0) {
+                                    textBuilder = textBuilder + transcript.substring(0, start);
+                                } else { //add in the transcript between previous noun and this one
+                                    textBuilder = textBuilder + transcript.substring(prev_end, start);
+                                }
+
+                                //add in current colored noun
+                                textBuilder = textBuilder + "<font color='#00FF00'>" + transcript.substring(start, end) + "</font>";
+                                System.out.println("textBuilder:" );
+
+                                //add in end of transcript if we just added the last noun
+                                if (i == (nouns.length() - 1)){
+                                    textBuilder = textBuilder + transcript.substring(end);
+                                }
+
+                                //set this noun end to be the previous noun end for next loop
+                                prev_end = end;
+                            }
+                            textBuilder = textBuilder + "</p>";
+                            textHolder.add(Html.fromHtml(textBuilder));
+                        }
+
+
+                        if (curr_mode.equals("llc")) {
+                            System.out.println("TEXTSET");
+                            liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
+                        }
+                    } catch (JSONException e){
+                        System.out.println(e);
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
                     String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
