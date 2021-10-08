@@ -56,6 +56,7 @@ public class MainActivity extends Activity {
 
     //live life captions ui
     ArrayList<Spanned> textHolder = new ArrayList<>();
+    int textHolderSizeLimit = 10; // how many lines maximum in the text holder
     TextView liveLifeCaptionsText;
 
     //metrics
@@ -65,6 +66,9 @@ public class MainActivity extends Activity {
 
     //save current mode
     String curr_mode;
+
+    long lastIntermediateMillis = 0;
+    long intermediateTranscriptPeriod = 150; //milliseconds
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -360,7 +364,7 @@ public class MainActivity extends Activity {
                                 }
 
                                 //add in current colored noun
-                                textBuilder = textBuilder + "<font color='#00FF00'>" + transcript.substring(start, end) + "</font>";
+                                textBuilder = textBuilder + "<font color='#00FF00'><u>" + transcript.substring(start, end) + "</u></font>";
                                 System.out.println("textBuilder:" );
 
                                 //add in end of transcript if we just added the last noun
@@ -375,19 +379,21 @@ public class MainActivity extends Activity {
                             textHolder.add(Html.fromHtml(textBuilder));
                         }
 
-
                         if (curr_mode.equals("llc")) {
-                            System.out.println("TEXTSET");
                             liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                         }
                     } catch (JSONException e){
                         System.out.println(e);
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
-                    String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
-                    System.out.println("I. TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + intermediate_transcript);
-                    if (curr_mode.equals("llc")) {
-                        liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
+                    //only update this transcript if it's been n milliseconds since the last intermediate update
+                    if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
+                        lastIntermediateMillis = System.currentTimeMillis();
+                        String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
+                        System.out.println("I. TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + intermediate_transcript);
+                        if (curr_mode.equals("llc")) {
+                            liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
+                        }
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
                     String command_response_text = intent.getStringExtra(GlboxClientSocket.COMMAND_RESPONSE);
@@ -406,6 +412,10 @@ public class MainActivity extends Activity {
 
     private Spanned getCurrentTranscriptScrollText() {
         Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
+        //limit textHolder to our maximum size
+        while ((textHolder.size() - textHolderSizeLimit) > 0){
+            textHolder.remove(0);
+        }
         for (int i = 0; i < textHolder.size(); i++) {
             //current_transcript_scroll = current_transcript_scroll + textHolder.get(i) + "\n" + "\n";
             if (i == 0) {
