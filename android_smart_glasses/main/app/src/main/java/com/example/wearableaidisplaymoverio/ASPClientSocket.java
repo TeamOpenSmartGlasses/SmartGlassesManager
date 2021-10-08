@@ -176,6 +176,12 @@ public class ASPClientSocket {
     }
 
     public void sendBytes(byte[] id, byte [] data, String type){
+        //only try to send data if the socket is connected state
+        if (mConnectState != 2){
+            System.out.println("MCONNECTED IS FALSE IN sendBytes, returning");
+            return;
+        }
+
         //handle different types differently
         if (type == "image"){
             image_buf_size++;
@@ -237,7 +243,7 @@ public class ASPClientSocket {
     }
 
     //returns how many images are in the buffer
-    public int getImageBuf(){
+    public static int getImageBuf(){
         return image_buf_size;
     }
 
@@ -407,6 +413,7 @@ public class ASPClientSocket {
             data_queue.clear();
             type_queue.clear();
             while (true) {
+                System.out.println("IMAGES IN Q: " + getImageBuf());
                 if (packets_in_buf > 5) { //if 5 packets in buffer (NOT QUEUE, BUF NETWORK BUFFER), restart socket
                     break;
                 }
