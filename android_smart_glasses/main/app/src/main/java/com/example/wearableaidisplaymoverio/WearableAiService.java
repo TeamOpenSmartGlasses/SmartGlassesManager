@@ -74,7 +74,7 @@ public class WearableAiService extends HiddenCameraService {
     //GLBOX socket
     GlboxClientSocket glbox_client_socket;
     //String glbox_address = "10.42.0.185";
-    String glbox_address = "192.168.43.188";
+    String glbox_address = "192.168.1.188";
     String glbox_adv_key = "WearableAiCyborgGLBOX";
 
     //id of packet
