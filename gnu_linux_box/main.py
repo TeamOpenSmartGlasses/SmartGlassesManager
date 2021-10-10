@@ -32,6 +32,9 @@ from utils.english_pronouns_list import english_pronouns
 
 import spacy
 
+import wikipedia
+import base64
+
 # NLP - Load English tokenizer, tagger, parser, NER and word vectors
 nlp = spacy.load("en_core_web_trf")
 
@@ -70,6 +73,43 @@ def add_wake_word(transcript, args, cmd_q):
         with open(wake_words_file, "a") as f: #add it to the wake words file for next load too
             # Append new wake word at the end of file
             f.write(args + "\n")
+        return 1
+    except Exception as e:
+        print(e)
+        return False
+
+def wikipedia_search(transcript, args, cmd_q):
+    try:
+        print("WIKIPEDIA SEARCHING NOW...")
+        #make wikipedia search request (will fail if ambiguous)
+        wiki_res = wikipedia.page(args, auto_suggest=False)
+        #get first paragraph of summary
+        summary_start = wiki_res.summary.split("\n")[0]
+        #get url or image, download image
+        img_url = wiki_res.images[0]
+        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+           'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+           'Accept-Encoding': 'none',
+           'Accept-Language': 'en-US,en;q=0.8',
+           'Connection': 'keep-alive'}
+        img_data = requests.get(img_url, headers=headers).content
+        with open('image_name.jpg', 'wb') as handler:
+            handler.write(img_data)
+        img_string = base64.b64encode(img_data).decode('utf-8')
+        #img_string = img_data.decode('utf-8') #turn image into utf-8 string so it can be sent over the socket
+        print("TYPE OF IMAGE STRING")
+        print(type(img_string))
+        #pack results into dict/json
+        result = {
+                "title" : wiki_res.title,
+                "summary" : summary_start,
+                "image" : img_string
+                }
+        print(wiki_res.title)
+        print(summary_start)
+        print(type(img_data))
+        cmd_q.put(("wikipedia search", result))
         return 1
     except Exception as e:
         print(e)
@@ -149,6 +189,7 @@ voice_commands = {
         "ask wolfram" : {"function" : ask_wolfram, "fail_function" : None, "voice_sounds" : ["Wolfram Alpha", "ask Wolfram"]}, #pass command directly to the terminal window we opened #TODO implement this with python `cli` package
         #"go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         "switch mode"  : {"function" : switch_mode, "voice_sounds" : ["switch mode"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
+        "wikipedia"  : {"function" : wikipedia_search, "voice_sounds" : ["wikipedia"]}, #search wikipedia for a query
         }
 
 def find_commands(transcript, stream, cmd_q, obj_q):
@@ -238,7 +279,7 @@ def find_commands(transcript, stream, cmd_q, obj_q):
                 print("NOW SAYING: {}".format(res))
                 subprocess.call(['say',res])
             else:
-                if voice_commands[command_name]["fail_function"] is not None:
+                if "fail_function" in voice_commands[command_name] and voice_commands[command_name]["fail_function"] is not None:
                     voice_commands[command_name]["fail_function"]()
                 else:
                     playsound(generic_failure_sound)
@@ -390,10 +431,13 @@ def run_server(transcript_q, cmd_q, obj_q):
             #check for commands
             try:
                 cmd, args = cmd_q.get(timeout=0.001)
-                print("CMD RECEIVEEEDDDD************************************** {} {}".format(cmd, args))
-                #need to make a switch block here for different commands and their associated function, but for now it's just switch mode - cayden
-                asg_socket.send_switch_mode(args)
-                print("SENT SWITCH MODE")
+                #a switch block here for different commands and their associated function
+                if cmd == "switch mode":
+                    asg_socket.send_switch_mode(args)
+                    print("SENT SWITCH MODE")
+                elif cmd == "wikipedia search":
+                    print("sending wikipedia search results")
+                    asg_socket.send_wikipedia_result(args)
             except Empty as e:
                 pass
             #check for command responses

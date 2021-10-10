@@ -2,6 +2,7 @@ package com.example.wearableaidisplaymoverio;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
@@ -13,12 +14,19 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import android.util.Base64;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -32,6 +40,8 @@ public class GlboxClientSocket {
     public final static String FINAL_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.FINAL_REGULAR_TRANSCRIPT";
     public final static String INTERMEDIATE_REGULAR_TRANSCRIPT = "com.example.wearableaidisplaymoverio.INTERMEDIATE_REGULAR_TRANSCRIPT";
     public final static String COMMAND_RESPONSE = "com.example.wearableaidisplaymoverio.COMMAND_RESPONSE";
+    public final static String WIKIPEDIA_RESULT = "com.example.wearableaidisplaymoverio.WIKIPEDIA_RESULT";
+    public final static String ACTION_WIKIPEDIA_RESULT = "com.example.wearableaidisplaymoverio.ACTION_WIKIPEDIA_RESULT";
 
     public final static String COMMAND_SWITCH_MODE = "com.example.wearableaidisplaymoverio.COMMAND_SWITCH_MODE";
     public final static String COMMAND_ARG = "com.example.wearableaidisplaymoverio.COMMAND_ARG";
@@ -57,6 +67,7 @@ public class GlboxClientSocket {
     static final byte [] final_transcript_cid = {0xC, 0x02};
     static final byte [] switch_mode_cid = {0xC, 0x03};
     static final byte [] command_response_cid = {0xC, 0x04};
+    static final byte [] wikipedia_result_cid = {0xC, 0x05};
 
     static final byte [] social_mode_id = {0xF, 0x00};
     static final byte [] llc_mode_id = {0xF, 0x01};
@@ -449,6 +460,33 @@ public class GlboxClientSocket {
                     intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, response_string);
                     intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                } else if ((b1 == wikipedia_result_cid [0]) && (b2 == wikipedia_result_cid [1])) { //got command response
+                    Log.d(TAG, "wikipedia_result_cid received");
+                    String wikipedia_result_json_string = new String(raw_data, StandardCharsets.US_ASCII);
+                    JSONObject wikipedia_result_json;
+                    try {
+                        wikipedia_result_json = new JSONObject(wikipedia_result_json_string);
+                        //we have to pull out the image, decode it, save locally, and then send the location of that saved file, because an image is too big to communicate over IPC (Android Intent)
+                        String img_string = wikipedia_result_json.getString("image");
+                        byte[] img_b64_bytes = img_string.getBytes("UTF-8");
+                        byte[] img_bytes = Base64.decode(img_b64_bytes, Base64.DEFAULT);
+                        img_b64_bytes = null;
+                        File img_file = savePicture(img_bytes);
+                        String img_path = img_file.getAbsolutePath();
+                        wikipedia_result_json.remove("image");
+                        wikipedia_result_json.put("image_path", img_path);
+                        img_bytes = null;
+                        System.gc();
+
+                        final Intent intent = new Intent();
+                        intent.putExtra(GlboxClientSocket.WIKIPEDIA_RESULT, wikipedia_result_json.toString());
+                        intent.setAction(GlboxClientSocket.ACTION_WIKIPEDIA_RESULT);
+                        mContext.sendBroadcast(intent);
+                    } catch( JSONException e){
+                        Log.d(TAG, e.toString());
+                    } catch (UnsupportedEncodingException e){
+                        Log.d(TAG, e.toString());
+                    }
                 }
 
 //                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
@@ -500,6 +538,44 @@ public class GlboxClientSocket {
             mConnectState = 0;
         }
     }
+
+    private static File getDir() {
+        File sdDir = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        return new File(sdDir, "WearableAI_Cache");
+    }
+
+    private static File savePicture(byte[] data){
+//        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
+        File pictureFileDir = getDir();
+
+        if (!pictureFileDir.exists() && !pictureFileDir.mkdirs()) {
+
+            Log.d("PHOTO_HANDLER", "Can't create directory to save image.");
+            return null;
+
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyymmddhhmmss");
+        String date = dateFormat.format(new Date());
+        String photoFile = "Picture_" + date + ".jpg";
+
+        String filename = pictureFileDir.getPath() + File.separator + photoFile;
+
+        File pictureFile = new File(filename);
+
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            fos.write(data);
+            fos.close();
+            Log.d(TAG, "File saved: " + filename);
+        } catch (Exception error) {
+            Log.d(TAG, "File" + filename + "not saved: "
+                    + error.getMessage());
+        }
+        return pictureFile;
+    }
+
     static class SendThread implements Runnable {
         SendThread() {
         }

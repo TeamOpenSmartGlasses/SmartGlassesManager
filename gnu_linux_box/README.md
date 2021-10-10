@@ -11,5 +11,3 @@ This is the main/only (Python3) program the runs on the GLBOX.
 7. Run `main.py`
 
 If you follow the above steps above, follow the steps in the main README (connect GLBOX and ASG to ASP hotspot), and run Android apps on the ASG and ASP, you will be running the WIS.
-
-

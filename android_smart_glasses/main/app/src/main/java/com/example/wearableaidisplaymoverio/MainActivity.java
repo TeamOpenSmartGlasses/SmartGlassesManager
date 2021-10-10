@@ -4,11 +4,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 
 import android.app.Activity;
 import android.hardware.Camera;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spanned;
@@ -18,9 +21,11 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import android.view.Window;
@@ -59,6 +64,11 @@ public class MainActivity extends Activity {
     int textHolderSizeLimit = 10; // how many lines maximum in the text holder
     TextView liveLifeCaptionsText;
 
+    //wikipedia ui
+    TextView wikipediaResultTitle;
+    TextView wikipediaResultSummary;
+    ImageView wikipediaResultImage;
+
     //metrics
     float eye_contact_30 = 0;
     String facial_emotion_30 = "";
@@ -68,7 +78,7 @@ public class MainActivity extends Activity {
     String curr_mode;
 
     long lastIntermediateMillis = 0;
-    long intermediateTranscriptPeriod = 150; //milliseconds
+    long intermediateTranscriptPeriod = 40; //milliseconds
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -299,6 +309,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
         intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
         intentFilter.addAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
+        intentFilter.addAction(GlboxClientSocket.ACTION_WIKIPEDIA_RESULT);
         return intentFilter;
     }
 
@@ -405,6 +416,46 @@ public class MainActivity extends Activity {
                 }
             } else if (GlboxClientSocket.COMMAND_SWITCH_MODE.equals(action)) {
                 switchMode(intent.getStringExtra(GlboxClientSocket.COMMAND_ARG));
+            } else if (GlboxClientSocket.ACTION_WIKIPEDIA_RESULT.equals(action)) {
+                try {
+                    //change the view to the wikipeida results page
+                    setContentView(R.layout.wikipedia_content);
+                    wikipediaResultTitle = (TextView) findViewById(R.id.wikipedia_result_title);
+                    wikipediaResultSummary = (TextView) findViewById(R.id.wikipedia_result_summary);
+                    wikipediaResultImage= (ImageView) findViewById(R.id.wikipedia_result_image);
+
+                    //get content
+                    JSONObject wikipedia_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.WIKIPEDIA_RESULT));
+                    String title = wikipedia_object.getString("title");
+                    String summary = wikipedia_object.getString("summary");
+                    String img_path = wikipedia_object.getString("image_path");
+
+                    //set the text
+                    wikipediaResultTitle.setText(title);
+                    wikipediaResultSummary.setText(summary);
+
+                    //open the image and display
+                    File imgFile = new  File(img_path);
+                    if(imgFile.exists()){
+                        Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                        wikipediaResultImage.setImageBitmap(myBitmap);
+                    }
+
+                    Log.d(TAG, "WIKIPEDIA TITLE IS " + title);
+                    Log.d(TAG, "WIKIPEDIA SUMMARY IS " + summary);
+                    Log.d(TAG, "WIKIPEDIA IMAGE NAME IS " + img_path);
+                    //for now, show for n seconds and then return to llc
+                    int wiki_show_time = 8000; //milliseconds
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        public void run() {
+                            setupLlcUi();
+                        }
+                    }, wiki_show_time);
+
+                } catch (JSONException e) {
+                    Log.d(TAG, e.toString());
+                }
             }
         }
     };
