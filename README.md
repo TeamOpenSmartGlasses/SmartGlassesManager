@@ -1,17 +1,34 @@
 # Wearable Intelligence System
 
-The Wearable Intelligence System is a personal intelligence amplification tool. This project and codebase is currently in stage alpha and is most valuable to developers, super users, and individuals in the XR and wearables industry. 
+The Wearable Intelligence System is a personal [intelligence amplification](https://en.wikipedia.org/wiki/Intelligence_amplification) tool and [humanistically intelligent](https://en.wikipedia.org/wiki/Humanistic_intelligence) system. The system runs on a pair of AR/smart glasses and presents the user with intelligent audio and visual information.
+
+Users benefit from a suite of tools that can be used in the real world while developers benefit from a system that provides a smart glasses app backend. 
+
+This project and codebase is currently in stage alpha, is not stable, and is subject to change. Right now, the system is most valuable to super users, developers, and individuals in the XR and wearables industry. 
+
+## What is this?
 
 The Wearable Intelligence System is:
 
-1. A fully functional, wearable, intelligence amplification system featuring a number of intelligence tools:
+1. **Smart Glasses Apps - User Tool**  
 
-- social/emotional intelligence amplification system
-- memory expansion tools
-- conversational intelligence enhancement
+A fully functional, wearable, intelligence amplification system featuring a number of intelligence tools:
+
+- understand your social-emotional environment with emotional intelligence tools
+- remember every names, idea, and conversation with memory expansion tools
+- improve understanding and retention in conversations, meetings, lectures, etc. with live closed captions overlaid on your vision at all times
 - voice control with command and natural language interface
 
-2. A software framework for developing cognitive extension systems on the the coming wave of consumer ready Android smart glasses. 
+2. **Software Framework - Developer Tool**  
+
+A software framework for developing smart glasses based intelligence systems on the the coming wave of consumer ready Android smart glasses. 
+
+There are three pieces of hardware involved, each with it's own standalone app. All hardware connects to the same WiFi network and connect to each other when the apps (at the top level of this repo, with the folders named after which hardware device they are for) are run. The system already handles a number of backend smart glasses system functionalities:  
+- Android smart glasses connect to and communicate with any external Android device (normally a smart phone with a powerful SOC) to send sensory data, run compute on the external Android device, receive results back from the external Android device, and render those results on the AR display
+- Android Smart Glasses connect to and communicate with any GNU/Linux computer, receive commands from the GNU/Linux computer, and render those results on the glasses' AR display
+- Android smart phone (or any Android device) receives sensory data from the smart glasses, runs compute-heavy machine-learning inference (neural networks) and signal processing using a [MediaPipe Perception Pipeline](https://arxiv.org/abs/1906.08172), and pushes results back to the glasses
+- GNU/Linux computer can run the voice commmand system, which runs live live Speech-To-Text, processes the data for commands, runs those commands, and send a stream of raw transcriptions and voice command query results the glasses.
+- System setup that adding new functions/tools is as simple as writing a new program that can run in Linux - use the prebuilt, simple voice command interface to run arbitrary code based on an arbitrary command name
  
 ## Technical Description
 
@@ -80,6 +97,36 @@ cd android_smart_phone/mediapipe
 ./build_single_android.sh mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai
 ```
 3. Run the android_smart_phone/mobile_compute_app on any modern-ish Android smart phone (a good CPU/GPU is reccomended for MediaPipe graph) that can make a WiFi hotspot.
+
+## Voice Commands
+
+All voice commands must be preceded by a `wakeword`. A `wakeword` is any word you choose to "wake up" the system and start listening to commands, commands will only be run if they follow a wakeword. Set your own wakeword by adding it to wakewords.txt, or just use an existing `wakeword` from wakewords.txt.  Choose a `wakeword` that the Speech-To-Text system can reliably recognize.
+
+`ask Wolfram <query>` - ask Wolfram Alpha a natural language <query>  
+ 
+`add wake word <wakeword>` - add a new <wake word> to wakewords.txt  
+ 
+`save speech` - save the transcribed speech to a file. This can be used to save ideas, thoughts, notes, reminders, etc.  
+ 
+`switch mode <arg>` - switch the current mode of the smart glasses app.  
+Currently available modes:  
+- live life captions
+- blank screen
+- social mode
+ 
+ ## Modes
+ 
+ ### Live Life Captions
+ 
+ Closed captions of everything you and those around you say. Live view of commands and commmand output. Nouns in transcripts are highlighted. Soon to be extended to give definition, summary, encylopedia, and NLP functionalities.
+ 
+ ### Social Mode
+ 
+ A social-emotional intelligence tool to be used in social situations. Live metrics about the social environment (eye-contact, facial emotion, high-level psychological metrics (e.g. stress, confidence, etc.)) overlaid on the users vision. Soon to extended with facial recognition (tie in to memory stream "Personal Person Database"), amalgamation (combine social information about everyone in the room), more metrics (drowsiness, believability (both ways), interest, etc.).
+ 
+ ### Blank Mode
+ 
+ Blanks out the screen, sleep mode.
 
 ## Demo
 
