@@ -26,6 +26,7 @@ from queue import Queue, Empty
 from threading import Thread
 
 from utils.gcp_stt import run_google_stt
+from utils.gcp_translate import run_google_translate
 from utils.asg_socket_server import ASGSocket
 
 from utils.english_pronouns_list import english_pronouns
@@ -34,6 +35,8 @@ import spacy
 
 import wikipedia
 import base64
+
+trans = True
 
 # NLP - Load English tokenizer, tagger, parser, NER and word vectors
 nlp = spacy.load("en_core_web_trf")
@@ -294,7 +297,7 @@ def get_current_time():
 
     return int(round(time.time() * 1000))
 
-def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream):
+def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream, translate_q):
     """Iterates through STT server responses.
 
     First sends them to whatever GUI we are using (ASG, send over a socket).
@@ -364,6 +367,10 @@ def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream):
 
             stream.is_final_end_time = stream.result_end_time
             stream.last_transcript_was_final = True
+
+            #translate text if in translation mode
+            if True:
+                translate_q.put(transcript_obj["transcript"])
 
             #send transcription responses to our voice command
             find_commands(transcript, stream, cmd_q, obj_q)
@@ -453,6 +460,9 @@ def run_server(transcript_q, cmd_q, obj_q):
                         GUI_receive_command_output("COMMAND SUCCESS")
                     else:
                         GUI_receive_command_output("COMMAND FAILED")
+                elif obj["type"] == "translate_result":
+                    print("sending translation results")
+                    asg_socket.send_translated_text(obj["data"])
             except Empty as e:
                 pass
 
@@ -465,12 +475,15 @@ def main():
     transcript_q = Queue() #to share raw transcriptions
     cmd_q = Queue() #to share parsed commands (currently voice command is running in run_google_stt)
     obj_q = Queue() #generic object queue to pass anything, of type: {"type" : "transcript" : "data" : "hello world"} or similiar
+    translate_q = Queue() #generic object queue to pass anything, of type: {"type" : "transcript" : "data" : "hello world"} or similiar
     server_thread = Thread(target = run_server, args = (transcript_q, cmd_q, obj_q))
-    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, obj_q, receive_transcriptions))
+    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, obj_q, receive_transcriptions, translate_q, "es"))
+    translate_thread = Thread(target = run_google_translate, args = (translate_q, obj_q))
     server_thread.start()
     #run speech to text, pass every result to the callback function passed in
     #in the future if we use different STT libs, we can just change that right here
     stt_thread.start()
+    translate_thread.start()
 
     #debug loop
     i = 0
@@ -482,6 +495,7 @@ def main():
     stt_thread.kill()
     server_thread.join()
     stt_thread.join()
+    translate_thread.join()
 
 if __name__ == "__main__":
     main()

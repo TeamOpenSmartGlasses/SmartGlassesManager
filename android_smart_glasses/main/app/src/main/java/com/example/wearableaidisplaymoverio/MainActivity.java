@@ -310,6 +310,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
         intentFilter.addAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
         intentFilter.addAction(GlboxClientSocket.ACTION_WIKIPEDIA_RESULT);
+        intentFilter.addAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
         return intentFilter;
     }
 
@@ -455,6 +456,13 @@ public class MainActivity extends Activity {
 
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());
+                }
+            } else if (GlboxClientSocket.ACTION_TRANSLATION_RESULT.equals(action)) {
+                String translation_result_text = intent.getStringExtra(GlboxClientSocket.TRANSLATION_RESULT);
+                Log.d(TAG, "TRANSLATED TEXT: " + translation_result_text);
+                textHolder.add(Html.fromHtml("<p><font color='#EE0000'>TRANSLATION: " + translation_result_text + "</font></p>"));
+                if (curr_mode.equals("llc")) {
+                    liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                 }
             }
         }

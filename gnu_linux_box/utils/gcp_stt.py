@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 
 from google.cloud import speech
+from google.cloud import translate
 import os
 import sys
 import time
@@ -48,7 +49,7 @@ def try_transcribe(content):
     return speech.StreamingRecognizeRequest(audio_content=content)
 
 
-def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb):
+def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb, translate_q, language_code="en-US"):
     """start bidirectional streaming from microphone input to speech API"""
 
     #set gcloud API key
@@ -58,7 +59,7 @@ def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb):
     config = speech.RecognitionConfig(
         encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=SAMPLE_RATE,
-        language_code="en-US",
+        language_code=language_code,
         max_alternatives=1,
         speech_contexts=[{"phrases" : ["Licklider", "mind expansion", "mind extension", "Cayden", "Cayden Pierce", "BCI", "wearables", "engineering", "bash", "shell"]}] #TODO make this pull from our wake words and voice commands list automatically
     )
@@ -91,7 +92,7 @@ def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb):
             responses = client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            parse_cb(transcript_q, cmd_q, obj_q, responses, stream)
+            parse_cb(transcript_q, cmd_q, obj_q, responses, stream, translate_q)
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
