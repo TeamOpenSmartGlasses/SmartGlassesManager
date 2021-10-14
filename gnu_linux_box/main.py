@@ -36,8 +36,6 @@ import spacy
 import wikipedia
 import base64
 
-trans = True
-
 # NLP - Load English tokenizer, tagger, parser, NER and word vectors
 nlp = spacy.load("en_core_web_trf")
 
@@ -69,7 +67,7 @@ with open(wake_words_file) as f:
 print("Active wake words: {}".format(wake_words))
 
 #define voice commands functions
-def add_wake_word(transcript, args, cmd_q):
+def add_wake_word(transcript, args, cmd_q, thread_q):
     try: 
         wake_word = args
         wake_words.append(args) #add it to our locally loaded object
@@ -81,7 +79,7 @@ def add_wake_word(transcript, args, cmd_q):
         print(e)
         return False
 
-def wikipedia_search(transcript, args, cmd_q):
+def wikipedia_search(transcript, args, cmd_q, thread_q):
     try:
         print("WIKIPEDIA SEARCHING NOW...")
         #make wikipedia search request (will fail if ambiguous)
@@ -118,7 +116,7 @@ def wikipedia_search(transcript, args, cmd_q):
         print(e)
         return False
 
-def save_memory(transcript, args, cmd_q):
+def save_memory(transcript, args, cmd_q, thread_q):
     try: 
         ctime = time.time()
         memory = args
@@ -130,11 +128,12 @@ def save_memory(transcript, args, cmd_q):
         print(e)
         return False
 
-def switch_mode(transcript, args, cmd_q):
+def switch_mode(transcript, args, cmd_q, thread_q):
     print("RUNNING SWITCH MODE")
     modes = {"social" : ["social", "social mode"],
             "llc" : ["LLC", "live life captions"],
-            "blank" : ["blank mode", "blank screen", "blank", "Blanc"]
+            "blank" : ["blank mode", "blank screen", "blank", "Blanc"],
+            "translate" : ["translate mode", "translate", "translated"],
             }
 
     transcript_l = transcript.lower()
@@ -143,11 +142,13 @@ def switch_mode(transcript, args, cmd_q):
             matches = find_near_matches(voice_command, transcript_l, max_l_dist=1)
             if len(matches) > 0:
                 print("USER COMMAND: SWITCH TO MODE: {}".format(k))
+                if (k == "translate"):
+                    thread_q.put({"type" : "translate", "cmd" : "start", "language" : "es"})
                 cmd_q.put(("switch mode", k))
                 break
     return 1
 
-def ask_wolfram(transcript, args, cmd_q):
+def ask_wolfram(transcript, args, cmd_q, thread_q):
     print("ASKING WOLFRAM: {}".format(args))
     result, convo_id = wolfram_conversational_query(args)
     print("WOLFRAM RESPONSE:")
@@ -195,7 +196,7 @@ voice_commands = {
         "wikipedia"  : {"function" : wikipedia_search, "voice_sounds" : ["wikipedia"]}, #search wikipedia for a query
         }
 
-def find_commands(transcript, stream, cmd_q, obj_q):
+def find_commands(transcript, stream, cmd_q, obj_q, thread_q):
     """
     Search through a transcript for wake words and predefined voice commands - strict mode commands first (not natural language)
 
@@ -270,7 +271,7 @@ def find_commands(transcript, stream, cmd_q, obj_q):
 
         if voice_command_func is not None:
             #run the voice command
-            res = voice_command_func(transcript, command_args, cmd_q)
+            res = voice_command_func(transcript, command_args, cmd_q, thread_q)
             if type(res) == int and res == 1:
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 obj_q.put({"type" : "cmd_success", "data" : True})
@@ -297,7 +298,7 @@ def get_current_time():
 
     return int(round(time.time() * 1000))
 
-def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream, translate_q):
+def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream, thread_q):
     """Iterates through STT server responses.
 
     First sends them to whatever GUI we are using (ASG, send over a socket).
@@ -369,11 +370,11 @@ def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream, transl
             stream.last_transcript_was_final = True
 
             #translate text if in translation mode
-            if True:
-                translate_q.put(transcript_obj["transcript"])
+#            if True:
+#                translate_q.put(transcript_obj["transcript"])
 
             #send transcription responses to our voice command
-            find_commands(transcript, stream, cmd_q, obj_q)
+            find_commands(transcript, stream, cmd_q, obj_q, thread_q)
         else:
             transcript_q.put(transcript_obj)
             sys.stdout.write(RED)
@@ -476,26 +477,42 @@ def main():
     cmd_q = Queue() #to share parsed commands (currently voice command is running in run_google_stt)
     obj_q = Queue() #generic object queue to pass anything, of type: {"type" : "transcript" : "data" : "hello world"} or similiar
     translate_q = Queue() #generic object queue to pass anything, of type: {"type" : "transcript" : "data" : "hello world"} or similiar
+    thread_q = Queue() #requests to the main thread to start a new thread
     server_thread = Thread(target = run_server, args = (transcript_q, cmd_q, obj_q))
-    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, obj_q, receive_transcriptions, translate_q, "es"))
+    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, obj_q, receive_transcriptions, thread_q))
     translate_thread = Thread(target = run_google_translate, args = (translate_q, obj_q))
     server_thread.start()
     #run speech to text, pass every result to the callback function passed in
     #in the future if we use different STT libs, we can just change that right here
     stt_thread.start()
-    translate_thread.start()
+    #translate_thread.start()
 
     #debug loop
+    #look for requests to start a new thread (some threads, like a translation service, are only started when requested by the user, and killed when the user requests to kill it
+    tmp_threads = list()
     i = 0
     while True:
+        try:
+            thread_obj = thread_q.get(False)
+            if thread_obj:
+                print("thread request")
+                thread_type = thread_obj["type"]
+                if thread_type == "translate":
+                    language = thread_obj["language"]
+                    new_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, obj_q, receive_transcriptions, True, "es"))
+                    tmp_threads.append(new_thread)
+                    print("STARTING TRANSLATION THREAD")
+                    new_thread.start()
+        except Empty:
+            pass
         print("--- EHLHO WHARLD * {}".format(i))
         i += 1
-        time.sleep(10)
+        time.sleep(2)
     server_thread.kill()
     stt_thread.kill()
     server_thread.join()
     stt_thread.join()
-    translate_thread.join()
+    #translate_thread.join()
 
 if __name__ == "__main__":
     main()

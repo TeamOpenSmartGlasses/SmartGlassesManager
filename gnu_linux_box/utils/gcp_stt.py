@@ -49,7 +49,7 @@ def try_transcribe(content):
     return speech.StreamingRecognizeRequest(audio_content=content)
 
 
-def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb, translate_q, language_code="en-US"):
+def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb, thread_q, translate_mode=False, language_code="en-US"):
     """start bidirectional streaming from microphone input to speech API"""
 
     #set gcloud API key
@@ -91,9 +91,14 @@ def run_google_stt(transcript_q, cmd_q, obj_q, parse_cb, translate_q, language_c
 
             responses = client.streaming_recognize(streaming_config, requests)
 
-            # Now, put the transcription responses to use.
-            parse_cb(transcript_q, cmd_q, obj_q, responses, stream, translate_q)
-
+            parse_cb(transcript_q, cmd_q, obj_q, responses, stream, thread_q)
+#            if not translate_mode:
+#                # Now, put the transcription responses to use.
+#                parse_cb(transcript_q, cmd_q, obj_q, responses, stream, translate_q)
+#            else: #if we are in translate mode
+#                print("FOREIGN LANGUAGE TEXT")
+#                print(responses[0].results[0].alternatives[0].transcript)
+#
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
             stream.result_end_time = 0
