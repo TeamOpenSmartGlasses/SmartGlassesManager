@@ -69,6 +69,11 @@ public class MainActivity extends Activity {
     TextView wikipediaResultSummary;
     ImageView wikipediaResultImage;
 
+    //translate ui
+    ArrayList<Spanned> translateTextHolder = new ArrayList<>();
+    int translateTextHolderSizeLimit = 10; // how many lines maximum in the text holder
+    TextView translateText;
+
     //metrics
     float eye_contact_30 = 0;
     String facial_emotion_30 = "";
@@ -134,6 +139,9 @@ public class MainActivity extends Activity {
             case "blank":
                 blankUi();
                 break;
+            case "translate":
+                setupTranslateUi();
+                break;
         }
         curr_mode = mode;
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
@@ -163,7 +171,37 @@ public class MainActivity extends Activity {
 
             }
         });
+        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
         scrollToBottom(liveLifeCaptionsText);
+    }
+
+    private void setupTranslateUi() {
+        Log.d(TAG, "RUNNING SETUP TRANSLATE");
+        //live life captions mode gui setup
+        setContentView(R.layout.translate_mode_view);
+        translateText = (TextView) findViewById(R.id.translatetextview);
+        translateText.setMovementMethod(new ScrollingMovementMethod());
+        translateText.setText(getCurrentTranscriptScrollText());
+
+        translateText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                scrollToBottom(translateText);
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        translateText.setText(getCurrentTranslateScrollText());
+        scrollToBottom(translateText);
     }
 
     private void setupSocialIntelligenceUi() {
@@ -198,6 +236,10 @@ public class MainActivity extends Activity {
 
         if (curr_mode == "llc"){
             scrollToBottom(liveLifeCaptionsText);
+        }
+
+        if (curr_mode == "translate"){
+            scrollToBottom(translateText);
         }
     }
 
@@ -460,9 +502,12 @@ public class MainActivity extends Activity {
             } else if (GlboxClientSocket.ACTION_TRANSLATION_RESULT.equals(action)) {
                 String translation_result_text = intent.getStringExtra(GlboxClientSocket.TRANSLATION_RESULT);
                 Log.d(TAG, "TRANSLATED TEXT: " + translation_result_text);
-                textHolder.add(Html.fromHtml("<p><font color='#EE0000'>TRANSLATION: " + translation_result_text + "</font></p>"));
-                if (curr_mode.equals("llc")) {
-                    liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
+                //textHolder.add(Html.fromHtml("<p><font color='#EE0000'>TRANSLATION: " + translation_result_text + "</font></p>"));
+
+                translateTextHolder.add(Html.fromHtml("<p>" + translation_result_text + "</p>"));
+
+                if (curr_mode.equals("translate")) {
+                    translateText.setText(getCurrentTranslateScrollText());
                 }
             }
         }
@@ -484,6 +529,23 @@ public class MainActivity extends Activity {
             }
         }
         return current_transcript_scroll;
+    }
+
+    private Spanned getCurrentTranslateScrollText() {
+        Spanned current_translate_scroll = Html.fromHtml("<div></div>");
+        //limit textHolder to our maximum size
+        while ((translateTextHolder.size() - translateTextHolderSizeLimit) > 0){
+            translateTextHolder.remove(0);
+        }
+        for (int i = 0; i < translateTextHolder.size(); i++) {
+            //current_transcript_scroll = current_transcript_scroll + textHolder.get(i) + "\n" + "\n";
+            if (i == 0) {
+                current_translate_scroll = translateTextHolder.get(i);
+            } else {
+                current_translate_scroll = (Spanned) TextUtils.concat(current_translate_scroll, translateTextHolder.get(i));
+            }
+        }
+        return current_translate_scroll;
     }
 
     //stuff for the charts

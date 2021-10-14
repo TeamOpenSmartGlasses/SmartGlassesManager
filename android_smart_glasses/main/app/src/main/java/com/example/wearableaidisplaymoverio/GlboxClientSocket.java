@@ -75,6 +75,7 @@ public class GlboxClientSocket {
     static final byte [] social_mode_id = {0xF, 0x00};
     static final byte [] llc_mode_id = {0xF, 0x01};
     static final byte [] blank_mode_id = {0xF, 0x02};
+    static final byte [] translate_mode_id = {0xF, 0x03};
 //    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
 //    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
 //    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
@@ -454,6 +455,12 @@ public class GlboxClientSocket {
                         final Intent intent = new Intent();
                         intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
                         intent.putExtra(GlboxClientSocket.COMMAND_ARG, "blank");
+                        mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                    } else if ((raw_data[0] == translate_mode_id[0]) && (raw_data[1] == translate_mode_id[1])) { //got ack response
+                        Log.d(TAG, "TRANSLATE MODE TOGGLE");
+                        final Intent intent = new Intent();
+                        intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
+                        intent.putExtra(GlboxClientSocket.COMMAND_ARG, "translate");
                         mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                     }
                 } else if ((b1 == command_response_cid[0]) && (b2 == command_response_cid[1])) { //got command response
