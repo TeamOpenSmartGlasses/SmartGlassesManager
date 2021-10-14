@@ -29,7 +29,8 @@ class ASGSocket:
         self.mode_ids = {
                             "social" : bytearray([15, 0]),
                             "llc" : bytearray([15, 1]), #live life captions
-                            "blank" : bytearray([15, 2]) #blank display
+                            "blank" : bytearray([15, 2]), #blank display
+                            "translate" : bytearray([15, 3]) #mode to translate text
                         }
 
 
