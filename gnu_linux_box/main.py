@@ -31,6 +31,8 @@ from utils.asg_socket_server import ASGSocket
 
 from utils.english_pronouns_list import english_pronouns
 
+from language_options import language_options
+
 import spacy
 
 import wikipedia
@@ -54,12 +56,14 @@ RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
-language_options = { "spanish" : "es",
-                    "german" : "de",
-                    "chinese" : "zh",
-                    "mandarin" : "zh",
-                    "korean" : "ko",
-                    }
+#language_options = { "spanish" : "es",
+#                    "german" : "de",
+#                    "chinese" : "zh",
+#                    "mandarin" : "zh",
+#                    "korean" : "ko",
+#                    "french" : "fr",
+#                    "hindi" : "hi"
+#                    }
 
 #define phrases/word that will wake the system to search the current speech for voice commands
 wake_words = []
