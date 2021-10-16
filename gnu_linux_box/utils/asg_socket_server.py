@@ -25,10 +25,12 @@ class ASGSocket:
         self.switch_mode_cid = bytearray([12, 3]) 
         self.command_output_cid = bytearray([12, 4]) 
         self.wikipedia_result_cid = bytearray([12, 5]) 
+        self.translation_cid = bytearray([12, 6]) 
         self.mode_ids = {
                             "social" : bytearray([15, 0]),
                             "llc" : bytearray([15, 1]), #live life captions
-                            "blank" : bytearray([15, 2]) #blank display
+                            "blank" : bytearray([15, 2]), #blank display
+                            "translate" : bytearray([15, 3]) #mode to translate text
                         }
 
 
@@ -45,6 +47,11 @@ class ASGSocket:
         encoded_message = json.dumps(t_obj).encode('utf-8')
         #s.sendall(b)
         self.send_bytes(self.final_transcript_cid, encoded_message)
+
+
+    def send_translated_text(self, text):
+        print("SENDING TRANSLATED TEXT")
+        self.send_bytes(self.translation_cid, bytes(text + "\n",'UTF-8'))
 
     def send_intermediate_transcript(self, message_str):
         self.send_bytes(self.intermediate_transcript_cid, bytes(message_str + "\n",'UTF-8'))

@@ -42,6 +42,8 @@ public class GlboxClientSocket {
     public final static String COMMAND_RESPONSE = "com.example.wearableaidisplaymoverio.COMMAND_RESPONSE";
     public final static String WIKIPEDIA_RESULT = "com.example.wearableaidisplaymoverio.WIKIPEDIA_RESULT";
     public final static String ACTION_WIKIPEDIA_RESULT = "com.example.wearableaidisplaymoverio.ACTION_WIKIPEDIA_RESULT";
+    public final static String TRANSLATION_RESULT = "com.example.wearableaidisplaymoverio.TRANSLATION_RESULT";
+    public final static String ACTION_TRANSLATION_RESULT = "com.example.wearableaidisplaymoverio.ACTION_TRANSLATION_RESULT";
 
     public final static String COMMAND_SWITCH_MODE = "com.example.wearableaidisplaymoverio.COMMAND_SWITCH_MODE";
     public final static String COMMAND_ARG = "com.example.wearableaidisplaymoverio.COMMAND_ARG";
@@ -68,10 +70,12 @@ public class GlboxClientSocket {
     static final byte [] switch_mode_cid = {0xC, 0x03};
     static final byte [] command_response_cid = {0xC, 0x04};
     static final byte [] wikipedia_result_cid = {0xC, 0x05};
+    static final byte [] translation_result_cid = {0xC, 0x06};
 
     static final byte [] social_mode_id = {0xF, 0x00};
     static final byte [] llc_mode_id = {0xF, 0x01};
     static final byte [] blank_mode_id = {0xF, 0x02};
+    static final byte [] translate_mode_id = {0xF, 0x03};
 //    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
 //    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
 //    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
@@ -411,7 +415,7 @@ public class GlboxClientSocket {
                 Log.d(TAG, "ftc1: " + final_transcript_cid[1]);
                 if ((b1 == final_transcript_cid[0]) && (b2 == final_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "final_transcript_cid received");
-                    String final_transcript_json_string = new String(raw_data, StandardCharsets.US_ASCII);
+                    String final_transcript_json_string = new String(raw_data, StandardCharsets.UTF_8);
                     JSONObject transcript_object;
                     try {
                         transcript_object = new JSONObject(final_transcript_json_string);
@@ -424,7 +428,7 @@ public class GlboxClientSocket {
                     }
                 } else if ((b1 == intermediate_transcript_cid[0]) && (b2 == intermediate_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "intermediate_transcript_cid received");
-                    String intermediate_transcript = new String(raw_data, StandardCharsets.US_ASCII);
+                    String intermediate_transcript = new String(raw_data, StandardCharsets.UTF_8);
                     final Intent intent = new Intent();
                     intent.putExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT, intermediate_transcript);
                     intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
@@ -452,17 +456,23 @@ public class GlboxClientSocket {
                         intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
                         intent.putExtra(GlboxClientSocket.COMMAND_ARG, "blank");
                         mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                    } else if ((raw_data[0] == translate_mode_id[0]) && (raw_data[1] == translate_mode_id[1])) { //got ack response
+                        Log.d(TAG, "TRANSLATE MODE TOGGLE");
+                        final Intent intent = new Intent();
+                        intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
+                        intent.putExtra(GlboxClientSocket.COMMAND_ARG, "translate");
+                        mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                     }
                 } else if ((b1 == command_response_cid[0]) && (b2 == command_response_cid[1])) { //got command response
                     Log.d(TAG, "command_response_cid received");
-                    String response_string = new String(raw_data, StandardCharsets.US_ASCII);
+                    String response_string = new String(raw_data, StandardCharsets.UTF_8);
                     final Intent intent = new Intent();
                     intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, response_string);
                     intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                     mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 } else if ((b1 == wikipedia_result_cid [0]) && (b2 == wikipedia_result_cid [1])) { //got command response
                     Log.d(TAG, "wikipedia_result_cid received");
-                    String wikipedia_result_json_string = new String(raw_data, StandardCharsets.US_ASCII);
+                    String wikipedia_result_json_string = new String(raw_data, StandardCharsets.UTF_8);
                     JSONObject wikipedia_result_json;
                     try {
                         wikipedia_result_json = new JSONObject(wikipedia_result_json_string);
@@ -487,6 +497,13 @@ public class GlboxClientSocket {
                     } catch (UnsupportedEncodingException e){
                         Log.d(TAG, e.toString());
                     }
+                } else if ((b1 == translation_result_cid[0]) && (b2 == translation_result_cid[1])) { //got command response
+                    Log.d(TAG, "translation_result_cid received");
+                    String translated_text_string = new String(raw_data, StandardCharsets.UTF_8);
+                    final Intent intent = new Intent();
+                    intent.putExtra(GlboxClientSocket.TRANSLATION_RESULT, translated_text_string);
+                    intent.setAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
+                    mContext.sendBroadcast(intent);
                 }
 
 //                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive

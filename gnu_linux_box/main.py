@@ -26,9 +26,12 @@ from queue import Queue, Empty
 from threading import Thread
 
 from utils.gcp_stt import run_google_stt
+from utils.gcp_translate import run_google_translate
 from utils.asg_socket_server import ASGSocket
 
 from utils.english_pronouns_list import english_pronouns
+
+from language_options import language_options
 
 import spacy
 
@@ -48,15 +51,19 @@ command_success_sound = "./speech_pre_rendered/command_success.wav"
 generic_failure_sound = "./speech_pre_rendered/command_failed.wav"
 wolfram_failure_sound = "./speech_pre_rendered/wolfram_query_failed.wav"
 
-# Audio recording parameters
-STREAMING_LIMIT = 300000 #YOU HAVE TO CHANGE THIS IN ./utils/ResumableMicInput.py AS WELL NO TIME TO SETUP SHARED CONFIG FILES (YAML) #also, no more than 300 seconds or GCP will error - cayden
-SAMPLE_RATE = 16000
-CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
-
 #terminal printing colors
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
+
+#language_options = { "spanish" : "es",
+#                    "german" : "de",
+#                    "chinese" : "zh",
+#                    "mandarin" : "zh",
+#                    "korean" : "ko",
+#                    "french" : "fr",
+#                    "hindi" : "hi"
+#                    }
 
 #define phrases/word that will wake the system to search the current speech for voice commands
 wake_words = []
@@ -66,7 +73,7 @@ with open(wake_words_file) as f:
 print("Active wake words: {}".format(wake_words))
 
 #define voice commands functions
-def add_wake_word(transcript, args, cmd_q):
+def add_wake_word(transcript, args, cmd_q, thread_q):
     try: 
         wake_word = args
         wake_words.append(args) #add it to our locally loaded object
@@ -78,7 +85,7 @@ def add_wake_word(transcript, args, cmd_q):
         print(e)
         return False
 
-def wikipedia_search(transcript, args, cmd_q):
+def wikipedia_search(transcript, args, cmd_q, thread_q):
     try:
         print("WIKIPEDIA SEARCHING NOW...")
         #make wikipedia search request (will fail if ambiguous)
@@ -115,7 +122,7 @@ def wikipedia_search(transcript, args, cmd_q):
         print(e)
         return False
 
-def save_memory(transcript, args, cmd_q):
+def save_memory(transcript, args, cmd_q, thread_q):
     try: 
         ctime = time.time()
         memory = args
@@ -127,24 +134,31 @@ def save_memory(transcript, args, cmd_q):
         print(e)
         return False
 
-def switch_mode(transcript, args, cmd_q):
+def switch_mode(transcript, args, cmd_q, thread_q):
     print("RUNNING SWITCH MODE")
     modes = {"social" : ["social", "social mode"],
             "llc" : ["LLC", "live life captions"],
-            "blank" : ["blank mode", "blank screen", "blank", "Blanc"]
+            "blank" : ["blank mode", "blank screen", "blank", "Blanc"],
+            "translate" : ["translate mode", "translate", "translated"],
             }
 
     transcript_l = transcript.lower()
     for k in modes:
         for voice_command in modes[k]:
             matches = find_near_matches(voice_command, transcript_l, max_l_dist=1)
+            print(matches)
             if len(matches) > 0:
+                args = transcript_l[matches[0].end+1:]
                 print("USER COMMAND: SWITCH TO MODE: {}".format(k))
+                if (k == "translate"):
+                    thread_q.put({"type" : "translate", "cmd" : "start", "language" : args})
+                else: #if we are changing to any mode other than translate, then stop translation services
+                    thread_q.put({"type" : "translate", "cmd" : "kill"})
                 cmd_q.put(("switch mode", k))
                 break
     return 1
 
-def ask_wolfram(transcript, args, cmd_q):
+def ask_wolfram(transcript, args, cmd_q, thread_q):
     print("ASKING WOLFRAM: {}".format(args))
     result, convo_id = wolfram_conversational_query(args)
     print("WOLFRAM RESPONSE:")
@@ -192,13 +206,13 @@ voice_commands = {
         "wikipedia"  : {"function" : wikipedia_search, "voice_sounds" : ["wikipedia"]}, #search wikipedia for a query
         }
 
-def find_commands(transcript, stream, cmd_q, obj_q):
+def find_commands(transcript, cmd_q, obj_q, thread_q):
     """
     Search through a transcript for wake words and predefined voice commands - strict mode commands first (not natural language)
 
     """
     #stop listening while we parse command and TTS (say) the result
-    stream.deaf = True
+    #stream.deaf = True
 
     # closest wake word detection
     wake_words_found = [] #list of fuzzysearch Match objects
@@ -267,7 +281,7 @@ def find_commands(transcript, stream, cmd_q, obj_q):
 
         if voice_command_func is not None:
             #run the voice command
-            res = voice_command_func(transcript, command_args, cmd_q)
+            res = voice_command_func(transcript, command_args, cmd_q, thread_q)
             if type(res) == int and res == 1:
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 obj_q.put({"type" : "cmd_success", "data" : True})
@@ -276,8 +290,8 @@ def find_commands(transcript, stream, cmd_q, obj_q):
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 print("COMMAND OUTPUT SAVING TO QUEUE")
                 obj_q.put({"type" : "cmd_response", "data" : res})
-                print("NOW SAYING: {}".format(res))
-                subprocess.call(['say',res])
+                #print("NOW SAYING: {}".format(res))
+                #subprocess.call(['say',res])
             else:
                 if "fail_function" in voice_commands[command_name] and voice_commands[command_name]["fail_function"] is not None:
                     voice_commands[command_name]["fail_function"]()
@@ -287,95 +301,19 @@ def find_commands(transcript, stream, cmd_q, obj_q):
                     print("COMMAND FAILED")
 
     #start listening again after we have parsed command, run command, and given user response with TTS
-    stream.deaf = False
+    #stream.deaf = False
 
-def get_current_time():
-    """Return Current Time in MS."""
+def run_voice_command(transcript_q, cmd_q, obj_q, thread_q):
+    while True:
+        transcript_obj = transcript_q.get()
+        transcript = transcript_obj["transcript"]
+        #send it to the ASG
+        obj_q.put({"type" : "transcript", "is_final" : transcript_obj["is_final"], "transcript" : transcript})
+        if transcript_obj["is_final"]:
+            #analyze latest transcription for voice commands
+            find_commands(transcript, cmd_q, obj_q, thread_q)
 
-    return int(round(time.time() * 1000))
-
-def receive_transcriptions(transcript_q, cmd_q, obj_q, responses, stream):
-    """Iterates through STT server responses.
-
-    First sends them to whatever GUI we are using (ASG, send over a socket).
-    Then, if the request is a "final request", parse for wake words and commands
-
-    The responses passed is a generator that will block until a response
-    is provided by the server.
-
-    Each response may contain multiple results, and each result may contain
-    multiple alternatives; for details, see https://goo.gl/tjCPAU.  Here we
-    print only the transcription for the top alternative of the top result.
-
-    In this case, responses are provided for interim results as well. If the
-    response is an interim one, print a line feed at the end of it, to allow
-    the next result to overwrite it, until the response is a final one. For the
-    final one, print a newline to preserve the finalized transcription.
-    """
-
-    for response in responses:
-
-        if get_current_time() - stream.start_time > STREAMING_LIMIT:
-            stream.start_time = get_current_time()
-            break
-
-        if not response.results:
-            continue
-
-        result = response.results[0]
-
-        if not result.alternatives:
-            continue
-
-        transcript = result.alternatives[0].transcript
-
-        result_seconds = 0
-        result_micros = 0
-
-        if result.result_end_time.seconds:
-            result_seconds = result.result_end_time.seconds
-
-        if result.result_end_time.microseconds:
-            result_micros = result.result_end_time.microseconds
-
-        stream.result_end_time = int((result_seconds * 1000) + (result_micros / 1000))
-
-        corrected_time = (
-            stream.result_end_time
-            - stream.bridging_offset
-            + (STREAMING_LIMIT * stream.restart_counter)
-        )
-        # Display interim results, but with a carriage return at the end of the
-        # line, so subsequent lines will overwrite them.
-
-        #send transcription responses to our GUI
-        #GUI_receive(transcript)
-        #add transcript to queue
-        transcript_obj = dict()
-        transcript_obj["transcript"] = transcript
-        transcript_obj["is_final"] = False
-
-        if result.is_final:
-            transcript_obj["is_final"] = True
-            transcript_q.put(transcript_obj)
-            sys.stdout.write(GREEN)
-            sys.stdout.write("\033[K")
-            sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
-
-            stream.is_final_end_time = stream.result_end_time
-            stream.last_transcript_was_final = True
-
-            #send transcription responses to our voice command
-            find_commands(transcript, stream, cmd_q, obj_q)
-        else:
-            transcript_q.put(transcript_obj)
-            sys.stdout.write(RED)
-            sys.stdout.write("\033[K")
-            sys.stdout.write(str(corrected_time) + ": " + transcript + "\r")
-
-            stream.last_transcript_was_final = False
-
-def run_nlp(string):
+def get_nlp(string):
     doc = nlp(string)
 
     # Analyze syntax
@@ -415,19 +353,19 @@ def run_server(transcript_q, cmd_q, obj_q):
         try:
             #check and continue if there are other data streams to check from
             #check for transcripts
-            try:
-                transcript_obj = transcript_q.get(timeout=0.001)
-                if transcript_obj:
-                    transcript = transcript_obj["transcript"]
-                    if transcript_obj["is_final"] == True:
-                        #run nlp on the final transcript
-                        nlp_out = run_nlp(transcript)
-                        transcript_obj["nlp"] = nlp_out
-                        GUI_receive_final_transcript_object(transcript_obj)
-                    else:
-                        GUI_receive_intermediate_transcript(transcript)
-            except Empty as e:
-                pass
+#            try:
+#                transcript_obj = transcript_q.get(timeout=0.001)
+#                if transcript_obj:
+#                    transcript = transcript_obj["transcript"]
+#                    if transcript_obj["is_final"] == True:
+#                        #run nlp on the final transcript
+#                        nlp_out = get_nlp(transcript)
+#                        transcript_obj["nlp"] = nlp_out
+#                        GUI_receive_final_transcript_object(transcript_obj)
+#                    else:
+#                        GUI_receive_intermediate_transcript(transcript)
+#            except Empty as e:
+#                pass
             #check for commands
             try:
                 cmd, args = cmd_q.get(timeout=0.001)
@@ -443,7 +381,16 @@ def run_server(transcript_q, cmd_q, obj_q):
             #check for command responses
             try:
                 obj = obj_q.get(timeout=0.001)
-                if obj["type"] == "cmd_response":
+                if obj["type"] == "transcript":
+                    transcript = obj["transcript"]
+                    if obj["is_final"] == True:
+                        #run nlp on the final transcript
+                        nlp_out = get_nlp(transcript)
+                        obj["nlp"] = nlp_out
+                        GUI_receive_final_transcript_object(obj)
+                    else:
+                        GUI_receive_intermediate_transcript(transcript)
+                elif obj["type"] == "cmd_response":
                     command_output = obj["data"]
                     print("CMD RESPONSE RECEIVEEEDDDD************************************** {}".format(command_output))
                     GUI_receive_command_output(command_output)
@@ -453,6 +400,9 @@ def run_server(transcript_q, cmd_q, obj_q):
                         GUI_receive_command_output("COMMAND SUCCESS")
                     else:
                         GUI_receive_command_output("COMMAND FAILED")
+                elif obj["type"] == "translate_result":
+                    print("sending translation results")
+                    asg_socket.send_translated_text(obj["data"])
             except Empty as e:
                 pass
 
@@ -460,28 +410,89 @@ def run_server(transcript_q, cmd_q, obj_q):
             print("Connection broken, listening again")
             asg_socket.start_conn()
 
+def make_new_thread(thread_q, thread_holder, translate_q, obj_q): #handles making new threads and adding them to the thread holder for the main loop
+    try:
+        thread_obj = thread_q.get(False)
+        if thread_obj:
+            print("thread request")
+            thread_type = thread_obj["type"]
+            if thread_type == "translate":
+                if thread_obj["cmd"] == "start":
+                    #first, check if translate mode is already running
+                    try:
+                        translate_stt_thread = thread_holder["translate_stt"]
+                        translater_thread = thread_holder["translater"]
+                        if translate_stt_thread is not None or translater_thread is not None:
+                            return
+                    except KeyError:
+                        pass
+
+                    language = thread_obj["language"]
+                    source_language = language_options[language.lower()]
+                    #source_language = "es"
+                    translate_stt_thread = Thread(target = run_google_stt, args = (translate_q, source_language)) #transcribes a different language
+                    translater_thread = Thread(target = run_google_translate, args = (translate_q, obj_q, source_language)) #takes those translations and converts them into our target language
+                    print("STARTING TRANSLATION THREAD")
+                    translate_stt_thread.start()
+                    translater_thread.start()
+                    thread_holder["translate_stt"] = translate_stt_thread
+                    thread_holder["translater"] = translater_thread
+                else: #if cmd is kill, then stop the translater, if it's running
+                    try:
+                        translate_stt_thread = thread_holder["translate_stt"]
+                        translater_thread = thread_holder["translater"]
+                    except KeyError:
+                        return
+                    if translate_stt_thread:
+                        print("attempting to kill (((((((((((((((((((((((((((((((((((((((((")
+                        translate_stt_thread.do_run = False
+                        translate_stt_thread.join()
+                        print("kill success (((((((((((((((((((((((((((((((((((((((((")
+                        thread_holder["translate_stt"] = None
+                    if translater_thread:
+                        print("2attempting to kill (((((((((((((((((((((((((((((((((((((((((")
+                        translater_thread.do_run = False
+                        translater_thread.join()
+                        print("2kill success (((((((((((((((((((((((((((((((((((((((((")
+                        thread_holder["translater"] = None
+    except Empty:
+        pass
+
+
 def main():
     # Create the shared queue and launch both threads
     transcript_q = Queue() #to share raw transcriptions
     cmd_q = Queue() #to share parsed commands (currently voice command is running in run_google_stt)
     obj_q = Queue() #generic object queue to pass anything, of type: {"type" : "transcript" : "data" : "hello world"} or similiar
-    server_thread = Thread(target = run_server, args = (transcript_q, cmd_q, obj_q))
-    stt_thread = Thread(target = run_google_stt, args = (transcript_q, cmd_q, obj_q, receive_transcriptions))
-    server_thread.start()
-    #run speech to text, pass every result to the callback function passed in
-    #in the future if we use different STT libs, we can just change that right here
-    stt_thread.start()
+    thread_q = Queue() #requests to the main thread to start a new thread
+    translate_q = Queue() # holds text to be translated to english
+    test_q = Queue() # a test queue that no one will ever read
 
-    #debug loop
+    server_thread = Thread(target = run_server, args = (transcript_q, cmd_q, obj_q))
+    stt_thread = Thread(target = run_google_stt, args = (transcript_q,))
+    voice_command_thread = Thread(target = run_voice_command, args = (transcript_q, cmd_q, obj_q, thread_q))
+
+    server_thread.start() #create connection with ASG and handle sending it stuff
+    stt_thread.start() #open microphone, convert speech to text, fill queue with transcribed speech
+    voice_command_thread.start() #receive output form STT, process it, send results and commands to ASG
+    #translate_thread.start()
+
+    #look for requests to start a new thread (some threads, like a translation service, are only started when requested by the user, and killed when the user requests to kill it
+    thread_holder = dict()
     i = 0
     while True:
+        make_new_thread(thread_q, thread_holder, translate_q, obj_q)
         print("--- EHLHO WHARLD * {}".format(i))
         i += 1
-        time.sleep(10)
+        time.sleep(2)
+
+    #shutdown - kill thread
     server_thread.kill()
     stt_thread.kill()
+    voice_command_thread.kill()
     server_thread.join()
     stt_thread.join()
+    voice_command_thread.join()
 
 if __name__ == "__main__":
     main()

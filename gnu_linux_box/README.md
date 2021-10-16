@@ -11,3 +11,11 @@ This is the main/only (Python3) program the runs on the GLBOX.
 7. Run `main.py`
 
 If you follow the above steps above, follow the steps in the main README (connect GLBOX and ASG to ASP hotspot), and run Android apps on the ASG and ASP, you will be running the WIS.
+
+## Software Engineering
+
+This has been thought through and attempted to make modular and customizable. However some things (ussually in the name of rapid development) have become a bit too dependent/spaghetti.
+
+The overall layout with the main thread simply starting up queues and threads is good. The communication scheme is ok, and could be improved. The modularity is mostly there, but moving functions into their own classes to further classify/modularize will help just to simplify the layout. The asg_socket_server should become just the ASG object, and that itself should import an asg_socket_server which doesn't understand what it's sending, just handles connetion, reconnetion, sending raw data.
+
+None of these things are life and death and at some point it will be worthwhile to return to fix these things. For now, keep building on what we have, which is completely acceptable, and what this turns into will help us better understand the "perfect" way to structure in a few months time.
