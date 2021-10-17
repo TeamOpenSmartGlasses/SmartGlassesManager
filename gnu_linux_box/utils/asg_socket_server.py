@@ -26,11 +26,13 @@ class ASGSocket:
         self.command_output_cid = bytearray([12, 4]) 
         self.wikipedia_result_cid = bytearray([12, 5]) 
         self.translation_cid = bytearray([12, 6]) 
+        self.visual_search_images_result_cid = bytearray([12, 7]) 
         self.mode_ids = {
                             "social" : bytearray([15, 0]),
                             "llc" : bytearray([15, 1]), #live life captions
                             "blank" : bytearray([15, 2]), #blank display
-                            "translate" : bytearray([15, 3]) #mode to translate text
+                            "translate" : bytearray([15, 3]), #mode to translate text
+                            "visualsearchviewfind" : bytearray([15, 4])
                         }
 
 
@@ -48,7 +50,6 @@ class ASGSocket:
         #s.sendall(b)
         self.send_bytes(self.final_transcript_cid, encoded_message)
 
-
     def send_translated_text(self, text):
         print("SENDING TRANSLATED TEXT")
         self.send_bytes(self.translation_cid, bytes(text + "\n",'UTF-8'))
@@ -59,6 +60,10 @@ class ASGSocket:
     def send_wikipedia_result(self, result):
         result_encoded = json.dumps(result).encode('utf-8')
         self.send_bytes(self.wikipedia_result_cid, result_encoded)
+
+    def send_visual_search_images_result(self, result):
+        result_encoded = json.dumps(result).encode('utf-8')
+        self.send_bytes(self.visual_search_images_result_cid, result_encoded)
 
     def send_command_output(self, message_str):
         self.send_bytes(self.command_output_cid, bytes(message_str + "\n",'UTF-8'))
@@ -100,6 +105,7 @@ class ASGSocket:
 if __name__ == "__main__":
     asg_socket = ASGSocket()
     asg_socket.start_conn()
+    print("conn done been started son")
 
     i = 0
     while True:
@@ -107,10 +113,24 @@ if __name__ == "__main__":
             print("Sending utf-8 string ping...")
             asg_socket.send_string("Hello man {}".format(i))
             print("--Ping sent")
-        except BrokenPipeError as e:
+
+            #listen for data
+            s.settimeout(1.0)
+            fragments = list()
+            print("getting frags")
+            while True:
+                print("Loop in asg")
+                chunk = s.recv(1024)
+                if not chunk:
+                    print("parse cuz no chunkz:")
+                    break
+                fragments.append(chunk)
+            message = "".join(fragments)
+            print("message received")
+            print(message)
+        except (ConnectionResetError, BrokenPipeError) as e:
             print("Connection broken, listening again")
             asg_socket.start_conn()
             i = 0
         i += 1
-        time.sleep(1)
 

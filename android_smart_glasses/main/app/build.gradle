@@ -50,6 +50,7 @@ dependencies {
 //        builtBy 'compile'
 //    }
     implementation  (name:'hiddencamera-release', ext:'aar')
+    implementation 'com.squareup.picasso:picasso:2.5.2'
 //    compile 'org.jacoco:jacoco-maven-plugin:0.7.9'
 //
 //    compile 'org.jacoco:org.jacoco.agent:0.7.9:runtime'
