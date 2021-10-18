@@ -59,7 +59,13 @@ public class MainActivity extends Activity {
 
     public String TAG = "WearableAiDisplay";
 
-    //tmp
+    //store information from visual search response
+    List<String> thumbnailImages;
+    List<String> visualSearchNames;
+
+    //visual search gridview ui
+    GridView gridviewImages;
+    ImageAdapter gridViewImageAdapter;
 
     //social UI
     TextView messageTextView;
@@ -559,12 +565,18 @@ public class MainActivity extends Activity {
             } else if (GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT.equals(action)) {
                 Log.d(TAG, "received visual search image results");
                 String str_data = intent.getStringExtra(GlboxClientSocket.VISUAL_SEARCH_RESULT);
-                List<String> thumbnailImages = new ArrayList<String>();
+                thumbnailImages = new ArrayList<String>();
+                visualSearchNames = new ArrayList<String>();
                 try {
                     JSONArray data = new JSONArray(str_data);
                     for (int i = 0; i < data.length(); i++){
+                        //get thumnail image urls
                         String thumbnailUrl = data.getJSONObject(i).getString("thumbnailUrl");
                         thumbnailImages.add(thumbnailUrl);
+
+                        //get names of items
+                        String name = data.getJSONObject(i).getString("name");
+                        visualSearchNames.add(name);
                     }
 
                 } catch (JSONException e){
@@ -572,14 +584,26 @@ public class MainActivity extends Activity {
                 }
                 //setup gridview to view grid of visual search images
                 switchMode("visualsearchgridview");
-                final GridView gridview = (GridView) findViewById(R.id.gridview);
-                ImageAdapter myImageAdapter = new ImageAdapter(context);
+                gridviewImages = (GridView) findViewById(R.id.gridview);
+                gridViewImageAdapter = new ImageAdapter(context);
                 String[] simpleThumbArray = new String[ thumbnailImages.size() ];
                 thumbnailImages.toArray( simpleThumbArray );
-                myImageAdapter.imageTotal = simpleThumbArray.length;
-                myImageAdapter.mThumbIds = simpleThumbArray;
-                gridview.setAdapter(myImageAdapter);
-        }
+                gridViewImageAdapter.imageTotal = simpleThumbArray.length;
+                gridViewImageAdapter.mThumbIds = simpleThumbArray;
+                gridviewImages.setDrawSelectorOnTop(false);
+                gridviewImages.setSelector(R.drawable.selector_image_gridview);
+                gridviewImages.setAdapter(gridViewImageAdapter);
+                gridviewImages.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    public void onItemClick(AdapterView<?> parent, View v,
+                                            int position, long id) {
+                        Log.d(TAG, "Selected position: " + position);
+                        selectVisualSearchResult();
+                        gridViewImageAdapter.notifyDataSetChanged();
+                    }
+                });
+
+
+            }
     }
 };
 
@@ -769,13 +793,32 @@ private Spanned getCurrentTranscriptScrollText() {
         Log.d(TAG, "visual search image has been sent");
     }
 
+    private void selectVisualSearchResult(){
+        Log.d(TAG, "select visual search result called");
+        int pos = gridviewImages.getSelectedItemPosition();
+        String name = visualSearchNames.get(pos);
+        Toast.makeText(MainActivity.this, name, Toast.LENGTH_LONG).show();
+    }
+
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        Log.d(TAG, "got keycode");
+        Log.d(TAG, Integer.toString(keyCode));
         switch (keyCode) {
             case KeyEvent.KEYCODE_ENTER:
                 Log.d(TAG, "keycode _ enter felt");
                 if (curr_mode.equals("visualsearchviewfind")){
                     captureVisualSearchImage();
+                    return true;
+                } else if (curr_mode.equals("visualsearchgridview")){
+                    selectVisualSearchResult();
+                    return true;
+                } else {
+                    return super.onKeyUp(keyCode, event);
+                }
+            case KeyEvent.KEYCODE_DEL:
+                if (curr_mode.equals("visualsearchgridview")) {
+                    switchMode("llc");
                     return true;
                 } else {
                     return super.onKeyUp(keyCode, event);
