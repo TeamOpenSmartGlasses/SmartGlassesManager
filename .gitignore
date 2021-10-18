@@ -1,6 +1,8 @@
 __pycache__
 *.pyc
 
+azure_key.txt
+
 # data
 *.jpg
 *mp3

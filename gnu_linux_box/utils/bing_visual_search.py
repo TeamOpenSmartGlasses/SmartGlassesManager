@@ -12,11 +12,13 @@ imagePath = '/home/cayden/Documents/to_rec/IMG_20211012_221002.jpg' #toilet pape
 #imagePath = '/home/cayden/Documents/to_rec/IMG_20211012_221016.jpg' #oculus quest 2
 #imagePath = '/home/cayden/Documents/to_rec/nano.jpg' #arduino nano
 
-
-
 def bing_visual_search(img_bytes):
     BASE_URI = "https://api.bing.microsoft.com/v7.0/images/visualsearch"
-    SUBSCRIPTION_KEY = "53cf054028cb4bae98713c5be4afc8f9" 
+
+    #set azure API key
+    with open('./utils/azure_key.txt') as f:
+        SUBSCRIPTION_KEY = f.readline().strip()
+
     HEADERS = {'Ocp-Apim-Subscription-Key': SUBSCRIPTION_KEY}
 
     file = {'image' : ('myfile', img_bytes)}
