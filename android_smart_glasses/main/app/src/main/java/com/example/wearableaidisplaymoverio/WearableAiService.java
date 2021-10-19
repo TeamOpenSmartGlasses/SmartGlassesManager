@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.os.Binder;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Handler;
@@ -60,6 +61,8 @@ import java.util.Date;
     //-locally running the camera in the background (Android Hidden camera: https://github.com/kevalpatel2106/android-hidden-camera)
     //-whatever else we need in the background
 public class WearableAiService extends HiddenCameraService {
+    // Binder given to clients
+    private final IBinder binder = new LocalBinder();
 
     //image stream handling
     private int img_count = 0;
@@ -96,6 +99,8 @@ public class WearableAiService extends HiddenCameraService {
 
     Thread adv_thread;
 
+    byte [] curr_cam_image;
+
     @Override
     public void onCreate(){
         System.out.println("HIDDEN CAMERA SERVICE CREATED");
@@ -108,6 +113,8 @@ public class WearableAiService extends HiddenCameraService {
         glbox_thread.start();
 
         mContext = this;
+
+        beginCamera();
     }
 
     class ReceiveAdvThread extends Thread {
@@ -120,6 +127,10 @@ public class WearableAiService extends HiddenCameraService {
         public void run(){
             glbox_starter();
         }
+    }
+
+    public byte [] getCurrentCameraImage(){
+        return curr_cam_image;
     }
 
     public void receiveUdpBroadcast(){
@@ -160,7 +171,6 @@ public class WearableAiService extends HiddenCameraService {
 
     public void asp_starter(){
         startAspSocket();
-        beginCamera();
     }
 
 
@@ -173,10 +183,22 @@ public class WearableAiService extends HiddenCameraService {
         System.out.println("HIDDEN CAMERA SERVICE DESTROYED");
     }
 
-    @Nullable
+//    @Nullable
+//    @Override
+//    public IBinder onBind(Intent intent) {
+//        return null;
+//    }
+
+    public class LocalBinder extends Binder {
+        WearableAiService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return WearableAiService.this;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
     }
 
     @Override
@@ -240,7 +262,7 @@ public class WearableAiService extends HiddenCameraService {
 
     @Override
     public void onImageCapture(@NonNull File imageFile) {
-        System.out.println("SUCCESSFULLY CAPTURED IMAGE");
+        Log.d(TAG, "SUCCESSFULLY CAPTURED IMAGE");
 
         //open back up camera lock
         camera_lock = false;
@@ -252,6 +274,8 @@ public class WearableAiService extends HiddenCameraService {
             BufferedInputStream buf = new BufferedInputStream(new FileInputStream(imageFile));
             buf.read(img, 0, img.length);
             buf.close();
+            System.arraycopy(img, 0, curr_cam_image, 0, img.length);
+            //curr_cam_image = img;
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -394,9 +418,14 @@ public class WearableAiService extends HiddenCameraService {
             yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
 
             byte[] bytes = out.toByteArray();
+            //this will slow down frame rate - need to make asynchronous in future
+            curr_cam_image = new byte[bytes.length];
+            System.arraycopy(bytes, 0, curr_cam_image, 0, bytes.length);
             final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             byte[] jpg = bmpToJpg(bitmap);
-            uploadImage(jpg);
+            if (asp_client_socket != null && asp_client_socket.getConnectState()){
+                uploadImage(jpg);
+            }
             int q_size = asp_client_socket.getImageBuf();
             //Log.d(TAG, "saving image");
             //savePicture(jpg);
@@ -420,6 +449,11 @@ public class WearableAiService extends HiddenCameraService {
         yuvToRgbIntrinsic.setInput(in);
         yuvToRgbIntrinsic.forEach(out);
         return out;
+    }
+
+
+    public void sendGlBoxCurrImage(){
+        glbox_client_socket.sendBytes(img_id, curr_cam_image, "image");
     }
 
 }

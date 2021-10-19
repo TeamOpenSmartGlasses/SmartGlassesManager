@@ -302,6 +302,14 @@ public class ASPClientSocket {
         return ByteBuffer.wrap(byteBarray).order(ByteOrder.BIG_ENDIAN).getInt();
     }
 
+    public boolean getConnectState(){
+        if (mConnectState != 2){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     static class ReceiveThread implements Runnable {
         @Override
         public void run() {
@@ -359,7 +367,6 @@ public class ASPClientSocket {
                     //got heart beat, respond with heart beat
                     clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
                 } else if ((b1 == eye_contact_info_id_5[0]) && (b2 == eye_contact_info_id_5[1])) { //we got a message with information to display
-                    Log.d(TAG, "eye contact info 5");
                     String message = Integer.toString(my_bb_to_int_be(raw_data));
                     final Intent intent = new Intent();
                     intent.putExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE, message);
@@ -413,7 +420,6 @@ public class ASPClientSocket {
             data_queue.clear();
             type_queue.clear();
             while (true) {
-                System.out.println("IMAGES IN Q: " + getImageBuf());
                 if (packets_in_buf > 5) { //if 5 packets in buffer (NOT QUEUE, BUF NETWORK BUFFER), restart socket
                     break;
                 }

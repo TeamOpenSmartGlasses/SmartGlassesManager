@@ -1,17 +1,21 @@
 package com.example.wearableaidisplaymoverio;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.Image;
 import android.os.Bundle;
 
 import android.app.Activity;
 import android.hardware.Camera;
 import android.os.Handler;
+import android.os.IBinder;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spanned;
@@ -20,16 +24,22 @@ import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.PieChart;
@@ -44,9 +54,18 @@ import org.json.JSONObject;
 
 
 public class MainActivity extends Activity {
+    WearableAiService mService;
+    boolean mBound = false;
+
     public String TAG = "WearableAiDisplay";
 
-    //tmp
+    //store information from visual search response
+    List<String> thumbnailImages;
+    List<String> visualSearchNames;
+
+    //visual search gridview ui
+    GridView gridviewImages;
+    ImageAdapter gridViewImageAdapter;
 
     //social UI
     TextView messageTextView;
@@ -74,6 +93,9 @@ public class MainActivity extends Activity {
     int translateTextHolderSizeLimit = 10; // how many lines maximum in the text holder
     TextView translateText;
 
+    //visual search ui
+    ImageView viewfinder;
+
     //metrics
     float eye_contact_30 = 0;
     String facial_emotion_30 = "";
@@ -90,11 +112,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
 
-        //print a bunch of stuff we can see in logcat
-        for (int i = 0; i < 20; i++) {
-            System.out.println("WEARABLEAI");
-        }
-
         //set full screen for Moverio
         long FLAG_SMARTFULLSCREEN = 0x80000000;
         Window win = getWindow();
@@ -107,8 +124,20 @@ public class MainActivity extends Activity {
         //hint, use this to allow it to turn off:
 
 
+//        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+//                Intent i = new Intent(getApplicationContext(), FullImageActivity.class);
+//                i.putExtra("id", position);
+//                startActivity(i);
+//            }
+//        });
+
+
         //create the WearableAI service if it isn't already running
         startService(new Intent(this, WearableAiService.class));
+        // Bind to that service
+        Intent intent = new Intent(this, WearableAiService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
 //        //setup camera preview
 //        preview = (SurfaceView) findViewById(R.id.preview);
@@ -129,6 +158,7 @@ public class MainActivity extends Activity {
 
     private void switchMode(String mode) {
         Log.d(TAG, "SWITCH MODE RUNNING WITH NEW MODE: " + mode);
+        curr_mode = mode;
         switch (mode) {
             case "social":
                 setupSocialIntelligenceUi();
@@ -142,9 +172,51 @@ public class MainActivity extends Activity {
             case "translate":
                 setupTranslateUi();
                 break;
+            case "visualsearchviewfind":
+                setupVisualSearchViewfinder();
+                break;
+            case "visualsearchgridview":
+                setContentView(R.layout.image_gridview);
+                break;
         }
-        curr_mode = mode;
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
+    }
+
+    private void setupVisualSearchViewfinder() {
+        //live life captions mode gui setup
+        setContentView(R.layout.viewfinder);
+        viewfinder = (ImageView) findViewById(R.id.camera_viewfinder);
+//        if (mBound) {
+//            byte[] curr_cam_image = mService.getCurrentCameraImage();
+//            Bitmap curr_cam_bmp = BitmapFactory.decodeByteArray(curr_cam_image, 0, curr_cam_image.length);
+//            viewfinder.setImageBitmap(curr_cam_bmp);
+//        } else {
+//            Log.d(TAG, "Mboudn not true yo");
+//        }
+
+        updateViewFindFrame();
+    }
+
+    private void updateViewFindFrame(){
+        if (mBound) {
+            byte[] curr_cam_image = mService.getCurrentCameraImage();
+            Bitmap curr_cam_bmp = BitmapFactory.decodeByteArray(curr_cam_image, 0, curr_cam_image.length);
+            viewfinder.setImageBitmap(curr_cam_bmp);
+        } else {
+            Log.d(TAG, "Mboudn not true yo");
+        }
+
+        //update the current preview frame in
+        //for now, show for n seconds and then return to llc
+        int frame_delay = 50; //milliseconds
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                if (curr_mode.equals("visualsearchviewfind")) {
+                    updateViewFindFrame();
+                }
+            }
+        }, frame_delay);
     }
 
     private void setupLlcUi() {
@@ -176,7 +248,6 @@ public class MainActivity extends Activity {
     }
 
     private void setupTranslateUi() {
-        Log.d(TAG, "RUNNING SETUP TRANSLATE");
         //live life captions mode gui setup
         setContentView(R.layout.translate_mode_view);
         translateText = (TextView) findViewById(R.id.translatetextview);
@@ -229,7 +300,6 @@ public class MainActivity extends Activity {
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResumerunning");
         super.onResume();
 
         registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
@@ -245,7 +315,6 @@ public class MainActivity extends Activity {
 
     @Override
     public void onPause() {
-        Log.d(TAG, "onPause running");
         super.onPause();
 
         //unregister receiver
@@ -345,14 +414,13 @@ public class MainActivity extends Activity {
     }
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
-
-        Log.d("WearableAI", "makeComputUpdateIntentFilter");
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
         intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
         intentFilter.addAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
         intentFilter.addAction(GlboxClientSocket.ACTION_WIKIPEDIA_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
+        intentFilter.addAction(GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT);
         return intentFilter;
     }
 
@@ -360,7 +428,6 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            Log.d(TAG, "GOT ACTION: " + action);
             if (curr_mode.equals("social") && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
                 if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
@@ -392,20 +459,13 @@ public class MainActivity extends Activity {
                         JSONObject nlp = transcript_object.getJSONObject("nlp");
                         JSONArray nouns = nlp.getJSONArray("nouns");
                         String transcript = transcript_object.getString("transcript");
-                        System.out.println("TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + transcript);
-                        System.out.println("TRANSCRIPT OBJECT IN MAIN ACTIVITY: " + transcript_object);
-                        System.out.println("nouns " + nouns);
                         if ((nouns.length() == 0)){
-                            System.out.println("fail");
                             textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
                         } else {
-                            System.out.println("run dee else");
-                            System.out.println("nouns length: " + nouns.length());
                             //add text to a string and highlight properly the things we want to highlight (e.g. proper nouns)
                             String textBuilder = "<p>";
                             int prev_end = 0;
                             for (int i = 0; i < nouns.length(); i++) {
-                                System.out.println("run dee loop");
                                 String noun = nouns.getJSONObject(i).getString("noun");
                                 int start = nouns.getJSONObject(i).getInt("start");
                                 int end = nouns.getJSONObject(i).getInt("end");
@@ -419,7 +479,6 @@ public class MainActivity extends Activity {
 
                                 //add in current colored noun
                                 textBuilder = textBuilder + "<font color='#00FF00'><u>" + transcript.substring(start, end) + "</u></font>";
-                                System.out.println("textBuilder:" );
 
                                 //add in end of transcript if we just added the last noun
                                 if (i == (nouns.length() - 1)){
@@ -444,14 +503,12 @@ public class MainActivity extends Activity {
                     if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
                         lastIntermediateMillis = System.currentTimeMillis();
                         String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
-                        System.out.println("I. TRANSCRIPT RECEIVED IN MAIN ACTIVITY: " + intermediate_transcript);
                         if (curr_mode.equals("llc")) {
                             liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
                         }
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
                     String command_response_text = intent.getStringExtra(GlboxClientSocket.COMMAND_RESPONSE);
-                    System.out.println("COMMAND_RESPONSE RECEIVED IN MAIN ACTIVITY: " + command_response_text);
                     textHolder.add(Html.fromHtml("<p><font color='#EE0000'>" + command_response_text.trim() + "</font></p>"));
                     if (curr_mode.equals("llc")) {
                         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
@@ -484,9 +541,6 @@ public class MainActivity extends Activity {
                         wikipediaResultImage.setImageBitmap(myBitmap);
                     }
 
-                    Log.d(TAG, "WIKIPEDIA TITLE IS " + title);
-                    Log.d(TAG, "WIKIPEDIA SUMMARY IS " + summary);
-                    Log.d(TAG, "WIKIPEDIA IMAGE NAME IS " + img_path);
                     //for now, show for n seconds and then return to llc
                     int wiki_show_time = 8000; //milliseconds
                     Handler handler = new Handler();
@@ -501,7 +555,6 @@ public class MainActivity extends Activity {
                 }
             } else if (GlboxClientSocket.ACTION_TRANSLATION_RESULT.equals(action)) {
                 String translation_result_text = intent.getStringExtra(GlboxClientSocket.TRANSLATION_RESULT);
-                Log.d(TAG, "TRANSLATED TEXT: " + translation_result_text);
                 //textHolder.add(Html.fromHtml("<p><font color='#EE0000'>TRANSLATION: " + translation_result_text + "</font></p>"));
 
                 translateTextHolder.add(Html.fromHtml("<p>" + translation_result_text + "</p>"));
@@ -509,12 +562,53 @@ public class MainActivity extends Activity {
                 if (curr_mode.equals("translate")) {
                     translateText.setText(getCurrentTranslateScrollText());
                 }
+            } else if (GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT.equals(action)) {
+                Log.d(TAG, "received visual search image results");
+                String str_data = intent.getStringExtra(GlboxClientSocket.VISUAL_SEARCH_RESULT);
+                thumbnailImages = new ArrayList<String>();
+                visualSearchNames = new ArrayList<String>();
+                try {
+                    JSONArray data = new JSONArray(str_data);
+                    for (int i = 0; i < data.length(); i++){
+                        //get thumnail image urls
+                        String thumbnailUrl = data.getJSONObject(i).getString("thumbnailUrl");
+                        thumbnailImages.add(thumbnailUrl);
+
+                        //get names of items
+                        String name = data.getJSONObject(i).getString("name");
+                        visualSearchNames.add(name);
+                    }
+
+                } catch (JSONException e){
+                    Log.d(TAG, e.toString());
+                }
+                //setup gridview to view grid of visual search images
+                switchMode("visualsearchgridview");
+                gridviewImages = (GridView) findViewById(R.id.gridview);
+                gridViewImageAdapter = new ImageAdapter(context);
+                String[] simpleThumbArray = new String[ thumbnailImages.size() ];
+                thumbnailImages.toArray( simpleThumbArray );
+                gridViewImageAdapter.imageTotal = simpleThumbArray.length;
+                gridViewImageAdapter.mThumbIds = simpleThumbArray;
+                gridviewImages.setDrawSelectorOnTop(false);
+                gridviewImages.setSelector(R.drawable.selector_image_gridview);
+                gridviewImages.setAdapter(gridViewImageAdapter);
+                gridviewImages.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    public void onItemClick(AdapterView<?> parent, View v,
+                                            int position, long id) {
+                        Log.d(TAG, "Selected position: " + position);
+                        selectVisualSearchResult();
+                        gridViewImageAdapter.notifyDataSetChanged();
+                    }
+                });
+
+
             }
-        }
-    };
+    }
+};
 
 
-    private Spanned getCurrentTranscriptScrollText() {
+private Spanned getCurrentTranscriptScrollText() {
         Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
         //limit textHolder to our maximum size
         while ((textHolder.size() - textHolderSizeLimit) > 0){
@@ -652,11 +746,9 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 int lc = tv.getLineCount();
-                Log.d(TAG, "LCLCLC is: " + lc);
                 if (lc == 0){
                     return;
                 }
-                Log.d(TAG, "getLineCount is : " + tv.getLineCount());
                 tv.scrollTo(0, tv.getBottom());
                 int scrollAmount = tv.getLayout().getLineTop(lc) - tv.getHeight();
                 // if there is no need to scroll, scrollAmount will be <=0
@@ -669,7 +761,72 @@ public class MainActivity extends Activity {
 
     }
 
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection connection = new ServiceConnection() {
 
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            WearableAiService.LocalBinder binder = (WearableAiService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
+
+    public void captureVisualSearchImage(){
+        Log.d(TAG, "sending visual search image");
+
+        Toast.makeText(MainActivity.this, "Capturing image...", Toast.LENGTH_SHORT).show();
+
+        if (mBound) {
+            //byte[] curr_cam_image = mService.getCurrentCameraImage();
+            mService.sendGlBoxCurrImage();
+        } else {
+            Log.d(TAG, "Mboudn not true yo");
+        }
+        Log.d(TAG, "visual search image has been sent");
+    }
+
+    private void selectVisualSearchResult(){
+        Log.d(TAG, "select visual search result called");
+        int pos = gridviewImages.getSelectedItemPosition();
+        String name = visualSearchNames.get(pos);
+        Toast.makeText(MainActivity.this, name, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        Log.d(TAG, "got keycode");
+        Log.d(TAG, Integer.toString(keyCode));
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_ENTER:
+                Log.d(TAG, "keycode _ enter felt");
+                if (curr_mode.equals("visualsearchviewfind")){
+                    captureVisualSearchImage();
+                    return true;
+                } else if (curr_mode.equals("visualsearchgridview")){
+                    selectVisualSearchResult();
+                    return true;
+                } else {
+                    return super.onKeyUp(keyCode, event);
+                }
+            case KeyEvent.KEYCODE_DEL:
+                if (curr_mode.equals("visualsearchgridview")) {
+                    switchMode("llc");
+                    return true;
+                } else {
+                    return super.onKeyUp(keyCode, event);
+                }
+            default:
+                return super.onKeyUp(keyCode, event);
+        }
+    }
 
 
 }

@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,7 +44,9 @@ public class GlboxClientSocket {
     public final static String WIKIPEDIA_RESULT = "com.example.wearableaidisplaymoverio.WIKIPEDIA_RESULT";
     public final static String ACTION_WIKIPEDIA_RESULT = "com.example.wearableaidisplaymoverio.ACTION_WIKIPEDIA_RESULT";
     public final static String TRANSLATION_RESULT = "com.example.wearableaidisplaymoverio.TRANSLATION_RESULT";
+    public final static String VISUAL_SEARCH_RESULT = "com.example.wearableaidisplaymoverio.VISUAL_SEARCH_RESULT";
     public final static String ACTION_TRANSLATION_RESULT = "com.example.wearableaidisplaymoverio.ACTION_TRANSLATION_RESULT";
+    public final static String ACTION_VISUAL_SEARCH_RESULT = "com.example.wearableaidisplaymoverio.ACTION_VISUAL_SEARCH_RESULT";
 
     public final static String COMMAND_SWITCH_MODE = "com.example.wearableaidisplaymoverio.COMMAND_SWITCH_MODE";
     public final static String COMMAND_ARG = "com.example.wearableaidisplaymoverio.COMMAND_ARG";
@@ -71,11 +74,13 @@ public class GlboxClientSocket {
     static final byte [] command_response_cid = {0xC, 0x04};
     static final byte [] wikipedia_result_cid = {0xC, 0x05};
     static final byte [] translation_result_cid = {0xC, 0x06};
+    static final byte [] visual_search_images_result_cid = {0xC, 0x07};
 
     static final byte [] social_mode_id = {0xF, 0x00};
     static final byte [] llc_mode_id = {0xF, 0x01};
     static final byte [] blank_mode_id = {0xF, 0x02};
     static final byte [] translate_mode_id = {0xF, 0x03};
+    static final byte [] visual_search_mode_viewfind_id = {0xF, 0x04};
 //    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
 //    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
 //    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
@@ -209,7 +214,73 @@ public class GlboxClientSocket {
         return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(myInteger).array();
     }
 
+//    public void sendBytes(byte[] id, byte [] data, String type){
+//        //handle different types differently
+//        if (type == "image"){
+//            image_buf_size++;
+//        }
+//        //first, send hello
+//        byte [] hello = {0x01, 0x02, 0x03};
+//        //then send length of body
+//        byte[] len;
+//        if (data != null) {
+//            len = my_int_to_bb_be(data.length);
+//        } else {
+//            len = my_int_to_bb_be(0);
+//        }
+//        //then send id of message type
+//        byte [] msg_id = id;
+//        //then send data
+//        byte [] body = data;
+//        //then send end tag - eventually make this unique to the image
+//        byte [] goodbye = {0x3, 0x2, 0x1};
+//        //combine those into a payload
+//        ByteArrayOutputStream outputStream;
+//        try {
+//            outputStream = new ByteArrayOutputStream();
+//            outputStream.write(hello);
+//            outputStream.write(len);
+//            outputStream.write(msg_id);
+//            if (body != null) {
+//                outputStream.write(body);
+//            }
+//            outputStream.write(goodbye);
+//        } catch (IOException e){
+//            mConnectState = 0;
+//            return;
+//        }
+//        byte [] payload = outputStream.toByteArray();
+//
+//        //send it in a background thread
+//        //new Thread(new SendThread(payload)).start();
+//        boolean try_send;
+//        if (type == "image"){
+//            if (data_queue.size() < (queue_size / 2)){ //if our queue is over half full, don't keep adding images to queue
+//                try_send = true;
+//            } else {
+//                try_send = false;
+//            }
+//        } else { //if not an image, try to send anyway
+//            try_send = true;
+//        }
+//
+//        //add the data to the send queue
+//        if (try_send) {
+//            try {
+//                data_queue.add(payload);
+//                type_queue.add(type);
+//            } catch (IllegalStateException e) {
+//                Log.d(TAG, "Queue is full, skipping this one");
+//            }
+//        }
+//    }
     public void sendBytes(byte[] id, byte [] data, String type){
+        //only try to send data if the socket is connected state
+        if (mConnectState != 2){
+            System.out.println("MCONNECTED IS FALSE IN sendBytes, returning");
+            return;
+        }
+
         //handle different types differently
         if (type == "image"){
             image_buf_size++;
@@ -269,6 +340,7 @@ public class GlboxClientSocket {
             }
         }
     }
+
 
     //returns how many images are in the buffer
     public int getImageBuf(){
@@ -377,17 +449,24 @@ public class GlboxClientSocket {
                         Log.d(TAG, "RECEIVED HELLO");
                     }
                     //length of body
+                    Log.d(TAG, "get body len");
                     int body_len = input.readInt();
+                    Log.d(TAG, "got body len of " + body_len);
 
                     //read in message id bytes
+                    Log.d(TAG, "get b1, b2");
                     b1 = input.readByte();
                     b2 = input.readByte();
+                    Log.d(TAG, "got b1, b2");
 
                     //read in message body (if there is one)
+                    Log.d(TAG, "read message body");
                     if (body_len > 0){
+                        Log.d(TAG, "reading message body...");
                         raw_data = new byte[body_len];
                         input.readFully(raw_data, 0, body_len); // read the body
                     }
+                    Log.d(TAG, "got message body");
 
                     goodbye1 = input.readByte(); // read goodbye of incoming message
                     goodbye2 = input.readByte(); // read goodbye of incoming message
@@ -462,6 +541,12 @@ public class GlboxClientSocket {
                         intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
                         intent.putExtra(GlboxClientSocket.COMMAND_ARG, "translate");
                         mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                    } else if ((raw_data[0] == visual_search_mode_viewfind_id[0]) && (raw_data[1] == visual_search_mode_viewfind_id[1])) { //got ack response
+                        Log.d(TAG, "VISUAL SEARCH MODE VIEWFIND TOGGLE");
+                        final Intent intent = new Intent();
+                        intent.setAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
+                        intent.putExtra(GlboxClientSocket.COMMAND_ARG, "visualsearchviewfind");
+                        mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                     }
                 } else if ((b1 == command_response_cid[0]) && (b2 == command_response_cid[1])) { //got command response
                     Log.d(TAG, "command_response_cid received");
@@ -504,6 +589,19 @@ public class GlboxClientSocket {
                     intent.putExtra(GlboxClientSocket.TRANSLATION_RESULT, translated_text_string);
                     intent.setAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
                     mContext.sendBroadcast(intent);
+                } else if ((b1 == visual_search_images_result_cid[0]) && (b2 == visual_search_images_result_cid[1])) { //got command response
+                    Log.d(TAG, "visual_search_images_result_cid received");
+                    String str_data = new String(raw_data, StandardCharsets.UTF_8);
+                    final Intent intent = new Intent();
+                    intent.putExtra(GlboxClientSocket.VISUAL_SEARCH_RESULT, str_data);
+                    intent.setAction(GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT);
+                    mContext.sendBroadcast(intent);
+
+//                    String translated_text_string = new String(raw_data, StandardCharsets.UTF_8);
+//                    final Intent intent = new Intent();
+//                    intent.putExtra(GlboxClientSocket.TRANSLATION_RESULT, translated_text_string);
+//                    intent.setAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
+//                    mContext.sendBroadcast(intent);
                 }
 
 //                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
@@ -599,7 +697,6 @@ public class GlboxClientSocket {
         @Override
         public void run() {
             //clear queue so we don't have a buildup of images
-            Log.d(TAG, "GLBOX starting SendThread");
             data_queue.clear();
             type_queue.clear();
             while (true) {
@@ -646,4 +743,5 @@ public class GlboxClientSocket {
         }
         return new String(buffer.toByteArray(), "UTF-8");
     }
+
 }

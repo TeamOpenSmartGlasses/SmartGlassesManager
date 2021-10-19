@@ -14,6 +14,7 @@ server goes through that queue and processes/send to the wearable
 
 @author: Cayden Pierce, Emex Labs
 """
+import struct 
 import requests
 import urllib
 from playsound import playsound
@@ -21,6 +22,7 @@ import subprocess
 from fuzzysearch import find_near_matches
 import sys
 import time
+import socket
 
 from queue import Queue, Empty
 from threading import Thread
@@ -30,6 +32,9 @@ from utils.gcp_translate import run_google_translate
 from utils.asg_socket_server import ASGSocket
 
 from utils.english_pronouns_list import english_pronouns
+
+from language_options import language_options
+from utils.bing_visual_search import bing_visual_search, bing_visual_search_file
 
 import spacy
 
@@ -54,12 +59,14 @@ RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
-language_options = { "spanish" : "es",
-                    "german" : "de",
-                    "chinese" : "zh",
-                    "mandarin" : "zh",
-                    "korean" : "ko",
-                    }
+#language_options = { "spanish" : "es",
+#                    "german" : "de",
+#                    "chinese" : "zh",
+#                    "mandarin" : "zh",
+#                    "korean" : "ko",
+#                    "french" : "fr",
+#                    "hindi" : "hi"
+#                    }
 
 #define phrases/word that will wake the system to search the current speech for voice commands
 wake_words = []
@@ -80,6 +87,11 @@ def add_wake_word(transcript, args, cmd_q, thread_q):
     except Exception as e:
         print(e)
         return False
+
+def visual_search(transcript, args, cmd_q, thread_q):
+    #sneaky - use switch mode because the GUI updates the display... even though it's not really a new mode - or is it?
+    cmd_q.put(("switch mode", "visualsearchviewfind"))
+    return True
 
 def wikipedia_search(transcript, args, cmd_q, thread_q):
     try:
@@ -200,6 +212,7 @@ voice_commands = {
         #"go to"  : {"function" : None, "voice_sounds" : ["select", "choose", "go to"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         "switch mode"  : {"function" : switch_mode, "voice_sounds" : ["switch mode"]}, #start a new program mode (enter different mental upgrade loop, or start a 'suite' of mental upgrades, i.e. "go to social mode"
         "wikipedia"  : {"function" : wikipedia_search, "voice_sounds" : ["wikipedia"]}, #search wikipedia for a query
+        "visual search"  : {"function" : visual_search, "voice_sounds" : ["what am I looking at", "visual search"]}, #search using the current POV image
         }
 
 def find_commands(transcript, cmd_q, obj_q, thread_q):
@@ -278,7 +291,7 @@ def find_commands(transcript, cmd_q, obj_q, thread_q):
         if voice_command_func is not None:
             #run the voice command
             res = voice_command_func(transcript, command_args, cmd_q, thread_q)
-            if type(res) == int and res == 1:
+            if res or (type(res) == int and res == 1):
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 obj_q.put({"type" : "cmd_success", "data" : True})
                 playsound(command_success_sound)
@@ -329,6 +342,41 @@ def get_nlp(string):
 
     return nlp_out
 
+def check_message(message, cmd_q):
+    img_id = [0x01, 0x10] #id for images
+    #make sure header is verified
+    if (message[0] != 0x01 or message[1] != 0x02 or message[2] != 0x03):
+        return False
+    else:
+        print("hello is good to go")
+
+    body_len, = struct.unpack_from(">i", message, offset=3)
+    print("Body length is: {}".format(body_len))
+
+    if (message[-3] != 0x03 or message[-2] != 0x02 or message[-1] != 0x01):
+        return False
+    else:
+        print("goodbye is good to go")
+
+    message_body = message[9:-3]
+
+    #now process the data that was sent to us
+    if ((message[7] == img_id[0]) and (message[8] == img_id[1])): #this means the message is an image
+        print("The message is an image")
+        process_image(message_body, cmd_q)
+    else:
+        print("The message is NOT an image")
+
+def process_image(img_bytes, cmd_q):
+    #for now, this is just for visual search mode, se will visually search for 
+#    imagePath = '/home/cayden/Documents/to_rec/IMG_20211012_221002.jpg' #toilet paper
+#    result = bing_visual_search_file(imagePath)
+    result = bing_visual_search(img_bytes)
+    print("BING VISUAL SEARCH RESULT")
+    print(type(result))
+
+    print("size of result in bytes is: {}".format(len(result)))
+    cmd_q.put(("visual search", result[0:50]))
 
 def run_server(transcript_q, cmd_q, obj_q):
 
@@ -347,22 +395,6 @@ def run_server(transcript_q, cmd_q, obj_q):
     asg_socket.start_conn()
     while True: #main server loop
         try:
-            #check and continue if there are other data streams to check from
-            #check for transcripts
-#            try:
-#                transcript_obj = transcript_q.get(timeout=0.001)
-#                if transcript_obj:
-#                    transcript = transcript_obj["transcript"]
-#                    if transcript_obj["is_final"] == True:
-#                        #run nlp on the final transcript
-#                        nlp_out = get_nlp(transcript)
-#                        transcript_obj["nlp"] = nlp_out
-#                        GUI_receive_final_transcript_object(transcript_obj)
-#                    else:
-#                        GUI_receive_intermediate_transcript(transcript)
-#            except Empty as e:
-#                pass
-            #check for commands
             try:
                 cmd, args = cmd_q.get(timeout=0.001)
                 #a switch block here for different commands and their associated function
@@ -372,6 +404,9 @@ def run_server(transcript_q, cmd_q, obj_q):
                 elif cmd == "wikipedia search":
                     print("sending wikipedia search results")
                     asg_socket.send_wikipedia_result(args)
+                elif cmd == "visual search":
+                    print("sending visual search image response")
+                    asg_socket.send_visual_search_images_result(args)
             except Empty as e:
                 pass
             #check for command responses
@@ -402,7 +437,23 @@ def run_server(transcript_q, cmd_q, obj_q):
             except Empty as e:
                 pass
 
-        except BrokenPipeError as e: #if error on socket at any point, restart connection and return to loop
+            #listen for data
+            asg_socket.conn.settimeout(0.001)
+            fragments = list()
+            while True:
+                try:
+                    chunk = asg_socket.conn.recv(1024)
+                    if not chunk:
+                        break
+                except socket.timeout as e:
+                    break
+                fragments.append(chunk)
+            message = b"".join(fragments)
+            if message != b'':
+                print("message received")
+                check_message(message, cmd_q)
+
+        except (ConnectionResetError, BrokenPipeError) as e: #if error on socket at any point, restart connection and return to loop
             print("Connection broken, listening again")
             asg_socket.start_conn()
 
@@ -478,7 +529,6 @@ def main():
     i = 0
     while True:
         make_new_thread(thread_q, thread_holder, translate_q, obj_q)
-        print("--- EHLHO WHARLD * {}".format(i))
         i += 1
         time.sleep(2)
 
