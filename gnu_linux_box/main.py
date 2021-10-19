@@ -438,7 +438,7 @@ def run_server(transcript_q, cmd_q, obj_q):
                 pass
 
             #listen for data
-            asg_socket.conn.settimeout(0.2)
+            asg_socket.conn.settimeout(0.001)
             fragments = list()
             while True:
                 try:
