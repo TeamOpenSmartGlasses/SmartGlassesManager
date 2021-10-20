@@ -7,8 +7,13 @@ The Wearable Intelligence System is:
 1. A fully functional, wearable, intelligence amplification system featuring a number of intelligence tools:
 
 - social/emotional intelligence amplification system
-- memory expansion tools
 - conversational intelligence enhancement
+    - live transcription
+    - live translation - over 100 languages supported
+    - live wikipedia search
+- point-of-view (POV) reverse image search (visual search)
+    - define anything that you see
+- memory expansion tools
 - voice control with command and natural language interface
 
 2. A software framework for developing cognitive extension systems on the the coming wave of consumer ready Android smart glasses. 
