@@ -346,6 +346,7 @@ def check_message(message, cmd_q):
     img_id = [0x01, 0x10] #id for images
     #make sure header is verified
     if (message[0] != 0x01 or message[1] != 0x02 or message[2] != 0x03):
+        print("Hello is no good")
         return False
     else:
         print("hello is good to go")
@@ -354,6 +355,7 @@ def check_message(message, cmd_q):
     print("Body length is: {}".format(body_len))
 
     if (message[-3] != 0x03 or message[-2] != 0x02 or message[-1] != 0x01):
+        print("Goodbye is no good")
         return False
     else:
         print("goodbye is good to go")
@@ -371,12 +373,13 @@ def process_image(img_bytes, cmd_q):
     #for now, this is just for visual search mode, se will visually search for 
 #    imagePath = '/home/cayden/Documents/to_rec/IMG_20211012_221002.jpg' #toilet paper
 #    result = bing_visual_search_file(imagePath)
+    print("ASKING BING")
     result = bing_visual_search(img_bytes)
     print("BING VISUAL SEARCH RESULT")
     print(type(result))
 
     print("size of result in bytes is: {}".format(len(result)))
-    cmd_q.put(("visual search", result[0:50]))
+    cmd_q.put(("visual search", result[0:25]))
 
 def run_server(transcript_q, cmd_q, obj_q):
 
@@ -445,6 +448,7 @@ def run_server(transcript_q, cmd_q, obj_q):
                     chunk = asg_socket.conn.recv(1024)
                     if not chunk:
                         break
+                    asg_socket.conn.settimeout(0.05) #increase it here after receiving part of a stream so we don't seperate messages
                 except socket.timeout as e:
                     break
                 fragments.append(chunk)
