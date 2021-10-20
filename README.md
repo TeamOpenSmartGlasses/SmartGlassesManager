@@ -14,9 +14,16 @@ The Wearable Intelligence System is:
 
 A fully functional, wearable, intelligence amplification system featuring a number of intelligence tools:
 
-- understand your social-emotional environment with emotional intelligence tools
-- remember every names, idea, and conversation with memory expansion tools
-- improve understanding and retention in conversations, meetings, lectures, etc. with live closed captions overlaid on your vision at all times
+- conversational intelligence enhancement
+    - improve understanding and retention in conversations, meetings, lectures, etc. with live closed captions overlaid on your vision at all times
+    - live translation - over 100 languages supported
+    - live wikipedia search
+- social/emotional intelligence amplification system
+    - improve emotional intelligence with affective computing running on your point-of-view, giving live insights into non-verbal communication
+- point-of-view (POV) reverse image search (visual search)
+    - define anything that you see
+- memory expansion tools
+    - remember every name, idea, and conversation
 - voice control with command and natural language interface
 
 2. **Software Framework - Developer Tool**  
