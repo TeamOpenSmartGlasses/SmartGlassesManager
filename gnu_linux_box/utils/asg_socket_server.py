@@ -100,6 +100,7 @@ class ASGSocket:
         goodbye = bytearray([3, 2, 1]);
         #combine those into a payload
         payload_packet = hello + message_len + msg_id + body + goodbye
+        self.conn.settimeout(None)
         self.conn.send(payload_packet)
 
 if __name__ == "__main__":
