@@ -76,8 +76,7 @@ public class WearableAiService extends HiddenCameraService {
 
     //GLBOX socket
     GlboxClientSocket glbox_client_socket;
-    //String glbox_address = "10.42.0.185";
-    String glbox_address = "192.168.1.188";
+    String glbox_address;
     String glbox_adv_key = "WearableAiCyborgGLBOX";
 
     //id of packet
@@ -107,10 +106,6 @@ public class WearableAiService extends HiddenCameraService {
         //first we have to listen for the UDP broadcast from the compute module so we know the IP address to connect to. Once we get that , we will connect to it on a socket and starting sending pictures
         Thread adv_thread = new Thread(new ReceiveAdvThread());
         adv_thread.start();
-
-        //then start a thread to connect to the glbox
-        Thread glbox_thread = new Thread(new StartGlbox());
-        glbox_thread.start();
 
         mContext = this;
 
@@ -161,8 +156,23 @@ public class WearableAiService extends HiddenCameraService {
                         public void run() { asp_starter(); }
                     };
                     mainHandler.post(myStarterRunnable);
-                    break;
-                } //if not true, listen for the next packet
+                } else if (data.equals(glbox_adv_key)) {
+                    glbox_address = packet.getAddress().getHostAddress();
+
+                    Handler mainHandler = new Handler(mContext.getMainLooper());
+                    Runnable myStarterRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            //then start a thread to connect to the glbox
+                            Thread glbox_thread = new Thread(new StartGlbox());
+                            glbox_thread.start();
+                        }
+                    };
+                    mainHandler.post(myStarterRunnable);
+                }
+                if (!(glbox_address == null || asp_address == null)){
+                    break; //if not true, listen for the next packet
+                }
             }
         } catch (IOException ex) {
             Log.d(TAG, "Exception: " + ex);

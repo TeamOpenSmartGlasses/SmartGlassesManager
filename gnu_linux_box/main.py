@@ -291,7 +291,7 @@ def find_commands(transcript, cmd_q, obj_q, thread_q):
         if voice_command_func is not None:
             #run the voice command
             res = voice_command_func(transcript, command_args, cmd_q, thread_q)
-            if res or (type(res) == int and res == 1):
+            if (type(res) == bool and res) or (type(res) == int and res == 1):
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 obj_q.put({"type" : "cmd_success", "data" : True})
                 playsound(command_success_sound)
