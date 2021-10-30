@@ -47,7 +47,7 @@ nlp = spacy.load("en_core_web_trf")
 #config files
 wake_words_file = "./wakewords.txt"
 voice_memories_file = "./data/voice_memories.csv"
-wolfram_api_key_file = "./wolfram_api_key.txt"
+wolfram_api_key_file = "./utils/wolfram_api_key.txt"
 
 #pre-generated text to speech sound files
 command_success_sound = "./speech_pre_rendered/command_success.wav"
