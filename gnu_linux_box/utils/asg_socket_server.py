@@ -72,7 +72,13 @@ class ASGSocket:
         print("Attempting to start connection...")
         self.s.listen()
         print("Socket Listening")
-        self.advertise_and_connect_glbox()
+        #self.advertise_and_connect_glbox() # we no longer advertise on local network because we are running in the cloud
+        while True:
+            try:
+                self.conn, self.addr = self.s.accept()
+                break
+            except socket.timeout as e:
+                pass
         print("Connected")
         return self.conn, self.addr
 
