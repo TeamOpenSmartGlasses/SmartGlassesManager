@@ -80,7 +80,7 @@ public class WearableAiService extends HiddenCameraService {
 
     //GLBOX socket
     GlboxClientSocket glbox_client_socket;
-    String glbox_address = "192.168.1.188";
+    String glbox_address = "192.168.1.34";
     //String glbox_address = "192.168.1.34";
     //String glbox_adv_key = "WearableAiCyborgGLBOX"; //glbox no longer advertises - it retains a hardcoded domain/IP in the cloud
 
@@ -115,7 +115,7 @@ public class WearableAiService extends HiddenCameraService {
         //start glbox thread
         //then start a thread to connect to the glbox
         Thread glbox_thread = new Thread(new StartGlbox());
-        //glbox_thread.start();
+        glbox_thread.start();
 
         mContext = this;
 
