@@ -9,7 +9,10 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 #RATE = 16000
 RATE = 44100
-CHUNK = 1024 * 4
+# CHUNK = 1024 * 4
+CHUNK = 1024
+# CHUNK = 1000 * 2
+# CHUNK = 1200
 
 def current_milli_time():
     return round(time.time() * 1000)
@@ -21,9 +24,10 @@ s.connect((sys.argv[1], int(sys.argv[2])))
 
 try:
     while True:
-        data = s.recv(CHUNK)
+        data = s.recv(CHUNK, socket.MSG_WAITALL)
         cid = data[0]
         print("cid : {}, received at: {}".format(cid, current_milli_time()))
+        print(len(data))
         #stream.write(data)
 except KeyboardInterrupt:
     pass
