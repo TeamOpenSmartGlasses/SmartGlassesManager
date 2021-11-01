@@ -463,27 +463,19 @@ public class GlboxClientSocket {
                         Log.d(TAG, "Socket hello header broken, restarting socket");
                         break;
                     } else {
-                        Log.d(TAG, "RECEIVED HELLO");
                     }
                     //length of body
-                    Log.d(TAG, "get body len");
                     int body_len = input.readInt();
-                    Log.d(TAG, "got body len of " + body_len);
 
                     //read in message id bytes
-                    Log.d(TAG, "get b1, b2");
                     b1 = input.readByte();
                     b2 = input.readByte();
-                    Log.d(TAG, "got b1, b2");
 
                     //read in message body (if there is one)
-                    Log.d(TAG, "read message body");
                     if (body_len > 0){
-                        Log.d(TAG, "reading message body...");
                         raw_data = new byte[body_len];
                         input.readFully(raw_data, 0, body_len); // read the body
                     }
-                    Log.d(TAG, "got message body");
 
                     goodbye1 = input.readByte(); // read goodbye of incoming message
                     goodbye2 = input.readByte(); // read goodbye of incoming message
@@ -504,11 +496,6 @@ public class GlboxClientSocket {
 
                 //then process the data
                 //if ((b1 == ack_id[0]) && (b2 == ack_id[1])) { //got ack response
-                Log.d(TAG, "b1: " + b1);
-                Log.d(TAG, "b2: " + b2);
-
-                Log.d(TAG, "ftc0: " + final_transcript_cid[0]);
-                Log.d(TAG, "ftc1: " + final_transcript_cid[1]);
                 if ((b1 == final_transcript_cid[0]) && (b2 == final_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "final_transcript_cid received");
                     String final_transcript_json_string = new String(raw_data, StandardCharsets.UTF_8);
@@ -525,7 +512,6 @@ public class GlboxClientSocket {
                 } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
                     //got heart beat, respond with heart beat
                     //clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
-                    Log.d(TAG, "RECEIVED HEART BEAT");
                     lastHeartbeatTime = System.currentTimeMillis();
                 } else if ((b1 == intermediate_transcript_cid[0]) && (b2 == intermediate_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "intermediate_transcript_cid received");

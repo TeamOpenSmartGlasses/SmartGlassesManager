@@ -10,12 +10,14 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.Image;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 
 import android.app.Activity;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spanned;
@@ -40,6 +42,8 @@ import java.util.List;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.PieChart;
@@ -138,6 +142,9 @@ public class MainActivity extends Activity {
         // Bind to that service
         Intent intent = new Intent(this, WearableAiService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+        //start the audio service
+        StartRecorder();
 
 //        //setup camera preview
 //        preview = (SurfaceView) findViewById(R.id.preview);
@@ -829,6 +836,48 @@ private Spanned getCurrentTranscriptScrollText() {
         }
     }
 
+    //Audio recording service - maybe to be moved into WearableAI service
+    public void StartRecorder() {
+        Log.i(TAG, "Starting the foreground-thread");
+
+        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
+        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+        ContextCompat.startForegroundService(this, serviceIntent);
+    }
+
+    public void StopRecorder() {
+        Log.i(TAG, "Stopping the foreground-thread");
+
+        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
+        this.getApplicationContext().stopService(serviceIntent);
+    }
+
+    // Note  from authour - From what I've seen you don't need the wake-lock or wifi-lock below for the audio-recorder to persist through screen-off.
+    // However, to be on the safe side you might want to activate them anyway. (and/or if you have other functions that need them)
+    private PowerManager.WakeLock wakeLock_partial = null;
+    public void StartPartialWakeLock() {
+        if (wakeLock_partial != null && wakeLock_partial.isHeld()) return;
+        Log.i("vmain", "Starting partial wake-lock.");
+        final PowerManager pm = (PowerManager) this.getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock_partial = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "com.myapp:partial_wake_lock");
+        wakeLock_partial.acquire();
+    }
+    public void StopPartialWakeLock() {
+        if (wakeLock_partial != null && wakeLock_partial.isHeld()) {
+            Log.i("vmain", "Stopping partial wake-lock.");
+            wakeLock_partial.release();
+        }
+    }
+
+    private WifiManager.WifiLock wifiLock = null;
+    public void StartWifiLock() {
+        WifiManager wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, "LockTag");
+        wifiLock.acquire();
+    }
+    public void StopWifiLock() {
+        wifiLock.release();
+    }
 
 }
 
