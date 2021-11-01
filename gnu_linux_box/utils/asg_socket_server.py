@@ -2,6 +2,7 @@ import socket
 import time
 import struct
 import json
+import threading
 
 class ASGSocket:
     def __init__(self, PORT=8989):
@@ -14,11 +15,18 @@ class ASGSocket:
         # Ensure that you can restart your server quickly when it terminates
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+        self.connected = False
+
         print("Binding socket")
         try:
             self.s.bind(('', PORT))
         except socket.error as err:
             print('Bind failed. Error Code : ' .format(err))
+
+        self.heart_beat_time = 3 #number seconds to send a heart beat ping
+        self.heart_beat() #continues to repeat indefinitly
+
+        self.heart_beat_id = bytearray([25, 32])
 
         #save command ids (CID)
         self.final_transcript_cid = bytearray([12, 2]) 
@@ -63,12 +71,14 @@ class ASGSocket:
             adv_sock.sendto(message, ('<broadcast>', self.ADV_PORT))
             try:
                 self.conn, self.addr = self.s.accept()
+                self.conn.settimeout(None)
                 break
             except socket.timeout as e:
                 pass
             time.sleep(0.5)
 
     def start_conn(self):
+        self.connected = False
         print("Attempting to start connection...")
         self.s.listen()
         print("Socket Listening")
@@ -79,8 +89,24 @@ class ASGSocket:
                 break
             except socket.timeout as e:
                 pass
+        self.connected = True
         print("Connected")
         return self.conn, self.addr
+
+    def heart_beat(self):
+        """
+        Runs on repeat, send a heart beat ping to the ASG if we are connected. If ping fails, restart server so ASG can reinitiate connection.
+        """
+        #start a new heart beat that will run after this one
+        heart_beat_thread = threading.Timer(self.heart_beat_time, self.heart_beat)
+        heart_beat_thread.daemon = True
+        heart_beat_thread.start()
+        if self.connected:
+            self.send_heart_beat()
+
+    def send_heart_beat(self):
+        print("SENDING HEART BEAT")
+        self.send_bytes(self.heart_beat_id, bytes("ping"  + "\n",'UTF-8'))
 
     def send_final_transcript_object(self, t_obj):
         print("SENDING FINAL")
