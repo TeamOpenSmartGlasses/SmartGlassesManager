@@ -15,6 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 
+from utils.ASGAudioStream import ASGAudioStream
 from google.cloud import speech
 from google.cloud import translate
 import os
@@ -48,6 +49,7 @@ def try_transcribe(content):
             speech_detected = vad.is_speech(vad_frame, SAMPLE_RATE)
         except Exception as e:
             print(e)
+
     return speech.StreamingRecognizeRequest(audio_content=content)
 
 def get_current_time():
@@ -157,7 +159,7 @@ def run_google_stt(transcript_q, language_code="en-US"):
         config=config, interim_results=True
     )
 
-    mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
+    # mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
     sys.stdout.write(YELLOW)
     sys.stdout.write('\nListening, begin entering voice commands now.\n\n')
     sys.stdout.write("End (ms)       Transcript Results/Status\n")
@@ -167,39 +169,47 @@ def run_google_stt(transcript_q, language_code="en-US"):
     t = threading.currentThread()
     t.do_run = True
 
-    with mic_manager as stream:
-        while not stream.closed:
-            #check if our thread kill switch has been activated
-            if not getattr(t, "do_run", True):
-                return
-            sys.stdout.write(YELLOW)
+    while True:
+        audio_stream = ASGAudioStream()
+        with audio_stream as stream:
+            while not stream.closed:
+                #check if our thread kill switch has been activated
+                if not getattr(t, "do_run", True):
+                    return
+                sys.stdout.write(YELLOW)
 
-            stream.audio_input = []
-            audio_generator = stream.generator()
+                stream.audio_input = []
+                audio_generator = stream.generator()
 
-            requests = (
-                try_transcribe(content)
-                for content in audio_generator
-            )
+                requests = (
+                    try_transcribe(content)
+                    for content in audio_generator
+                )
 
-            responses = client.streaming_recognize(streaming_config, requests)
+                responses = client.streaming_recognize(streaming_config, requests)
 
-            receive_transcriptions(responses, stream, transcript_q)
-#            if not translate_mode:
-#                # Now, put the transcription responses to use.
-#                parse_cb(transcript_q, cmd_q, obj_q, responses, stream, translate_q)
-#            else: #if we are in translate mode
-#                print("FOREIGN LANGUAGE TEXT")
-#                print(responses[0].results[0].alternatives[0].transcript)
-#
-            if stream.result_end_time > 0:
-                stream.final_request_end_time = stream.is_final_end_time
-            stream.result_end_time = 0
-            stream.last_audio_input = []
-            stream.last_audio_input = stream.audio_input
-            stream.audio_input = []
-            stream.restart_counter = stream.restart_counter + 1
+                try:
+                    receive_transcriptions(responses, stream, transcript_q)
+                except Exception as e:
+                    print(e)
+                    print('silence time exceeded, opening new connection to google')
+                    audio_stream.end_connection()
+                    break
+    #            if not translate_mode:
+    #                # Now, put the transcription responses to use.
+    #                parse_cb(transcript_q, cmd_q, obj_q, responses, stream, translate_q)
+    #            else: #if we are in translate mode
+    #                print("FOREIGN LANGUAGE TEXT")
+    #                print(responses[0].results[0].alternatives[0].transcript)
+    #
+                if stream.result_end_time > 0:
+                    stream.final_request_end_time = stream.is_final_end_time
+                stream.result_end_time = 0
+                stream.last_audio_input = []
+                stream.last_audio_input = stream.audio_input
+                stream.audio_input = []
+                stream.restart_counter = stream.restart_counter + 1
 
-#            if not stream.last_transcript_was_final:
-#                sys.stdout.write("\n")
-            stream.new_stream = True
+    #            if not stream.last_transcript_was_final:
+    #                sys.stdout.write("\n")
+                stream.new_stream = True
