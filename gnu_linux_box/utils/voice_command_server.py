@@ -138,7 +138,8 @@ def ask_wolfram(transcript, args, cmd_q, thread_q):
     return result
 
 def wolfram_failed():
-    playsound(wolfram_failure_sound)
+    pass
+    #playsound(wolfram_failure_sound) #playsound(command_success_sound) #disable as we are now a headless cloud server
 
 #Wolfram API key - this loads from a plain text file containing only one string - your APP id key
 wolframApiKey = None
@@ -256,7 +257,7 @@ def find_commands(transcript, cmd_q, obj_q, thread_q):
             if (type(res) == bool and res) or (type(res) == int and res == 1):
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 obj_q.put({"type" : "cmd_success", "data" : True})
-                playsound(command_success_sound)
+                #playsound(command_success_sound) #disable as we are now a headless cloud server
             elif type(res) == str:
                 print("COMMAND COMPLETED SUCCESSFULLY")
                 print("COMMAND OUTPUT SAVING TO QUEUE")
@@ -267,7 +268,7 @@ def find_commands(transcript, cmd_q, obj_q, thread_q):
                 if "fail_function" in voice_commands[command_name] and voice_commands[command_name]["fail_function"] is not None:
                     voice_commands[command_name]["fail_function"]()
                 else:
-                    playsound(generic_failure_sound)
+                    #playsound(generic_failure_sound) #playsound(command_success_sound) #disable as we are now a headless cloud server
                     obj_q.put({"type" : "cmd_success", "data" : False})
                     print("COMMAND FAILED")
 
