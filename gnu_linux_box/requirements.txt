@@ -1,6 +1,5 @@
 Pillow==8.4.0
 protobuf==3.19.1
-PyAudio==0.2.11
 termcolor
 pyaudio
 google-api-python-client
