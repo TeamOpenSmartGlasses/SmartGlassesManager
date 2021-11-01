@@ -186,10 +186,12 @@ public class GlboxClientSocket {
         }
 
         //or, if haven't been receiving heart beats, restart socket
-        if ((System.currentTimeMillis() - lastHeartbeatTime) >  (heartbeatInterval * heartbeatPanicX)){
-            Log.d(TAG, "DIDN'T RECEIVE HEART BEATS, RESTARTING SOCKET");
-            mConnectState = 0;
-            restartSocket();
+        if (mConnectState == 2) {
+            if ((System.currentTimeMillis() - lastHeartbeatTime) > (heartbeatInterval * heartbeatPanicX)) {
+                Log.d(TAG, "DIDN'T RECEIVE HEART BEATS, RESTARTING SOCKET");
+                mConnectState = 0;
+                restartSocket();
+            }
         }
     }
 
