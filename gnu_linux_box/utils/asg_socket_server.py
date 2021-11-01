@@ -97,12 +97,17 @@ class ASGSocket:
         """
         Runs on repeat, send a heart beat ping to the ASG if we are connected. If ping fails, restart server so ASG can reinitiate connection.
         """
+        #if connected, try to send heart beat, reconnect if not connected
+        if self.connected:
+            try:
+                self.send_heart_beat()
+            except BrokenPipeError as e:
+                self.start_conn()
         #start a new heart beat that will run after this one
         heart_beat_thread = threading.Timer(self.heart_beat_time, self.heart_beat)
         heart_beat_thread.daemon = True
         heart_beat_thread.start()
-        if self.connected:
-            self.send_heart_beat()
+
 
     def send_heart_beat(self):
         print("SENDING HEART BEAT")
