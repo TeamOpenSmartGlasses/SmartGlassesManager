@@ -9,11 +9,13 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -22,6 +24,8 @@ import android.renderscript.Type;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import android.util.Log;
 import android.widget.Toast;
 
@@ -111,7 +115,7 @@ public class WearableAiService extends HiddenCameraService {
         //start glbox thread
         //then start a thread to connect to the glbox
         Thread glbox_thread = new Thread(new StartGlbox());
-        glbox_thread.start();
+        //glbox_thread.start();
 
         mContext = this;
 
@@ -458,6 +462,8 @@ public class WearableAiService extends HiddenCameraService {
     public void sendGlBoxCurrImage(){
         glbox_client_socket.sendBytes(img_id, curr_cam_image, "image");
     }
+
+
 
 }
 
