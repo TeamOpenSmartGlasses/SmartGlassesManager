@@ -12,6 +12,7 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -33,10 +34,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class AudioService extends Service {
+    // Binder given to clients
+    private final IBinder binder = new AudioService.LocalBinder();
+
     public static final String CHANNEL_ID = "AudioServiceChannel";
 
     //socket info
-    static String SERVER_IP = "192.168.1.34";
+    static String SERVER_IP = "18.191.190.218";
     static int SERVER_PORT = 4449;
     private static int mConnectState = 0;
 
@@ -70,34 +74,34 @@ public class AudioService extends Service {
 //    private static BlockingQueue<String> type_queue;
     private static int queue_size = 1024;
 
-    //SETUP STUFF
     @Override
-    public void onCreate() {
-        super.onCreate();
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_NOT_STICKY;
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void onCreate(){
+        super.onCreate();
         //setup data
         //create send queue and a thread to handle sending
         data_queue = new ArrayBlockingQueue<byte[]>(queue_size);
 
         //setup notification
-        Log.d(TAG, "STARTING AUDIO SERVICE");
-        String input = intent.getStringExtra("inputExtra");
-        createNotificationChannel();
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-                0, notificationIntent, 0);
-
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("WearableAI Audio Service")
-                .setContentText(input)
-                .setSmallIcon(R.drawable.audio_recording_icon_small)
-                .setContentIntent(pendingIntent)
-                .build();
-
-        startForeground(1, notification);
+//        Log.d(TAG, "STARTING AUDIO SERVICE");
+//        String input = intent.getStringExtra("inputExtra");
+//        createNotificationChannel();
+//        Intent notificationIntent = new Intent(this, MainActivity.class);
+//        PendingIntent pendingIntent = PendingIntent.getActivity(this,
+//                0, notificationIntent, 0);
+//
+//        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+//                .setContentTitle("WearableAI Audio Service")
+//                .setContentText(input)
+//                .setSmallIcon(R.drawable.audio_recording_icon_small)
+//                .setContentIntent(pendingIntent)
+//                .build();
+//
+//        startForeground(1, notification);
 
         //start the socket thread which will send the raw audio data
         startSocket();
@@ -107,18 +111,11 @@ public class AudioService extends Service {
 
         //stopSelf();
 
-        return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
     }
 
     private void createNotificationChannel() {
@@ -362,4 +359,18 @@ public class AudioService extends Service {
         // start the thread
         streamThread.start();
     }
+
+
+    public class LocalBinder extends Binder {
+        AudioService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return AudioService.this;
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+
 }
