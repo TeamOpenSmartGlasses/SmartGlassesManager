@@ -315,7 +315,7 @@ public class AudioService extends Service {
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
 
                 Log.d(TAG, "Creating the AudioRecord");
-                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE);
+                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE * 10);
                 //recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, rate, CHANNEL, FORMAT, bufferSize);
 
                 Log.d(TAG, "AudioRecord recording...");
