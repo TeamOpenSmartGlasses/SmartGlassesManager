@@ -787,6 +787,25 @@ private Spanned getCurrentTranscriptScrollText() {
         }
     };
 
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection audio_service_connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            AudioService.LocalBinder binder = (AudioService.LocalBinder) service;
+//            mService = binder.getService();
+//            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+//            mBound = false;
+        }
+    };
+
     public void captureVisualSearchImage(){
         Log.d(TAG, "sending visual search image");
 
@@ -840,9 +859,13 @@ private Spanned getCurrentTranscriptScrollText() {
     public void StartRecorder() {
         Log.i(TAG, "Starting the foreground-thread");
 
-        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
-        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
-        ContextCompat.startForegroundService(this, serviceIntent);
+//        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
+//        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+//        ContextCompat.startForegroundService(this, serviceIntent);
+        startService(new Intent(this, AudioService.class));
+        // Bind to that service
+        Intent intent = new Intent(this, AudioService.class);
+        bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
     }
 
     public void StopRecorder() {
