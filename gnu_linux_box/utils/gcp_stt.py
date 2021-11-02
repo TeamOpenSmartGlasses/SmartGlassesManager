@@ -23,6 +23,7 @@ import time
 import threading
 from utils.ResumableMicrophoneStream import ResumableMicrophoneStream
 import queue
+import collections
 
 # Audio recording parameters
 STREAMING_LIMIT = 300000 #YOU HAVE TO CHANGE THIS IN ./utils/ResumableMicInput.py AS WELL NO TIME TO SETUP SHARED CONFIG FILES (YAML) #also, no more than 300 seconds or GCP will error - cayden
@@ -30,27 +31,49 @@ SAMPLE_RATE = 16000
 CHUNK_SIZE = int(SAMPLE_RATE / 10)  # 100ms
 
 import webrtcvad
-vad = webrtcvad.Vad(3)
+vad = webrtcvad.Vad(2) #aggresiveness of 2 based on loose testing - the VAD is easily tricked
 vad_time = 30 #ms
-vad_num = 320 # (vad_time * SAMPLE_RATE) / 1000
+#vad_num = 320 #int((vad_time / 1000) * SAMPLE_RATE)
+vad_num = int((vad_time / 1000) * SAMPLE_RATE)
+vad_num_bytes = vad_num * 2  #*2 because PCM 16 = 16 bit samples
+vad_slider = 5 #holds data for last n seconds of speech for VAD to slide across
+vad_slider_bytes = int(( vad_slider * SAMPLE_RATE ) * 2) #number of bytes our slider should be
+vad_ring_buffer = bytes([0] * vad_slider_bytes) #don't keep as global
 
 #terminal printing colors
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
+def vad_filter(content):
+    global vad_ring_buffer
+    #append our new content to the ring buffer
+    vad_ring_buffer = vad_ring_buffer + content
+    vad_ring_buffer = vad_ring_buffer[-vad_slider_bytes:]
+
+    valid_vad = webrtcvad.valid_rate_and_frame_length(SAMPLE_RATE, vad_num)
+
+    vad_frame = vad_ring_buffer[-vad_num_bytes:]
+
+    if valid_vad:
+        frame_count = 0
+        speech_detected_count = 0
+        for i in range(0, len(vad_ring_buffer) - vad_num_bytes, vad_num_bytes):
+            frame_count += 1
+            chunk = vad_ring_buffer[i:i+vad_num_bytes]
+            speech_detected = vad.is_speech(chunk, SAMPLE_RATE)
+            if speech_detected:
+                speech_detected_count += 1
+#        print(speech_detected_count)
+#        print(frame_count)
+#        print("Percentage of speech: {}".format((speech_detected_count/frame_count)*100))
+
+        return content
+    else: 
+        print("Not valid VAD rate and frame length.")
+        return content
+
 def try_transcribe(content):
-    #vad_frame = bytes(bytearray(content)[-vad_num:])
-#    vad_frame = content[-vad_num:]
-#    valid_vad = webrtcvad.valid_rate_and_frame_length(SAMPLE_RATE, len(vad_frame))
-#
-#    if valid_vad:
-#        try:
-#            speech_detected = vad.is_speech(vad_frame, SAMPLE_RATE)
-#        except Exception as e:
-#            print(e)
-
-
     return speech.StreamingRecognizeRequest(audio_content=content)
 
 def get_current_time():
@@ -167,7 +190,9 @@ def run_google_stt(transcript_q, audio_stream_observable, language_code="en-US")
     t = threading.currentThread()
     t.do_run = True
 
+    #vad_ring_buffer = collections.deque([0] * vad_num, maxlen=vad_num)
     while True:
+        vad_ring_buffer = bytes([0] * vad_slider_bytes) #reset to empty
         #check if our thread kill switch has been activated
         if not getattr(t, "do_run", True):
             return
@@ -175,7 +200,7 @@ def run_google_stt(transcript_q, audio_stream_observable, language_code="en-US")
         audio_generator = audio_generator_func(audio_stream_observable) #audio_stream.generator()
 
         requests = (
-            try_transcribe(content)
+            try_transcribe(vad_filter(content))
             for content in audio_generator
         )
 
@@ -186,4 +211,3 @@ def run_google_stt(transcript_q, audio_stream_observable, language_code="en-US")
         except Exception as e:
             print(e)
             print('Google STT API error, opening new streaming connection to Google Speech to Text API')
-            break
