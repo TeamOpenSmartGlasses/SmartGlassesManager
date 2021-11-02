@@ -2,6 +2,7 @@ import socket
 import struct
 import threading
 import time
+import queue
 
 
 STREAMING_LIMIT = 300000 #YOU HAVE TO CHANGE THIS IN main.py AS WELL NO TIME TO SETUP SHARED CONFIG FILES (YAML) #also, no more than 300 seconds or GCP will error - cayden
@@ -12,13 +13,19 @@ def get_current_time():
     return int(round(time.time() * 1000))
 
 
-class ASGAudioStream:
-    def __init__(self, port=4449, chunk=1024):
+class ASGAudioServer:
+    def __init__(self, audio_stream_observable, port=4449, chunk=1024):
         self.chunk = chunk
         self.closed = True
         self.port = port
         self.heart_beat_time = 3 #number seconds to send a heart beat ping
         self.heart_beat_id = bytearray([25, 32])
+
+        #the observable we use to push data to everyone who wants a live stream of audio
+        self.audio_stream_observable = audio_stream_observable
+
+        #queue to hold incoming data
+        self._buff = queue.Queue()
 
         # Part of the bridging system
         self.audio_input = []
@@ -30,96 +37,69 @@ class ASGAudioStream:
         self.last_transcript_was_final = False
         self.restart_counter = 0
 
-    def __enter__(self):
-
+    def connect(self):
         self.start_time = get_current_time()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('', self.port))
         self.socket.listen(5)
         (self.clientsocket, self.address) = self.socket.accept()
+        print("AUDIO SOCKET CONNECTED TO ASG")
         self.closed = False
         self.heart_beat() #continues to repeat indefinitly
         return self
 
-    def __exit__(self, *args):
+    def close(self, *args):
         print('Shutting down audio socket')
         self.closed = True
         self.socket.close()
 
-    def generator(self):
-        while not self.closed:
-            # non-bridging
-            # yield self.clientsocket.recv(self.chunk, socket.MSG_WAITALL)
+    def fill_buffer(self, in_data):
+        """Continuously collect data from the audio stream, into the buffer."""
+        pass
+        #self._buff.put(in_data)
 
-            #bridging below
+    def data_receive(self):
+        if not self.closed:
             try:
-                received = self.clientsocket.recv(self.chunk, socket.MSG_WAITALL)
+                chunk = self.clientsocket.recv(self.chunk, socket.MSG_WAITALL)
             except (ConnectionResetError, BrokenPipeError) as e:
-                print('lost audio connection, retrying')
+                print('ASG Audio Server disconnected, retrying.')
                 self.end_connection()
 
-            data = []
-
-            if self.new_stream and self.last_audio_input:
-
-                chunk_time = STREAMING_LIMIT / len(self.last_audio_input)
-
-                if chunk_time != 0:
-
-                    if self.bridging_offset < 0:
-                        self.bridging_offset = 0
-
-                    if self.bridging_offset > self.final_request_end_time:
-                        self.bridging_offset = self.final_request_end_time
-
-                    chunks_from_ms = round(
-                        (self.final_request_end_time - self.bridging_offset)
-                        / chunk_time
-                    )
-
-                    self.bridging_offset = round(
-                        (len(self.last_audio_input) - chunks_from_ms) * chunk_time
-                    )
-
-                    for i in range(chunks_from_ms, len(self.last_audio_input)):
-                        data.append(self.last_audio_input[i])
-
-                self.new_stream = False
-
-            chunk = received 
-            self.audio_input.append(chunk)
-
+            #if the received data is none, exit the generator
             if chunk is None:
+                print('ASG Audio Server received None, exiting.')
                 return
-            data.append(chunk)
 
-            # print(b"".join(data))
-            yield b"".join(data)
-
+            #send out data fill out local data objects
+            self.audio_stream_observable.on_next(chunk)
+            self.fill_buffer(chunk)
 
     def heart_beat(self):
         """
         Runs on repeat, send a heart beat ping to the ASG if we are connected. If ping fails, restart server so ASG can reinitiate connection.
         """
-        #start a new heart beat that will run after this one
+        #if the socket is closed, stop sending heart beats
         if self.closed:
             return
 
-        heart_beat_thread = threading.Timer(self.heart_beat_time, self.heart_beat)
-        heart_beat_thread.daemon = True
-        heart_beat_thread.start()
+        #try to send heart beat, reconnect if not connected
         try:
             self.send_heart_beat()
         except (ConnectionResetError, BrokenPipeError) as e:
-            print('lost audio connection, retrying')
-            self.end_connection()
+            self.connect() #this will start a new heart beat stream if connect is successful, so return
+            return
+
+        #start a new heart beat that will run after this one
+        heart_beat_thread = threading.Timer(self.heart_beat_time, self.heart_beat)
+        heart_beat_thread.daemon = True
+        heart_beat_thread.start()
 
     def end_connection(self):
         self.__exit__()
 
     def send_heart_beat(self):
-        print("SENDING HEART BEAT")
         self.send_bytes(self.heart_beat_id, bytes("ping"  + "\n",'UTF-8'))
 
     def send_bytes(self, cid, data):
@@ -147,10 +127,23 @@ class ASGAudioStream:
         self.clientsocket.settimeout(None)
         self.clientsocket.send(payload_packet)
 
+def run_audio_server(audio_stream_observable):
+    print("************** starting audio server")
+    audio_stream = ASGAudioServer(audio_stream_observable)
+    audio_stream.connect()
 
+    #get the thread
+    t = threading.currentThread()
+    t.do_run = True
+
+    while True:
+        #check if our thread kill switch has been activated
+        if not getattr(t, "do_run", True):
+            return
+        audio_stream.data_receive()
 
 if __name__ == "__main__":
-    with ASGAudioStream() as stream:
+    with ASGAudioServer() as stream:
         audio_generator = stream.generator()
         for aud in audio_generator:
             print(aud)

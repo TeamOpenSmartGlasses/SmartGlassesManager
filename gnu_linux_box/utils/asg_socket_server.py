@@ -24,7 +24,7 @@ class ASGSocket:
             print('Bind failed. Error Code : ' .format(err))
 
         self.heart_beat_time = 3 #number seconds to send a heart beat ping
-        self.heart_beat() #continues to repeat indefinitly
+        #self.heart_beat() #continues to repeat indefinitly
 
         self.heart_beat_id = bytearray([25, 32])
 
@@ -90,7 +90,8 @@ class ASGSocket:
             except socket.timeout as e:
                 pass
         self.connected = True
-        print("Connected")
+        self.heart_beat()
+        print("DATA SOCKET CONNECTED TO ASG")
         return self.conn, self.addr
 
     def heart_beat(self):
@@ -101,26 +102,24 @@ class ASGSocket:
         if self.connected:
             try:
                 self.send_heart_beat()
-            except BrokenPipeError as e:
-                self.start_conn()
+            except (ConnectionResetError, BrokenPipeError) as e:
+                self.start_conn() #this will start a new heart beat stream if connect is successful, so return
+                return
+
         #start a new heart beat that will run after this one
         heart_beat_thread = threading.Timer(self.heart_beat_time, self.heart_beat)
         heart_beat_thread.daemon = True
         heart_beat_thread.start()
 
-
     def send_heart_beat(self):
-        print("SENDING HEART BEAT")
         self.send_bytes(self.heart_beat_id, bytes("ping"  + "\n",'UTF-8'))
 
     def send_final_transcript_object(self, t_obj):
-        print("SENDING FINAL")
         encoded_message = json.dumps(t_obj).encode('utf-8')
         #s.sendall(b)
         self.send_bytes(self.final_transcript_cid, encoded_message)
 
     def send_translated_text(self, text):
-        print("SENDING TRANSLATED TEXT")
         self.send_bytes(self.translation_cid, bytes(text + "\n",'UTF-8'))
 
     def send_intermediate_transcript(self, message_str):
