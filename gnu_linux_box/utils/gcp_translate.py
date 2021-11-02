@@ -35,6 +35,7 @@ def translate_text(translation_client, text="hola, Encantado de conocerte", proj
     return response.translations[0].translated_text
 
 def run_google_translate(translate_q, obj_q, source_language="es"):
+    print("starting translate service")
     #make translation client
     client = translate.TranslationServiceClient()
 
@@ -51,7 +52,8 @@ def run_google_translate(translate_q, obj_q, source_language="es"):
                 result = translate_text(client, transcript, source_language=source_language)
                 print("Translation result: {}".format(result))
                 obj_q.put({"type" : "translate_result", "data" : result})
-        except Empty:
+        except Exception as e:
+            print(e)
             pass
 
 if __name__ == "__main__":
