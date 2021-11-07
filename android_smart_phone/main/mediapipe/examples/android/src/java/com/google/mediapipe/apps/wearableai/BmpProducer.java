@@ -52,7 +52,7 @@ public class BmpProducer extends Thread {
                 continue;
             }
             if (newFrame == true){
-//                Log.d(TAG,"Writing frame");
+                Log.d(TAG,"Sending frame into MediaPipe WearableAI graph");
                 customFrameAvailableListener.onFrame(bmp);
                 newFrame = false;
             }

@@ -312,7 +312,7 @@ public class WearableAiAspService extends Service {
     processor.addPacketCallback(
       OUTPUT_LANDMARKS_STREAM_NAME,
       (packet) -> {
-//        Log.d(TAG, "PACKET CALLBACK");
+        Log.d(TAG, "OUT LANDMARKS PACKET CALLBACK");
         byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
         try {
           NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
@@ -335,6 +335,7 @@ public class WearableAiAspService extends Service {
       (packet) -> {
           //extract face_emotion_vector from packet
           
+        Log.d(TAG, "OUT FACE EMOTION PACKET CALLBACK");
             float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
             //update face emotion
             mSocialInteraction.updateFaceEmotion(face_emotion_vector, System.currentTimeMillis());
@@ -353,6 +354,7 @@ public class WearableAiAspService extends Service {
     processor.addPacketCallback(
       OUTPUT_BODY_LANGUAGE_LANDMARKS_STREAM_NAME,
       (packet) -> {
+        Log.d(TAG, "OUT BODY LANGUAGE PACKET CALLBACK");
         byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
         try {
 //              NormalizedLandmarkList landmarks = PacketGetter.getProto(packet, NormalizedLandmarkList.class);
@@ -401,6 +403,9 @@ public class WearableAiAspService extends Service {
     //start first socketThread
     startSocket();
 
+    //setup mediapipe
+    converter = new BitmapConverter(eglManager.getContext());
+    converter.setConsumer(processor);
     startProducer();
   }
 
@@ -508,12 +513,6 @@ public class WearableAiAspService extends Service {
 //  @Override
 //  protected void onResume() {
 //    super.onResume();
-////    converter =
-////        new ExternalTextureConverter(
-////            eglManager.getContext(),
-////            applicationInfo.metaData.getInt("converterNumBuffers", NUM_BUFFERS));
-////    converter.setFlipY(
-////        applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
 //    converter = new BitmapConverter(eglManager.getContext());
 //    converter.setConsumer(processor);
 //    startProducer();
@@ -565,6 +564,7 @@ public class WearableAiAspService extends Service {
     private void startProducer(){
         bitmapProducer = new BmpProducer(this);
         previewDisplayView.setVisibility(View.VISIBLE);
+        bitmapProducer.setCustomFrameAvailableListener(converter);
     }
 
   private  String getLandmarksDebugString(NormalizedLandmarkList landmarks) {
