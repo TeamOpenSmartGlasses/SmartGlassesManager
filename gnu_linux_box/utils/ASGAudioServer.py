@@ -42,21 +42,24 @@ class ASGAudioServer:
         self.aes = AESpy()
 
         self.socket = None
+        self.connected = 0
 
     def connect(self):
+        self.connected = 1
+        self.closed = True
         self.start_time = get_current_time()
-        if self.socket is not None:
-            self.socket.shutdown(socket.SHUT_RDWR)
-            socket.close()
+#        if self.socket is not None:
+#            self.socket.shutdown(socket.SHUT_RDWR)
+#            socket.close()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('', self.port))
         self.socket.listen(5)
         (self.clientsocket, self.address) = self.socket.accept()
+        self.connected = 2
         print("AUDIO SOCKET CONNECTED TO ASG")
         self.closed = False
         self.heart_beat() #continues to repeat indefinitly
-        return self
 
     def close(self, *args):
         print('Shutting down audio socket')
@@ -69,12 +72,13 @@ class ASGAudioServer:
         #self._buff.put(in_data)
 
     def data_receive(self):
+        chunk = None
         if not self.closed:
             try:
                 encrypted_chunk = self.clientsocket.recv(self.chunk, socket.MSG_WAITALL)
                 #decrypt chunk
                 chunk = self.aes.decrypt(encrypted_chunk, aes_key)
-            except (ConnectionResetError, BrokenPipeError, BlockingIOError) as e:
+            except (ConnectionResetError, ConnectionResetError, BrokenPipeError, BlockingIOError) as e:
                 print('ASG Audio Server disconnected, retrying.')
                 self.restart_connection()
 
@@ -99,7 +103,7 @@ class ASGAudioServer:
         try:
             self.send_heart_beat()
         except (ConnectionResetError, BrokenPipeError) as e:
-            self.connect() #this will start a new heart beat stream if connect is successful, so return
+            self.restart_connection() #this will start a new heart beat stream if connect is successful, so return
             return
 
         #start a new heart beat that will run after this one
@@ -108,7 +112,8 @@ class ASGAudioServer:
         heart_beat_thread.start()
 
     def restart_connection(self):
-        self.connect()
+        if self.connected == 2:
+            self.connect()
 
     def send_heart_beat(self):
         self.send_bytes(self.heart_beat_id, bytes("ping"  + "\n",'UTF-8'))
@@ -138,7 +143,7 @@ class ASGAudioServer:
         self.clientsocket.send(payload_packet)
 
 def run_audio_server(audio_stream_observable):
-    print("************** starting audio server")
+    print("Starting ASGAudioServer")
     audio_stream = ASGAudioServer(audio_stream_observable)
     audio_stream.connect()
 
@@ -151,6 +156,7 @@ def run_audio_server(audio_stream_observable):
         if not getattr(t, "do_run", True):
             return
         audio_stream.data_receive()
+    audio_stream.close()
 
 if __name__ == "__main__":
     with ASGAudioServer() as stream:

@@ -88,6 +88,7 @@ def main():
     translate_q = Queue() # holds text to be translated to english
     test_q = Queue() # a test queue that no one will ever read
     audio_stream_observable = Subject() #an observable to share the audio data stream with anyone who subscribes to the stream
+    print(dir(audio_stream_observable))
 
     server_thread = Thread(target = run_voice_command_server, args = (transcript_q, cmd_q, obj_q))
     audio_server_thread = Thread(target = run_audio_server, args = (audio_stream_observable,))

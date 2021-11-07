@@ -16,3 +16,4 @@ six==1.16.0
 requests==2.26.0
 google-cloud-language
 google-cloud-translate
+pycrypto
