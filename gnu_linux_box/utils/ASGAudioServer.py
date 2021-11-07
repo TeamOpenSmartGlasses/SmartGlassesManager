@@ -3,7 +3,8 @@ import struct
 import threading
 import time
 import queue
-
+from utils.encryption.AESpy import AESpy
+from key import aes_key
 
 STREAMING_LIMIT = 300000 #YOU HAVE TO CHANGE THIS IN main.py AS WELL NO TIME TO SETUP SHARED CONFIG FILES (YAML) #also, no more than 300 seconds or GCP will error - cayden
 
@@ -37,8 +38,16 @@ class ASGAudioServer:
         self.last_transcript_was_final = False
         self.restart_counter = 0
 
+        #encryption
+        self.aes = AESpy()
+
+        self.socket = None
+
     def connect(self):
         self.start_time = get_current_time()
+        if self.socket is not None:
+            self.socket.shutdown(socket.SHUT_RDWR)
+            socket.close()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('', self.port))
@@ -62,10 +71,12 @@ class ASGAudioServer:
     def data_receive(self):
         if not self.closed:
             try:
-                chunk = self.clientsocket.recv(self.chunk, socket.MSG_WAITALL)
-            except (ConnectionResetError, BrokenPipeError) as e:
+                encrypted_chunk = self.clientsocket.recv(self.chunk, socket.MSG_WAITALL)
+                #decrypt chunk
+                chunk = self.aes.decrypt(encrypted_chunk, aes_key)
+            except (ConnectionResetError, BrokenPipeError, BlockingIOError) as e:
                 print('ASG Audio Server disconnected, retrying.')
-                self.end_connection()
+                self.restart_connection()
 
             #if the received data is none, exit the generator
             if chunk is None:
@@ -96,8 +107,8 @@ class ASGAudioServer:
         heart_beat_thread.daemon = True
         heart_beat_thread.start()
 
-    def end_connection(self):
-        self.__exit__()
+    def restart_connection(self):
+        self.connect()
 
     def send_heart_beat(self):
         self.send_bytes(self.heart_beat_id, bytes("ping"  + "\n",'UTF-8'))
@@ -124,7 +135,6 @@ class ASGAudioServer:
         goodbye = bytearray([3, 2, 1])
         #combine those into a payload
         payload_packet = hello + message_len + msg_id + body + goodbye
-        self.clientsocket.settimeout(None)
         self.clientsocket.send(payload_packet)
 
 def run_audio_server(audio_stream_observable):
