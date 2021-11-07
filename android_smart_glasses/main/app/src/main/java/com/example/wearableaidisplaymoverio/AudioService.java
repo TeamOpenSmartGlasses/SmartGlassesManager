@@ -22,6 +22,8 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.example.wearableaidisplaymoverio.utils.AES;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -29,11 +31,24 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.SecretKeySpec;
+
 public class AudioService extends Service {
+    //encryption key - TEMPORARILY HARD CODED - change to local storage, user can set
+    private String secretKey;
+
     // Binder given to clients
     private final IBinder binder = new AudioService.LocalBinder();
 
@@ -45,6 +60,7 @@ public class AudioService extends Service {
     private static int mConnectState = 0;
 
     private static String TAG = "WearableAi_AudioService";
+
 
     // the audio recording options
     private static final int RECORDING_RATE = 16000;
@@ -82,9 +98,14 @@ public class AudioService extends Service {
     @Override
     public void onCreate(){
         super.onCreate();
+
+        secretKey = getResources().getString(R.string.key);
+
         //setup data
         //create send queue and a thread to handle sending
         data_queue = new ArrayBlockingQueue<byte[]>(queue_size);
+
+
 
         //setup notification
 //        Log.d(TAG, "STARTING AUDIO SERVICE");
@@ -197,6 +218,24 @@ public class AudioService extends Service {
         SocketThread = new Thread(new AudioService.SocketThread());
         SocketThread.start();
     }
+
+    public byte [] encryptBytes(byte [] input){
+        byte [] encryptedBytes = AES.encrypt(input, secretKey) ;
+//        String encryptedString = AES.encrypt(originalString, secretKey) ;
+//        String decryptedString = AES.decrypt(encryptedString, secretKey) ;
+//
+//        System.out.println(originalString);
+//        System.out.println(encryptedString);
+//        System.out.println(decryptedString);
+        return encryptedBytes;
+    }
+
+
+    public byte [] decryptBytes(byte [] input) {
+        byte [] decryptedBytes = AES.decrypt(input, secretKey) ;
+        return decryptedBytes;
+    }
+
     public void sendBytes(byte [] data){
         //only try to send data if the socket is connected state
         if (mConnectState != 2){
@@ -331,7 +370,9 @@ public class AudioService extends Service {
                     b_buffer.asShortBuffer().put(buffer);
                     byte[] audio_bytes = b_buffer.array();
 
-                    sendBytes(audio_bytes);
+                    byte [] encrypted_audio_bytes = encryptBytes(audio_bytes);
+
+                    sendBytes(encrypted_audio_bytes);
 
 //                    double maxAmplitude = 0;
 //                    for (int i = 0; i < readSize; i++) {

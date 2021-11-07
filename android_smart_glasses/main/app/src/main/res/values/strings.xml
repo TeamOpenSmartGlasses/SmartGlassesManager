@@ -1,4 +1,6 @@
 <resources>
+    <string name="key">TEMPORARYKEY_CHANGETHISKEY</string>
+
     <string name="app_name">WearableAiDisplayMoverio</string>
     <string name="error_cannot_write">Cannot write image captured by camera.</string>
     <string name="error_cannot_open">Cannot open camera.</string>
