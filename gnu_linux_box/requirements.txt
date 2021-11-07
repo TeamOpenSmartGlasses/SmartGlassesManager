@@ -1,6 +1,6 @@
+torch==1.9.0
 Pillow==8.4.0
 protobuf==3.19.1
-PyAudio==0.2.11
 termcolor
 pyaudio
 google-api-python-client
@@ -16,3 +16,4 @@ six==1.16.0
 requests==2.26.0
 google-cloud-language
 google-cloud-translate
+pycrypto

@@ -2,6 +2,7 @@ import socket
 import time
 import struct
 import json
+import threading
 
 class ASGSocket:
     def __init__(self, PORT=8989):
@@ -14,11 +15,18 @@ class ASGSocket:
         # Ensure that you can restart your server quickly when it terminates
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+        self.connected = False
+
         print("Binding socket")
         try:
             self.s.bind(('', PORT))
         except socket.error as err:
             print('Bind failed. Error Code : ' .format(err))
+
+        self.heart_beat_time = 3 #number seconds to send a heart beat ping
+        #self.heart_beat() #continues to repeat indefinitly
+
+        self.heart_beat_id = bytearray([25, 32])
 
         #save command ids (CID)
         self.final_transcript_cid = bytearray([12, 2]) 
@@ -63,27 +71,55 @@ class ASGSocket:
             adv_sock.sendto(message, ('<broadcast>', self.ADV_PORT))
             try:
                 self.conn, self.addr = self.s.accept()
+                self.conn.settimeout(None)
                 break
             except socket.timeout as e:
                 pass
             time.sleep(0.5)
 
     def start_conn(self):
+        self.connected = False
         print("Attempting to start connection...")
         self.s.listen()
         print("Socket Listening")
-        self.advertise_and_connect_glbox()
-        print("Connected")
+        #self.advertise_and_connect_glbox() # we no longer advertise on local network because we are running in the cloud
+        while True:
+            try:
+                self.conn, self.addr = self.s.accept()
+                break
+            except socket.timeout as e:
+                pass
+        self.connected = True
+        self.heart_beat()
+        print("DATA SOCKET CONNECTED TO ASG")
         return self.conn, self.addr
 
+    def heart_beat(self):
+        """
+        Runs on repeat, send a heart beat ping to the ASG if we are connected. If ping fails, restart server so ASG can reinitiate connection.
+        """
+        #if connected, try to send heart beat, reconnect if not connected
+        if self.connected:
+            try:
+                self.send_heart_beat()
+            except (ConnectionResetError, BrokenPipeError) as e:
+                self.start_conn() #this will start a new heart beat stream if connect is successful, so return
+                return
+
+        #start a new heart beat that will run after this one
+        heart_beat_thread = threading.Timer(self.heart_beat_time, self.heart_beat)
+        heart_beat_thread.daemon = True
+        heart_beat_thread.start()
+
+    def send_heart_beat(self):
+        self.send_bytes(self.heart_beat_id, bytes("ping"  + "\n",'UTF-8'))
+
     def send_final_transcript_object(self, t_obj):
-        print("SENDING FINAL")
         encoded_message = json.dumps(t_obj).encode('utf-8')
         #s.sendall(b)
         self.send_bytes(self.final_transcript_cid, encoded_message)
 
     def send_translated_text(self, text):
-        print("SENDING TRANSLATED TEXT")
         self.send_bytes(self.translation_cid, bytes(text + "\n",'UTF-8'))
 
     def send_intermediate_transcript(self, message_str):

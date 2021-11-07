@@ -88,7 +88,7 @@ public class GlboxClientSocket {
 //    static final byte [] facial_emotion_info_id_300 = {0x13, 0x03};
 //
 //    static final byte [] img_id = {0x01, 0x10}; //id for images
-//    static final byte [] heart_beat_id = {0x19, 0x20}; //id for heart beat
+    static final byte [] heart_beat_id = {0x19, 0x20}; //id for heart beat
 //    static final byte [] ack_id = {0x13, 0x37};
 
     //static private BufferedReader input;
@@ -96,6 +96,12 @@ public class GlboxClientSocket {
     static String SERVER_IP = "0.0.0.0"; //gets updated
     static int SERVER_PORT = 8989;
     private static int mConnectState = 0;
+
+    //handle heart beat stuff
+    private static long lastHeartbeatTime;
+    private static int heartbeatInterval = 3000; //milliseconds
+    private static int heartbeatPanicX = 3; // number of intervals before we reset connection
+    static Thread HeartbeatThread = null;
 
     private static boolean gotAck = false;
 
@@ -155,7 +161,7 @@ public class GlboxClientSocket {
             HandlerThread thread = new HandlerThread("HeartBeater");
             thread.start();
             Handler handler = new Handler(thread.getLooper());
-            final int delay = 1000;
+            final int delay = 3000;
             final int min_delay = 3000;
             final int max_delay = 4000;
             Random rand = new Random();
@@ -170,12 +176,22 @@ public class GlboxClientSocket {
         }
     }
 
+    //heart beat checker - check if we have received a heart rate
     private void heartBeat(){
         //check if we are still connected.
         //if not , reconnect,
         //we don't need to actively send heart beats from the client, as it's assumed that we are ALWAYS streaming data. Later, if we have periods of time where no data is sent, we will want to send a heart beat perhaps. but the client doesn't really need to, we just need to check if we are still connected
         if (mConnectState == 0) {
             restartSocket();
+        }
+
+        //or, if haven't been receiving heart beats, restart socket
+        if (mConnectState == 2) {
+            if ((System.currentTimeMillis() - lastHeartbeatTime) > (heartbeatInterval * heartbeatPanicX)) {
+                Log.d(TAG, "DIDN'T RECEIVE HEART BEATS, RESTARTING SOCKET");
+                mConnectState = 0;
+                restartSocket();
+            }
         }
     }
 
@@ -356,6 +372,7 @@ public class GlboxClientSocket {
             try {
                 System.out.println("TRYING TO CONNECT GLBOX");
                 socket = new Socket(SERVER_IP, SERVER_PORT);
+                lastHeartbeatTime = System.currentTimeMillis();
                 System.out.println("GLBOX CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -446,27 +463,19 @@ public class GlboxClientSocket {
                         Log.d(TAG, "Socket hello header broken, restarting socket");
                         break;
                     } else {
-                        Log.d(TAG, "RECEIVED HELLO");
                     }
                     //length of body
-                    Log.d(TAG, "get body len");
                     int body_len = input.readInt();
-                    Log.d(TAG, "got body len of " + body_len);
 
                     //read in message id bytes
-                    Log.d(TAG, "get b1, b2");
                     b1 = input.readByte();
                     b2 = input.readByte();
-                    Log.d(TAG, "got b1, b2");
 
                     //read in message body (if there is one)
-                    Log.d(TAG, "read message body");
                     if (body_len > 0){
-                        Log.d(TAG, "reading message body...");
                         raw_data = new byte[body_len];
                         input.readFully(raw_data, 0, body_len); // read the body
                     }
-                    Log.d(TAG, "got message body");
 
                     goodbye1 = input.readByte(); // read goodbye of incoming message
                     goodbye2 = input.readByte(); // read goodbye of incoming message
@@ -487,11 +496,6 @@ public class GlboxClientSocket {
 
                 //then process the data
                 //if ((b1 == ack_id[0]) && (b2 == ack_id[1])) { //got ack response
-                Log.d(TAG, "b1: " + b1);
-                Log.d(TAG, "b2: " + b2);
-
-                Log.d(TAG, "ftc0: " + final_transcript_cid[0]);
-                Log.d(TAG, "ftc1: " + final_transcript_cid[1]);
                 if ((b1 == final_transcript_cid[0]) && (b2 == final_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "final_transcript_cid received");
                     String final_transcript_json_string = new String(raw_data, StandardCharsets.UTF_8);
@@ -505,6 +509,10 @@ public class GlboxClientSocket {
                         Log.d(TAG, "F. Transcript is: " + transcript_object.getString("transcript"));
                     } catch (JSONException e) {
                     }
+                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
+                    //got heart beat, respond with heart beat
+                    //clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
+                    lastHeartbeatTime = System.currentTimeMillis();
                 } else if ((b1 == intermediate_transcript_cid[0]) && (b2 == intermediate_transcript_cid[1])) { //got ack response
                     Log.d(TAG, "intermediate_transcript_cid received");
                     String intermediate_transcript = new String(raw_data, StandardCharsets.UTF_8);
@@ -696,6 +704,10 @@ public class GlboxClientSocket {
         }
         @Override
         public void run() {
+            if (mConnectState != 2){
+                System.out.println("MCONNECTED IS FALSE IN SendThread, returning");
+                return;
+            }
             //clear queue so we don't have a buildup of images
             data_queue.clear();
             type_queue.clear();

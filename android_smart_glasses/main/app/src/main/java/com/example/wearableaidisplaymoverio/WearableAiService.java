@@ -9,11 +9,13 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
+import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -22,6 +24,8 @@ import android.renderscript.Type;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import android.util.Log;
 import android.widget.Toast;
 
@@ -76,8 +80,9 @@ public class WearableAiService extends HiddenCameraService {
 
     //GLBOX socket
     GlboxClientSocket glbox_client_socket;
-    String glbox_address;
-    String glbox_adv_key = "WearableAiCyborgGLBOX";
+    String glbox_address = "18.191.190.218";
+    //String glbox_address = "192.168.1.34";
+    //String glbox_adv_key = "WearableAiCyborgGLBOX"; //glbox no longer advertises - it retains a hardcoded domain/IP in the cloud
 
     //id of packet
     static final byte [] img_id = {0x01, 0x10}; //id for images
@@ -106,6 +111,11 @@ public class WearableAiService extends HiddenCameraService {
         //first we have to listen for the UDP broadcast from the compute module so we know the IP address to connect to. Once we get that , we will connect to it on a socket and starting sending pictures
         Thread adv_thread = new Thread(new ReceiveAdvThread());
         adv_thread.start();
+
+        //start glbox thread
+        //then start a thread to connect to the glbox
+        Thread glbox_thread = new Thread(new StartGlbox());
+        glbox_thread.start();
 
         mContext = this;
 
@@ -156,21 +166,8 @@ public class WearableAiService extends HiddenCameraService {
                         public void run() { asp_starter(); }
                     };
                     mainHandler.post(myStarterRunnable);
-                } else if (data.equals(glbox_adv_key)) {
-                    glbox_address = packet.getAddress().getHostAddress();
-
-                    Handler mainHandler = new Handler(mContext.getMainLooper());
-                    Runnable myStarterRunnable = new Runnable() {
-                        @Override
-                        public void run() {
-                            //then start a thread to connect to the glbox
-                            Thread glbox_thread = new Thread(new StartGlbox());
-                            glbox_thread.start();
-                        }
-                    };
-                    mainHandler.post(myStarterRunnable);
                 }
-                if (!(glbox_address == null || asp_address == null)){
+                if (asp_address != null){
                     break; //if not true, listen for the next packet
                 }
             }
@@ -465,6 +462,8 @@ public class WearableAiService extends HiddenCameraService {
     public void sendGlBoxCurrImage(){
         glbox_client_socket.sendBytes(img_id, curr_cam_image, "image");
     }
+
+
 
 }
 
