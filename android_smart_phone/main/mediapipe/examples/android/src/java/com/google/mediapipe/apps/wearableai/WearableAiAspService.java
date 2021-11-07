@@ -264,6 +264,8 @@ public class WearableAiAspService extends Service {
 
   private boolean haveAddedSidePackets = false;
 
+  AudioSystem audioSystem;
+
   @Override
   public void onCreate() {
       //make screen stay on for demos
@@ -407,6 +409,10 @@ public class WearableAiAspService extends Service {
     converter = new BitmapConverter(eglManager.getContext());
     converter.setConsumer(processor);
     startProducer();
+
+    //start audio streaming from ASG
+    audioSystem = new AudioSystem();
+    audioSystem.startAudio(this);
   }
 
   public void startSocket(){
@@ -909,7 +915,7 @@ public class WearableAiAspService extends Service {
         SocketThread.start();
     }
 
-    public   byte[] my_int_to_bb_be(int myInteger){
+    public byte[] my_int_to_bb_be(int myInteger){
         return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(myInteger).array();
     }
 
@@ -1141,7 +1147,6 @@ public class WearableAiAspService extends Service {
     }
 
     public void openSocket() {
-        // Hack Prevent crash (sending should be done using an async task)
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 

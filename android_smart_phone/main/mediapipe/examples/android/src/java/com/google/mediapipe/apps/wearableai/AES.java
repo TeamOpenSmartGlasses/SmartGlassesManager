@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio.utils;
+package com.google.mediapipe.apps.wearableai;
 
 import android.util.Base64;
 
@@ -10,7 +10,10 @@ import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
+import android.util.Log;
+
 public class AES {
+    private static final String TAG = "WearableIntelligenceSystem_AES";
 
     private static SecretKeySpec secretKey;
     private static byte[] key;
@@ -44,7 +47,7 @@ public class AES {
         }
         catch (Exception e)
         {
-            System.out.println("Error while encrypting: " + e.toString());
+            Log.d(TAG, "Error while encrypting: " + e.toString());
         }
         return null;
     }
@@ -61,7 +64,7 @@ public class AES {
         }
         catch (Exception e)
         {
-            System.out.println("Error while encrypting: " + e.toString());
+            Log.d(TAG, "Error while encrypting: " + e.toString());
         }
         return null;
     }
@@ -71,6 +74,7 @@ public class AES {
     {
         try
         {
+            Log.d(TAG, "Secret key is: " + secret);
             setKey(secret);
             Cipher cipher = Cipher.getInstance("AES/ECB/PKCS7PADDING");
             cipher.init(Cipher.DECRYPT_MODE, secretKey);
@@ -78,7 +82,7 @@ public class AES {
         }
         catch (Exception e)
         {
-            System.out.println("Error while decrypting: " + e.toString());
+            Log.d(TAG, "Error while decrypting: " + e.toString());
         }
         return null;
     }
@@ -95,7 +99,7 @@ public class AES {
         }
         catch (Exception e)
         {
-            System.out.println("Error while decrypting: " + e.toString());
+            Log.d(TAG, "Error while decrypting: " + e.toString());
         }
         return null;
     }

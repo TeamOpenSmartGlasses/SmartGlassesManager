@@ -349,12 +349,14 @@ maven_install(
         "com.google.guava:listenablefuture:1.0",
         "junit:junit:4.12",
         "org.hamcrest:hamcrest-library:1.3",
+        "com.alphacephei:vosk-android:0.3.23"
     ],
     repositories = [
         "https://jcenter.bintray.com",
         "https://maven.google.com",
         "https://dl.google.com/dl/android/maven2",
         "https://repo1.maven.org/maven2",
+        "https://alphacephei.com/maven/",
     ],
     fetch_sources = True,
     version_conflict_policy = "pinned",
