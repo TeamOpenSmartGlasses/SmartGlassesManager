@@ -876,7 +876,7 @@ public class WearableAiAspService extends Service {
                         bitmapProducer.newFrame(bitmap);
 
                         //save image
-                        //savePicture(raw_data);
+                        savePicture(raw_data);
                     }
                 } else {
                     break;
@@ -1001,11 +1001,12 @@ public class WearableAiAspService extends Service {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_mm_dd_hh_mm_ss_SSS");
         String date = dateFormat.format(new Date());
-        String photoFile = "Picture_" + date + ".jpg";
+        String photoFile = "WearableIntelligenceSystem_POVcamera_" + date + ".jpg";
 
         String filename = pictureFileDir.getPath() + File.separator + photoFile;
 
         File pictureFile = new File(filename);
+        Log.d(TAG, "Saving image as : " + filename);
 
         try {
             FileOutputStream fos = new FileOutputStream(pictureFile);
@@ -1018,7 +1019,8 @@ public class WearableAiAspService extends Service {
     }
 
     private  File getDir() {
-        File sdDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        //File sdDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File sdDir = this.getCacheDir();
         return sdDir; //new File(sdDir, "WearableAiMobileCompute");
     }
 

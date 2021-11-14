@@ -35,6 +35,7 @@ cc_library(
 android_binary(
     name = "wearableai",
     srcs = glob(["*.java", "LandmarksTranslate/*.java"]),
+    #proguard_specs = ["proguard.txt"],
     assets = [
         "//mediapipe/graphs/wearable_ai_gpu:wearable_ai_gpu.binarypb",
         "//mediapipe/modules/face_landmark:face_landmark.tflite",
@@ -67,6 +68,7 @@ android_binary(
     },
     multidex = "native",
     deps = [
+        "@maven//:net_java_dev_jna_jna",
         ":mediapipe_jni_lib",
         "//mediapipe/framework/formats:landmark_java_proto_lite",
         "//mediapipe/java/com/google/mediapipe/components:android_camerax_helper",
@@ -80,5 +82,9 @@ android_binary(
         "//third_party:androidx_recyclerview",
         "//third_party:opencv",
         "//third_party:androidx_annotation",
+        "@maven//:com_alphacephei_vosk_android",
+        "@maven//:com_alphacephei_vosk_model_en",
+        #"@jna_cust//aar"
+        "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai/jniLibs:jna_libs",
     ],
 )

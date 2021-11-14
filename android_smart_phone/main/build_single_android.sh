@@ -91,6 +91,7 @@ fi
 target="${app}:${target_name}"
 bin="${bin_dir}/${app}/${target_name}.apk"
 
+echo "************************7adf************************"
 echo "=== Target: ${target}"
 
 if [[ $install_only == false ]]; then
@@ -100,6 +101,7 @@ if [[ $install_only == false ]]; then
     bazel_flags+=(--linkopt=-s)
   fi
 fi
+echo "************************8adf************************"
 
 if [[ ${app_name} == "objectdetection3d" ]]; then
   categories=("shoe" "chair" "cup" "camera" "shoe_1stage" "chair_1stage")
@@ -110,6 +112,8 @@ if [[ ${app_name} == "objectdetection3d" ]]; then
       if [[ ${category} != "shoe" ]]; then
         bazel_flags_extended+=(--define ${category}=true)
       fi
+      echo "Running command: "
+      echo "${bazel_flags_extended[@]}"
       bazel "${bazel_flags_extended[@]}"
       cp -f "${bin}" "${apk}"
     fi
@@ -121,6 +125,8 @@ else
     if [[ ${app_name} == "templatematchingcpu" ]]; then
       switch_to_opencv_4
     fi
+    echo "Running command: "
+    echo "${bazel_flags[@]}"
     bazel "${bazel_flags[@]}"
     cp -f "${bin}" "${apk}"
     if [[ ${app_name} == "templatematchingcpu" ]]; then

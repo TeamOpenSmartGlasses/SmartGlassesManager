@@ -6,14 +6,14 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 
-//import org.vosk.LibVosk;
-//import org.vosk.LogLevel;
-//import org.vosk.Model;
-//import org.vosk.Recognizer;
-//import org.vosk.android.RecognitionListener;
-//import org.vosk.android.SpeechService;
-//import org.vosk.android.SpeechStreamService;
-//import org.vosk.android.StorageService;
+import org.vosk.LibVosk;
+import org.vosk.LogLevel;
+import org.vosk.Model;
+import org.vosk.Recognizer;
+import org.vosk.android.RecognitionListener;
+import org.vosk.android.SpeechService;
+import org.vosk.android.SpeechStreamService;
+import org.vosk.android.StorageService;
 
 import java.io.IOException;
 import java.io.InputStream;

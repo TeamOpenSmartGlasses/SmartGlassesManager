@@ -1,0 +1,8 @@
+-dontwarn java.awt.*
+-dontwarn sun.misc.Unsafe
+-dontwarn com.google.common.**
+-dontwarn javax.annotation.**
+-dontwarn javax.inject.**
+-dontwarn javax.lang.**
+-keep class com.sun.jna.* { *; }
+-keepclassmembers class * extends com.sun.jna.* { public *; }
