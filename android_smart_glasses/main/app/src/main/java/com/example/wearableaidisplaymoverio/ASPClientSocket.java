@@ -1,10 +1,13 @@
 package com.example.wearableaidisplaymoverio;
 
 import android.content.Context;
+import com.example.wearableaidisplaymoverio.comms.AsgWebSocketClient;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -13,6 +16,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
@@ -20,8 +25,19 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+
 //singleton clientsocket class for connecting o ASP
 public class ASPClientSocket {
+    //data observable we can send data through
+    private static PublishSubject<JSONObject> dataObservable;
+    private static Disposable dataSubscriber;
+
+    //our websocket connection to the ASP
+    private static AsgWebSocketClient aspWebSocket;
+
+    //broadcast intent string
     //broadcast intent string
     public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_DATA";
     public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
@@ -447,4 +463,31 @@ public class ASPClientSocket {
             mConnectState = 0;
         }
     }
+
+    private void parseData(JSONObject data){
+        Log.d(TAG, "Parsing data");
+        Log.d(TAG, Integer.toString(aspWebSocket.getConnectionState()));
+        if ((aspWebSocket != null) && (aspWebSocket.getConnectionState() == 2)){
+            aspWebSocket.sendJson(data);
+        }
+    }
+
+    public void setObservable(PublishSubject observable){
+        dataObservable = observable;
+        //dataSubscriber = dataObservable.subscribe(i -> parseData(i));
+        dataSubscriber = dataObservable.subscribe(i -> parseData(i));
+    }
+
+    public void startWebSocket(){
+        //start a thread to hold the websocket connection to ASP
+        try {
+            aspWebSocket = new AsgWebSocketClient(new URI(
+                    "ws://192.168.1.164:8887")); // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
+            aspWebSocket.start();
+        } catch (URISyntaxException e){
+            Log.d(TAG, "FAILED TO START ASP WEB SOCKET");
+            e.printStackTrace();
+        }
+    }
+
 }

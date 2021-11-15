@@ -252,7 +252,7 @@ android_ndk_repository(
 
 android_sdk_repository(
     name = "androidsdk",
-    path = "/home/cayden/Android/Sdk",
+    path = "/home/cayden/biggem/programs/Android/Sdk",
 )
 
 # iOS basic build deps.
@@ -349,7 +349,10 @@ maven_install(
         "com.google.guava:listenablefuture:1.0",
         "junit:junit:4.12",
         "org.hamcrest:hamcrest-library:1.3",
-        "com.alphacephei:vosk-android:0.3.23"
+        "com.alphacephei:vosk-android:0.3.23",
+        "org.java-websocket:Java-WebSocket:1.5.2",
+        "io.reactivex.rxjava3:rxandroid:3.0.0",
+        "io.reactivex.rxjava3:rxjava:3.0.0",
     ],
     repositories = [
         "https://jcenter.bintray.com",
@@ -357,6 +360,7 @@ maven_install(
         "https://dl.google.com/dl/android/maven2",
         "https://repo1.maven.org/maven2",
         "https://alphacephei.com/maven/",
+        "https://oss.jfrog.org/libs-snapshot",
     ],
     fetch_sources = True,
     version_conflict_policy = "pinned",

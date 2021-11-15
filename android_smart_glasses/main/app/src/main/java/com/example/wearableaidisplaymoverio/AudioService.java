@@ -49,13 +49,16 @@ public class AudioService extends Service {
     //encryption key - TEMPORARILY HARD CODED - change to local storage, user can set
     private String secretKey;
 
+    private long lastAudioUpdate = 0;
+    private int audioInterval = 3000;
+
     // Binder given to clients
     private final IBinder binder = new AudioService.LocalBinder();
 
     public static final String CHANNEL_ID = "AudioServiceChannel";
 
     //socket info
-    static String SERVER_IP = "18.191.190.218";
+    static String SERVER_IP = "3.23.98.82";
     static int SERVER_PORT = 4449;
     private static int mConnectState = 0;
 
@@ -363,6 +366,11 @@ public class AudioService extends Service {
                 while (currentlySendingAudio == true) {
                     // read the data into the buffer
                     int readSize = recorder.read(buffer, 0, buffer.length);
+
+                    if ((System.currentTimeMillis() - lastAudioUpdate) > audioInterval){
+                        Log.d(TAG, "SENDING AUDIO");
+                        lastAudioUpdate = System.currentTimeMillis();
+                    }
 
                     //convert short array to byte array
                     ByteBuffer b_buffer = ByteBuffer.allocate(buffer.length * 2);

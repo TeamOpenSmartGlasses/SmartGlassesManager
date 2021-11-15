@@ -33,8 +33,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
+import io.reactivex.rxjava3.subjects.PublishSubject;
+
 //singleton clientsocket class for connecting to ASP
 public class GlboxClientSocket {
+    //data observable we can send data through
+    private static PublishSubject dataObservable;
+
     //broadcast intent string
     public final static String ACTION_RECEIVE_TEXT = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_TEXT";
 //    public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
@@ -505,6 +510,7 @@ public class GlboxClientSocket {
                         final Intent intent = new Intent();
                         intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, transcript_object.toString());
                         intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                        dataObservable.onNext(transcript_object);
                         mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                         Log.d(TAG, "F. Transcript is: " + transcript_object.getString("transcript"));
                     } catch (JSONException e) {
@@ -755,5 +761,11 @@ public class GlboxClientSocket {
         }
         return new String(buffer.toByteArray(), "UTF-8");
     }
+
+
+    public void setObservable(PublishSubject observable){
+        dataObservable = observable;
+    }
+
 
 }

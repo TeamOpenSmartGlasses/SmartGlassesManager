@@ -2,8 +2,13 @@ Keras-VGG16-places365/ is the places365 system converted to a tensorflowlite mod
 
 main/ is the main system, which is a fork of the Google MediaPipe library and Android example program. The app and holisitic graph have been extended to include a number of new neural networks (e.g. facial emotion) and processes (e.g. server connection to ASG)
 
-You can either use the officially released APK (on Github or <emexwearables.com>) or build your own locally after following the instructions in the main README.md and then running the following command:
+You can either use the officially released APK (on Github or <emexwearables.com>) or build your own locally after following the instructions in the main README.md and then the instruction below:
 
+## Install and build
+
+1. Follow these instructions: https://google.github.io/mediapipe/getting_started/android.html (including the external link on this page on how to install MediaPipe)
+2. Change the SDK and NDK in ./main/WORKSPACE to point to your own Android SDK install (if you don't have one, install Android Studio and download an SDK and NDK)
+3. Run this command:
 ```
 ./build_single_android.sh mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai
 ```

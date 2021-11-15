@@ -26,6 +26,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -39,6 +40,8 @@ import com.androidhiddencamera.config.CameraFocus;
 import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
 
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -49,10 +52,17 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+import io.reactivex.rxjava3.subjects.Subject;
 
 /**
  * Class strongly based on app example from : https://github.com/kevalpatel2106/android-hidden-camera, Created by Keval on 11-Nov-16 @author {@link 'https://github.com/kevalpatel2106'}
@@ -80,7 +90,7 @@ public class WearableAiService extends HiddenCameraService {
 
     //GLBOX socket
     GlboxClientSocket glbox_client_socket;
-    String glbox_address = "18.191.190.218";
+    String glbox_address = "3.23.98.82";
     //String glbox_address = "192.168.1.34";
     //String glbox_adv_key = "WearableAiCyborgGLBOX"; //glbox no longer advertises - it retains a hardcoded domain/IP in the cloud
 
@@ -105,9 +115,14 @@ public class WearableAiService extends HiddenCameraService {
 
     byte [] curr_cam_image;
 
+    //observables to send data around app
+    PublishSubject<JSONObject> dataObservable;
+
     @Override
     public void onCreate(){
-        System.out.println("HIDDEN CAMERA SERVICE CREATED");
+        dataObservable = PublishSubject.create();
+        Disposable s = dataObservable.subscribe(i -> Log.d(TAG, "SUBBED TO " + i));
+
         //first we have to listen for the UDP broadcast from the compute module so we know the IP address to connect to. Once we get that , we will connect to it on a socket and starting sending pictures
         Thread adv_thread = new Thread(new ReceiveAdvThread());
         adv_thread.start();
@@ -122,9 +137,15 @@ public class WearableAiService extends HiddenCameraService {
         beginCamera();
     }
 
+    private void setupObservervables(){
+        //set up the multicasting observables we use to send data between all the subsystems of the service
+    }
+
     class ReceiveAdvThread extends Thread {
         public void run(){
+            //first get the ASP IP from its UDP broadcast, then start the ASP object
             receiveUdpBroadcast();
+            asp_starter();
         }
     }
 
@@ -158,18 +179,20 @@ public class WearableAiService extends HiddenCameraService {
                 Log.i(TAG, "Packet received; data: " + data);
                 if (data.equals(asp_adv_key)) {
                     asp_address = packet.getAddress().getHostAddress();
+                    Log.d(TAG, "GOD ASP ADDRESS" + asp_address);
                     //start socket and camera on main service thread
                     // Get a handler that can be used to post to the main thread
-                    Handler mainHandler = new Handler(mContext.getMainLooper());
-                    Runnable myStarterRunnable = new Runnable() {
-                        @Override
-                        public void run() { asp_starter(); }
-                    };
-                    mainHandler.post(myStarterRunnable);
+//                    Handler mainHandler = new Handler(mContext.getMainLooper());
+//                    Runnable myStarterRunnable = new Runnable() {
+//                        @Override
+//                        public void run() { asp_starter(); }
+//                    };
+//                    mainHandler.post(myStarterRunnable);
+                    return;
                 }
-                if (asp_address != null){
-                    break; //if not true, listen for the next packet
-                }
+//                if (asp_address != null){
+//                    break; //if not true, listen for the next packet
+//                }
             }
         } catch (IOException ex) {
             Log.d(TAG, "Exception: " + ex);
@@ -336,14 +359,17 @@ public class WearableAiService extends HiddenCameraService {
     private void startAspSocket(){
         //create client socket and setup socket
         asp_client_socket = ASPClientSocket.getInstance(this);
+        asp_client_socket.setObservable(dataObservable);
         asp_client_socket.setIp(asp_address);
         asp_client_socket.startSocket();
+        asp_client_socket.startWebSocket();
     }
 
     private void startGlboxSocket(){
         //create client socket and setup socket
         System.out.println("STARTING GLBOX SOCKET");
         glbox_client_socket = GlboxClientSocket.getInstance(this);
+        glbox_client_socket.setObservable(dataObservable);
         glbox_client_socket.setIp(glbox_address);
         glbox_client_socket.startSocket();
     }
