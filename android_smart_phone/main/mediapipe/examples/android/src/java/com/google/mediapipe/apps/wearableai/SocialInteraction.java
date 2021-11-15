@@ -42,7 +42,6 @@ class SocialInteraction {
         List<Object> bls = this.body_language.computeBodyLanguage(start_time);
 
         int head_touch = (int) bls.get(0);
-        Log.d(TAG, "GOT HEAD TOUCHES" + head_touch);
         return head_touch;
     }
 

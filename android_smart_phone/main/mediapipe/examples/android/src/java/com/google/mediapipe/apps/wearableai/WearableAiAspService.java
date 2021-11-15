@@ -20,6 +20,7 @@
 
 package com.google.mediapipe.apps.wearableai;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.ArrayList;
 import android.content.Intent;
@@ -142,8 +143,18 @@ import android.os.StrictMode;
 //import android.support.v4.app.NotificationCompat;
 import androidx.core.app.NotificationCompat;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+import org.json.JSONObject;
+
 /** Main activity of WearableAI compute module android app. */
 public class WearableAiAspService extends Service {
+    private static final String TAG_FOREGROUND_SERVICE = "FOREGROUND_SERVICE";
+    public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
+    public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
+
+    private AspWebsocketServer asgWebSocket; 
+
     private  final String TAG = "WearableAi_ASP_Service";
 
     //SOCKET STUFF
@@ -266,8 +277,17 @@ public class WearableAiAspService extends Service {
 
   AudioSystem audioSystem;
 
+    //observables to send data around app
+    PublishSubject<JSONObject> dataObservable;
+
   @Override
   public void onCreate() {
+      dataObservable = PublishSubject.create();
+     Disposable s = dataObservable.subscribe(i -> Log.d(TAG, "SUBBED TO " + i));
+
+      //start websocket to ASG
+      startAsgWebSocketConnection();
+
       //make screen stay on for demos
       //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -314,7 +334,6 @@ public class WearableAiAspService extends Service {
     processor.addPacketCallback(
       OUTPUT_LANDMARKS_STREAM_NAME,
       (packet) -> {
-        Log.d(TAG, "OUT LANDMARKS PACKET CALLBACK");
         byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
         try {
           NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
@@ -337,7 +356,6 @@ public class WearableAiAspService extends Service {
       (packet) -> {
           //extract face_emotion_vector from packet
           
-        Log.d(TAG, "OUT FACE EMOTION PACKET CALLBACK");
             float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
             //update face emotion
             mSocialInteraction.updateFaceEmotion(face_emotion_vector, System.currentTimeMillis());
@@ -356,7 +374,6 @@ public class WearableAiAspService extends Service {
     processor.addPacketCallback(
       OUTPUT_BODY_LANGUAGE_LANDMARKS_STREAM_NAME,
       (packet) -> {
-        Log.d(TAG, "OUT BODY LANGUAGE PACKET CALLBACK");
         byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
         try {
 //              NormalizedLandmarkList landmarks = PacketGetter.getProto(packet, NormalizedLandmarkList.class);
@@ -468,7 +485,6 @@ public class WearableAiAspService extends Service {
 
 
                     int head_touch = mSocialInteraction.getBodyLanguage(start_time_300);
-                    Log.d(TAG, "HEAD_TOUCHMAINACTIVITY: " + head_touch);
 
                     //load payloads and send
                     byte [] eye_contact_data_send_5 = my_int_to_bb_be(round_eye_contact_percentage_5);
@@ -478,7 +494,6 @@ public class WearableAiAspService extends Service {
                     byte [] facial_emotion_data_send_30 = facial_emotion_list[facial_emotion_idx_30].getBytes();
                     byte [] facial_emotion_data_send_300 = facial_emotion_list[facial_emotion_idx_300].getBytes();
                     if (mConnectState == 2){
-                        Log.d(TAG, "SENDING EYE CONTACT 5");
                         sendBytes(eye_contact_info_id_5, eye_contact_data_send_5);
                         sendBytes(eye_contact_info_id_30, eye_contact_data_send_30);
                         sendBytes(eye_contact_info_id_300, eye_contact_data_send_300);
@@ -872,7 +887,6 @@ public class WearableAiAspService extends Service {
                         //convert to bitmap
                         Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
                         //send through mediapipe
-                        Log.d(TAG, "Got frame from ASG");
                         bitmapProducer.newFrame(bitmap);
 
                         //save image
@@ -1039,13 +1053,11 @@ public class WearableAiAspService extends Service {
             for (InterfaceAddress inetAddress: addresses)
 
                 iAddr = inetAddress.getBroadcast();
-            Log.d(TAG, "iAddr=" + iAddr);
             return iAddr;
 
         } catch (SocketException e) {
 
             e.printStackTrace();
-            Log.d(TAG, "getBroadcast" + e.getMessage());
         }
         return null;
     }
@@ -1120,7 +1132,6 @@ public class WearableAiAspService extends Service {
             for (InterfaceAddress inetAddress: addresses)
 
                 iAddr = inetAddress.getBroadcast();
-            Log.d(TAG, "iAddr=" + iAddr);
             return iAddr;
 
         } catch (SocketException e) {
@@ -1132,7 +1143,6 @@ public class WearableAiAspService extends Service {
     }
     
     public void sendBroadcast(String messageStr){
-        Log.d(TAG, "SENDING BROADCAST");
         try {
             byte[] sendData = messageStr.getBytes();
             InetAddress my_ip = getIpAddress();
@@ -1143,7 +1153,6 @@ public class WearableAiAspService extends Service {
             Log.d(TAG, "FAILED TO SEND BROADCAST");
             return ;
         }
-        Log.d(TAG, "ATTEMPTED TO SEND BROADCAST");
     }
 
     public void openSocket() {
@@ -1180,11 +1189,11 @@ public class WearableAiAspService extends Service {
         NotificationCompat.Builder builder;
 
 
-        String CHANNEL_ID = "crowd_sourced_crowds_channel";
+        String CHANNEL_ID = "wearable_ai_service_channel";
 
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "CrowdSourcedCrowds",
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Wearable Intelligence System",
                 NotificationManager.IMPORTANCE_HIGH);
-        channel.setDescription("CrowdSourcedCrowds scanning crowds...");
+        channel.setDescription("Running intelligence suite...");
         manager.createNotificationChannel(channel);
 
         builder = new NotificationCompat.Builder(this, CHANNEL_ID);
@@ -1206,29 +1215,36 @@ public class WearableAiAspService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "Bluetooth Service starting");
+        Log.d(TAG, "WearableAI Service onStartCommand");
 
-//        if (intent.getAction().contains("start")) {
-//            h = new Handler();
-//            r = new Runnable() {
-//                @Override
-//                public void run() {
-//                    startForeground(101, updateNotification());
-//                    h.postDelayed(this, 1000);
-//                }
-//            };
-//
-//            h.post(r);
-//        } else {
-//            h.removeCallbacks(r);
-//            stopForeground(true);
-//            stopSelf();
-//        }
-
-        // start the service in the foreground
-        startForeground(1234, updateNotification());
+        if (intent != null){
+            String action = intent.getAction();
+            switch (action) {
+                case ACTION_START_FOREGROUND_SERVICE:
+                    // start the service in the foreground
+                    startForeground(1234, updateNotification());
+                    break;
+                case ACTION_STOP_FOREGROUND_SERVICE:
+                    asgWebSocket.destroy();
+                    stopForeground(true);
+                    stopSelf();
+                    break;
+            }
+        }
 
         return Service.START_STICKY;
     }
+
+    public void startAsgWebSocketConnection(){
+        Log.d(TAG, "STARTGIN WS");
+        //String address = "localhost:8887";
+        //InetSocketAddress inetSockAddress = new InetSocketAddress(address);
+        int port = 8887;
+        asgWebSocket = new AspWebsocketServer(port);
+        asgWebSocket.setObservable(dataObservable);
+        asgWebSocket.start();
+        Log.d(TAG, "WS STARTED");
+    }
+
 
 }

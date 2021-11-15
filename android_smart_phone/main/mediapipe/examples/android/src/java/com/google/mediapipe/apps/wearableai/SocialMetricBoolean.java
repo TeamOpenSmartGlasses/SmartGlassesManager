@@ -64,15 +64,10 @@ class SocialMetricBoolean {
 
 
             //ensure we haven't gone further into the past than our start time permits
-            Log.d(TAG, "Eye contact start_time then it then i");
-            Log.d(TAG, Long.toString(start_time));
-            Log.d(TAG, Long.toString(it));
-            Log.d(TAG, Long.toString(i));
 
             if (it < start_time){
                 break;
             }
-            Log.d(TAG, "Adding");
 
             //add to proper sum
             if (this.metrics.get(i)){

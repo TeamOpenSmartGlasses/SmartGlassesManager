@@ -43,7 +43,6 @@ class BodyLanguageDecode {
         for (int i = (timestamps.size() - 1); i > 0; i--){
             //get time
             long it = this.timestamps.get(i);
-            Log.d(TAG, "CHECKIN it : " + it);
 
             //if older than request window, break and don't add
             if (it < start_time){
@@ -84,7 +83,6 @@ class BodyLanguageDecode {
         List<NormalizedLandmark> lms_arr = lms.getLandmarkList();
         //Log.d(TAG, lms);
         if (lms_arr.size() < 1) {
-            Log.d(TAG, "EMPTY BRO SHIT");
             return -1;
         }
 
@@ -101,7 +99,6 @@ class BodyLanguageDecode {
             List<NormalizedLandmark> lms_arr = lms.getLandmarkList();
 
             float scaler = this.getScaler(lms);
-            Log.d(TAG, "SCALER IS : " + scaler);
             
             //get nose and hands
             //nose
@@ -120,7 +117,6 @@ class BodyLanguageDecode {
             float simple_dist = nose_landmark.getX() - left_index_landmark.getX(); 
 //            float head_left_hand_dist = Math.sqrt((Math.pow((nose_landmark.getX() - left_hand_middle_finger_landmark.getX()), 2)) + (Math.pow((nose_landmark.getY() - left_hand_middle_finger_landmark.getY()), 2))); 
             //Log.d(TAG, "DIST LEFT HAND HEAD : " + head_left_hand_dist);
-            Log.d(TAG, "SIMPLE ST LEFT HAND HEAD : " + simple_dist);
 
         }
 

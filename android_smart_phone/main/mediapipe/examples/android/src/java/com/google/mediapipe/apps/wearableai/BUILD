@@ -80,5 +80,8 @@ android_binary(
         "//third_party:androidx_recyclerview",
         "//third_party:opencv",
         "//third_party:androidx_annotation",
+        "@maven//:org_java_websocket_Java_WebSocket",
+        "@maven//:io_reactivex_rxjava3_rxandroid",
+        "@maven//:io_reactivex_rxjava3_rxjava",
     ],
 )

@@ -145,8 +145,20 @@ public class MainActivity extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
+
+      //setup activity view
+      setContentView(R.layout.activity_main);
+
       //start wearable ai service
       startWearableAiService();
+
+      final Button button = findViewById(R.id.kill_wearableai_service);
+         button.setOnClickListener(new View.OnClickListener() {
+             public void onClick(View v) {
+                 // Code here executes on main thread after user presses button
+                 stopWearableAiService();
+             }
+         });
   }
 
   @Override
@@ -166,19 +178,20 @@ public class MainActivity extends AppCompatActivity {
     PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
   }
 
+   public void stopWearableAiService() {
+        if (!isMyServiceRunning(WearableAiAspService.class)) return;
+        Intent stopIntent = new Intent(this, WearableAiAspService.class);
+        stopIntent.setAction(WearableAiAspService.ACTION_STOP_FOREGROUND_SERVICE);
+        Log.d(TAG, "MainActivity stopping WearableAI service");
+        startService(stopIntent);
+   }
+
    public void startWearableAiService() {
         if (isMyServiceRunning(WearableAiAspService.class)) return;
         Intent startIntent = new Intent(this, WearableAiAspService.class);
-        startIntent.setAction("start");
+        startIntent.setAction(WearableAiAspService.ACTION_START_FOREGROUND_SERVICE);
         Log.d(TAG, "MainActivity starting WearableAI service");
         startService(startIntent);
-    }
-
-    public void stopWearableAiService() {
-        if (!isMyServiceRunning(WearableAiAspService.class)) return;
-        Intent stopIntent = new Intent(this, WearableAiAspService.class);
-        stopIntent.setAction("stop");
-        startService(stopIntent);
     }
 
     //check if service is running
