@@ -148,6 +148,13 @@ public class MainActivity extends AppCompatActivity {
 
       //setup activity view
       setContentView(R.layout.activity_main);
+      //stuff = new Stuff();
+
+     //setup room database
+    //setup phrase creation interface
+    //repo = new PhraseRepository(getApplication());
+    //db = PhraseRoomDatabase.getDatabase(getApplication());
+    //PhraseCreator.create("hello world", "local_test", getApplicationContext(), repo);
 
       //start wearable ai service
       startWearableAiService();

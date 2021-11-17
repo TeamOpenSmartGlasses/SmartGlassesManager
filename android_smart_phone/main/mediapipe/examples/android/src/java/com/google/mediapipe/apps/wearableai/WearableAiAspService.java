@@ -20,6 +20,20 @@
 
 package com.google.mediapipe.apps.wearableai;
 
+import java.util.concurrent.ExecutionException;
+import java.lang.InterruptedException;
+import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
+import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRoomDatabase;
+import com.google.mediapipe.apps.wearableai.database.phrase.PhraseDao;
+import com.google.mediapipe.apps.wearableai.database.phrase.PhraseViewModel;
+import com.google.mediapipe.apps.wearableai.database.phrase.PhraseCreator;
+import com.google.mediapipe.apps.wearableai.database.phrase.Phrase;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.LifecycleService;
+import androidx.annotation.Nullable;
+
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.ArrayList;
@@ -146,9 +160,10 @@ import androidx.core.app.NotificationCompat;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import org.json.JSONObject;
+import org.json.JSONException;
 
 /** Main activity of WearableAI compute module android app. */
-public class WearableAiAspService extends Service {
+public class WearableAiAspService extends LifecycleService {
     private static final String TAG_FOREGROUND_SERVICE = "FOREGROUND_SERVICE";
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
@@ -280,10 +295,28 @@ public class WearableAiAspService extends Service {
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
 
+    //database
+    private PhraseRepository mRepository = null;
+    private List<Phrase> mAllPhrasesSnapshot;
+    //private PhraseViewModel mPhraseViewModel;
+
   @Override
   public void onCreate() {
-      dataObservable = PublishSubject.create();
-     Disposable s = dataObservable.subscribe(i -> Log.d(TAG, "SUBBED TO " + i));
+    mRepository = new PhraseRepository(getApplication());
+    //PhraseCreator.create("this is a test 1", "local_test", getApplicationContext(), mRepository);
+    //below can be used when we want to stream live data (NOT on the main thread)
+    //    mAllPhrases.observe(this, new Observer<List<Phrase>>() {
+    //        @Override
+    //        public void onChanged(@Nullable final List<Phrase> phrases) {
+    //            // Update the cached copy of the words in the adapter.
+    //            Log.d(TAG, "onChange called!");
+    //            Log.d(TAG, phrases.toString());
+    //        }
+    //    });
+
+    //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
+     dataObservable = PublishSubject.create();
+     Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
 
       //start websocket to ASG
       startAsgWebSocketConnection();
@@ -338,10 +371,8 @@ public class WearableAiAspService extends Service {
         try {
           NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
           if (landmarks == null) {
-//            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] No landmarks.");
             return;
           } else {
-//            Log.d(TAG, "[TS:" + packet.getTimestamp() + "] Timestamp.");
               processWearableAiOutput(landmarks, System.currentTimeMillis());
           }
         } catch (InvalidProtocolBufferException e) {
@@ -508,78 +539,13 @@ public class WearableAiAspService extends Service {
 
     }
 
-//  public  void restartSocket() {
-//        Log.d(TAG, "Restarting socket");
-//        mConnectState = 1;
-//        if (socket != null && (!socket.isClosed())){
-//            try {
-//                output.close();
-//                input.close();
-//                socket.close();
-//            } catch (IOException e) {
-//                System.out.println("FAILED TO CLOSE SOCKET, SOMETHING IS WRONG");
-//            }
-//        }
-//        SocketThread = new Thread(new SocketThread());
-//        SocketThread.start();
-//    }
-
-
   // Used to obtain the content view for this application. If you are extending this class, and
   // have a custom layout, override this method and return the custom layout.
   protected int getContentViewLayoutResId() {
     return R.layout.activity_main;
   }
 
-//  @Override
-//  protected void onResume() {
-//    super.onResume();
-//    converter = new BitmapConverter(eglManager.getContext());
-//    converter.setConsumer(processor);
-//    startProducer();
-//
-//  }
-//
-//  @Override
-//  protected void onPause() {
-//    super.onPause();
-//    converter.close();
-//
-//    // Hide preview display until we re-open the camera again.
-//    previewDisplayView.setVisibility(View.GONE);
-//  }
-//
-//  @Override
-//  public void onRequestPermissionsResult(
-//      int requestCode, String[] permissions, int[] grantResults) {
-//    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//    PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//  }
-
   private void setupPreviewDisplayView() {
-//    previewDisplayView.setVisibility(View.GONE);
-//    ViewGroup viewGroup = findViewById(R.id.preview_display_layout);
-//    viewGroup.addView(previewDisplayView);
-//
-//    previewDisplayView
-//        .getHolder()
-//        .addCallback(
-//            new SurfaceHolder.Callback() {
-//              @Override
-//              public void surfaceCreated(SurfaceHolder holder) {
-//                processor.getVideoSurfaceOutput().setSurface(holder.getSurface());
-//              }
-//
-//              @Override
-//              public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-//                bitmapProducer.setCustomFrameAvailableListener(converter);
-//              }
-//
-//              @Override
-//              public void surfaceDestroyed(SurfaceHolder holder) {
-//                processor.getVideoSurfaceOutput().setSurface(null);
-//              }
-//            });
   }
 
     private void startProducer(){
@@ -1026,8 +992,7 @@ public class WearableAiAspService extends Service {
             fos.write(data);
             fos.close();
         } catch (Exception error) {
-//            Log.d(TAG, "File" + filename + "not saved: "
-//                    + error.getMessage());
+            error.printStackTrace();
         }
     }
 
@@ -1236,14 +1201,38 @@ public class WearableAiAspService extends Service {
     }
 
     public void startAsgWebSocketConnection(){
-        Log.d(TAG, "STARTGIN WS");
+        Log.d(TAG, "Starting WebSocket Server");
         //String address = "localhost:8887";
         //InetSocketAddress inetSockAddress = new InetSocketAddress(address);
         int port = 8887;
         asgWebSocket = new AspWebsocketServer(port);
         asgWebSocket.setObservable(dataObservable);
         asgWebSocket.start();
-        Log.d(TAG, "WS STARTED");
+        Log.d(TAG, "WebSocket Server STARTED");
+    }
+
+    private void handleDataStream(JSONObject data){
+        try {
+            Log.d(TAG, "SAVING ASG TRANSCRIPT TO ROOM DATABASE");
+            String transcript = data.getString("transcript");
+            PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mRepository);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        //gets all phrases, parses out most recent phrase, and, print to debug
+//         try{
+//            mAllPhrasesSnapshot = mRepository.getAllPhrasesSnapshot();
+//            Phrase lastPhrase = mAllPhrasesSnapshot.get(0);
+//            String lastPhraseTranscript = lastPhrase.getPhrase();
+//
+//            Log.d(TAG, "MOST RECENT TRANSCRIPT: ");
+//            Log.d(TAG, lastPhraseTranscript);
+//         } catch (ExecutionException | InterruptedException e) {
+//             e.printStackTrace();
+//         }
+
+
     }
 
 

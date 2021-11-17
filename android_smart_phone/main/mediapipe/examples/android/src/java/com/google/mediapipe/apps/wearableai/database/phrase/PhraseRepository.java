@@ -1,0 +1,76 @@
+package com.google.mediapipe.apps.wearableai.database.phrase;
+
+//originally from MXT: Memory Expansion Tools
+//Jeremy Stairs (stairs1) and Cayden Pierce
+//https://github.com/stairs1/memory-expansion-tools
+
+import android.app.Application;
+import android.location.Location;
+
+import androidx.lifecycle.LiveData;
+
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.lang.InterruptedException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+public class PhraseRepository {
+
+    private PhraseDao mPhraseDao;
+    private LiveData<List<Phrase>> mAllPhrases;
+
+    public PhraseRepository(Application application) {
+        PhraseRoomDatabase db = PhraseRoomDatabase.getDatabase(application);
+        mPhraseDao = db.phraseDao();
+        mAllPhrases = mPhraseDao.getAllPhrases();
+    }
+
+    public LiveData<List<Phrase>> getAllPhrases() {
+        return mAllPhrases;
+    }
+
+//    public List<Phrase> getAllPhrasesSnapshot() {
+//        return mPhraseDao.getAllPhrasesSnapshot();
+//    }
+
+    public List<Phrase> getAllPhrasesSnapshot() throws ExecutionException, InterruptedException {
+
+        Callable<List<Phrase>> callable = new Callable<List<Phrase>>() {
+            @Override
+            public List<Phrase> call() throws Exception {
+                return mPhraseDao.getAllPhrasesSnapshot();
+            }
+        };
+
+        Future<List<Phrase>> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        return future.get();
+    }
+
+    public long insert(Phrase phrase) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Callable<Long> insertCallable = () -> mPhraseDao.insert(phrase);
+        Future<Long> future = executorService.submit(insertCallable);
+        long rowId = 0;
+        try{
+            rowId = future.get();
+        }
+        catch (InterruptedException | ExecutionException e){
+            e.printStackTrace();
+        }
+        return rowId;
+    }
+
+    public void update(long id, Location location, String address) {
+        PhraseRoomDatabase.databaseWriteExecutor.execute(() -> {
+            mPhraseDao.update(id, location, address);
+        });
+    }
+
+    public LiveData<Phrase> getPhrase(int id) {
+        return mPhraseDao.get_by_id(id);
+    }
+}
