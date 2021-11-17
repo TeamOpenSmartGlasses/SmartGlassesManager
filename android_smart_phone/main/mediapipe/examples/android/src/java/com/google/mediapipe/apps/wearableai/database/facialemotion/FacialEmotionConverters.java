@@ -1,8 +1,4 @@
-package com.google.mediapipe.apps.wearableai.database.phrase;
-
-//originally from MXT: Memory Expansion Tools
-//Jeremy Stairs (stairs1) and Cayden Pierce
-//https://github.com/stairs1/memory-expansion-tools
+package com.google.mediapipe.apps.wearableai.database.facialemotion;
 
 import android.location.Location;
 import android.location.LocationManager;
@@ -14,9 +10,9 @@ import com.google.gson.Gson;
 import java.util.Date;
 import java.util.Dictionary;
 import java.util.Hashtable;
-//import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRoomDatabase;
+//import com.google.mediapipe.apps.wearableai.database.phrase.FacialEmotionRoomDatabase;
 
-public class PhraseConverters {
+public class FacialEmotionConverters {
 
     @TypeConverter
     public static Date fromTimestamp(Long value){

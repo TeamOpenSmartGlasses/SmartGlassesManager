@@ -17,13 +17,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
+
 public class PhraseRepository {
 
     private PhraseDao mPhraseDao;
     private LiveData<List<Phrase>> mAllPhrases;
 
     public PhraseRepository(Application application) {
-        PhraseRoomDatabase db = PhraseRoomDatabase.getDatabase(application);
+        WearableAiRoomDatabase db = WearableAiRoomDatabase.getDatabase(application);
         mPhraseDao = db.phraseDao();
         mAllPhrases = mPhraseDao.getAllPhrases();
     }
@@ -65,7 +67,7 @@ public class PhraseRepository {
     }
 
     public void update(long id, Location location, String address) {
-        PhraseRoomDatabase.databaseWriteExecutor.execute(() -> {
+        WearableAiRoomDatabase.databaseWriteExecutor.execute(() -> {
             mPhraseDao.update(id, location, address);
         });
     }

@@ -22,12 +22,20 @@ package com.google.mediapipe.apps.wearableai;
 
 import java.util.concurrent.ExecutionException;
 import java.lang.InterruptedException;
+import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
+
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
-import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRoomDatabase;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseDao;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseViewModel;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseCreator;
 import com.google.mediapipe.apps.wearableai.database.phrase.Phrase;
+
+import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotionRepository;
+import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotionDao;
+import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotionViewModel;
+import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotionCreator;
+import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotion;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -235,6 +243,8 @@ public class WearableAiAspService extends LifecycleService {
     //social metrics
     //facial_emotion_list
     String [] facial_emotion_list = {"Angry", "Disgusted", "Fearful", "Happy", "Sad", "Surprised", "Neutral"};
+    String [] facialEmotionList = {"angry", "disgusted", "fearful", "happy", "sad", "surprised", "neutral"}; //this how the one hot encoded vector of our emotion network encodes the output, i.e. 0010000 would be Fearful
+
 
   // Flips the camera-preview frames vertically by default, before sending them into FrameProcessor
   // to be processed in a MediaPipe graph, and flips the processed frames back when they are
@@ -296,14 +306,16 @@ public class WearableAiAspService extends LifecycleService {
     PublishSubject<JSONObject> dataObservable;
 
     //database
-    private PhraseRepository mRepository = null;
+    private PhraseRepository mPhraseRepository = null;
     private List<Phrase> mAllPhrasesSnapshot;
-    //private PhraseViewModel mPhraseViewModel;
+    private FacialEmotionRepository mFacialEmotionRepository = null;
+    private List<FacialEmotion> mAllFacialEmotionsSnapshot;
 
   @Override
   public void onCreate() {
-    mRepository = new PhraseRepository(getApplication());
-    //PhraseCreator.create("this is a test 1", "local_test", getApplicationContext(), mRepository);
+    mPhraseRepository = new PhraseRepository(getApplication());
+    mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
+    //PhraseCreator.create("this is a test 1", "local_test", getApplicationContext(), mPhraseRepository);
     //below can be used when we want to stream live data (NOT on the main thread)
     //    mAllPhrases.observe(this, new Observer<List<Phrase>>() {
     //        @Override
@@ -390,6 +402,9 @@ public class WearableAiAspService extends LifecycleService {
             float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
             //update face emotion
             mSocialInteraction.updateFaceEmotion(face_emotion_vector, System.currentTimeMillis());
+            
+            String faceEmotion = facialEmotionList[getMaxIdxFloat(face_emotion_vector)];
+            saveFacialEmotion(faceEmotion);
 
             //get facial emotion
 //           int most_frequent_facial_emotion = mSocialInteraction.getFacialEmotionMostFrequent(30);
@@ -538,6 +553,21 @@ public class WearableAiAspService extends LifecycleService {
         }
 
     }
+
+    private int getMaxIdxFloat(float [] arr){
+        float maxi = 0;
+        int maxi_idx = 0;
+
+        for (int i = 0; i < arr.length; i++){
+            if (arr[i] > maxi){
+                maxi = arr[i];
+                maxi_idx = i;
+            }
+        }
+
+        return maxi_idx;
+    }
+
 
   // Used to obtain the content view for this application. If you are extending this class, and
   // have a custom layout, override this method and return the custom layout.
@@ -1215,19 +1245,39 @@ public class WearableAiAspService extends LifecycleService {
         try {
             Log.d(TAG, "SAVING ASG TRANSCRIPT TO ROOM DATABASE");
             String transcript = data.getString("transcript");
-            PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mRepository);
+            PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mPhraseRepository);
         } catch (JSONException e){
             e.printStackTrace();
-        }
+    }
+
 
         //gets all phrases, parses out most recent phrase, and, print to debug
 //         try{
-//            mAllPhrasesSnapshot = mRepository.getAllPhrasesSnapshot();
+//            mAllPhrasesSnapshot = mPhraseRepository.getAllPhrasesSnapshot();
 //            Phrase lastPhrase = mAllPhrasesSnapshot.get(0);
 //            String lastPhraseTranscript = lastPhrase.getPhrase();
 //
 //            Log.d(TAG, "MOST RECENT TRANSCRIPT: ");
 //            Log.d(TAG, lastPhraseTranscript);
+//         } catch (ExecutionException | InterruptedException e) {
+//             e.printStackTrace();
+//         }
+
+
+    }
+
+
+    private void saveFacialEmotion(String faceEmotion){
+        Log.d(TAG, "SAVING FACIAL EMOTION: " + faceEmotion);
+        FacialEmotionCreator.create(faceEmotion, "pov_camera_ASG", getApplicationContext(), mFacialEmotionRepository);
+        //gets all face emotinos, parses out most recent and print to debug
+//         try{
+//            mAllFacialEmotionsSnapshot = mFacialEmotionRepository.getAllFacialEmotionsSnapshot();
+//            FacialEmotion lastFacialEmotion = mAllFacialEmotionsSnapshot.get(0);
+//            String lastFacialEmotionTranscript = lastFacialEmotion.getFacialEmotion();
+//
+//            Log.d(TAG, "MOST RECENT Face Emotion: ");
+//            Log.d(TAG, lastFacialEmotionTranscript);
 //         } catch (ExecutionException | InterruptedException e) {
 //             e.printStackTrace();
 //         }
