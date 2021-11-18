@@ -15,8 +15,6 @@ class ASGSocket:
         # Ensure that you can restart your server quickly when it terminates
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        self.connected = False
-
         print("Binding socket")
         try:
             self.s.bind(('', PORT))
@@ -43,7 +41,9 @@ class ASGSocket:
                             "translate" : bytearray([15, 3]), #mode to translate text
                             "visualsearchviewfind" : bytearray([15, 4])
                         }
-
+        
+        self.connected = 0
+        self.conn = None
 
     def advertise_and_connect_glbox(self):
         print("advertiseglbox")
@@ -78,7 +78,11 @@ class ASGSocket:
             time.sleep(0.5)
 
     def start_conn(self):
-        self.connected = False
+        if self.connected == 2:
+            self.conn.close()
+        elif self.connected == 1:
+            return
+        self.connected = 1
         print("Attempting to start connection...")
         self.s.listen()
         print("Socket Listening")
@@ -89,7 +93,7 @@ class ASGSocket:
                 break
             except socket.timeout as e:
                 pass
-        self.connected = True
+        self.connected = 2
         self.heart_beat()
         print("DATA SOCKET CONNECTED TO ASG")
         return self.conn, self.addr
@@ -99,19 +103,27 @@ class ASGSocket:
         Runs on repeat, send a heart beat ping to the ASG if we are connected. If ping fails, restart server so ASG can reinitiate connection.
         """
         #if connected, try to send heart beat, reconnect if not connected
-        if self.connected:
+        if self.connected == 2:
             try:
                 self.send_heart_beat()
-            except (ConnectionResetError, BrokenPipeError) as e:
-                self.start_conn() #this will start a new heart beat stream if connect is successful, so return
+            except (OSError, ConnectionResetError, BrokenPipeError) as e:
+                self.restart_connection() #this will start a new heart beat stream if connect is successful, so return
                 return
+        else: #if not connected, that means no point in checking connection
+            return
 
         #start a new heart beat that will run after this one
         heart_beat_thread = threading.Timer(self.heart_beat_time, self.heart_beat)
         heart_beat_thread.daemon = True
         heart_beat_thread.start()
 
+    def restart_connection(self):
+        print("RESTARTING ASG_SOCKET")
+        if self.connected == 2:
+            self.start_conn()
+
     def send_heart_beat(self):
+        print("ASG HEART BEAT")
         self.send_bytes(self.heart_beat_id, bytes("ping"  + "\n",'UTF-8'))
 
     def send_final_transcript_object(self, t_obj):
@@ -168,8 +180,10 @@ class ASGSocket:
         goodbye = bytearray([3, 2, 1]);
         #combine those into a payload
         payload_packet = hello + message_len + msg_id + body + goodbye
+        prev_timeout = self.conn.gettimeout()
         self.conn.settimeout(None)
         self.conn.send(payload_packet)
+        self.conn.settimeout(prev_timeout)
 
 if __name__ == "__main__":
     asg_socket = ASGSocket()
