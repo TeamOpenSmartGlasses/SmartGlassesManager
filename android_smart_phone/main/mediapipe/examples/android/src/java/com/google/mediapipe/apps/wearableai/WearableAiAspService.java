@@ -36,6 +36,11 @@ import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotion
 import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotionCreator;
 import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotion;
 
+import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandRepository;
+import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandDao;
+import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandCreator;
+import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEntity;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -300,7 +305,11 @@ public class WearableAiAspService extends LifecycleService {
 
   private boolean haveAddedSidePackets = false;
 
+  //audio streaming system
   AudioSystem audioSystem;
+
+  //voice command system
+  VoiceCommandServer voiceCommandServer;
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
@@ -310,11 +319,13 @@ public class WearableAiAspService extends LifecycleService {
     private List<Phrase> mAllPhrasesSnapshot;
     private FacialEmotionRepository mFacialEmotionRepository = null;
     private List<FacialEmotion> mAllFacialEmotionsSnapshot;
+    private VoiceCommandRepository mVoiceCommandRepository = null;
 
   @Override
   public void onCreate() {
     mPhraseRepository = new PhraseRepository(getApplication());
     mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
+    mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
     //PhraseCreator.create("this is a test 1", "local_test", getApplicationContext(), mPhraseRepository);
     //below can be used when we want to stream live data (NOT on the main thread)
     //    mAllPhrases.observe(this, new Observer<List<Phrase>>() {
@@ -332,6 +343,9 @@ public class WearableAiAspService extends LifecycleService {
 
       //start websocket to ASG
       startAsgWebSocketConnection();
+
+      //start voice command server to parse transcript for voice command
+      voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
 
       //make screen stay on for demos
       //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

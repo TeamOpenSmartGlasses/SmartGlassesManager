@@ -7,8 +7,9 @@ You can either use the officially released APK (on Github or <emexwearables.com>
 ## Install and build
 
 1. Follow these instructions: https://google.github.io/mediapipe/getting_started/android.html (including the external link on this page on how to install MediaPipe)
-2. Change the SDK and NDK in ./main/WORKSPACE to point to your own Android SDK install (if you don't have one, install Android Studio and download an SDK and NDK)
-3. Run this command:
+    - don't forget to follow these instructions on that same page: https://google.github.io/mediapipe/getting_started/install.html
+3. Change the SDK and NDK in ./main/WORKSPACE to point to your own Android SDK install (if you don't have one, install Android Studio and download an SDK and NDK)
+4. Run this command:
 ```
 ./build_single_android.sh mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai
 ```
@@ -20,3 +21,8 @@ You can either use the officially released APK (on Github or <emexwearables.com>
 ### Note
 
 There may be some issues with hard links to Android Studio executables in some Bazel configs in main/ app. We are working on making everything easy for dev setup, but if you get weird errors on running the above command, make an issue on Github or reach out to cayden@emexwearables.com
+
+### HACKED / TODO
+Some things that were done in the name of time that should be cleaned up:
+- each voice command in the voice command server should be it's own class that has its own command name(s) and implements its own run function
+- there should be a data saver process that continually listens to rx streams and saves whatever data we need - that way we only pass an instance of the data saver process to everyone (or just an rx stream is we can make it accept polymorphic data) and not continually add things down streams of function calls
