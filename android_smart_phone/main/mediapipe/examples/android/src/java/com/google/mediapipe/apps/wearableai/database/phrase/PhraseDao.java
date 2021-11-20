@@ -12,6 +12,7 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
+import java.util.Date;
 import java.util.List;
 
 @Dao
@@ -34,4 +35,7 @@ public interface PhraseDao {
 
     @Query("SELECT * FROM PhraseTable WHERE ID = :id")
     LiveData<Phrase> get_by_id(int id);
+
+    @Query("SELECT * FROM PhraseTable ORDER BY ABS(:timestamp - timestamp) LIMIT 1")
+    Phrase getByNearestTimestamp(Date timestamp);
 }

@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -36,6 +37,11 @@ public class ASPClientSocket {
 
     //our websocket connection to the ASP
     private static AsgWebSocketClient aspWebSocket;
+    private static Disposable webSocketSub;
+
+
+    //observables to receive data from websocket
+    private static PublishSubject<JSONObject> webSocketObservable;
 
     //broadcast intent string
     //broadcast intent string
@@ -47,6 +53,9 @@ public class ASPClientSocket {
     public final static String FACIAL_EMOTION_5_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_5";
     public final static String FACIAL_EMOTION_30_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_30";
     public final static String FACIAL_EMOTION_300_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_300";
+
+    public final static String ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST = "com.example.wearableaidisplaymoverio.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST";
+    public final static String AFFECTIVE_MEM_TRANSCRIPT_LIST = "com.example.wearableaidisplaymoverio.AFFECTIVE_MEM_TRANSCRIPT_LIST";
 
     public static String TAG = "WearableAiDisplayMoverio";
     //singleton instance
@@ -467,8 +476,19 @@ public class ASPClientSocket {
     private void parseData(JSONObject data){
         Log.d(TAG, "Parsing data");
         Log.d(TAG, Integer.toString(aspWebSocket.getConnectionState()));
-        if ((aspWebSocket != null) && (aspWebSocket.getConnectionState() == 2)){
-            aspWebSocket.sendJson(data);
+        try {
+            String typeOf = data.getString("type");
+            if (typeOf.equals("transcript") && (aspWebSocket != null) && (aspWebSocket.getConnectionState() == 2)) {
+                aspWebSocket.sendJson(data);
+            }
+            else if (typeOf.equals("affective_mem_transcripts")) {
+                final Intent intent = new Intent();
+                intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
+                intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
+                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
         }
     }
 
@@ -482,7 +502,10 @@ public class ASPClientSocket {
         //start a thread to hold the websocket connection to ASP
         try {
             aspWebSocket = new AsgWebSocketClient(new URI(
-                    "ws://192.168.1.164:8887")); // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
+                    "ws://" + SERVER_IP + ":8887")); // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
+            //webSocketObservable = aspWebSocket.getDataObservable();
+            aspWebSocket.setObservable(dataObservable);
+            aspWebSocket.setSourceName("asg_web_socket"); //should be pulled from R.string
             aspWebSocket.start();
         } catch (URISyntaxException e){
             Log.d(TAG, "FAILED TO START ASP WEB SOCKET");

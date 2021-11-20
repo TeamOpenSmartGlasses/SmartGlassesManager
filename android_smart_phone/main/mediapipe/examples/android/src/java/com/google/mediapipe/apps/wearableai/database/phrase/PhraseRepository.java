@@ -16,6 +16,7 @@ import java.lang.InterruptedException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.Date;
 
 import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
 
@@ -75,4 +76,19 @@ public class PhraseRepository {
     public LiveData<Phrase> getPhrase(int id) {
         return mPhraseDao.get_by_id(id);
     }
+
+    public Phrase getByNearestTimestamp(Date timestamp) throws ExecutionException, InterruptedException {
+
+        Callable<Phrase> callable = new Callable<Phrase>() {
+            @Override
+            public Phrase call() throws Exception {
+                return mPhraseDao.getByNearestTimestamp(timestamp);
+            }
+        };
+
+        Future<Phrase> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        return future.get();
+    }
+
 }

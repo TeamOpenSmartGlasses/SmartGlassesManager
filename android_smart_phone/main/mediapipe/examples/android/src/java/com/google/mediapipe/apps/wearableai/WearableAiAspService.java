@@ -50,6 +50,7 @@ import androidx.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 import android.content.Intent;
 import android.os.IBinder;
 
@@ -180,6 +181,7 @@ public class WearableAiAspService extends LifecycleService {
     private static final String TAG_FOREGROUND_SERVICE = "FOREGROUND_SERVICE";
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
+    public static final String ACTION_RUN_AFFECTIVE_MEM = "ACTION_RUN_AFFECTIVE_MEM";
 
     private AspWebsocketServer asgWebSocket; 
 
@@ -346,6 +348,8 @@ public class WearableAiAspService extends LifecycleService {
 
       //start voice command server to parse transcript for voice command
       voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
+
+      runAffectiveMemory();
 
       //make screen stay on for demos
       //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -1238,6 +1242,9 @@ public class WearableAiAspService extends LifecycleService {
                     stopForeground(true);
                     stopSelf();
                     break;
+                case ACTION_RUN_AFFECTIVE_MEM:
+                    runAffectiveMemory();
+                    break;
             }
         }
 
@@ -1299,5 +1306,99 @@ public class WearableAiAspService extends LifecycleService {
 
     }
 
+    //AFFECTIVE MEMORY EXTENSION
+    private void runAffectiveMemory(){
+        Log.d(TAG, "RUNNING AFFECTIVE MEMORY");
+        try{
+            VoiceCommandEntity latestStartConvoCommand = mVoiceCommandRepository.getLatestCommand("start conversation");
+            VoiceCommandEntity latestStopConvoCommand = mVoiceCommandRepository.getLatestCommand("stop conversation");
+            Date startTime = latestStartConvoCommand.getTimestamp();
+            Date endTime = latestStopConvoCommand.getTimestamp();
+            Log.d(TAG, "Convo timeframe - " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", startTime) + " to " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", endTime));
 
+            Log.d(TAG, "getting facial emotions from conversation");
+            List<FacialEmotion> facialEmotionsConvo = mFacialEmotionRepository.getFacialEmotionsRange(startTime, endTime);
+            engagementAlgorithm(facialEmotionsConvo);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void engagementAlgorithm(List<FacialEmotion> facialEmotionsList){
+        int windowSize = 10000; //length of window, in milliseconds
+        int stride = windowSize / 1; //how fine should our jumps be
+
+        //get the start and end time we need to process
+        //we should update Date to java.time so it
+        Date startTime = facialEmotionsList.get(facialEmotionsList.size() - 1).getTimestamp();
+        Date endTime = facialEmotionsList.get(0).getTimestamp();
+        Date t = new Date(startTime.getTime() + stride); //marks the end of the stride
+        float engaged = 0f;
+        float curr_count = 0f;
+        ArrayList<Float> engagedScores = new ArrayList();
+        ArrayList<Date> engagedTimes = new ArrayList();
+
+        //loop through all facial emotions
+        for (int i = 0; i < facialEmotionsList.size(); i++){
+            FacialEmotion fe = facialEmotionsList.get(facialEmotionsList.size() - 1 - i);
+            //if the current timestamp is before the end of the current stride
+            if (!fe.getTimestamp().before(t)){
+                engagedScores.add(engaged / curr_count);
+                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
+                engagedTimes.add(t_half);
+                engaged = 0;
+                curr_count = 1;
+                t = new Date(t.getTime() + stride);
+            }
+            //if neutral, then 0, else is 1
+            if (!fe.getFacialEmotion().equals("neutral")){
+                engaged = engaged + 1;
+            }
+            curr_count = curr_count + 1;
+        }
+        Log.d(TAG, engagedScores.toString());
+        Log.d(TAG, engagedTimes.toString());
+
+        for (int i = 0; i < engagedTimes.size(); i++){
+            try {
+                Log.d(TAG, "PULLING PHRASE BY TIMESTAMP "+ String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", engagedTimes.get(i)) + " : ");
+                Phrase phrase = mPhraseRepository.getByNearestTimestamp(engagedTimes.get(i));
+                Log.d(TAG, phrase.getPhrase());
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //get the top n transcripts
+        ArrayList<String> topTranscripts = new ArrayList();
+        int n = 3; //top n transcripts
+        JSONObject affectiveMemoryObj = new JSONObject();
+        try {
+            affectiveMemoryObj.put("type", "affective_mem_transcripts");
+            affectiveMemoryObj.put("time_made", System.currentTimeMillis());
+            for (int i = 0; i < n; i++){
+                //stupid convoluted Java argmax
+                float score = Collections.max(engagedScores);
+                int idx = engagedScores.indexOf(score);
+                Date t_transcript = engagedTimes.get(idx);
+                //drop the old values now that we have them
+                engagedScores.remove(idx);
+                engagedTimes.remove(idx);
+                //get transcript closest to that time
+                try {
+                    Log.d(TAG, "PULLING PHRASE #" + i + " at time " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", t_transcript)); 
+                    Phrase phrase = mPhraseRepository.getByNearestTimestamp(t_transcript);
+                    Log.d(TAG, phrase.getPhrase());
+                    topTranscripts.add(phrase.getPhrase());
+                    affectiveMemoryObj.put(Integer.toString(i), phrase.getPhrase());
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+        Log.d(TAG, affectiveMemoryObj.toString());
+        asgWebSocket.sendJson(affectiveMemoryObj);
+    }
 }

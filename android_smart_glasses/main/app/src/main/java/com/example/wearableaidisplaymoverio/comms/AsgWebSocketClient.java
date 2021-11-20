@@ -34,13 +34,17 @@ import com.example.wearableaidisplaymoverio.R;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.server.WebSocketServer;
 import org.java_websocket.enums.ReadyState;
 
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
 import org.json.JSONObject;
+import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /**
  * This example demonstrates how to create a websocket connection to a server. Only the most
@@ -49,6 +53,11 @@ import org.json.JSONObject;
 public class AsgWebSocketClient extends WebSocketClient {
     private int connected = 0;
 
+    //observables to send data around app
+    PublishSubject<JSONObject> dataObservable;
+
+    private String mySourceName;
+
     public AsgWebSocketClient(URI serverUri, Draft draft) {
         super(serverUri, draft);
 
@@ -56,10 +65,29 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     public AsgWebSocketClient(URI serverURI) {
         super(serverURI);
+        setup();
     }
 
     public AsgWebSocketClient(URI serverUri, Map<String, String> httpHeaders) {
         super(serverUri, httpHeaders);
+        setup();
+    }
+
+    private void setup(){
+        //dataObservable = PublishSubject.create();
+        mySourceName = "web_socket";
+    }
+
+    public void setObservable(PublishSubject<JSONObject> dataO){
+        dataObservable = dataO;
+    }
+
+    public void setSourceName(String name){
+        mySourceName = name;
+    }
+
+    public PublishSubject<JSONObject> getDataObservable(){
+        return dataObservable;
     }
 
     public void start(){
@@ -81,7 +109,18 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        System.out.println("received: " + message);
+        try {
+            System.out.println("received: " + message);
+            JSONObject json_message = new JSONObject(message);
+            json_message.put("local_source", mySourceName); //ad our set name so rest of program knows the source of this message
+            dataObservable.onNext(json_message);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onMessage(ByteBuffer message) {
     }
 
     @Override

@@ -26,3 +26,4 @@ There may be some issues with hard links to Android Studio executables in some B
 Some things that were done in the name of time that should be cleaned up:
 - each voice command in the voice command server should be it's own class that has its own command name(s) and implements its own run function
 - there should be a data saver process that continually listens to rx streams and saves whatever data we need - that way we only pass an instance of the data saver process to everyone (or just an rx stream is we can make it accept polymorphic data) and not continually add things down streams of function calls
+- the affective memory processing that runs when the command is triggered is all within WearableAiAspService - this should be in its own functionality class that is abstracted for many different types of functionalities that may be invoked

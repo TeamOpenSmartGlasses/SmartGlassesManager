@@ -259,12 +259,15 @@ public class VoiceCommandServer {
 //
         //save command
         VoiceCommandCreator.create(preArgs, wakeWord, command, postArgs, "transcript_ASG", mContext, mVoiceCommandRepository);
-//         try{
-//            List<VoiceCommandEntity> allCommandsSnapshot = mVoiceCommandRepository.getAllVoiceCommandsSnapshot();
-//            VoiceCommandEntity lastCommand = allCommandsSnapshot.get(0);
-//         } catch (ExecutionException | InterruptedException e) {
-//             e.printStackTrace();
-//         }
+         try{
+            VoiceCommandEntity latestCommand = mVoiceCommandRepository.getLatestCommand("start conversation");
+            Log.d(TAG, "getLatestCommand output on 'start conversation' command");
+            Log.d(TAG, latestCommand.getCommand());
+            Log.d(TAG, latestCommand.getWakeWord());
+            Log.d(TAG, latestCommand.getPostArgs());
+         } catch (ExecutionException | InterruptedException e) {
+             e.printStackTrace();
+         }
 
 
 

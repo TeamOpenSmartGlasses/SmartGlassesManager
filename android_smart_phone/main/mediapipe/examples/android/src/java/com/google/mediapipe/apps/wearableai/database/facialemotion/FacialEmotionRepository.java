@@ -12,6 +12,7 @@ import java.lang.InterruptedException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.Date;
 
 import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
 
@@ -43,6 +44,21 @@ public class FacialEmotionRepository {
 
         return future.get();
     }
+
+    public List<FacialEmotion> getFacialEmotionsRange(Date startTime, Date endTime) throws ExecutionException, InterruptedException {
+
+        Callable<List<FacialEmotion>> callable = new Callable<List<FacialEmotion>>() {
+            @Override
+            public List<FacialEmotion> call() throws Exception {
+                return mFacialEmotionDao.getFacialEmotionsRange(startTime, endTime);
+            }
+        };
+
+        Future<List<FacialEmotion>> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        return future.get();
+    }
+
 
     public long insert(FacialEmotion facialEmotion) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();

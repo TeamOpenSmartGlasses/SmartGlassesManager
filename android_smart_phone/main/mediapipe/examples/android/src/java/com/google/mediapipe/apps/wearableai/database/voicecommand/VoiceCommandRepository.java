@@ -75,4 +75,19 @@ public class VoiceCommandRepository {
     public LiveData<VoiceCommandEntity> getVoiceCommand(int id) {
         return mVoiceCommandDao.get_by_id(id);
     }
+
+    public VoiceCommandEntity getLatestCommand(String command) throws ExecutionException, InterruptedException {
+
+        Callable<VoiceCommandEntity> callable = new Callable<VoiceCommandEntity>() {
+            @Override
+            public VoiceCommandEntity call() throws Exception {
+                return mVoiceCommandDao.getLatestCommand(command);
+            }
+        };
+
+        Future<VoiceCommandEntity> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        return future.get();
+    }
+
 }

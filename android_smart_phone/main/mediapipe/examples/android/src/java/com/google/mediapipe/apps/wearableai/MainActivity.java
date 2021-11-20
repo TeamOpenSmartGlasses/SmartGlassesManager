@@ -159,13 +159,22 @@ public class MainActivity extends AppCompatActivity {
       //start wearable ai service
       startWearableAiService();
 
-      final Button button = findViewById(R.id.kill_wearableai_service);
-         button.setOnClickListener(new View.OnClickListener() {
+      final Button killServiceButton = findViewById(R.id.kill_wearableai_service);
+         killServiceButton.setOnClickListener(new View.OnClickListener() {
              public void onClick(View v) {
                  // Code here executes on main thread after user presses button
                  stopWearableAiService();
              }
          });
+
+      final Button runAffectiveMemoryButton = findViewById(R.id.run_affective_mem);
+         runAffectiveMemoryButton.setOnClickListener(new View.OnClickListener() {
+             public void onClick(View v) {
+                 // Code here executes on main thread after user presses button
+                 sendWearableAiServiceMessage(WearableAiAspService.ACTION_RUN_AFFECTIVE_MEM);
+             }
+         });
+
   }
 
   @Override
@@ -191,6 +200,14 @@ public class MainActivity extends AppCompatActivity {
         stopIntent.setAction(WearableAiAspService.ACTION_STOP_FOREGROUND_SERVICE);
         Log.d(TAG, "MainActivity stopping WearableAI service");
         startService(stopIntent);
+   }
+
+   public void sendWearableAiServiceMessage(String message) {
+        if (!isMyServiceRunning(WearableAiAspService.class)) return;
+        Intent messageIntent = new Intent(this, WearableAiAspService.class);
+        messageIntent.setAction(message);
+        Log.d(TAG, "Sending WearableAi Service this message: " + message);
+        startService(messageIntent);
    }
 
    public void startWearableAiService() {

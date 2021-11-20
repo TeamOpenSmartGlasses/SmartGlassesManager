@@ -512,7 +512,7 @@ public class GlboxClientSocket {
                         intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                         dataObservable.onNext(transcript_object);
                         mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                        Log.d(TAG, "F. Transcript is: " + transcript_object.getString("transcript"));
+                        Log.d(TAG, "F. Transcript is: " + transcript_object.toString());
                     } catch (JSONException e) {
                     }
                 } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
