@@ -15,7 +15,7 @@ def get_current_time():
 
 
 class ASGAudioServer:
-    def __init__(self, audio_stream_observable, port=4449, chunk=1024):
+    def __init__(self, audio_stream_observable, port=4449, chunk=4096):
         self.chunk = chunk
         self.closed = True
         self.port = port
@@ -45,6 +45,8 @@ class ASGAudioServer:
         self.connected = 0
 
     def connect(self):
+        if self.connected == 2:
+            self.socket.close()
         self.connected = 1
         self.closed = True
         self.start_time = get_current_time()
@@ -78,8 +80,11 @@ class ASGAudioServer:
                 encrypted_chunk = self.clientsocket.recv(self.chunk, socket.MSG_WAITALL)
                 #decrypt chunk
                 chunk = self.aes.decrypt(encrypted_chunk, aes_key)
-            except (ConnectionResetError, ConnectionResetError, BrokenPipeError, BlockingIOError) as e:
+            except (OSError, ConnectionResetError, BrokenPipeError, BlockingIOError) as e:
                 print('ASG Audio Server disconnected, retrying.')
+                self.restart_connection()
+            except ValueError as e:
+                print("Problem with audio data received, reconnecting")
                 self.restart_connection()
 
             #if the received data is none, exit the generator

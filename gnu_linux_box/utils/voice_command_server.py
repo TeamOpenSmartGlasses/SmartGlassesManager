@@ -75,8 +75,6 @@ def wikipedia_search(transcript, args, cmd_q, thread_q):
             handler.write(img_data)
         img_string = base64.b64encode(img_data).decode('utf-8')
         #img_string = img_data.decode('utf-8') #turn image into utf-8 string so it can be sent over the socket
-        print("TYPE OF IMAGE STRING")
-        print(type(img_string))
         #pack results into dict/json
         result = {
                 "title" : wiki_res.title,
@@ -360,6 +358,9 @@ def run_voice_command_server(transcript_q, cmd_q, obj_q):
     asg_socket = ASGSocket()
     asg_socket.start_conn()
     while True: #main server loop
+        if asg_socket.connected != 2:
+            print("Pass while disconnected")
+            continue
         try:
             try:
                 cmd, args = cmd_q.get(timeout=0.001)
@@ -389,7 +390,7 @@ def run_voice_command_server(transcript_q, cmd_q, obj_q):
                         GUI_receive_intermediate_transcript(transcript)
                 elif obj["type"] == "cmd_response":
                     command_output = obj["data"]
-                    print("CMD RESPONSE RECEIVEEEDDDD************************************** {}".format(command_output))
+                    print("CMD RESPONSE RECEIVED")
                     GUI_receive_command_output(command_output)
                     print("SENT COMMAND OUTPUT ")
                 elif obj["type"] == "cmd_success":
@@ -417,9 +418,8 @@ def run_voice_command_server(transcript_q, cmd_q, obj_q):
                 fragments.append(chunk)
             message = b"".join(fragments)
             if message != b'':
-                print("message received")
                 check_message(message, cmd_q)
-
-        except (ConnectionResetError, BrokenPipeError) as e: #if error on socket at any point, restart connection and return to loop
-            print("Connection broken, listening again")
-            asg_socket.start_conn()
+        except (OSError, ConnectionResetError, BrokenPipeError) as e: #if error on socket at any point, restart connection and return to loop
+            print("ASG Socket connection broken found in voice_command_server, listening again")
+            asg_socket.restart_connection()
+    print("EXITING VOICE COMMAND SERVER LOOP NOW")

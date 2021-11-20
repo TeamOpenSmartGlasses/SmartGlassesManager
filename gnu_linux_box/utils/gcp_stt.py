@@ -251,6 +251,9 @@ def run_google_stt(transcript_q, audio_stream_observable, language_code="en-US")
             for content in audio_generator
         )
 
+        streaming_config = speech.StreamingRecognitionConfig(
+            config=config, interim_results=True
+        )
         responses = client.streaming_recognize(streaming_config, requests)
 
         try:
