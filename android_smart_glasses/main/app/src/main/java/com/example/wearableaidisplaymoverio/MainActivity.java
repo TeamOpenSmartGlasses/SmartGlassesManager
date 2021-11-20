@@ -98,7 +98,11 @@ public class MainActivity extends Activity {
     TextView translateText;
 
     //visual search ui
+    TextView textListView;
     ImageView viewfinder;
+
+    //text list ui
+    ArrayList<String> textListHolder = new ArrayList<>();
 
     //metrics
     float eye_contact_30 = 0;
@@ -185,6 +189,9 @@ public class MainActivity extends Activity {
             case "visualsearchgridview":
                 setContentView(R.layout.image_gridview);
                 break;
+            case "textlist":
+                setupTextList();
+                break;
         }
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
     }
@@ -202,6 +209,22 @@ public class MainActivity extends Activity {
 //        }
 
         updateViewFindFrame();
+    }
+
+    //generic way to set the current enumerated list of strings and display them, scrollably, on the main UI
+    private void setupTextList() {
+        //live life captions mode gui setup
+        setContentView(R.layout.text_list);
+
+        //setup the text list view
+        textListView = (TextView) findViewById(R.id.text_list);
+        textListView.setText("");
+        for (int i = 0; i < textListHolder.size(); i++) {
+            textListView.append(Integer.toString(i+1) + ": " + textListHolder.get(i) + "\n");
+        }
+        textListView.setPadding(10, 0, 10, 0);
+        textListView.setMovementMethod(new ScrollingMovementMethod());
+        textListView.setSelected(true);
     }
 
     private void updateViewFindFrame(){
@@ -428,6 +451,9 @@ public class MainActivity extends Activity {
         intentFilter.addAction(GlboxClientSocket.ACTION_WIKIPEDIA_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT);
+
+        intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
+
         return intentFilter;
     }
 
@@ -541,6 +567,8 @@ public class MainActivity extends Activity {
                     //set the text
                     wikipediaResultTitle.setText(title);
                     wikipediaResultSummary.setText(summary);
+                    wikipediaResultSummary.setMovementMethod(new ScrollingMovementMethod());
+                    wikipediaResultSummary.setSelected(true);
 
                     //open the image and display
                     File imgFile = new  File(img_path);
@@ -560,6 +588,25 @@ public class MainActivity extends Activity {
 
                 } catch (JSONException e) {
                     Log.d(TAG, e.toString());
+                }
+            } else if (ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST.equals(action)) {
+                Log.d(TAG, "MainActivity got affective mem transcript list");
+                try {
+                    JSONObject affective_mem = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST));
+                    textListHolder.clear();
+                    int i = 0;
+                    while (true) {
+                        if (!affective_mem.has(Integer.toString(i))) {
+                            break;
+                        }
+                        String transcript = affective_mem.getString(Integer.toString(i));
+                        textListHolder.add(transcript);
+                        Log.d(TAG, "MainActivity Affective mem #" + i + " is " + transcript);
+                        i++;
+                    }
+                    switchMode("textlist");
+                } catch (JSONException e){
+                    e.printStackTrace();
                 }
             } else if (GlboxClientSocket.ACTION_TRANSLATION_RESULT.equals(action)) {
                 String translation_result_text = intent.getStringExtra(GlboxClientSocket.TRANSLATION_RESULT);
