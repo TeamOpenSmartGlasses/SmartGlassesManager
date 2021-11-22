@@ -2,6 +2,8 @@ package com.example.wearableaidisplaymoverio;
 
 import android.content.Context;
 import com.example.wearableaidisplaymoverio.comms.AsgWebSocketClient;
+import com.example.wearableaidisplaymoverio.comms.WebSocketManager;
+
 import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -36,7 +38,7 @@ public class ASPClientSocket {
     private static Disposable dataSubscriber;
 
     //our websocket connection to the ASP
-    private static AsgWebSocketClient aspWebSocket;
+    private static WebSocketManager aspWebSocketManager;
     private static Disposable webSocketSub;
 
 
@@ -475,11 +477,10 @@ public class ASPClientSocket {
 
     private void parseData(JSONObject data){
         Log.d(TAG, "Parsing data");
-        Log.d(TAG, Integer.toString(aspWebSocket.getConnectionState()));
         try {
             String typeOf = data.getString("type");
-            if (typeOf.equals("transcript") && (aspWebSocket != null) && (aspWebSocket.getConnectionState() == 2)) {
-                aspWebSocket.sendJson(data);
+            if (typeOf.equals("transcript") && (aspWebSocketManager != null) && (aspWebSocketManager.getConnectionState() == 2)) {
+                aspWebSocketManager.sendJson(data);
             }
             else if (typeOf.equals("affective_mem_transcripts")) {
                 final Intent intent = new Intent();
@@ -500,17 +501,10 @@ public class ASPClientSocket {
 
     public void startWebSocket(){
         //start a thread to hold the websocket connection to ASP
-        try {
-            aspWebSocket = new AsgWebSocketClient(new URI(
-                    "ws://" + SERVER_IP + ":8887")); // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
-            //webSocketObservable = aspWebSocket.getDataObservable();
-            aspWebSocket.setObservable(dataObservable);
-            aspWebSocket.setSourceName("asg_web_socket"); //should be pulled from R.string
-            aspWebSocket.start();
-        } catch (URISyntaxException e){
-            Log.d(TAG, "FAILED TO START ASP WEB SOCKET");
-            e.printStackTrace();
-        }
+        aspWebSocketManager = new WebSocketManager(SERVER_IP, "8887");
+        aspWebSocketManager.setObservable(dataObservable);
+        aspWebSocketManager.setSourceName("asg_web_socket"); //should be pulled from R.string
+        aspWebSocketManager.run(); //start socket which will auto reconnect on disconnect
     }
 
 }

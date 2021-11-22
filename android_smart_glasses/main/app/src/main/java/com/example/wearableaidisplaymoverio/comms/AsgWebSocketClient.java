@@ -28,17 +28,11 @@ package com.example.wearableaidisplaymoverio.comms;
 import static com.example.wearableaidisplaymoverio.ASPClientSocket.TAG;
 
 import android.util.Log;
-import org.java_websocket.server.WebSocketServer;
-
-import com.example.wearableaidisplaymoverio.R;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.server.WebSocketServer;
-import org.java_websocket.enums.ReadyState;
 
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
@@ -52,6 +46,9 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
  */
 public class AsgWebSocketClient extends WebSocketClient {
     private int connected = 0;
+    private URI serverURI;
+    private WebSocketManager webSocketManager;
+    public boolean killme = false;
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
@@ -63,8 +60,11 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     }
 
-    public AsgWebSocketClient(URI serverURI) {
+    public AsgWebSocketClient(WebSocketManager manager, URI serverURI) {
         super(serverURI);
+        connected = 0;
+        webSocketManager = manager;
+        this.serverURI = serverURI;
         setup();
     }
 
@@ -76,6 +76,7 @@ public class AsgWebSocketClient extends WebSocketClient {
     private void setup(){
         //dataObservable = PublishSubject.create();
         mySourceName = "web_socket";
+        setConnectionLostTimeout(3);
     }
 
     public void setObservable(PublishSubject<JSONObject> dataO){
@@ -88,11 +89,6 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     public PublishSubject<JSONObject> getDataObservable(){
         return dataObservable;
-    }
-
-    public void start(){
-        connected = 1;
-        connect();
     }
 
     public void stop(){
@@ -125,11 +121,13 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        if (connected == 2) {
-            connected = 1;
+        connected = 0;
+
+        if (remote && !killme) {
+            webSocketManager.onClose(); //tell manager that we are done and it should make a new socket to reconnect
         }
 
-        // The codecodes are documented in class org.java_websocket.framing.CloseFrame
+        // The codes are documented in class org.java_websocket.framing.CloseFrame
         System.out.println(
                 "Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: "
                         + reason);
@@ -141,10 +139,6 @@ public class AsgWebSocketClient extends WebSocketClient {
         // if the error is fatal then onClose will be called additionally
     }
 
-    public void sendJson(JSONObject data){
-        Log.d(TAG, "SENDING JSON FROM ASG WS");
-        send(data.toString());
-    }
 
     public int getConnectionState(){
 //        ReadyState ready_state = getReadyState();
