@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
     <application
         android:allowBackup="true"
@@ -29,6 +31,7 @@
             android:name=".WearableAiService"
             android:label="CameraService" >
         </service>
+        <service android:name=".sensors.MuseService" android:enabled="true"/>
 
         <service android:name=".AudioService" android:enabled="true" android:exported="true"></service>
 

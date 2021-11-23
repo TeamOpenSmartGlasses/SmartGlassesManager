@@ -39,6 +39,7 @@ import com.androidhiddencamera.config.CameraFacing;
 import com.androidhiddencamera.config.CameraFocus;
 import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
+import com.example.wearableaidisplaymoverio.sensors.BluetoothScanner;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -119,6 +120,9 @@ public class WearableAiService extends HiddenCameraService {
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
 
+    //bluetooth sensors
+    private BluetoothScanner mBluetoothScanner;
+
     @Override
     public void onCreate() {
         dataObservable = PublishSubject.create();
@@ -136,6 +140,10 @@ public class WearableAiService extends HiddenCameraService {
         mContext = this;
 
         beginCamera();
+
+        //start sensor scan
+        mBluetoothScanner = new BluetoothScanner(this);
+        mBluetoothScanner.startScan();
     }
 
     private void setupObservervables() {
