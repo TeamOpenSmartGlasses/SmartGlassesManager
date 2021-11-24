@@ -46,7 +46,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Example wikipedia results summary of the information that we receive from asking wikipedia about a certain person, place, or thing."
+            android:scrollbars="vertical"
+        android:text="Example wikipedia results summary of the information that we receive from asking wikipedia about a certain person, place, or thing."
             android:textColor="@color/hud_text"
             android:id="@+id/wikipedia_result_summary"
             android:textSize="14dp"></TextView>

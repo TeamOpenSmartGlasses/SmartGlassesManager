@@ -40,6 +40,7 @@ import com.androidhiddencamera.config.CameraFocus;
 import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -95,7 +96,7 @@ public class WearableAiService extends HiddenCameraService {
     //String glbox_adv_key = "WearableAiCyborgGLBOX"; //glbox no longer advertises - it retains a hardcoded domain/IP in the cloud
 
     //id of packet
-    static final byte [] img_id = {0x01, 0x10}; //id for images
+    static final byte[] img_id = {0x01, 0x10}; //id for images
 
     //settings
     private String router = "web";
@@ -113,15 +114,15 @@ public class WearableAiService extends HiddenCameraService {
 
     Thread adv_thread;
 
-    byte [] curr_cam_image;
+    byte[] curr_cam_image;
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
 
     @Override
-    public void onCreate(){
+    public void onCreate() {
         dataObservable = PublishSubject.create();
-        Disposable s = dataObservable.subscribe(i -> Log.d(TAG, "SUBBED TO " + i));
+        Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
 
         //first we have to listen for the UDP broadcast from the compute module so we know the IP address to connect to. Once we get that , we will connect to it on a socket and starting sending pictures
         Thread adv_thread = new Thread(new ReceiveAdvThread());
@@ -137,12 +138,12 @@ public class WearableAiService extends HiddenCameraService {
         beginCamera();
     }
 
-    private void setupObservervables(){
+    private void setupObservervables() {
         //set up the multicasting observables we use to send data between all the subsystems of the service
     }
 
     class ReceiveAdvThread extends Thread {
-        public void run(){
+        public void run() {
             //first get the ASP IP from its UDP broadcast, then start the ASP object
             receiveUdpBroadcast();
             asp_starter();
@@ -150,23 +151,23 @@ public class WearableAiService extends HiddenCameraService {
     }
 
     class StartGlbox extends Thread {
-        public void run(){
+        public void run() {
             glbox_starter();
         }
     }
 
-    public byte [] getCurrentCameraImage(){
+    public byte[] getCurrentCameraImage() {
         return curr_cam_image;
     }
 
-    public void receiveUdpBroadcast(){
+    public void receiveUdpBroadcast() {
         try {
             //Keep a socket open to listen to all the UDP trafic that is destined for this port
             socket = new DatagramSocket(PORT_NUM, InetAddress.getByName("0.0.0.0"));
             socket.setBroadcast(true);
 
             while (true) {
-                Log.i(TAG,"Ready to receive broadcast packets!");
+                Log.i(TAG, "Ready to receive broadcast packets!");
 
                 //Receive a packet
                 byte[] recvBuf = new byte[2600];
@@ -199,17 +200,17 @@ public class WearableAiService extends HiddenCameraService {
         }
     }
 
-    public void asp_starter(){
+    public void asp_starter() {
         startAspSocket();
     }
 
 
-    public void glbox_starter(){
+    public void glbox_starter() {
         startGlboxSocket();
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         System.out.println("HIDDEN CAMERA SERVICE DESTROYED");
     }
 
@@ -237,7 +238,7 @@ public class WearableAiService extends HiddenCameraService {
         return START_NOT_STICKY;
     }
 
-    private void beginCamera(){
+    private void beginCamera() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
 
@@ -283,7 +284,7 @@ public class WearableAiService extends HiddenCameraService {
 
     }
 
-    private void takeAndSendPicture(){
+    private void takeAndSendPicture() {
         camera_lock = true;
         System.out.println("TRYING TO TAKE PICTURE");
         takePicture(); //when succeeds, it will call the "onImageCapture" below
@@ -314,9 +315,9 @@ public class WearableAiService extends HiddenCameraService {
             e.printStackTrace();
         }
 
-        if (router == "web"){
+        if (router == "web") {
             uploadImage(img);
-        } else if (router =="file"){
+        } else if (router == "file") {
             System.out.println("SAVING IMAGE TO FILE");
             savePicture(img);
         } else {
@@ -356,7 +357,7 @@ public class WearableAiService extends HiddenCameraService {
         stopSelf();
     }
 
-    private void startAspSocket(){
+    private void startAspSocket() {
         //create client socket and setup socket
         asp_client_socket = ASPClientSocket.getInstance(this);
         asp_client_socket.setObservable(dataObservable);
@@ -365,7 +366,7 @@ public class WearableAiService extends HiddenCameraService {
         asp_client_socket.startWebSocket();
     }
 
-    private void startGlboxSocket(){
+    private void startGlboxSocket() {
         //create client socket and setup socket
         System.out.println("STARTING GLBOX SOCKET");
         glbox_client_socket = GlboxClientSocket.getInstance(this);
@@ -377,9 +378,9 @@ public class WearableAiService extends HiddenCameraService {
 
     public void onPictureTaken(byte[] data, Camera camera) {
         System.out.println("ONE PICTURE TAKEN");
-        if (router == "web"){
+        if (router == "web") {
             uploadImage(data);
-        } else if (router =="file"){
+        } else if (router == "file") {
             System.out.println("SAVING IMAGE TO FILE");
             savePicture(data);
         } else {
@@ -387,13 +388,13 @@ public class WearableAiService extends HiddenCameraService {
         }
     }
 
-    private void uploadImage(byte[] image_data){
+    private void uploadImage(byte[] image_data) {
         //upload the image using async task
 //        new SendImage().execute(data);
         asp_client_socket.sendBytes(img_id, image_data, "image");
     }
 
-    private void savePicture(byte[] data){
+    private void savePicture(byte[] data) {
 //        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
         File pictureFileDir = getDir();
 
@@ -423,7 +424,7 @@ public class WearableAiService extends HiddenCameraService {
         }
     }
 
-    private byte [] bmpToJpg(Bitmap bmp){
+    private byte[] bmpToJpg(Bitmap bmp) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         byte[] byteArrayJpg = stream.toByteArray();
@@ -437,7 +438,7 @@ public class WearableAiService extends HiddenCameraService {
     }
 
     @Override
-    public void onPreviewFrame(byte [] data, Camera camera){
+    public void onPreviewFrame(byte[] data, Camera camera) {
         long curr_time = System.currentTimeMillis();
         float now_frame_rate = (1 / (curr_time - last_sent_time));
         if (now_frame_rate <= fps_to_send) {
@@ -456,7 +457,7 @@ public class WearableAiService extends HiddenCameraService {
             System.arraycopy(bytes, 0, curr_cam_image, 0, bytes.length);
             final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
             byte[] jpg = bmpToJpg(bitmap);
-            if (asp_client_socket != null && asp_client_socket.getConnectState()){
+            if (asp_client_socket != null && asp_client_socket.getConnectState()) {
                 uploadImage(jpg);
             }
             int q_size = asp_client_socket.getImageBuf();
@@ -485,11 +486,27 @@ public class WearableAiService extends HiddenCameraService {
     }
 
 
-    public void sendGlBoxCurrImage(){
+    public void sendGlBoxCurrImage() {
         glbox_client_socket.sendBytes(img_id, curr_cam_image, "image");
     }
 
-
-
+    private void handleDataStream(JSONObject data) {
+//        try {
+//            String typeOf = data.getString("type");
+//            if (typeOf.equals("affective_mem_transcripts")) {
+//                int i = 0;
+//                while (true) {
+//                    if (!data.has(Integer.toString(i))) {
+//                        break;
+//                    }
+//                    String transcript = data.getString(Integer.toString(i));
+//                    Log.d(TAG, "Affective mem #" + i + " is " + transcript);
+//                    i++;
+//                }
+//            }
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+    }
 }
 

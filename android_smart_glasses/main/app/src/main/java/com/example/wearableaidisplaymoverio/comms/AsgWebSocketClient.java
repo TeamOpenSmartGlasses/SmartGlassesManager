@@ -28,19 +28,17 @@ package com.example.wearableaidisplaymoverio.comms;
 import static com.example.wearableaidisplaymoverio.ASPClientSocket.TAG;
 
 import android.util.Log;
-import org.java_websocket.server.WebSocketServer;
-
-import com.example.wearableaidisplaymoverio.R;
 
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.enums.ReadyState;
 
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
 import org.json.JSONObject;
+import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /**
  * This example demonstrates how to create a websocket connection to a server. Only the most
@@ -48,23 +46,49 @@ import org.json.JSONObject;
  */
 public class AsgWebSocketClient extends WebSocketClient {
     private int connected = 0;
+    private URI serverURI;
+    private WebSocketManager webSocketManager;
+    public boolean killme = false;
+
+    //observables to send data around app
+    PublishSubject<JSONObject> dataObservable;
+
+    private String mySourceName;
 
     public AsgWebSocketClient(URI serverUri, Draft draft) {
         super(serverUri, draft);
 
     }
 
-    public AsgWebSocketClient(URI serverURI) {
+    public AsgWebSocketClient(WebSocketManager manager, URI serverURI) {
         super(serverURI);
+        connected = 0;
+        webSocketManager = manager;
+        this.serverURI = serverURI;
+        setup();
     }
 
     public AsgWebSocketClient(URI serverUri, Map<String, String> httpHeaders) {
         super(serverUri, httpHeaders);
+        setup();
     }
 
-    public void start(){
-        connected = 1;
-        connect();
+    private void setup(){
+        //dataObservable = PublishSubject.create();
+        mySourceName = "web_socket";
+        setConnectionLostTimeout(3);
+    }
+
+    public void setObservable(PublishSubject<JSONObject> dataO){
+        dataObservable = dataO;
+    }
+
+    public void setSourceName(String name){
+        mySourceName = name;
+    }
+
+    public PublishSubject<JSONObject> getDataObservable(){
+        return dataObservable;
     }
 
     public void stop(){
@@ -81,16 +105,29 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     @Override
     public void onMessage(String message) {
-        System.out.println("received: " + message);
+        try {
+            System.out.println("received: " + message);
+            JSONObject json_message = new JSONObject(message);
+            json_message.put("local_source", mySourceName); //ad our set name so rest of program knows the source of this message
+            dataObservable.onNext(json_message);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onMessage(ByteBuffer message) {
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        if (connected == 2) {
-            connected = 1;
+        connected = 0;
+
+        if (remote && !killme) {
+            webSocketManager.onClose(); //tell manager that we are done and it should make a new socket to reconnect
         }
 
-        // The codecodes are documented in class org.java_websocket.framing.CloseFrame
+        // The codes are documented in class org.java_websocket.framing.CloseFrame
         System.out.println(
                 "Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: "
                         + reason);
@@ -102,10 +139,6 @@ public class AsgWebSocketClient extends WebSocketClient {
         // if the error is fatal then onClose will be called additionally
     }
 
-    public void sendJson(JSONObject data){
-        Log.d(TAG, "SENDING JSON FROM ASG WS");
-        send(data.toString());
-    }
 
     public int getConnectionState(){
 //        ReadyState ready_state = getReadyState();

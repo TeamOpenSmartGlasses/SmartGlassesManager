@@ -20,9 +20,12 @@ public class AspWebsocketServer extends WebSocketServer {
     //data observable we can send data through
     private static PublishSubject dataObservable;
 
+    private static int connected = 0;
+
     private final String TAG = "WearableAI_AspWebsocketServer";
 
     private Map<String, WebSocket> clients = new ConcurrentHashMap<>();
+    private WebSocket asgConn;
 
     public AspWebsocketServer(int port)
     {
@@ -36,12 +39,15 @@ public class AspWebsocketServer extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
+        connected = 2;
         String uniqueID = UUID.randomUUID().toString();
         clients.put(uniqueID, conn);
+        asgConn = conn;
     }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
+        connected = 1;
         Log.d(TAG, "onClose called");
     }
 
@@ -75,9 +81,19 @@ public class AspWebsocketServer extends WebSocketServer {
     public void onStart()
     {
         //LogHelper.e(TAG, "Server started!");
+        connected = 1;
         setConnectionLostTimeout(3);
     }
 
+    public void sendJson(JSONObject data){
+        if (connected == 2){
+            Log.d(TAG, "SENDING JSON FROM ASP WS");
+            asgConn.send(data.toString());
+        } else {
+            Log.d(TAG, "CANNOT SEND JSON, NOT CONNECTED");
+        }
+
+    }
 
     public void setObservable(PublishSubject observable){
         dataObservable = observable;
@@ -85,6 +101,7 @@ public class AspWebsocketServer extends WebSocketServer {
 
     //need to call this so if we get "Force Stop"ped, we will clean up sockets so we can connect on restart
     public void destroy(){
+        connected = 0;
         try{
             stop(3);
         } catch (InterruptedException e){
