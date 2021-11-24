@@ -35,6 +35,9 @@ public interface PhraseDao {
 
     @Query("SELECT * FROM PhraseTable WHERE ID = :id")
     LiveData<Phrase> get_by_id(int id);
+    
+    @Query("SELECT * from PhraseTable WHERE timestamp BETWEEN :startTime AND :endTime ORDER BY timestamp DESC")
+    List<Phrase> getPhraseRange(Date startTime, Date endTime);
 
     @Query("SELECT * FROM PhraseTable ORDER BY ABS(:timestamp - timestamp) LIMIT 1")
     Phrase getByNearestTimestamp(Date timestamp);

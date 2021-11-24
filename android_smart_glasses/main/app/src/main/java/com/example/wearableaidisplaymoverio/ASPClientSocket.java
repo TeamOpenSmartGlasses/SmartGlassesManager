@@ -77,6 +77,8 @@ public class ASPClientSocket {
     static final byte [] facial_emotion_info_id_30 = {0x13, 0x02};
     static final byte [] facial_emotion_info_id_300 = {0x13, 0x03};
 
+    static final byte [] affective_conversation = {0x13, 0x38};
+
     static final byte [] img_id = {0x01, 0x10}; //id for images
     static final byte [] heart_beat_id = {0x19, 0x20}; //id for heart beat
     static final byte [] ack_id = {0x13, 0x37};
@@ -487,6 +489,14 @@ public class ASPClientSocket {
                 intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
                 intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+            } else if (typeOf.equals("affective_conversation")) {
+                Log.d(TAG, data.toString());
+                //clientsocket.sendBytes(affective_conversation, data.toString().getBytes(), "affective_conversation");
+                //dataObservable.onNext(data);
+//                final Intent intent = new Intent();
+//                intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
+//                intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
+//                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             }
         } catch (JSONException e){
             e.printStackTrace();

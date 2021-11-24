@@ -174,6 +174,7 @@ import androidx.core.app.NotificationCompat;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.json.JSONException;
 
 /** Main activity of WearableAI compute module android app. */
@@ -1318,8 +1319,67 @@ public class WearableAiAspService extends LifecycleService {
 
             Log.d(TAG, "getting facial emotions from conversation");
             List<FacialEmotion> facialEmotionsConvo = mFacialEmotionRepository.getFacialEmotionsRange(startTime, endTime);
-            engagementAlgorithm(facialEmotionsConvo);
+            List<Phrase> phrasesConvo = mPhraseRepository.getPhraseRange(startTime, endTime);
+            //engagementAlgorithm(facialEmotionsConvo); //sends top n most engaged transcripts to be displayed on ASG
+            summarizerAlgorithm(phrasesConvo, facialEmotionsConvo); //send an affective conversation summary to be displayed on ASG
         } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //code here copied from engagement algorithm for sake of time, should refactor
+    private void summarizerAlgorithm(List<Phrase> phraseList, List<FacialEmotion> facialEmotionsList){
+        int windowSize = 10000; //length of window, in milliseconds
+        int stride = windowSize / 1; //how fine should our jumps be
+
+        //get the start and end time we need to process
+        //we should update Date to java.time so it
+        Date startTime = facialEmotionsList.get(facialEmotionsList.size() - 1).getTimestamp();
+        Date endTime = facialEmotionsList.get(0).getTimestamp();
+        Date t = new Date(startTime.getTime() + stride); //marks the end of the stride
+        float engaged = 0f;
+        float curr_count = 0f;
+        ArrayList<Float> engagedScores = new ArrayList();
+        ArrayList<Date> engagedTimes = new ArrayList();
+
+        //loop through all facial emotions
+        for (int i = 0; i < facialEmotionsList.size(); i++){
+            FacialEmotion fe = facialEmotionsList.get(facialEmotionsList.size() - 1 - i);
+            //if the current timestamp is before the end of the current stride
+            if (!fe.getTimestamp().before(t)){
+                engagedScores.add(engaged / curr_count);
+                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
+                engagedTimes.add(t_half);
+                engaged = 0;
+                curr_count = 1;
+                t = new Date(t.getTime() + stride);
+            }
+            //if neutral, then 0, else is 1
+            if (!fe.getFacialEmotion().equals("neutral")){
+                engaged = engaged + 1;
+            }
+            curr_count = curr_count + 1;
+        }
+
+        //loop through all phrases and make json object of conversation and affective information
+        try {
+            JSONObject affectiveConversation = new JSONObject();
+            JSONArray phraseArray = new JSONArray();
+            for (int i = 0; i < phraseList.size(); i++){
+                Phrase cPhrase = phraseList.get(i);
+                Date cTime = cPhrase.getTimestamp();
+                int idx = getNearestDate(engagedTimes, cTime);
+                float score = engagedScores.get(i);
+                JSONObject phraseObj = new JSONObject();
+                phraseObj.put("phrase", cPhrase.getPhrase());
+                phraseObj.put("timestamp", cPhrase.getTimestamp().getTime());
+                phraseObj.put("affective_engagement", score);
+                phraseArray.put(phraseObj);
+            }
+            affectiveConversation.put("type", "affective_conversation");
+            affectiveConversation.put("phrases", phraseArray);
+            asgWebSocket.sendJson(affectiveConversation);
+        } catch (JSONException e){
             e.printStackTrace();
         }
     }
@@ -1386,7 +1446,6 @@ public class WearableAiAspService extends LifecycleService {
                 engagedTimes.remove(idx);
                 //get transcript closest to that time
                 try {
-                    Log.d(TAG, "PULLING PHRASE #" + i + " at time " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", t_transcript)); 
                     Phrase phrase = mPhraseRepository.getByNearestTimestamp(t_transcript);
                     Log.d(TAG, phrase.getPhrase());
                     topTranscripts.add(phrase.getPhrase());
@@ -1400,5 +1459,22 @@ public class WearableAiAspService extends LifecycleService {
         }
         Log.d(TAG, affectiveMemoryObj.toString());
         asgWebSocket.sendJson(affectiveMemoryObj);
+    }
+
+    public int getNearestDate(ArrayList<Date> dates, Date targetDate) {
+        Date nearestDate = null;
+        int index = 0;
+        long prevDiff = -1;
+        long targetTS = targetDate.getTime();
+        for (int i = 0; i < dates.size(); i++) {
+            Date date = dates.get(i);
+            long currDiff = Math.abs(date.getTime() - targetTS);
+            if (prevDiff == -1 || currDiff < prevDiff) {
+                prevDiff = currDiff;
+                nearestDate = date;
+                index = i;
+            }
+        }
+        return index;
     }
 }

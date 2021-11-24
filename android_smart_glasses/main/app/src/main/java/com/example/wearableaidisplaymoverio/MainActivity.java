@@ -98,11 +98,15 @@ public class MainActivity extends Activity {
     TextView translateText;
 
     //visual search ui
-    TextView textListView;
     ImageView viewfinder;
 
     //text list ui
     ArrayList<String> textListHolder = new ArrayList<>();
+    TextView textListView;
+
+    //text list ui
+    private String textBlockHolder = "";
+    TextView textBlockView;
 
     //metrics
     float eye_contact_30 = 0;
@@ -192,6 +196,9 @@ public class MainActivity extends Activity {
             case "textlist":
                 setupTextList();
                 break;
+            case "textblock":
+                setupTextBlock();
+                break;
         }
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
     }
@@ -225,6 +232,19 @@ public class MainActivity extends Activity {
         textListView.setPadding(10, 0, 10, 0);
         textListView.setMovementMethod(new ScrollingMovementMethod());
         textListView.setSelected(true);
+    }
+
+    //generic way to set the current single string, scrollably, on the main UI
+    private void setupTextBlock() {
+        //live life captions mode gui setup
+        setContentView(R.layout.text_block);
+
+        //setup the text list view
+        textBlockView = (TextView) findViewById(R.id.text_block);
+        textBlockView.setText(textBlockHolder);
+        textBlockView.setPadding(10, 0, 10, 0);
+        textBlockView.setMovementMethod(new ScrollingMovementMethod());
+        textBlockView.setSelected(true);
     }
 
     private void updateViewFindFrame(){
@@ -451,6 +471,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(GlboxClientSocket.ACTION_WIKIPEDIA_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT);
+        intentFilter.addAction(GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT);
 
         intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
 
@@ -492,7 +513,7 @@ public class MainActivity extends Activity {
                         JSONObject nlp = transcript_object.getJSONObject("nlp");
                         JSONArray nouns = nlp.getJSONArray("nouns");
                         String transcript = transcript_object.getString("transcript");
-                        if ((nouns.length() == 0)){
+                        if ((nouns.length() == 0)) {
                             textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
                         } else {
                             //add text to a string and highlight properly the things we want to highlight (e.g. proper nouns)
@@ -514,7 +535,7 @@ public class MainActivity extends Activity {
                                 textBuilder = textBuilder + "<font color='#00FF00'><u>" + transcript.substring(start, end) + "</u></font>";
 
                                 //add in end of transcript if we just added the last noun
-                                if (i == (nouns.length() - 1)){
+                                if (i == (nouns.length() - 1)) {
                                     textBuilder = textBuilder + transcript.substring(end);
                                 }
 
@@ -528,7 +549,7 @@ public class MainActivity extends Activity {
                         if (curr_mode.equals("llc")) {
                             liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                         }
-                    } catch (JSONException e){
+                    } catch (JSONException e) {
                         System.out.println(e);
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
@@ -556,7 +577,7 @@ public class MainActivity extends Activity {
                     setContentView(R.layout.wikipedia_content);
                     wikipediaResultTitle = (TextView) findViewById(R.id.wikipedia_result_title);
                     wikipediaResultSummary = (TextView) findViewById(R.id.wikipedia_result_summary);
-                    wikipediaResultImage= (ImageView) findViewById(R.id.wikipedia_result_image);
+                    wikipediaResultImage = (ImageView) findViewById(R.id.wikipedia_result_image);
 
                     //get content
                     JSONObject wikipedia_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.WIKIPEDIA_RESULT));
@@ -571,8 +592,8 @@ public class MainActivity extends Activity {
                     wikipediaResultSummary.setSelected(true);
 
                     //open the image and display
-                    File imgFile = new  File(img_path);
-                    if(imgFile.exists()){
+                    File imgFile = new File(img_path);
+                    if (imgFile.exists()) {
                         Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
                         wikipediaResultImage.setImageBitmap(myBitmap);
                     }
@@ -605,7 +626,7 @@ public class MainActivity extends Activity {
                         i++;
                     }
                     switchMode("textlist");
-                } catch (JSONException e){
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
             } else if (GlboxClientSocket.ACTION_TRANSLATION_RESULT.equals(action)) {
@@ -624,7 +645,7 @@ public class MainActivity extends Activity {
                 visualSearchNames = new ArrayList<String>();
                 try {
                     JSONArray data = new JSONArray(str_data);
-                    for (int i = 0; i < data.length(); i++){
+                    for (int i = 0; i < data.length(); i++) {
                         //get thumnail image urls
                         String thumbnailUrl = data.getJSONObject(i).getString("thumbnailUrl");
                         thumbnailImages.add(thumbnailUrl);
@@ -634,15 +655,15 @@ public class MainActivity extends Activity {
                         visualSearchNames.add(name);
                     }
 
-                } catch (JSONException e){
+                } catch (JSONException e) {
                     Log.d(TAG, e.toString());
                 }
                 //setup gridview to view grid of visual search images
                 switchMode("visualsearchgridview");
                 gridviewImages = (GridView) findViewById(R.id.gridview);
                 gridViewImageAdapter = new ImageAdapter(context);
-                String[] simpleThumbArray = new String[ thumbnailImages.size() ];
-                thumbnailImages.toArray( simpleThumbArray );
+                String[] simpleThumbArray = new String[thumbnailImages.size()];
+                thumbnailImages.toArray(simpleThumbArray);
                 gridViewImageAdapter.imageTotal = simpleThumbArray.length;
                 gridViewImageAdapter.mThumbIds = simpleThumbArray;
                 gridviewImages.setDrawSelectorOnTop(false);
@@ -658,12 +679,17 @@ public class MainActivity extends Activity {
                 });
 
 
+            } else if (GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT.equals(action)) {
+                String str_data = intent.getStringExtra(GlboxClientSocket.AFFECTIVE_SUMMARY_RESULT);
+                Log.d(TAG, str_data);
+                textBlockHolder = str_data;
+                switchMode("textblock");
             }
-    }
-};
+        }
+    };
 
 
-private Spanned getCurrentTranscriptScrollText() {
+    private Spanned getCurrentTranscriptScrollText() {
         Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
         //limit textHolder to our maximum size
         while ((textHolder.size() - textHolderSizeLimit) > 0){
@@ -891,7 +917,7 @@ private Spanned getCurrentTranscriptScrollText() {
                     return super.onKeyUp(keyCode, event);
                 }
             case KeyEvent.KEYCODE_DEL:
-                if (curr_mode.equals("visualsearchgridview")) {
+                if (!curr_mode.equals("llc")) {
                     switchMode("llc");
                     return true;
                 } else {
