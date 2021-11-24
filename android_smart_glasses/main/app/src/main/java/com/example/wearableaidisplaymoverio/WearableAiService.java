@@ -142,8 +142,8 @@ public class WearableAiService extends HiddenCameraService {
         beginCamera();
 
         //start sensor scan
-        mBluetoothScanner = new BluetoothScanner(this);
-        mBluetoothScanner.startScan();
+//        mBluetoothScanner = new BluetoothScanner(this);
+//        mBluetoothScanner.startScan();
     }
 
     private void setupObservervables() {

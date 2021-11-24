@@ -5,8 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -72,6 +74,7 @@ public class AudioService extends Service {
 
     // the audio recorder
     private AudioRecord recorder;
+    private AudioManager mAudioManager;
     // the minimum buffer size needed for audio recording
     private static int BUFFER_SIZE = AudioRecord.getMinBufferSize(RECORDING_RATE, CHANNEL, FORMAT);
     // are we currently sending audio data
@@ -98,6 +101,45 @@ public class AudioService extends Service {
         return START_NOT_STICKY;
     }
 
+    enum BluetoothState {
+        AVAILABLE, UNAVAILABLE
+    }
+
+    private final BroadcastReceiver bluetoothStateReceiver = new BroadcastReceiver() {
+
+        private BluetoothState bluetoothState = BluetoothState.UNAVAILABLE;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
+            switch (state) {
+                case AudioManager.SCO_AUDIO_STATE_CONNECTED:
+                    Log.i(TAG, "Bluetooth HFP Headset is connected");
+                    handleBluetoothStateChange(BluetoothState.AVAILABLE);
+                    break;
+                case AudioManager.SCO_AUDIO_STATE_CONNECTING:
+                    Log.i(TAG, "Bluetooth HFP Headset is connecting");
+                    handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
+                case AudioManager.SCO_AUDIO_STATE_DISCONNECTED:
+                    Log.i(TAG, "Bluetooth HFP Headset is disconnected");
+                    handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
+                    break;
+                case AudioManager.SCO_AUDIO_STATE_ERROR:
+                    Log.i(TAG, "Bluetooth HFP Headset is in error state");
+                    handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
+                    break;
+            }
+        }
+
+        private void handleBluetoothStateChange(BluetoothState state) {
+            if (bluetoothState == state) {
+                return;
+            }
+
+            bluetoothState = state;
+        }
+    };
+
     @Override
     public void onCreate(){
         super.onCreate();
@@ -108,24 +150,18 @@ public class AudioService extends Service {
         //create send queue and a thread to handle sending
         data_queue = new ArrayBlockingQueue<byte[]>(queue_size);
 
+        //use bluetooth microphone if available
+//        registerReceiver(bluetoothStateReceiver, new IntentFilter(
+//                AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
 
+//        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+//        activateBluetoothSco();
+//        mAudioManager.setBluetoothScoOn(true);
+//        mAudioManager.startBluetoothSco();
+//
+//        mAudioManager.setSpeakerphoneOn(false);
+//        mAudioManager.setMode(mAudioManager.MODE_NORMAL);
 
-        //setup notification
-//        Log.d(TAG, "STARTING AUDIO SERVICE");
-//        String input = intent.getStringExtra("inputExtra");
-//        createNotificationChannel();
-//        Intent notificationIntent = new Intent(this, MainActivity.class);
-//        PendingIntent pendingIntent = PendingIntent.getActivity(this,
-//                0, notificationIntent, 0);
-//
-//        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-//                .setContentTitle("WearableAI Audio Service")
-//                .setContentText(input)
-//                .setSmallIcon(R.drawable.audio_recording_icon_small)
-//                .setContentIntent(pendingIntent)
-//                .build();
-//
-//        startForeground(1, notification);
 
         //start the socket thread which will send the raw audio data
         startSocket();
@@ -355,10 +391,11 @@ public class AudioService extends Service {
                 short[] buffer = new short[bufferSize];
 
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
-
-                Log.d(TAG, "Creating the AudioRecord");
                 recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, RECORDING_RATE, CHANNEL, FORMAT, BUFFER_SIZE * 10);
                 //recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, rate, CHANNEL, FORMAT, bufferSize);
+
+                Log.d(TAG, "Creating the AudioRecord");
+
 
                 Log.d(TAG, "AudioRecord recording...");
                 recorder.startRecording();
@@ -422,4 +459,14 @@ public class AudioService extends Service {
         return binder;
     }
 
+    private void activateBluetoothSco() {
+        if (!mAudioManager.isBluetoothScoAvailableOffCall()) {
+            Log.e(TAG, "SCO is not available, recording with bluetooth is not possible");
+            return;
+        }
+
+        if (!mAudioManager.isBluetoothScoOn()) {
+            mAudioManager.startBluetoothSco();
+        }
+    }
 }

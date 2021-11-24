@@ -33,12 +33,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 //singleton clientsocket class for connecting to ASP
 public class GlboxClientSocket {
     //data observable we can send data through
-    private static PublishSubject dataObservable;
+    private static PublishSubject<JSONObject> dataObservable;
+    private static Disposable dataSubscriber;
 
     //broadcast intent string
     public final static String ACTION_RECEIVE_TEXT = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_TEXT";
@@ -50,8 +52,10 @@ public class GlboxClientSocket {
     public final static String ACTION_WIKIPEDIA_RESULT = "com.example.wearableaidisplaymoverio.ACTION_WIKIPEDIA_RESULT";
     public final static String TRANSLATION_RESULT = "com.example.wearableaidisplaymoverio.TRANSLATION_RESULT";
     public final static String VISUAL_SEARCH_RESULT = "com.example.wearableaidisplaymoverio.VISUAL_SEARCH_RESULT";
+    public final static String AFFECTIVE_SUMMARY_RESULT = "com.example.wearableaidisplaymoverio.AFFECTIVE_SUMMARY_RESULT";
     public final static String ACTION_TRANSLATION_RESULT = "com.example.wearableaidisplaymoverio.ACTION_TRANSLATION_RESULT";
     public final static String ACTION_VISUAL_SEARCH_RESULT = "com.example.wearableaidisplaymoverio.ACTION_VISUAL_SEARCH_RESULT";
+    public final static String ACTION_AFFECTIVE_SUMMARY_RESULT = "com.example.wearableaidisplaymoverio.ACTION_AFFECTIVE_SUMMARY_RESULT";
 
     public final static String COMMAND_SWITCH_MODE = "com.example.wearableaidisplaymoverio.COMMAND_SWITCH_MODE";
     public final static String COMMAND_ARG = "com.example.wearableaidisplaymoverio.COMMAND_ARG";
@@ -80,12 +84,15 @@ public class GlboxClientSocket {
     static final byte [] wikipedia_result_cid = {0xC, 0x05};
     static final byte [] translation_result_cid = {0xC, 0x06};
     static final byte [] visual_search_images_result_cid = {0xC, 0x07};
+    static final byte [] affective_summary_result_cid = {0xC, 0x08};
 
     static final byte [] social_mode_id = {0xF, 0x00};
     static final byte [] llc_mode_id = {0xF, 0x01};
     static final byte [] blank_mode_id = {0xF, 0x02};
     static final byte [] translate_mode_id = {0xF, 0x03};
     static final byte [] visual_search_mode_viewfind_id = {0xF, 0x04};
+
+    static final byte [] affective_conversation_message = {0xD, 0x01};
 //    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
 //    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
 //    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
@@ -616,6 +623,13 @@ public class GlboxClientSocket {
 //                    intent.putExtra(GlboxClientSocket.TRANSLATION_RESULT, translated_text_string);
 //                    intent.setAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
 //                    mContext.sendBroadcast(intent);
+                } else if ((b1 == affective_summary_result_cid[0]) && (b2 == affective_summary_result_cid[1])) { //got command response
+                    Log.d(TAG, "affective_summary_result_cid received");
+                    String str_data = new String(raw_data, StandardCharsets.UTF_8);
+                    final Intent intent = new Intent();
+                    intent.putExtra(GlboxClientSocket.AFFECTIVE_SUMMARY_RESULT, str_data);
+                    intent.setAction(GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT);
+                    mContext.sendBroadcast(intent);
                 }
 
 //                } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
@@ -763,8 +777,22 @@ public class GlboxClientSocket {
     }
 
 
-    public void setObservable(PublishSubject observable){
+    public void setObservable(PublishSubject<JSONObject> observable){
         dataObservable = observable;
+        dataSubscriber = dataObservable.subscribe(i -> parseData(i));
+    }
+
+    private void parseData(JSONObject data){
+        Log.d(TAG, "Parsing data");
+        try {
+            String typeOf = data.getString("type");
+            if (typeOf.equals("affective_conversation")) {
+                Log.d(TAG, data.toString());
+                sendBytes(affective_conversation_message, data.toString().getBytes(), "message");
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
 
