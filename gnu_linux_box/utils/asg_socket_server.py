@@ -34,6 +34,7 @@ class ASGSocket:
         self.wikipedia_result_cid = bytearray([12, 5]) 
         self.translation_cid = bytearray([12, 6]) 
         self.visual_search_images_result_cid = bytearray([12, 7]) 
+        self.affective_summary_result_cid = bytearray([12, 8]) 
         self.mode_ids = {
                             "social" : bytearray([15, 0]),
                             "llc" : bytearray([15, 1]), #live life captions
@@ -144,6 +145,9 @@ class ASGSocket:
     def send_visual_search_images_result(self, result):
         result_encoded = json.dumps(result).encode('utf-8')
         self.send_bytes(self.visual_search_images_result_cid, result_encoded)
+
+    def send_affective_search_result(self, result):
+        self.send_bytes(self.affective_summary_result_cid, bytes(result,'UTF-8'))
 
     def send_command_output(self, message_str):
         self.send_bytes(self.command_output_cid, bytes(message_str + "\n",'UTF-8'))
