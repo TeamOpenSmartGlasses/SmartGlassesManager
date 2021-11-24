@@ -10,10 +10,12 @@ import base64
 from queue import Queue, Empty
 import socket
 import time
+import json
 
 from utils.asg_socket_server import ASGSocket
 from language_options import language_options
 from utils.bing_visual_search import bing_visual_search, bing_visual_search_file
+from utils.affective_summarizer import affective_summarize
 
 from utils.english_pronouns_list import english_pronouns
 
@@ -305,6 +307,8 @@ def get_nlp(string):
 
 def check_message(message, cmd_q):
     img_id = [0x01, 0x10] #id for images
+    affective_conversation_id = [0xD, 0x01] #bytearray([13, 1]) #{0xD, 0x01};
+
     #make sure header is verified
     if (message[0] != 0x01 or message[1] != 0x02 or message[2] != 0x03):
         print("Hello is no good")
@@ -327,8 +331,15 @@ def check_message(message, cmd_q):
     if ((message[7] == img_id[0]) and (message[8] == img_id[1])): #this means the message is an image
         print("The message is an image")
         process_image(message_body, cmd_q)
+    elif ((message[7] == affective_conversation_id[0]) and (message[8] == affective_conversation_id[1])): #this means the message is an affective conversation
+        process_affective_conversation(message_body, cmd_q)
     else:
         print("The message is NOT an image")
+
+def process_affective_conversation(json_bytes, cmd_q):
+    convo_obj = json.loads(json_bytes)
+    summary = affective_summarize(convo_obj)
+    cmd_q.put(("affective summary", summary))
 
 def process_image(img_bytes, cmd_q):
     #for now, this is just for visual search mode, se will visually search for 
@@ -374,6 +385,9 @@ def run_voice_command_server(transcript_q, cmd_q, obj_q):
                 elif cmd == "visual search":
                     print("sending visual search image response")
                     asg_socket.send_visual_search_images_result(args)
+                elif cmd == "affective summary":
+                    print("sending affective summary response")
+                    asg_socket.send_affective_search_result(args)
             except Empty as e:
                 pass
             #check for command responses
