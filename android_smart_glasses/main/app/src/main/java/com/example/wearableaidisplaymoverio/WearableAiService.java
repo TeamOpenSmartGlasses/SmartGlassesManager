@@ -39,6 +39,8 @@ import com.androidhiddencamera.config.CameraFacing;
 import com.androidhiddencamera.config.CameraFocus;
 import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
+import com.example.wearableaidisplaymoverio.sensors.AudioChunkCallback;
+import com.example.wearableaidisplaymoverio.sensors.BluetoothMic;
 import com.example.wearableaidisplaymoverio.sensors.BluetoothScanner;
 
 import org.json.JSONException;
@@ -56,6 +58,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;

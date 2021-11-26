@@ -24,6 +24,8 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.example.wearableaidisplaymoverio.sensors.AudioChunkCallback;
+import com.example.wearableaidisplaymoverio.sensors.BluetoothMic;
 import com.example.wearableaidisplaymoverio.utils.AES;
 
 import java.io.ByteArrayOutputStream;
@@ -167,7 +169,15 @@ public class AudioService extends Service {
         startSocket();
 
         // do heavy work on a background thread
-        StartRecorder();
+        //StartRecorder();
+
+        //start audio from bluetooth headset
+        BluetoothMic blutoothAudio = new BluetoothMic(this, new AudioChunkCallback(){
+            @Override
+            public void onSuccess(ByteBuffer chunk){
+                receiveChunk(chunk);
+            }
+        });
 
         //stopSelf();
 
@@ -379,6 +389,14 @@ public class AudioService extends Service {
         recorder.release();
     }
 
+    private void receiveChunk(ByteBuffer chunk){
+        byte[] audio_bytes = chunk.array();
+
+        byte [] encrypted_audio_bytes = encryptBytes(audio_bytes);
+
+        sendBytes(encrypted_audio_bytes);
+    }
+
     private void startStreaming() {
         Log.i(TAG, "Starting the background thread (in this foreground service) to read the audio data");
 
@@ -418,20 +436,6 @@ public class AudioService extends Service {
                     byte [] encrypted_audio_bytes = encryptBytes(audio_bytes);
 
                     sendBytes(encrypted_audio_bytes);
-
-//                    double maxAmplitude = 0;
-//                    for (int i = 0; i < readSize; i++) {
-//                        if (Math.abs(buffer[i]) > maxAmplitude) {
-//                            maxAmplitude = Math.abs(buffer[i]);
-//                        }
-//                    }
-//
-//                    double db = 0;
-//                    if (maxAmplitude != 0) {
-//                        db = 20.0 * Math.log10(maxAmplitude / 32767.0) + 90;
-//                    }
-//
-//                    Log.d(TAG, "Max amplitude: " + maxAmplitude + " ; DB: " + db);
                 }
 
                 Log.d(TAG, "AudioRecord finished recording");

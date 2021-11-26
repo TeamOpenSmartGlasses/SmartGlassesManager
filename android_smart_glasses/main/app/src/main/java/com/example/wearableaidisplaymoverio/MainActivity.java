@@ -152,7 +152,7 @@ public class MainActivity extends Activity {
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
         //start the audio service
-        StartRecorder();
+        StartAudioService();
 
 //        //setup camera preview
 //        preview = (SurfaceView) findViewById(R.id.preview);
@@ -940,7 +940,7 @@ public class MainActivity extends Activity {
     }
 
     //Audio recording service - maybe to be moved into WearableAI service
-    public void StartRecorder() {
+    public void StartAudioService() {
         Log.i(TAG, "Starting the foreground-thread");
 
 //        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
@@ -952,7 +952,7 @@ public class MainActivity extends Activity {
         bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
     }
 
-    public void StopRecorder() {
+    public void StopAudioService() {
         Log.i(TAG, "Stopping the foreground-thread");
 
         Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);

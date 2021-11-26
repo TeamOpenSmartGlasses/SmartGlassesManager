@@ -502,8 +502,6 @@ public class GlboxClientSocket {
                 if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
                     Log.d(TAG, "Socket stream - footer broken, restarting socket");
                     break;
-                } else {
-                    Log.d(TAG, "RECEIVED GOODBYE");
                 }
 
                 //then process the data
