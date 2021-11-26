@@ -59,6 +59,9 @@ public class ASPClientSocket {
     public final static String ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST = "com.example.wearableaidisplaymoverio.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST";
     public final static String AFFECTIVE_MEM_TRANSCRIPT_LIST = "com.example.wearableaidisplaymoverio.AFFECTIVE_MEM_TRANSCRIPT_LIST";
 
+    public final static String ACTION_AFFECTIVE_SEARCH_QUERY = "com.example.wearableaidisplaymoverio.ACTION_AFFECTIVE_SEARCH_QUERY";
+    public final static String AFFECTIVE_SEARCH_QUERY_RESULT = "com.example.wearableaidisplaymoverio.AFFECTIVE_SEARCH_QUERY_RESULT";
+
     public static String TAG = "WearableAiDisplayMoverio";
     //singleton instance
     private static ASPClientSocket clientsocket;
@@ -497,6 +500,11 @@ public class ASPClientSocket {
 //                intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
 //                intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
 //                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+            } else if (typeOf.equals("affective_search_query")) {
+                final Intent intent = new Intent();
+                intent.putExtra(ASPClientSocket.AFFECTIVE_SEARCH_QUERY_RESULT, data.toString());
+                intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY);
+                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             }
         } catch (JSONException e){
             e.printStackTrace();

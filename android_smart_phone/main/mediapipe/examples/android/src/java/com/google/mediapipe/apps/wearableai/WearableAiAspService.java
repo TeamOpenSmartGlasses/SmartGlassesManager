@@ -1265,9 +1265,14 @@ public class WearableAiAspService extends LifecycleService {
 
     private void handleDataStream(JSONObject data){
         try {
-            Log.d(TAG, "SAVING ASG TRANSCRIPT TO ROOM DATABASE");
-            String transcript = data.getString("transcript");
-            PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mPhraseRepository);
+            String typeOf = data.getString("type");
+            if (typeOf.equals("transcript")){
+                Log.d(TAG, "SAVING ASG TRANSCRIPT TO ROOM DATABASE");
+                String transcript = data.getString("transcript");
+                PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mPhraseRepository);
+            } else if (typeOf.equals("affective_search_query")){
+                runAffectiveSearch(data.getString("emotion"));
+            }
         } catch (JSONException e){
             e.printStackTrace();
     }
@@ -1307,6 +1312,26 @@ public class WearableAiAspService extends LifecycleService {
 
     }
 
+    
+    private void runAffectiveSearch(String emotion){
+    try{
+            VoiceCommandEntity latestStartConvoCommand = mVoiceCommandRepository.getLatestCommand("start conversation");
+            VoiceCommandEntity latestStopConvoCommand = mVoiceCommandRepository.getLatestCommand("stop conversation");
+            Date startTime = latestStartConvoCommand.getTimestamp();
+            Date endTime = latestStopConvoCommand.getTimestamp();
+            Log.d(TAG, "Convo timeframe - " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", startTime) + " to " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", endTime));
+
+            Log.d(TAG, "getting facial emotions from conversation");
+            List<FacialEmotion> facialEmotionsConvo = mFacialEmotionRepository.getFacialEmotionsRange(startTime, endTime);
+            List<Phrase> phrasesConvo = mPhraseRepository.getPhraseRange(startTime, endTime);
+            //engagementAlgorithm(facialEmotionsConvo); //sends top n most engaged transcripts to be displayed on ASG
+            //summarizerAlgorithm(phrasesConvo, facialEmotionsConvo); //send an affective conversation summary to be displayed on ASG
+            affectiveSearch(facialEmotionsConvo, emotion);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     //AFFECTIVE MEMORY EXTENSION
     private void runAffectiveMemory(){
         Log.d(TAG, "RUNNING AFFECTIVE MEMORY");
@@ -1322,6 +1347,7 @@ public class WearableAiAspService extends LifecycleService {
             List<Phrase> phrasesConvo = mPhraseRepository.getPhraseRange(startTime, endTime);
             //engagementAlgorithm(facialEmotionsConvo); //sends top n most engaged transcripts to be displayed on ASG
             summarizerAlgorithm(phrasesConvo, facialEmotionsConvo); //send an affective conversation summary to be displayed on ASG
+            //affectiveSearch(facialEmotionsConvo, "sad");
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -1476,5 +1502,68 @@ public class WearableAiAspService extends LifecycleService {
             }
         }
         return index;
+    }
+
+    //code here copied from engagement algorithm for sake of time, should refactor
+    private void affectiveSearch(List<FacialEmotion> facialEmotionsList, String emotion){
+        Log.d(TAG, "emotion is: " + emotion);
+        int windowSize = 10000; //length of window, in milliseconds
+        int stride = windowSize / 1; //how fine should our jumps be
+
+        //get the start and end time we need to process
+        //we should update Date to java.time so it
+        Date startTime = facialEmotionsList.get(facialEmotionsList.size() - 1).getTimestamp();
+        Date endTime = facialEmotionsList.get(0).getTimestamp();
+        Date t = new Date(startTime.getTime() + stride); //marks the end of the stride
+        float emotionV = 0f;
+        float curr_count = 0f;
+        ArrayList<Float> emotionScores = new ArrayList();
+        ArrayList<Date> emotionTimes = new ArrayList();
+
+        //loop through all facial emotions
+        for (int i = 0; i < facialEmotionsList.size(); i++){
+            FacialEmotion fe = facialEmotionsList.get(facialEmotionsList.size() - 1 - i);
+            //if the current timestamp is before the end of the current stride
+            if (!fe.getTimestamp().before(t)){
+                emotionScores.add(emotionV / curr_count);
+                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
+                emotionTimes.add(t_half);
+                emotionV = 0;
+                curr_count = 1;
+                t = new Date(t.getTime() + stride);
+            }
+            //if neutral, then 0, else is 1
+            if (!fe.getFacialEmotion().equals(emotion)){
+                emotionV = emotionV + 1;
+            }
+            curr_count = curr_count + 1;
+            //if we're on the last one, save what we have so far
+            if (i == (facialEmotionsList.size() - 1)){
+                emotionScores.add(emotionV / curr_count);
+                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
+                emotionTimes.add(t_half);
+                emotionV = 0;
+                curr_count = 1;
+            }
+        }
+
+        //find the time where the given emotion was highest
+        //stupid convoluted Java argmax
+        float score = Collections.max(emotionScores);
+        int idx = emotionScores.indexOf(score);
+        Date t_search = emotionTimes.get(idx);
+
+        //get transcript closest to that time
+        try {
+            Phrase phrase = mPhraseRepository.getByNearestTimestamp(t_search);
+            Log.d(TAG, "Affective search for emotion " + emotion + ": " + phrase.getPhrase());
+            JSONObject affectiveSearchQuery = new JSONObject();
+            affectiveSearchQuery.put("type", "affective_search_query");
+            affectiveSearchQuery.put("emotion", emotion);
+            affectiveSearchQuery.put("phrase", phrase.getPhrase());
+            asgWebSocket.sendJson(affectiveSearchQuery);
+        } catch (JSONException | ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

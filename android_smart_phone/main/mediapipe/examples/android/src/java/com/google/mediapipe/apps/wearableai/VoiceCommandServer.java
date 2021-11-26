@@ -201,7 +201,7 @@ public class VoiceCommandServer {
         dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
-        voiceCommands = new ArrayList<>(Arrays.asList(new String [] {"start conversation", "stop conversation"}));
+        voiceCommands = new ArrayList<>(Arrays.asList(new String [] {"start conversation", "stop conversation", "affective search", "effective search"}));
 
     }
     
@@ -249,7 +249,7 @@ public class VoiceCommandServer {
     }
 
     private void runCommand(String preArgs, String wakeWord, String command, String postArgs){
-        Log.d(TAG, "RUN COMMAND");
+        Log.d(TAG, "RUN COMMAND with postARgs:" + postArgs);
         //below is how we WANT to call commands, by creating command classes and calling their 'run' functions here... but for sake of time I am doing hack below
 //        for (int i = 0; i < commandFuncs.size(); i++){
 //            if (command.equals(commandFuncs[i])){ //if the substring "wake word" is in the larger string "transcript"
@@ -276,6 +276,8 @@ public class VoiceCommandServer {
             convoTag(true); //this is precicely where it gets hacky, this should be generic and running "run"function in voice command class
         } else if (command.contains("stop conversation")){
             convoTag(false);
+        } else if ((command.contains("effective search")) || (command.contains("affective search"))){
+            affectiveSearch(postArgs);
         }
     }
 
@@ -284,6 +286,26 @@ public class VoiceCommandServer {
             Log.d(TAG, "********** starting conversation");
         } else {
             Log.d(TAG, "********** stopping conversation");
+        }
+    }
+
+    private void affectiveSearch(String postArgs){
+        try{
+            postArgs = postArgs.trim();
+            int idxSpace = postArgs.indexOf(' ');
+            String emotion = "";
+            if (idxSpace != -1){
+                emotion = postArgs.trim().substring(0, postArgs.indexOf(' '));
+            } else{
+                emotion = postArgs;
+            }
+            Log.d(TAG, "emotion is: " + emotion);
+            JSONObject affective_search_query = new JSONObject();
+            affective_search_query.put("type", "affective_search_query");
+            affective_search_query.put("emotion", emotion);
+            dataObservable.onNext(affective_search_query);
+        } catch (JSONException e){
+            e.printStackTrace();
         }
     }
 

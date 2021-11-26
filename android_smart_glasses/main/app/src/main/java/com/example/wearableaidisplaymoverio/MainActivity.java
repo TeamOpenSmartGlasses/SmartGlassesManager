@@ -474,6 +474,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT);
 
         intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
+        intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY);
 
         return intentFilter;
     }
@@ -626,6 +627,16 @@ public class MainActivity extends Activity {
                         i++;
                     }
                     switchMode("textlist");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else if (ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY.equals(action)) {
+                Log.d(TAG, "MainActivity got affective mem transcript list");
+                try {
+                    JSONObject affective_query_result = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_SEARCH_QUERY_RESULT));
+                    textBlockHolder = "";
+                    textBlockHolder = "Most " + affective_query_result.getString("emotion") + " of last conversation: \n\n" + affective_query_result.getString("phrase");
+                    switchMode("textblock");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
