@@ -171,6 +171,9 @@ public class MainActivity extends AppCompatActivity implements
   @Override
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
+      //set main view
+      setContentView(R.layout.activity_main);
+
       //start wearable ai service
       startWearableAiService();
 
@@ -212,8 +215,10 @@ public class MainActivity extends AppCompatActivity implements
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
         } else {
             initModel();
-            recognizeMicrophone();
+            //recognizeMicrophone();
         }
+
+        findViewById(R.id.recognize_mic).setOnClickListener(view -> recognizeMicrophone());
 
         //recognize file
   }
@@ -263,11 +268,13 @@ public class MainActivity extends AppCompatActivity implements
 
     //vosk stuff
     private void initModel() {
+        Log.d(TAG, "Initing ASR model...");
         StorageService.unpack(this, "model-en-us", "model",
                 (model) -> {
                     this.model = model;
                 },
                 (exception) -> setErrorState("Failed to unpack the model" + exception.getMessage()));
+        Log.d(TAG, "ASR Model loaded.");
     }
 
     private void setErrorState(String message) {
