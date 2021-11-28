@@ -350,8 +350,8 @@ maven_install(
         "junit:junit:4.12",
         "org.hamcrest:hamcrest-library:1.3",
         "net.java.dev.jna:jna:aar:5.8.0",
-        "com.alphacephei:vosk-android:aar:0.3.34",
-        "com.alphacephei:vosk-model-en:aar:0.3.32",
+        "com.alphacephei:vosk-android:0.3.34",
+        "com.alphacephei:vosk-model-en:0.3.34",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",
