@@ -48,7 +48,7 @@ strip=true
 install_only=false
 app_dir="mediapipe/examples/android/src/java/com/google/mediapipe/apps"
 bin_dir="bazel-bin"
-declare -a default_bazel_flags=(build -c opt --config=android_arm64 --verbose_failures)
+declare -a default_bazel_flags=(build -c opt --config=android_arm64 --verbose_failures --noincremental_dexing )
 
 #while [[ -n $1 ]]; do
 #  case $1 in
@@ -91,6 +91,7 @@ fi
 target="${app}:${target_name}"
 bin="${bin_dir}/${app}/${target_name}.apk"
 
+echo "************************7adf************************"
 echo "=== Target: ${target}"
 
 if [[ $install_only == false ]]; then
@@ -100,6 +101,7 @@ if [[ $install_only == false ]]; then
     bazel_flags+=(--linkopt=-s)
   fi
 fi
+echo "************************8adf************************"
 
 if [[ ${app_name} == "objectdetection3d" ]]; then
   categories=("shoe" "chair" "cup" "camera" "shoe_1stage" "chair_1stage")
@@ -110,6 +112,8 @@ if [[ ${app_name} == "objectdetection3d" ]]; then
       if [[ ${category} != "shoe" ]]; then
         bazel_flags_extended+=(--define ${category}=true)
       fi
+      echo "Running command: "
+      echo "${bazel_flags_extended[@]}"
       bazel "${bazel_flags_extended[@]}"
       cp -f "${bin}" "${apk}"
     fi
@@ -121,7 +125,9 @@ else
     if [[ ${app_name} == "templatematchingcpu" ]]; then
       switch_to_opencv_4
     fi
-    bazel "${bazel_flags[@]}"
+    echo "Running command: "
+    echo "${bazel_flags[@]}"
+    bazel "${bazel_flags[@]}" 
     cp -f "${bin}" "${apk}"
     if [[ ${app_name} == "templatematchingcpu" ]]; then
       switch_to_opencv_3
