@@ -104,6 +104,7 @@ android_library(
         srcs = glob(["**/*.java"]),
         resource_files = glob(["res/**"]),
         deps = [
+            "@maven//:net_java_dev_jna_jna",
             ":androidx_room_room_compiler_library",
             ":mediapipe_jni_lib",
             "//mediapipe/framework/formats:landmark_java_proto_lite",
@@ -132,6 +133,9 @@ android_library(
             "@maven//:androidx_lifecycle_lifecycle_livedata_core",
             "@maven//:androidx_room_room_common",
             "@maven//:androidx_room_room_runtime",
+            "@maven//:com_alphacephei_vosk_android",
+            "@maven//:com_alphacephei_vosk_model_en",
+            "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai/jniLibs:jna_libs",
         ],
     assets = [
         "//mediapipe/graphs/wearable_ai_gpu:wearable_ai_gpu.binarypb",

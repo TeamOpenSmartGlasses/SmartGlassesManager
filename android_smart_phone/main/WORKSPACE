@@ -355,7 +355,7 @@ maven_install(
         "com.google.guava:listenablefuture:1.0",
         "junit:junit:4.12",
         "org.hamcrest:hamcrest-library:1.3",
-        "com.alphacephei:vosk-android:0.3.23",
+
         "org.java-websocket:Java-WebSocket:1.5.2",
         "io.reactivex.rxjava3:rxandroid:3.0.0",
         "io.reactivex.rxjava3:rxjava:3.0.0",
@@ -377,13 +377,17 @@ maven_install(
         "androidx.lifecycle:lifecycle-compiler:" + LIFECYCLE_VERSION,
         "androidx.room:room-compiler:" + ROOM_VERSION,
         "com.google.guava:guava:28.1-android",
+
+        #VOSK ASR
+        "net.java.dev.jna:jna:aar:5.8.0",
+        "com.alphacephei:vosk-android:0.3.34",
+        "com.alphacephei:vosk-model-en:0.3.34",
     ],
     repositories = [
+        "https://repo1.maven.org/maven2",
         "https://jcenter.bintray.com",
         "https://maven.google.com",
         "https://dl.google.com/dl/android/maven2",
-        "https://repo1.maven.org/maven2",
-        "https://alphacephei.com/maven/",
         "https://oss.jfrog.org/libs-snapshot",
     ],
     fetch_sources = True,
@@ -393,6 +397,16 @@ maven_install(
 load("@maven//:compat.bzl", "compat_repositories")
 
 compat_repositories()
+load("@bazel_tools//tools/build_defs/repo:android.bzl", "aar_import_external", "aar_maven_import_external")
+# Specify the URL directly:
+aar_import_external(
+    name = "jna_cust",                              # required
+    aar_sha256 = "a31fda0acd52f55f0c681285d095d986ab3d9dc2ba00fa5b06d118bad2cd3d52",
+    licenses = ["notice"],                                                           # required
+    aar_urls = [                                                                     # required
+        "https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.7.0/jna-5.7.0.aar"
+    ]
+)
 
 # Needed by TensorFlow
 http_archive(

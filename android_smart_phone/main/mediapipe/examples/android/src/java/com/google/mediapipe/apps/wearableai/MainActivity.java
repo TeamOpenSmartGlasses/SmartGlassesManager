@@ -138,23 +138,48 @@ import android.net.DhcpInfo;
 import android.net.wifi.WifiManager;
 import android.os.StrictMode;
 
+//Vosk ASR
+import org.vosk.LibVosk;
+import org.vosk.LogLevel;
+import org.vosk.Model;
+import org.vosk.Recognizer;
+import org.vosk.android.RecognitionListener;
+import org.vosk.android.SpeechService;
+import org.vosk.android.SpeechStreamService;
+import org.vosk.android.StorageService;
+
+//vosk needs
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
+
 /** Main activity of WearableAI compute module android app. */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements
+        RecognitionListener {
+
     private  final String TAG = "WearableAi_MainActivity";
+
+    //Vosk stuff
+    /* Used to handle permission request */
+    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+
+    private Model model;
+    private SpeechService speechService;
+    private SpeechStreamService speechStreamService;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
-
-      //setup activity view
-      setContentView(R.layout.activity_main);
-      //stuff = new Stuff();
 
      //setup room database
     //setup phrase creation interface
     //repo = new PhraseRepository(getApplication());
     //db = PhraseRoomDatabase.getDatabase(getApplication());
     //PhraseCreator.create("hello world", "local_test", getApplicationContext(), repo);
+      
+    //set main view
+    setContentView(R.layout.activity_main);
 
       //start wearable ai service
       startWearableAiService();
@@ -175,6 +200,50 @@ public class MainActivity extends AppCompatActivity {
              }
          });
 
+        //vosk stuff
+        //String libraryPath = this.getApplicationInfo().dataDir + "/lib/arm64-v8a/";
+        String libraryPath = getApplicationInfo().nativeLibraryDir;
+        System.setProperty("jna.boot.library.path", libraryPath);
+        String curr_path = libraryPath;
+        System.out.println("CURRENT PATH");
+        System.out.println(curr_path);
+        System.out.println("New PATH");
+        //String path = curr_path + "/lib/arm64-v8a/";
+        String path = curr_path + "/code_cache";
+
+        System.out.println(curr_path);
+        Log.d("Files", "Path: " + curr_path);
+        File directory = new File(curr_path);
+        File[] files = directory.listFiles();
+        Log.d("Files", "Size: "+ files.length);
+        for (int i = 0; i < files.length; i++)
+        {
+            Log.d("Files", "FileName:" + files[i].getName());
+        }
+//
+//        System.out.println(path);
+//        Log.d("Files", "Path: " + path);
+//        File ndirectory = new File(path);
+//        File[] nfiles = ndirectory.listFiles();
+//        Log.d("Files", "Size: "+ nfiles.length);
+//        for (int i = 0; i < nfiles.length; i++)
+//        {
+//            Log.d("Files", "FileName:" + nfiles[i].getName());
+//        }
+        LibVosk.setLogLevel(LogLevel.INFO);
+
+        // Check if user has given permission to record audio, init the model after permission is granted
+        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
+        } else {
+            initModel();
+            //recognizeMicrophone();
+        }
+
+        findViewById(R.id.recognize_mic).setOnClickListener(view -> recognizeMicrophone());
+
+        //recognize file
   }
 
   @Override
@@ -187,12 +256,12 @@ public class MainActivity extends AppCompatActivity {
     super.onPause();
   }
 
-  @Override
-  public void onRequestPermissionsResult(
-      int requestCode, String[] permissions, int[] grantResults) {
-    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
-  }
+//  @Override
+//  public void onRequestPermissionsResult(
+//      int requestCode, String[] permissions, int[] grantResults) {
+//    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//    PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//  }
 
    public void stopWearableAiService() {
         if (!isMyServiceRunning(WearableAiAspService.class)) return;
@@ -227,6 +296,106 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    //vosk stuff
+    private void initModel() {
+        Log.d(TAG, "Initing ASR model...");
+        StorageService.unpack(this, "model-en-us", "model",
+                (model) -> {
+                    this.model = model;
+                },
+                (exception) -> setErrorState("Failed to unpack the model" + exception.getMessage()));
+        Log.d(TAG, "ASR Model loaded.");
+    }
+
+    private void setErrorState(String message) {
+        Log.d(TAG, "VOSK error: " + message);
+    }
+
+   private void recognizeMicrophone() {
+        if (speechService != null) {
+            speechService.stop();
+            speechService = null;
+        } else {
+            try {
+                Log.d(TAG, "VOSK MAKE RECOGNIZER");
+                Recognizer rec = new Recognizer(model, 16000.0f);
+                Log.d(TAG, "VOSK MAKE SPEECH SERVICE");
+                speechService = new SpeechService(rec, 16000.0f);
+                Log.d(TAG, "VOSK START LISTENING");
+                speechService.startListening(this);
+            } catch (IOException e) {
+                setErrorState(e.getMessage());
+            }
+        }
+    }
+
+
+    private void pause(boolean checked) {
+        if (speechService != null) {
+            speechService.setPause(checked);
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Recognizer initialization is a time-consuming and it involves IO,
+                // so we execute it in async task
+                initModel();
+            } else {
+                finish();
+            }
+        }
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (speechService != null) {
+            speechService.stop();
+            speechService.shutdown();
+        }
+
+        if (speechStreamService != null) {
+            speechStreamService.stop();
+        }
+    }
+
+    @Override
+    public void onResult(String hypothesis) {
+        Log.d(TAG, "VOSK: " + hypothesis + "\n");
+    }
+
+    @Override
+    public void onFinalResult(String hypothesis) {
+        Log.d(TAG, "VOSK, final: " + hypothesis + "\n");
+        if (speechStreamService != null) {
+            speechStreamService = null;
+        }
+    }
+
+    @Override
+    public void onPartialResult(String hypothesis) {
+        Log.d(TAG, "VOSK, partial: " + hypothesis + "\n");
+    }
+
+    @Override
+    public void onError(Exception e) {
+        setErrorState(e.getMessage());
+    }
+
+    @Override
+    public void onTimeout() {
+        Log.d(TAG, "VOSK: timeout");
     }
 
 
