@@ -1,5 +1,7 @@
 package com.example.wearableaidisplaymoverio.sensors;
 
+//thanks to https://github.com/aahlenst/android-audiorecord-sample/blob/master/src/main/java/com/example/audiorecord/BluetoothRecordActivity.java
+
 
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -22,6 +24,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -43,7 +47,9 @@ public class BluetoothMic {
      * size is determined by {@link AudioRecord#getMinBufferSize(int, int, int)} and depends on the
      * recording settings.
      */
-    private static final int BUFFER_SIZE_FACTOR = 10;
+    private final static float BUFFER_SIZE_SECONDS = 0.2f;
+    private static final int BUFFER_SIZE_FACTOR = 2;
+    private final int bufferSize;
 
     private boolean bluetoothAudio = false; //are we using local audio or bluetooth audio?
     private int retries = 0;
@@ -54,8 +60,8 @@ public class BluetoothMic {
     /**
      * Size of the buffer where the audio data is stored by Android
      */
-    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLING_RATE_IN_HZ,
-            CHANNEL_CONFIG, AUDIO_FORMAT) * BUFFER_SIZE_FACTOR;
+//    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLING_RATE_IN_HZ,
+//            CHANNEL_CONFIG, AUDIO_FORMAT) * BUFFER_SIZE_FACTOR;
 
     /**
      * Signals whether a recording is in progress (true) or not (false).
@@ -169,6 +175,8 @@ public class BluetoothMic {
 //    private Button bluetoothButton;
 
     public BluetoothMic(Context context, AudioChunkCallback chunkCallback) {
+        bufferSize = Math.round(SAMPLING_RATE_IN_HZ * BUFFER_SIZE_SECONDS);
+
         // need for audio sco, see mBroadcastReceiver
         mIsStarting = true;
 
@@ -209,27 +217,14 @@ public class BluetoothMic {
         // Depending on the device one might has to change the AudioSource, e.g. to DEFAULT
         // or VOICE_COMMUNICATION
 
-        recorder = new AudioRecord(MediaRecorder.AudioSource.DEFAULT,
-                SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE);
+        recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize * 2);
 
         recorder.startRecording();
 
         recordingInProgress.set(true);
 
         recordingThread = new Thread(new RecordingRunnable(), "Recording Thread");
-//        recordingThread = new Thread(() -> {
-//            final File file = new File(Environment.getExternalStorageDirectory(), "recording.pcm");
-//            final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
-//            while (recordingInProgress.get()) {
-//                int result = recorder.read(buffer, BUFFER_SIZE);
-//                if (result < 0) {
-////                    throw new RuntimeException("Reading of audio buffer failed: " +
-////                            getBufferReadFailureReason(result));
-//                }
-//                mChunkCallback.onSuccess(buffer);
-//                buffer.clear();
-//            }
-//        });
         recordingThread.start();
     }
 
@@ -291,17 +286,24 @@ public class BluetoothMic {
 
         @Override
         public void run() {
-            final File file = new File(Environment.getExternalStorageDirectory(), "recording.pcm");
-            final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
-            while (recordingInProgress.get()) {
-                int result = recorder.read(buffer, BUFFER_SIZE);
-                if (result < 0) {
-                    throw new RuntimeException("Reading of audio buffer failed: " +
-                            getBufferReadFailureReason(result));
+//            final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+            short[] short_buffer = new short[bufferSize];
+            ByteBuffer b_buffer = ByteBuffer.allocate(short_buffer.length * 2);
+
+                while (recordingInProgress.get()) {
+//                    int result = recorder.read(buffer, BUFFER_SIZE);
+                    // read the data into the buffer
+                    int result = recorder.read(short_buffer, 0, short_buffer.length);
+                    if (result < 0) {
+                        Log.d(TAG, "ERROR");
+                    }
+                    //convert short array to byte array
+                    b_buffer.order(ByteOrder.LITTLE_ENDIAN);
+                    b_buffer.asShortBuffer().put(short_buffer);
+                    //send to audio system
+                    mChunkCallback.onSuccess(b_buffer);
+                    b_buffer.clear();
                 }
-                mChunkCallback.onSuccess(buffer);
-                buffer.clear();
-            }
         }
 
         private String getBufferReadFailureReason(int errorCode) {
@@ -327,7 +329,7 @@ public class BluetoothMic {
     /**
      * Try to connect to audio headset in onTick.
      */
-    private CountDownTimer mCountDown = new CountDownTimer(10000, 1000)
+    private CountDownTimer mCountDown = new CountDownTimer(3000, 1000)
     {
 
         @SuppressWarnings("synthetic-access")
