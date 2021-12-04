@@ -15,6 +15,9 @@ import org.vosk.android.SpeechService;
 import org.vosk.android.SpeechStreamService;
 import org.vosk.android.StorageService;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -83,6 +86,13 @@ public class AudioSystem {
     //our actual socket connection object
     ServerSocket serverSocket;
     private static Socket socket;
+
+    //send audio to to other services in the app
+    PublishSubject audioObservable;
+
+    public AudioSystem(PublishSubject<byte []> audioObservable){
+        this.audioObservable = audioObservable;
+    }
 
 
     //send_queue of data to send through the socket
@@ -416,13 +426,11 @@ public class AudioSystem {
                     break;
                 }
                 try {
-                    int chunk_len = 2576;
+                    int chunk_len = 6416; //until we use a better protocol to specify start and end of packet, we need to to match the number in asg
                     byte [] raw_data = new byte[chunk_len];
                     input.readFully(raw_data, 0, chunk_len); // read the body
-                    byte [] plain_text_bytes = decryptBytes(raw_data);
-                    Log.d(TAG, "RECEIVED AUDIO DATA FROM ASG");
-                    Log.d(TAG, Arrays.toString(raw_data));
-                    Log.d(TAG, Arrays.toString(plain_text_bytes));
+                    byte [] plain_audio_bytes = decryptBytes(raw_data);
+                    audioObservable.onNext(plain_audio_bytes);
                 } catch (IOException e) {
                     e.printStackTrace();
                     break;
@@ -444,7 +452,6 @@ public class AudioSystem {
     }
 
     public byte [] decryptBytes(byte [] input) {
-        Log.d(TAG, "DECRYPTING WITH KEY: " + secretKey);
         byte [] decryptedBytes = AES.decrypt(input, secretKey);
         return decryptedBytes;
     }

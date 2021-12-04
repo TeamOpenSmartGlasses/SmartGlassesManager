@@ -38,6 +38,7 @@ import java.nio.ByteOrder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -62,7 +63,8 @@ public class AudioService extends Service {
     public static final String CHANNEL_ID = "AudioServiceChannel";
 
     //socket info
-    static String SERVER_IP = "3.23.98.82";
+    //static String SERVER_IP = "3.23.98.82";
+    static String SERVER_IP = "192.168.1.164";
     static int SERVER_PORT = 4449;
     private static int mConnectState = 0;
 
@@ -403,7 +405,6 @@ public class AudioService extends Service {
         Thread streamThread = new Thread(() -> {
             try {
                 Log.d(TAG, "Creating the buffer of size " + BUFFER_SIZE);
-                //byte[] buffer = new byte[BUFFER_SIZE];
                 int rate = AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_SYSTEM);
                 int bufferSize = AudioRecord.getMinBufferSize(RECORDING_RATE, CHANNEL, FORMAT);
                 short[] buffer = new short[bufferSize];
@@ -434,6 +435,7 @@ public class AudioService extends Service {
                     byte[] audio_bytes = b_buffer.array();
 
                     byte [] encrypted_audio_bytes = encryptBytes(audio_bytes);
+                    byte [] decrypted_audio_bytes = decryptBytes(encrypted_audio_bytes);
 
                     sendBytes(encrypted_audio_bytes);
                 }

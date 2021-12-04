@@ -23,7 +23,9 @@ package com.google.mediapipe.apps.wearableai;
 import java.util.concurrent.ExecutionException;
 import java.lang.InterruptedException;
 import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
+import com.google.mediapipe.apps.wearableai.speechrecvosk.SpeechRecVosk;
 
+import java.util.Arrays;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseDao;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseViewModel;
@@ -316,6 +318,7 @@ public class WearableAiAspService extends LifecycleService {
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
+    PublishSubject<byte []> audioObservable;
 
     //database
     private PhraseRepository mPhraseRepository = null;
@@ -342,6 +345,7 @@ public class WearableAiAspService extends LifecycleService {
 
     //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
      dataObservable = PublishSubject.create();
+     audioObservable = PublishSubject.create();
      Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
 
       //start websocket to ASG
@@ -493,8 +497,12 @@ public class WearableAiAspService extends LifecycleService {
     startProducer();
 
     //start audio streaming from ASG
-    audioSystem = new AudioSystem();
+    audioSystem = new AudioSystem(audioObservable);
     audioSystem.startAudio(this);
+
+
+    //start vosk
+    SpeechRecVosk speechRecVosk = new SpeechRecVosk(this, audioObservable);
   }
 
   public void startSocket(){
@@ -905,7 +913,7 @@ public class WearableAiAspService extends LifecycleService {
                         bitmapProducer.newFrame(bitmap);
 
                         //save image
-                        savePicture(raw_data);
+                        //savePicture(raw_data);
                     }
                 } else {
                     break;
@@ -1018,7 +1026,7 @@ public class WearableAiAspService extends LifecycleService {
         }
     }
 
-    private  void savePicture(byte[] data){
+    private void savePicture(byte[] data){
 //        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
         File pictureFileDir = getDir();
         //System.out.println("TRYING TO SAVE AT LOCATION: " + pictureFileDir.toString());
@@ -1278,6 +1286,7 @@ public class WearableAiAspService extends LifecycleService {
         } catch (JSONException e){
             e.printStackTrace();
     }
+
 
 
         //gets all phrases, parses out most recent phrase, and, print to debug
