@@ -21,9 +21,6 @@ public interface VoiceCommandDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(VoiceCommandEntity voiceCommand);
 
-    @Query("UPDATE VoiceCommandTable SET location = :location, address = :address WHERE id = :id")
-    void update(long id, Location location, String address);
-
     @Query("DELETE FROM VoiceCommandTable")
     void deleteAll();
 
@@ -36,7 +33,7 @@ public interface VoiceCommandDao {
     @Query("SELECT * from VoiceCommandTable WHERE timestamp BETWEEN :startTime AND :endTime ORDER BY timestamp DESC")
     List<VoiceCommandEntity> getVoiceCommandRange(Date startTime, Date endTime);
 
-    @Query("SELECT * from VoiceCommandTable WHERE command=:command ORDER BY timestamp DESC LIMIT 1")
+    @Query("SELECT * from VoiceCommandTable WHERE commandName=:command ORDER BY timestamp DESC LIMIT 1")
     VoiceCommandEntity getLatestCommand(String command);
 
     @Query("SELECT * FROM VoiceCommandTable WHERE ID = :id")

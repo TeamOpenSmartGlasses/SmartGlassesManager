@@ -12,7 +12,6 @@ import java.lang.InterruptedException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.Date;
 
 import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
 
@@ -45,7 +44,7 @@ public class FacialEmotionRepository {
         return future.get();
     }
 
-    public List<FacialEmotion> getFacialEmotionsRange(Date startTime, Date endTime) throws ExecutionException, InterruptedException {
+    public List<FacialEmotion> getFacialEmotionsRange(long startTime, long endTime) throws ExecutionException, InterruptedException {
 
         Callable<List<FacialEmotion>> callable = new Callable<List<FacialEmotion>>() {
             @Override

@@ -5,7 +5,6 @@ package com.google.mediapipe.apps.wearableai.database.voicecommand;
 //https://github.com/stairs1/memory-expansion-tools
 
 import android.app.Application;
-import android.location.Location;
 
 import androidx.lifecycle.LiveData;
 
@@ -64,12 +63,6 @@ public class VoiceCommandRepository {
             e.printStackTrace();
         }
         return rowId;
-    }
-
-    public void update(long id, Location location, String address) {
-        WearableAiRoomDatabase.databaseWriteExecutor.execute(() -> {
-            mVoiceCommandDao.update(id, location, address);
-        });
     }
 
     public LiveData<VoiceCommandEntity> getVoiceCommand(int id) {

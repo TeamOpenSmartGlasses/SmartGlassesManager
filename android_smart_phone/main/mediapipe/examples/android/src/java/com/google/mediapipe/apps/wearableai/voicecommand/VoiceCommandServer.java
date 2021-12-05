@@ -18,7 +18,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.voicecommand;
 
 import java.util.concurrent.ExecutionException;
 import java.lang.InterruptedException;
@@ -185,12 +185,13 @@ public class VoiceCommandServer {
     private Disposable dataSubscriber;
 
     //voice command stuff
+    private ArrayList<VoiceCommand> voiceCommands;
     private ArrayList<String> wakeWords;
-    private ArrayList<String> voiceCommands;
+    //private ArrayList<String> voiceCommands;
     private Context mContext;
 
     //database to save voice commmands to
-    private VoiceCommandRepository mVoiceCommandRepository;
+    public VoiceCommandRepository mVoiceCommandRepository;
 
     public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, Context context){
         mVoiceCommandRepository = voiceCommandRepository;
@@ -200,9 +201,11 @@ public class VoiceCommandServer {
         dataObservable = observable;
         dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
 
-        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
-        voiceCommands = new ArrayList<>(Arrays.asList(new String [] {"start conversation", "stop conversation", "affective search", "effective search"}));
+        //get all voice commands
+        voiceCommands = new ArrayList<VoiceCommand>();
+        voiceCommands.add(new MxtVoiceCommand());
 
+        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
     }
     
     public void setObservable(PublishSubject observable){
@@ -211,75 +214,99 @@ public class VoiceCommandServer {
 
     private void handleDataStream(JSONObject data){
         try {
-            Log.d(TAG, "PARSING VOICE COMMAND");
             String dataType = data.getString("type");
             if (dataType.equals("transcript")){
-                parseWakeWord(data);
+                parseTranscript(data);
             }
         } catch (JSONException e){
             e.printStackTrace();
         }
     }
 
-    private void parseWakeWord(JSONObject data){
-        Log.d(TAG, "PARSING WAKE WORD");
+    private void parseTranscript(JSONObject data){
         String transcript = "";
+        long transcriptTime = 0l;
         try{
             transcript = data.getString("transcript").toLowerCase();
+            transcriptTime = data.getLong("time");
         } catch (JSONException e){
             e.printStackTrace();
         }
-        for (int i = 0; i < wakeWords.size(); i++){
-            int wakeWordLocation = transcript.indexOf(wakeWords.get(i));
-            if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
-                parseCommand(transcript.substring(0, wakeWordLocation), wakeWords.get(i), transcript.substring(wakeWordLocation + wakeWords.get(i).length()));
-            }
-        }
-    }
 
-    private void parseCommand(String preArgs, String wakeWord, String rest){
-        Log.d(TAG, "GOT WAKE WORD: " + wakeWord);
-        Log.d(TAG, "PARSING rest of string: " + rest);
+        //loop through all voice commands to see if any of their wake words match
         for (int i = 0; i < voiceCommands.size(); i++){
-            int commandLocation = rest.indexOf(voiceCommands.get(i));
-            if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
-                runCommand(preArgs, wakeWord, voiceCommands.get(i), rest.substring(commandLocation + voiceCommands.get(i).length()));
+            //check if any of the wake words match
+            for (int j = 0; j < voiceCommands.get(i).getWakeWords().size(); j++){
+                String currWakeWord = voiceCommands.get(i).getWakeWords().get(j);
+                int wakeWordLocation = transcript.indexOf(currWakeWord);
+                if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
+                    //we found a command, now get its arguments and run it
+                    String preArgs = transcript.substring(0, wakeWordLocation);
+                    String postArgs = transcript.substring(wakeWordLocation + currWakeWord.length());
+                    voiceCommands.get(i).runCommand(this, preArgs, currWakeWord, j, postArgs, transcriptTime);
+                }
+            }
+        }
+
+        //loop through all global wake words to see if any match
+        for (int i = 0; i < wakeWords.size(); i++){
+            String currWakeWord = wakeWords.get(i);
+            int wakeWordLocation = transcript.indexOf(currWakeWord);
+            if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
+                //we found a command, now get its arguments and run it
+                String preArgs = transcript.substring(0, wakeWordLocation);
+                String rest = transcript.substring(wakeWordLocation);
+                parseCommand(preArgs, currWakeWord, rest, transcriptTime);
+            }
+
+        }
+    }
+
+    private void parseCommand(String preArgs, String wakeWord, String rest, long transcriptTime){
+        for (int i = 0; i < voiceCommands.size(); i++){
+            for (int j = 0; j < voiceCommands.get(i).getCommands().size(); j++){
+                String currCommand = voiceCommands.get(i).getCommands().get(j);
+                int commandLocation = rest.indexOf(currCommand);
+                if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
+                    String postArgs = rest.substring(commandLocation + currCommand.length());
+                    voiceCommands.get(i).runCommand(this, preArgs, wakeWord, j, postArgs, transcriptTime);
+                }
             }
         }
     }
 
-    private void runCommand(String preArgs, String wakeWord, String command, String postArgs){
-        Log.d(TAG, "RUN COMMAND with postARgs:" + postArgs);
-        //below is how we WANT to call commands, by creating command classes and calling their 'run' functions here... but for sake of time I am doing hack below
-//        for (int i = 0; i < commandFuncs.size(); i++){
-//            if (command.equals(commandFuncs[i])){ //if the substring "wake word" is in the larger string "transcript"
-//                //commandFuncs[i].runCommand(wakeWord, voiceCommands[i], commandLocation + voiceCommands[i].length());
-//            }
-//        }
+//    private void runCommand(String preArgs, String wakeWord, String command, String postArgs){
+//        Log.d(TAG, "RUN COMMAND with postARgs:" + postArgs);
+//        //below is how we WANT to call commands, by creating command classes and calling their 'run' functions here... but for sake of time I am doing hack below
+////        for (int i = 0; i < commandFuncs.size(); i++){
+////            if (command.equals(commandFuncs[i])){ //if the substring "wake word" is in the larger string "transcript"
+////                //commandFuncs[i].runCommand(wakeWord, voiceCommands[i], commandLocation + voiceCommands[i].length());
+////            }
+////        }
+////
+//        //save command
+//        VoiceCommandCreator.create(preArgs, wakeWord, command, postArgs, "transcript_ASG", mContext, mVoiceCommandRepository);
+//         try{
+//            VoiceCommandEntity latestCommand = mVoiceCommandRepository.getLatestCommand("start conversation");
+//            Log.d(TAG, "getLatestCommand output on 'start conversation' command");
+//            Log.d(TAG, latestCommand.getCommand());
+//            Log.d(TAG, latestCommand.getWakeWord());
+//            Log.d(TAG, latestCommand.getPostArgs());
+//         } catch (ExecutionException | InterruptedException e) {
+//             e.printStackTrace();
+//         }
 //
-        //save command
-        VoiceCommandCreator.create(preArgs, wakeWord, command, postArgs, "transcript_ASG", mContext, mVoiceCommandRepository);
-         try{
-            VoiceCommandEntity latestCommand = mVoiceCommandRepository.getLatestCommand("start conversation");
-            Log.d(TAG, "getLatestCommand output on 'start conversation' command");
-            Log.d(TAG, latestCommand.getCommand());
-            Log.d(TAG, latestCommand.getWakeWord());
-            Log.d(TAG, latestCommand.getPostArgs());
-         } catch (ExecutionException | InterruptedException e) {
-             e.printStackTrace();
-         }
-
-
-
-        //run command finder
-        if (command.contains("start conversation")){ //if the substring "wake word" is in the larger string "transcript"
-            convoTag(true); //this is precicely where it gets hacky, this should be generic and running "run"function in voice command class
-        } else if (command.contains("stop conversation")){
-            convoTag(false);
-        } else if ((command.contains("effective search")) || (command.contains("affective search"))){
-            affectiveSearch(postArgs);
-        }
-    }
+//
+//
+//        //run command finder
+//        if (command.contains("start conversation")){ //if the substring "wake word" is in the larger string "transcript"
+//            convoTag(true); //this is precicely where it gets hacky, this should be generic and running "run"function in voice command class
+//        } else if (command.contains("stop conversation")){
+//            convoTag(false);
+//        } else if ((command.contains("effective search")) || (command.contains("affective search"))){
+//            affectiveSearch(postArgs);
+//        }
+//    }
 
     private void convoTag(boolean start){
         if (start){

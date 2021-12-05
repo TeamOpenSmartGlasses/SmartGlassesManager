@@ -27,6 +27,8 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Arrays;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 //rxjava
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -45,12 +47,18 @@ public class SpeechRecVosk implements RecognitionListener {
     private PipedOutputStream audioAdderStreamVosk;
     private InputStream audioSenderStreamVosk;
 
+    //receive/send data stream
+    PublishSubject<JSONObject> dataObservable;
     //receive audio stream
     PublishSubject<byte []> audioObservable;
 
-    public SpeechRecVosk(Context context, PublishSubject<byte []> audioObservable){
+    public SpeechRecVosk(Context context, PublishSubject<byte []> audioObservable, PublishSubject<JSONObject> dataObservable){
         mContext = context;
 
+        //receive/send data
+        this.dataObservable = dataObservable;
+
+        //receive audio
         this.audioObservable = audioObservable;
         Disposable audioSub = this.audioObservable.subscribe(i -> handleAudioStream(i));
 
@@ -155,6 +163,22 @@ public class SpeechRecVosk implements RecognitionListener {
     @Override
     public void onResult(String hypothesis) {
         Log.d(TAG, "VOSK: " + hypothesis + "\n");
+        //https://github.com/alphacep/vosk-android-demo/issues/81
+        long transcriptTime = System.currentTimeMillis();
+
+        //send transcript to other services in app
+        try {
+            //why the absolute <redacted> does Vosk return a string with a dictionary like format here instead of a proper object or just the transcript? Below, we do a disgusting parsing of Vosk's retarded output
+            JSONObject voskResponse = new JSONObject(hypothesis);
+            String transcript = voskResponse.getString("text");
+            JSONObject transcriptObj = new JSONObject();
+            transcriptObj.put("type", "transcript");
+            transcriptObj.put("transcript", transcript);
+            transcriptObj.put("time", transcriptTime);
+            dataObservable.onNext(transcriptObj);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
     @Override

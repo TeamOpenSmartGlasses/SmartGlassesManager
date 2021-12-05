@@ -12,8 +12,6 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import java.util.Date;
-
 @Entity(tableName = "PhraseTable")
 public class Phrase {
 
@@ -27,7 +25,7 @@ public class Phrase {
 
     @NonNull
     @ColumnInfo(name = "timestamp")
-    private Date timestamp;
+    private long timestamp;
 
     @NonNull
     @ColumnInfo(name = "medium")
@@ -39,7 +37,7 @@ public class Phrase {
     @ColumnInfo(name = "address")
     private String address;
 
-    public Phrase(@NonNull String phrase, @NonNull Date timestamp, @NonNull String medium, Location location, String address) {
+    public Phrase(@NonNull String phrase, @NonNull long timestamp, @NonNull String medium, Location location, String address) {
         this.phrase = phrase;
         this.timestamp = timestamp;
         this.medium = medium;
@@ -48,14 +46,14 @@ public class Phrase {
     }
 
     @Ignore
-     public Phrase(@NonNull String phrase, @NonNull Date timestamp, @NonNull String medium){
+     public Phrase(@NonNull String phrase, @NonNull long timestamp, @NonNull String medium){
         this.phrase = phrase;
         this.timestamp = timestamp;
         this.medium = medium;
      }
 
     public String getPhrase(){return this.phrase;}
-    public Date getTimestamp(){return this.timestamp;}
+    public long getTimestamp(){return this.timestamp;}
     public String getMedium(){return this.medium;}
     public Location getLocation(){return this.location;}
     public void setLocation(Location location){this.location = location;}

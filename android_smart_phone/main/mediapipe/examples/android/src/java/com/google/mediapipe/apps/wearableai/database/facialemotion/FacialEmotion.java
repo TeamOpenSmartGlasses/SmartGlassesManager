@@ -8,8 +8,6 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import java.util.Date;
-
 @Entity(tableName = "FacialEmotionTable")
 public class FacialEmotion {
 
@@ -23,7 +21,7 @@ public class FacialEmotion {
 
     @NonNull
     @ColumnInfo(name = "timestamp")
-    private Date timestamp;
+    private long timestamp;
 
     @NonNull
     @ColumnInfo(name = "medium")
@@ -35,7 +33,7 @@ public class FacialEmotion {
     @ColumnInfo(name = "address")
     private String address;
 
-    public FacialEmotion(@NonNull String facialEmotion, @NonNull Date timestamp, @NonNull String medium, Location location, String address) {
+    public FacialEmotion(@NonNull String facialEmotion, @NonNull long timestamp, @NonNull String medium, Location location, String address) {
         this.facialEmotion = facialEmotion;
         this.timestamp = timestamp;
         this.medium = medium;
@@ -44,14 +42,14 @@ public class FacialEmotion {
     }
 
     @Ignore
-     public FacialEmotion(@NonNull String facialEmotion, @NonNull Date timestamp, @NonNull String medium){
+     public FacialEmotion(@NonNull String facialEmotion, @NonNull long timestamp, @NonNull String medium){
         this.facialEmotion = facialEmotion;
         this.timestamp = timestamp;
         this.medium = medium;
      }
 
     public String getFacialEmotion(){return this.facialEmotion;}
-    public Date getTimestamp(){return this.timestamp;}
+    public long getTimestamp(){return this.timestamp;}
     public String getMedium(){return this.medium;}
     public Location getLocation(){return this.location;}
     public void setLocation(Location location){this.location = location;}

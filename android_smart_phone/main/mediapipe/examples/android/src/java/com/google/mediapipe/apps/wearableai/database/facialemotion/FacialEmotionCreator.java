@@ -10,7 +10,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import android.util.Log;
@@ -25,7 +24,7 @@ public class FacialEmotionCreator {
             get location and update the data with location results whenever they arrive.
          */
 
-        Date time = new Date();
+        long time = System.currentTimeMillis();
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         FacialEmotion facialEmotion = new FacialEmotion(faceEmotion, time, medium);
         long id = repo.insert(facialEmotion);  // This insert blocks until database write has completed

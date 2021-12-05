@@ -20,44 +20,17 @@ import java.util.Locale;
 import android.util.Log;
 
 public class VoiceCommandCreator {
-    public static final String LOG_TAG = VoiceCommandCreator.class.getName();
+    public static final String TAG = "WearableAi_VoiceCommandCreator";
 
-    public static void create(String preArgs, String wakeWord, String command, String postArgs, String medium, Context context, VoiceCommandRepository repo) {
+    public static void create(String commandName, String commandSpoken, String wakeWord, boolean isMaster, String argKey, String argValue, long timestamp, String medium, VoiceCommandRepository repo) {
         /*
         Location may return right away or in a minute, null or not
         Because of this, insert each voicecommand without location synchronously, and after getting id back
             get location and update the voicecommand with location results whenever they arrive.
          */
 
-        Date time = new Date();
-        Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-        VoiceCommandEntity voiceCommand = new VoiceCommandEntity(preArgs, wakeWord, command, postArgs, time, medium);
+        VoiceCommandEntity voiceCommand = new VoiceCommandEntity(commandName, commandSpoken, wakeWord, isMaster, argKey, argValue, timestamp, medium);
         long id = repo.insert(voiceCommand);  // This insert blocks until database write has completed
-
-        // Using getLastLocation is not always totally accurate. Good to update this at some point.
-        FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-        Task<Location> task = fusedLocationClient.getLastLocation();
-        task.addOnSuccessListener(location -> {
-            if(location != null) {
-                String address = null;
-                voiceCommand.setLocation(location);
-
-                List<Address> addresses = null;
-                try {
-                    addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                    if(addresses.size() > 0){
-                        address = addresses.get(0).getAddressLine(0);
-                        voiceCommand.setAddress(address);
-                    }
-                    else {
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                repo.update(id, location, address);
-            }
-            else{
-            }
-        });
+        Log.d(TAG, "Saved voice command to database");
     }
 }

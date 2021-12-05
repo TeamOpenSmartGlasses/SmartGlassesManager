@@ -14,7 +14,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import android.util.Log;
@@ -29,7 +28,7 @@ public class PhraseCreator {
             get location and update the phrase with location results whenever they arrive.
          */
 
-        Date time = new Date();
+        long time = System.currentTimeMillis();
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         Phrase phrase = new Phrase(words, time, medium);
         long id = repo.insert(phrase);  // This insert blocks until database write has completed

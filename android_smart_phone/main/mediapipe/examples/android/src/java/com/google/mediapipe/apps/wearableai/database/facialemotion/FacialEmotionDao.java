@@ -7,7 +7,6 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
-import java.util.Date;
 
 import java.util.List;
 
@@ -30,7 +29,7 @@ public interface FacialEmotionDao {
     List<FacialEmotion> getAllFacialEmotionsSnapshot();
 
     @Query("SELECT * from FacialEmotionTable WHERE timestamp BETWEEN :startTime AND :endTime ORDER BY timestamp DESC")
-    List<FacialEmotion> getFacialEmotionsRange(Date startTime, Date endTime);
+    List<FacialEmotion> getFacialEmotionsRange(long startTime, long endTime);
 
     @Query("SELECT * FROM FacialEmotionTable WHERE ID = :id")
     LiveData<FacialEmotion> get_by_id(int id);

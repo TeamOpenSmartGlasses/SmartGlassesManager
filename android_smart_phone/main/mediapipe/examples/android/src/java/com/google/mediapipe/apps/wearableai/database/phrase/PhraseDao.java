@@ -12,7 +12,6 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
-import java.util.Date;
 import java.util.List;
 
 @Dao
@@ -37,8 +36,8 @@ public interface PhraseDao {
     LiveData<Phrase> get_by_id(int id);
     
     @Query("SELECT * from PhraseTable WHERE timestamp BETWEEN :startTime AND :endTime ORDER BY timestamp DESC")
-    List<Phrase> getPhraseRange(Date startTime, Date endTime);
+    List<Phrase> getPhraseRange(long startTime, long endTime);
 
     @Query("SELECT * FROM PhraseTable ORDER BY ABS(:timestamp - timestamp) LIMIT 1")
-    Phrase getByNearestTimestamp(Date timestamp);
+    Phrase getByNearestTimestamp(long timestamp);
 }
