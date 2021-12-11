@@ -14,4 +14,5 @@
     <string name="data_loading">...</string>
     <string name="cam_on">START</string>
     <string name="cam_off">STOP</string>
+    <string name="asg_socket">asg_socket</string>
 </resources>

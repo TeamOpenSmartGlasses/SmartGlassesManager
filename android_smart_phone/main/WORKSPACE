@@ -325,7 +325,7 @@ http_archive(
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@rules_jvm_external//:specs.bzl", "maven")
 
-LIFECYCLE_VERSION = "2.2.0-rc03"
+LIFECYCLE_VERSION = "2.2.0"
 ROOM_VERSION = "2.2.3"
 
 # Important: there can only be one maven_install rule. Add new maven deps here.
@@ -343,7 +343,18 @@ maven_install(
         "androidx.camera:camera-lifecycle:1.0.0-beta10",
         "androidx.constraintlayout:constraintlayout:1.1.3",
         "androidx.core:core:aar:1.1.0-rc03",
-        "androidx.legacy:legacy-support-v4:aar:1.0.0",
+        #"androidx.legacy:legacy-support-v4:aar:1.0.0",
+       maven.artifact(
+            group = "androidx.legacy",
+            artifact = "legacy-support-v4",
+            version = "1.0.0",
+            exclusions = [
+                maven.exclusion(
+                    group = "androidx.lifecycle",
+                    artifact = "lifecycle-viewmodel"
+                ),
+            ]
+        ),
         "androidx.recyclerview:recyclerview:aar:1.1.0-beta02",
         "androidx.test.espresso:espresso-core:3.1.1",
         "com.github.bumptech.glide:glide:4.11.0",
@@ -367,7 +378,7 @@ maven_install(
         "androidx.sqlite:sqlite:2.0.1",
         "androidx.lifecycle:lifecycle-extensions:" + LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-livedata-core:" + LIFECYCLE_VERSION,
-        "androidx.lifecycle:lifecycle-viewmodel:" + LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-viewmodel:2.2.0",
         "androidx.lifecycle:lifecycle-service:" + LIFECYCLE_VERSION,
 
         "androidx.room:room-runtime:" + ROOM_VERSION,
@@ -382,6 +393,12 @@ maven_install(
         "net.java.dev.jna:jna:aar:5.8.0",
         "com.alphacephei:vosk-android:0.3.34",
         "com.alphacephei:vosk-model-en:0.3.34",
+
+        #navigation
+        "androidx.navigation:navigation-fragment:2.0.0",
+        "androidx.navigation:navigation-ui:2.0.0",
+        "androidx.navigation:navigation-runtime:2.0.0",
+        "androidx.fragment:fragment:1.2.0",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",
