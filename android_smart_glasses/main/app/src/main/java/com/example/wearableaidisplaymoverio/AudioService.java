@@ -32,7 +32,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.InvalidKeyException;
@@ -51,8 +53,13 @@ import javax.crypto.ShortBufferException;
 import javax.crypto.spec.SecretKeySpec;
 
 public class AudioService extends Service {
+    public static final String ACTION_START_COMMS = "ACTION_START_COMMS";
+    public static final String ACTION_NEW_IP = "ACTION_NEW_IP";
+
     //encryption key - TEMPORARILY HARD CODED - change to local storage, user can set
     private String secretKey;
+
+    private static int socketTimeout = 10000;
 
     private long lastAudioUpdate = 0;
     private int audioInterval = 3000;
@@ -64,7 +71,7 @@ public class AudioService extends Service {
 
     //socket info
     //static String SERVER_IP = "3.23.98.82";
-    static String SERVER_IP = "192.168.1.164";
+    static String SERVER_IP;
     static int SERVER_PORT = 4449;
     private static int mConnectState = 0;
 
@@ -102,6 +109,31 @@ public class AudioService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if (intent != null){
+            String action = intent.getAction();
+            switch (action) {
+                case ACTION_START_COMMS:
+                    SERVER_IP = intent.getExtras().getString("address_to_send");
+                    //start the socket thread which will send the raw audio data
+                    startSocket();
+
+                    // do heavy work on a background thread
+                    //StartRecorder();
+
+                    //start audio from bluetooth headset
+                    BluetoothMic blutoothAudio = new BluetoothMic(this, new AudioChunkCallback(){
+                        @Override
+                        public void onSuccess(ByteBuffer chunk){
+                            receiveChunk(chunk);
+                        }
+                    });
+                    break;
+                case ACTION_NEW_IP:
+                    SERVER_IP = intent.getExtras().getString("address_to_send");
+            }
+        }
+
         return START_NOT_STICKY;
     }
 
@@ -167,21 +199,6 @@ public class AudioService extends Service {
 //        mAudioManager.setMode(mAudioManager.MODE_NORMAL);
 
 
-        //start the socket thread which will send the raw audio data
-        startSocket();
-
-        // do heavy work on a background thread
-        //StartRecorder();
-
-        //start audio from bluetooth headset
-        BluetoothMic blutoothAudio = new BluetoothMic(this, new AudioChunkCallback(){
-            @Override
-            public void onSuccess(ByteBuffer chunk){
-                receiveChunk(chunk);
-            }
-        });
-
-        //stopSelf();
 
     }
 
@@ -316,9 +333,10 @@ public class AudioService extends Service {
     static class SocketThread implements Runnable {
         public void run() {
             try {
-                System.out.println("TRYING TO CONNECT AudioService server");
-                socket = new Socket(SERVER_IP, SERVER_PORT);
-//                lastHeartbeatTime = System.currentTimeMillis();
+                System.out.println("TRYING TO CONNECT AudioService server at IP: " + SERVER_IP);
+                socket = new Socket();
+                //socket.setSoTimeout(3000);
+                socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT), socketTimeout);
                 System.out.println("AudioService server CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 mConnectState = 2;
@@ -334,11 +352,11 @@ public class AudioService extends Service {
                         e.printStackTrace();
                     }
                     Log.d(TAG, "send JOINED");
-                    SendThread =  new Thread(new AudioService.SendThread());
+                    SendThread = new Thread(new AudioService.SendThread());
                     SendThread.start();
                 }
             } catch (IOException e) {
-                Log.d(TAG, "Connection Refused on socket");
+                Log.d(TAG, "Connection Refused on socket or timeout occured");
                 e.printStackTrace();
                 mConnectState = 0;
             }

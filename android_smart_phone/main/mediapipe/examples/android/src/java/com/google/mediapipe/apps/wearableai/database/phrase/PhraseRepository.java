@@ -86,6 +86,21 @@ public class PhraseRepository {
         return future.get();
     }
 
+    public List<Phrase> getPhrases(List<Long> ids) throws ExecutionException, InterruptedException {
+
+        Callable<List<Phrase>> callable = new Callable<List<Phrase>>() {
+            @Override
+            public List<Phrase> call() throws Exception {
+                return mPhraseDao.getPhrases(ids);
+            }
+        };
+
+        Future<List<Phrase>> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        return future.get();
+    }
+
+
 
     public LiveData<Phrase> getPhrase(int id) {
         return mPhraseDao.get_by_id(id);

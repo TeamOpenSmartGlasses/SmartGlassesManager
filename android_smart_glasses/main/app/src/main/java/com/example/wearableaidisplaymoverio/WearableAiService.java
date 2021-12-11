@@ -1,8 +1,11 @@
 package com.example.wearableaidisplaymoverio;
 
 import android.Manifest;
+import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -83,6 +86,8 @@ public class WearableAiService extends HiddenCameraService {
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
 
+    private boolean audioSocketStarted = false;
+
     //image stream handling
     private int img_count = 0;
     private long last_sent_time = 0;
@@ -131,14 +136,19 @@ public class WearableAiService extends HiddenCameraService {
         dataObservable = PublishSubject.create();
         Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
 
+        //setup our connection to the ASP
+        asp_client_socket = ASPClientSocket.getInstance(this);
+        asp_client_socket.setObservable(dataObservable);
+
         //first we have to listen for the UDP broadcast from the compute module so we know the IP address to connect to. Once we get that , we will connect to it on a socket and starting sending pictures
+        //this will start the asp socket when ASP address is received and ASP is not connected. If ASP socket already running, it will update the ASP address (useful when ASP IP changes, like on new wifi)
         Thread adv_thread = new Thread(new ReceiveAdvThread());
         adv_thread.start();
 
         //start glbox thread
         //then start a thread to connect to the glbox
-        Thread glbox_thread = new Thread(new StartGlbox());
-        glbox_thread.start();
+//        Thread glbox_thread = new Thread(new StartGlbox());
+//        glbox_thread.start();
 
         mContext = this;
 
@@ -155,9 +165,11 @@ public class WearableAiService extends HiddenCameraService {
 
     class ReceiveAdvThread extends Thread {
         public void run() {
-            //first get the ASP IP from its UDP broadcast, then start the ASP object
-            receiveUdpBroadcast();
-            asp_starter();
+            //first get the ASP IP from its UDP broadcast, then we can start the ASP
+            while (true){
+                receiveUdpBroadcast();
+            }
+
         }
     }
 
@@ -178,41 +190,40 @@ public class WearableAiService extends HiddenCameraService {
             socket.setBroadcast(true);
 
             while (true) {
-                Log.i(TAG, "Ready to receive broadcast packets!");
-
                 //Receive a packet
                 byte[] recvBuf = new byte[2600];
                 DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
                 socket.receive(packet);
 
                 //Packet received
-                Log.i(TAG, "Packet received from: " + asp_address);
                 String data = new String(packet.getData()).trim();
-                Log.i(TAG, "Packet received; data: " + data);
                 if (data.equals(asp_adv_key)) {
                     asp_address = packet.getAddress().getHostAddress();
-                    Log.d(TAG, "GOD ASP ADDRESS" + asp_address);
-                    //start socket and camera on main service thread
-                    // Get a handler that can be used to post to the main thread
-//                    Handler mainHandler = new Handler(mContext.getMainLooper());
-//                    Runnable myStarterRunnable = new Runnable() {
-//                        @Override
-//                        public void run() { asp_starter(); }
-//                    };
-//                    mainHandler.post(myStarterRunnable);
-                    return;
+                    asp_client_socket.setIp(asp_address);
+                    sendAudioServiceNewIp(asp_address);
+                    asp_comms_starter();
                 }
-//                if (asp_address != null){
-//                    break; //if not true, listen for the next packet
-//                }
             }
         } catch (IOException ex) {
             Log.d(TAG, "Exception: " + ex);
         }
     }
 
-    public void asp_starter() {
-        startAspSocket();
+    public void asp_comms_starter() {
+        //start comms to ASP
+        if (!asp_client_socket.getSocketStarted()) {
+            asp_client_socket.startSocket();
+        }
+        if (!asp_client_socket.getWebSocketStarted()) {
+            //asp_client_socket.startWebSocket();
+        }
+
+        //then start the audio system which will send audio to the asp
+        //start the audio service
+        if (!audioSocketStarted) {
+            audioSocketStarted = true;
+            StartAudioService(asp_address);
+        }
     }
 
 
@@ -368,15 +379,6 @@ public class WearableAiService extends HiddenCameraService {
         stopSelf();
     }
 
-    private void startAspSocket() {
-        //create client socket and setup socket
-        asp_client_socket = ASPClientSocket.getInstance(this);
-        asp_client_socket.setObservable(dataObservable);
-        asp_client_socket.setIp(asp_address);
-        asp_client_socket.startSocket();
-        asp_client_socket.startWebSocket();
-    }
-
     private void startGlboxSocket() {
         //create client socket and setup socket
         System.out.println("STARTING GLBOX SOCKET");
@@ -519,5 +521,72 @@ public class WearableAiService extends HiddenCameraService {
 //            e.printStackTrace();
 //        }
     }
+    //Audio recording service - maybe to be moved into WearableAI service
+    public void StartAudioService(String address_to_send) {
+        Log.i(TAG, "Starting the Audio Service");
+
+//        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
+//        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+//        ContextCompat.startForegroundService(this, serviceIntent);
+        Intent audioService = new Intent(this, AudioService.class);
+        audioService.setAction(AudioService.ACTION_START_COMMS);
+        audioService.putExtra("address_to_send", address_to_send);
+        startService(audioService);
+        // Bind to that service
+        Intent intent = new Intent(this, AudioService.class);
+        bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
+    }
+
+    public void StopAudioService() {
+        Log.i(TAG, "Stopping the foreground-thread");
+
+        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
+        this.getApplicationContext().stopService(serviceIntent);
+    }
+
+    public void updateAudioServiceIp(String ip) {
+        Log.i(TAG, "Stopping the foreground-thread");
+
+        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
+        this.getApplicationContext().stopService(serviceIntent);
+    }
+
+       public void sendAudioServiceNewIp(String message) {
+        if (!isMyServiceRunning(AudioService.class)) return;
+        Intent mIntent = new Intent(this, AudioService.class);
+        mIntent.setAction(AudioService.ACTION_NEW_IP);
+        mIntent.putExtra("address_to_send", message);
+        this.startService(mIntent);
+   }
+
+    //check if service is running
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection audio_service_connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            AudioService.LocalBinder binder = (AudioService.LocalBinder) service;
+//            mService = binder.getService();
+//            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+//            mBound = false;
+        }
+    };
 }
 

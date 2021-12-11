@@ -91,6 +91,7 @@ android_binary(
     multidex = "native",
     deps = [
         "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:wearableai_main",
+        #"//mediapipe/examples/android/src/java/com/google/mediapipe/apps/vosk_22_lgraph:vosk_models",
     ],
     #visibility = [":__subpackages__"],
     visibility = ["//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:__subpackages__"],
@@ -136,6 +137,10 @@ android_library(
             "@maven//:com_alphacephei_vosk_android",
             "@maven//:com_alphacephei_vosk_model_en",
             "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai/jniLibs:jna_libs",
+            "@maven//:androidx_navigation_navigation_fragment",
+            "@maven//:androidx_navigation_navigation_ui",
+            "@maven//:androidx_navigation_navigation_runtime",
+            "@maven//:androidx_fragment_fragment",
         ],
     assets = [
         "//mediapipe/graphs/wearable_ai_gpu:wearable_ai_gpu.binarypb",

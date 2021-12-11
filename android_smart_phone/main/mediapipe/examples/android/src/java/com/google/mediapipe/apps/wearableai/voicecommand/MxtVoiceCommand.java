@@ -19,21 +19,21 @@ class MxtVoiceCommand extends VoiceCommand {
     }
 
     @Override
-    public boolean runCommand(VoiceCommandServer vcServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime){
+    public boolean runCommand(VoiceCommandServer vcServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime, long transcriptId){
         Log.d(TAG, "Running command: " + this.commandList.get(command)); 
 
         //parse command
         String commandSpoken = this.commandList.get(command);
 
         //save master command
-        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, "asg_transcript", vcServer.mVoiceCommandRepository);
+        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
 
         //find tags and return a list of the tags that were found
         ArrayList<String> foundTags = this.parseKeyValueArgs(postArgs, "tag");
         for (int i = 0; i < foundTags.size(); i++){
             //save tag command
             Log.d(TAG, "Saving tag: " + foundTags.get(i));
-            VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, "asg_transcript", vcServer.mVoiceCommandRepository);
+            VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
         }
 
         return true;
