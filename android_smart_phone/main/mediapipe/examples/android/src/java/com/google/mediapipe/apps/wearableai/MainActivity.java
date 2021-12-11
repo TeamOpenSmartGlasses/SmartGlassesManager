@@ -20,6 +20,8 @@
 
 package com.google.mediapipe.apps.wearableai;
 
+import androidx.navigation.NavController;
+
 import com.google.mediapipe.apps.wearableai.LandmarksTranslator;
 import com.google.mediapipe.apps.wearableai.SocialInteraction;
 import com.google.mediapipe.apps.wearableai.WearableAiAspService;
@@ -156,24 +158,24 @@ public class MainActivity extends AppCompatActivity {
     //set main view
     setContentView(R.layout.activity_main);
 
-      //start wearable ai service
-      startWearableAiService();
+    //start wearable ai service
+    startWearableAiService();
 
-      final Button killServiceButton = findViewById(R.id.kill_wearableai_service);
-         killServiceButton.setOnClickListener(new View.OnClickListener() {
-             public void onClick(View v) {
-                 // Code here executes on main thread after user presses button
-                 stopWearableAiService();
-             }
-         });
-
-      final Button runAffectiveMemoryButton = findViewById(R.id.run_affective_mem);
-         runAffectiveMemoryButton.setOnClickListener(new View.OnClickListener() {
-             public void onClick(View v) {
-                 // Code here executes on main thread after user presses button
-                 sendWearableAiServiceMessage(WearableAiAspService.ACTION_RUN_AFFECTIVE_MEM);
-             }
-         });
+//      final Button killServiceButton = findViewById(R.id.kill_wearableai_service);
+//         killServiceButton.setOnClickListener(new View.OnClickListener() {
+//             public void onClick(View v) {
+//                 // Code here executes on main thread after user presses button
+//                 stopWearableAiService();
+//             }
+//         });
+//
+//      final Button runAffectiveMemoryButton = findViewById(R.id.run_affective_mem);
+//         runAffectiveMemoryButton.setOnClickListener(new View.OnClickListener() {
+//             public void onClick(View v) {
+//                 // Code here executes on main thread after user presses button
+//                 sendWearableAiServiceMessage(WearableAiAspService.ACTION_RUN_AFFECTIVE_MEM);
+//             }
+//         });
 
 //        // Check if user has given permission to record audio, init the model after permission is granted
 //        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
@@ -239,5 +241,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
+
 
 }

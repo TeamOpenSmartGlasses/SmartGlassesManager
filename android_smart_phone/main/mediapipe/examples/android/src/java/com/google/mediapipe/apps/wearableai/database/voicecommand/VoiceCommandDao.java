@@ -15,6 +15,8 @@ import java.util.Date;
 
 import java.util.List;
 
+import com.google.mediapipe.apps.wearableai.database.phrase.Phrase;
+
 @Dao
 public interface VoiceCommandDao {
 
@@ -38,4 +40,13 @@ public interface VoiceCommandDao {
 
     @Query("SELECT * FROM VoiceCommandTable WHERE ID = :id")
     LiveData<VoiceCommandEntity> get_by_id(int id);
+
+    @Query("SELECT * from VoiceCommandTable WHERE commandName=:commandName AND isMaster=:isMaster ORDER BY timestamp DESC")
+    LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster);
+
+    @Query("SELECT * FROM PhraseTable WHERE id IN (" +
+        "SELECT transcriptId from VoiceCommandTable WHERE commandName=:commandName AND isMaster=:isMaster" +
+    ") ORDER BY timestamp DESC")
+    LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster);
+
 }

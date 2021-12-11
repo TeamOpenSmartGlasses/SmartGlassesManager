@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_main_ui">
+
+    <fragment
+        android:id="@+id/nav_main_ui"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MainUi"
+        tools:layout="@layout/main_ui_fragment"
+        android:label="Home Main Page" >
+        <action
+            android:id="@+id/action_nav_main_ui_to_nav_memory_tools"
+            app:destination="@id/nav_memory_tools" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_memory_tools"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MemoryToolsUi"
+        tools:layout="@layout/memory_tools_fragment"
+        android:label="Memory Tools" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_main_ui"
+            app:destination="@id/nav_main_ui" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_all_transcripts"
+        android:name="com.google.mediapipe.apps.wearableai.ui.AllTranscriptsUi"
+        tools:layout="@layout/all_transcripts_fragment"
+        android:label="All Transcripts" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_all_transcripts"
+            app:destination="@id/nav_all_transcripts" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_mxt_cache"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MxtCacheUi"
+        tools:layout="@layout/mxt_cache_fragment"
+        android:label="MXT Cache" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_mxt_cache"
+            app:destination="@id/nav_mxt_cache" />
+    </fragment>
+
+
+</navigation>

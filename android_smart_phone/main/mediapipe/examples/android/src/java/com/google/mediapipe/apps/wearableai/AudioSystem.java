@@ -193,16 +193,17 @@ public class AudioSystem {
             restartSocket();
         } else if (mConnectState == 2){
             //make sure we don't have a ton of outbound heart beats unresponded to
-            if (outbound_heart_beats > 5) {
-                restartSocket();
-                return;
-            }
-
-            //increment counter
-            outbound_heart_beats++;
-
-            //send heart beat
-            sendBytes(heart_beat_id, null);
+            //reimplement this later -- ASG needs to receive heart beats
+//            if (outbound_heart_beats > 5) {
+//                restartSocket();
+//                return;
+//            }
+//
+//            //increment counter
+//            outbound_heart_beats++;
+//
+//            //send heart beat
+//            sendBytes(heart_beat_id, null);
         }
     }
 
@@ -229,6 +230,7 @@ public class AudioSystem {
 //    }
 //
     private void restartSocket(){
+        Log.d(TAG, "Running restart socket");
         mConnectState = 1;
 
         outbound_heart_beats = 0;
@@ -236,10 +238,15 @@ public class AudioSystem {
         //close the previous socket now that it's broken/being restarted
         try {
             if (serverSocket != null && (!serverSocket.isClosed())) {
-                output.close();
-                input.close();
+                Log.d(TAG, "Closing socket, input, serverSocket, etc.");
                 serverSocket.close();
                 socket.close();
+            }
+            if (output != null){
+                output.close();
+            }
+            if (input != null){
+                input.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -303,9 +310,13 @@ public class AudioSystem {
         @Override
         public void run() {
             try {
+                Log.d(TAG, "Starting new socket, waiting for connection...");
                 serverSocket = new ServerSocket(PORT);
+                serverSocket.setSoTimeout(3000);
                 try {
                     socket = serverSocket.accept();
+                    socket.setSoTimeout(3000);
+                    Log.d(TAG, "Got socket connection.");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
                     input = new DataInputStream(new DataInputStream(socket.getInputStream()));
@@ -417,7 +428,7 @@ public class AudioSystem {
     }
 
     //receives messages
-    private  class ReceiveThread implements Runnable {
+    private class ReceiveThread implements Runnable {
         @Override
         public void run() {
             //System.out.println("Receive Started, mconnect: " + mConnectState);
@@ -432,13 +443,14 @@ public class AudioSystem {
                     byte [] plain_audio_bytes = decryptBytes(raw_data);
                     audioObservable.onNext(plain_audio_bytes);
                 } catch (IOException e) {
+                    Log.d(TAG, "Audio service receive thread broken.");
                     e.printStackTrace();
                     break;
                 }
             }
+            throwBrokenSocket();
         }
     }
-
 
     public byte[] my_int_to_bb_be(int myInteger){
         return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(myInteger).array();

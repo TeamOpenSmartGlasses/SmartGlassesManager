@@ -22,6 +22,7 @@ import android.util.Log;
 import android.content.Context;
 import android.os.Handler;
 import java.io.IOException;
+import java.lang.InterruptedException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
@@ -29,6 +30,15 @@ import java.io.PipedOutputStream;
 import java.util.Arrays;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
+import com.google.mediapipe.apps.wearableai.database.phrase.PhraseCreator;
+import com.google.mediapipe.apps.wearableai.speechrecvosk.SpeechStreamQueueServiceVosk;
+
+//queue
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+
 
 //rxjava
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -41,19 +51,26 @@ public class SpeechRecVosk implements RecognitionListener {
 
     private Model model;
     //private SpeechService speechService;
-    private SpeechStreamService speechStreamService;
+    //private SpeechStreamService speechStreamService;
+    private SpeechStreamQueueServiceVosk speechStreamService;
+    private PhraseRepository mPhraseRepository = null;
 
     private VoskAudioBytesStream voskAudioBytesStream;
-    private PipedOutputStream audioAdderStreamVosk;
-    private InputStream audioSenderStreamVosk;
+    //private PipedOutputStream audioAdderStreamVosk;
+    //private InputStream audioSenderStreamVosk;
+    private BlockingQueue<byte []> audioSenderStreamVosk;
+    final Handler main_handler;
 
     //receive/send data stream
     PublishSubject<JSONObject> dataObservable;
     //receive audio stream
     PublishSubject<byte []> audioObservable;
 
-    public SpeechRecVosk(Context context, PublishSubject<byte []> audioObservable, PublishSubject<JSONObject> dataObservable){
+    public SpeechRecVosk(Context context, PublishSubject<byte []> audioObservable, PublishSubject<JSONObject> dataObservable, PhraseRepository mPhraseRepository){
         mContext = context;
+
+        //to save trancript
+        this.mPhraseRepository = mPhraseRepository;
 
         //receive/send data
         this.dataObservable = dataObservable;
@@ -63,20 +80,21 @@ public class SpeechRecVosk implements RecognitionListener {
         Disposable audioSub = this.audioObservable.subscribe(i -> handleAudioStream(i));
 
         //setup the object which will pass audio bytes to vosk
+        audioSenderStreamVosk = new ArrayBlockingQueue(1024);
         //VoskAudioBytesStream voskAudioBytesStream = new VoskAudioBytesStream();
-        try{
-            audioAdderStreamVosk = new PipedOutputStream();
-            audioSenderStreamVosk = new PipedInputStream(audioAdderStreamVosk);
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+//        try{
+//            //audioAdderStreamVosk = new PipedOutputStream();
+//            //audioSenderStreamVosk = new PipedInputStream(audioAdderStreamVosk);
+//        } catch (IOException e){
+//            e.printStackTrace();
+//        }
 
         //start vosk ASR
         LibVosk.setLogLevel(LogLevel.INFO);
         initModel();
 
         //start recognizing audio after delay, must first wait for model to load
-        final Handler main_handler = new Handler();
+        main_handler = new Handler();
         final int delay = 500;
         main_handler.postDelayed(new Runnable() {
             public void run() {
@@ -112,8 +130,10 @@ public class SpeechRecVosk implements RecognitionListener {
             Recognizer rec = new Recognizer(model, 16000.0f);
             Log.d(TAG, "VOSK MAKE SPEECH SERVICE");
             //speechService = new SpeechService(rec, 16000.0f);
-            speechStreamService = new SpeechStreamService(rec, audioSenderStreamVosk, 16000.0f);
+            //6416 is hard coded - same as chunk_len - size of buffer used on ASG
+            speechStreamService = new SpeechStreamQueueServiceVosk(rec, audioSenderStreamVosk, 16000.0f, 6416);
             Log.d(TAG, "VOSK START LISTENING");
+            //speechService.startListening(rec);
             speechStreamService.start(this);
         }
     }
@@ -139,8 +159,9 @@ public class SpeechRecVosk implements RecognitionListener {
     //receive audio and send to vosk
     private void handleAudioStream(byte [] data){
         try {
-            audioAdderStreamVosk.write(data);
-        } catch (IOException e) {
+            Log.d(TAG, "audio buffer size: " + audioSenderStreamVosk.size());
+            audioSenderStreamVosk.put(data);
+        } catch (InterruptedException e) {
             setErrorState(e.getMessage());
         }
     }
@@ -162,23 +183,43 @@ public class SpeechRecVosk implements RecognitionListener {
     //vosk listener implementation
     @Override
     public void onResult(String hypothesis) {
+        //start recognizing audio after delay, must first wait for model to load
+        main_handler.post(new Runnable() {
+            public void run() {
+                handleResult(hypothesis);
+            }
+        });
+    }
+
+    public void handleResult(String hypothesis){
         Log.d(TAG, "VOSK: " + hypothesis + "\n");
         //https://github.com/alphacep/vosk-android-demo/issues/81
         long transcriptTime = System.currentTimeMillis();
 
-        //send transcript to other services in app
+        //save transcript then send to other services in app
         try {
-            //why the absolute <redacted> does Vosk return a string with a dictionary like format here instead of a proper object or just the transcript? Below, we do a disgusting parsing of Vosk's retarded output
+            //Below, we do a parsing of Vosk's silly string output
             JSONObject voskResponse = new JSONObject(hypothesis);
             String transcript = voskResponse.getString("text");
+            if (transcript == null || transcript.trim().isEmpty()){
+                return;
+            }
+            //save transcript
+            long transcriptId = 0l;
+            Log.d(TAG, "SAVING TRANSCRIPT TO ROOM DATABASE");
+            transcriptId = PhraseCreator.create(transcript, "transcript_ASG", mContext, mPhraseRepository);
+
+            //send to other services
             JSONObject transcriptObj = new JSONObject();
             transcriptObj.put("type", "transcript");
             transcriptObj.put("transcript", transcript);
+            transcriptObj.put("id", transcriptId);
             transcriptObj.put("time", transcriptTime);
             dataObservable.onNext(transcriptObj);
         } catch (JSONException e){
             e.printStackTrace();
         }
+
     }
 
     @Override

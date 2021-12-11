@@ -226,9 +226,11 @@ public class VoiceCommandServer {
     private void parseTranscript(JSONObject data){
         String transcript = "";
         long transcriptTime = 0l;
+        long transcriptId = 0l;
         try{
             transcript = data.getString("transcript").toLowerCase();
             transcriptTime = data.getLong("time");
+            transcriptId = data.getLong("id");
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -243,7 +245,7 @@ public class VoiceCommandServer {
                     //we found a command, now get its arguments and run it
                     String preArgs = transcript.substring(0, wakeWordLocation);
                     String postArgs = transcript.substring(wakeWordLocation + currWakeWord.length());
-                    voiceCommands.get(i).runCommand(this, preArgs, currWakeWord, j, postArgs, transcriptTime);
+                    voiceCommands.get(i).runCommand(this, preArgs, currWakeWord, j, postArgs, transcriptTime, transcriptId);
                 }
             }
         }
@@ -256,20 +258,20 @@ public class VoiceCommandServer {
                 //we found a command, now get its arguments and run it
                 String preArgs = transcript.substring(0, wakeWordLocation);
                 String rest = transcript.substring(wakeWordLocation);
-                parseCommand(preArgs, currWakeWord, rest, transcriptTime);
+                parseCommand(preArgs, currWakeWord, rest, transcriptTime, transcriptId);
             }
 
         }
     }
 
-    private void parseCommand(String preArgs, String wakeWord, String rest, long transcriptTime){
+    private void parseCommand(String preArgs, String wakeWord, String rest, long transcriptTime, long transcriptId){
         for (int i = 0; i < voiceCommands.size(); i++){
             for (int j = 0; j < voiceCommands.get(i).getCommands().size(); j++){
                 String currCommand = voiceCommands.get(i).getCommands().get(j);
                 int commandLocation = rest.indexOf(currCommand);
                 if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     String postArgs = rest.substring(commandLocation + currCommand.length());
-                    voiceCommands.get(i).runCommand(this, preArgs, wakeWord, j, postArgs, transcriptTime);
+                    voiceCommands.get(i).runCommand(this, preArgs, wakeWord, j, postArgs, transcriptTime, transcriptId);
                 }
             }
         }

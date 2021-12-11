@@ -18,6 +18,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,6 +42,7 @@ public class ASPClientSocket {
     private static WebSocketManager aspWebSocketManager;
     private static Disposable webSocketSub;
 
+    private static int socketTimeout = 10000;
 
     //observables to receive data from websocket
     private static PublishSubject<JSONObject> webSocketObservable;
@@ -109,6 +111,10 @@ public class ASPClientSocket {
     //we need a reference to the context of whatever called this class so we can send broadcast updates on receving new info
     private static Context mContext;
 
+    private boolean socketStarted = false;
+    private boolean webSocketStarted = false;
+    private boolean audioSocketStarted = false;
+
     private ASPClientSocket(Context context){
         //create send queue and a thread to handle sending
         data_queue = new ArrayBlockingQueue<byte[]>(queue_size);
@@ -137,6 +143,7 @@ public class ASPClientSocket {
     }
 
     public void startSocket(){
+        socketStarted = true;
         //start first socketThread
         if (socket == null) {
             mConnectState = 1;
@@ -286,8 +293,9 @@ public class ASPClientSocket {
     static class SocketThread implements Runnable {
         public void run() {
             try {
-                System.out.println("TRYING TO CONNECT");
-                socket = new Socket(SERVER_IP, SERVER_PORT);
+                System.out.println("TRYING TO CONNECT AspClient Socket on IP: " + SERVER_IP + " and port: " + SERVER_PORT);
+                socket = new Socket();
+                socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT), socketTimeout);
                 System.out.println("CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -518,6 +526,7 @@ public class ASPClientSocket {
     }
 
     public void startWebSocket(){
+        webSocketStarted = true;
         //start a thread to hold the websocket connection to ASP
         aspWebSocketManager = new WebSocketManager(SERVER_IP, "8887");
         aspWebSocketManager.setObservable(dataObservable);
@@ -525,4 +534,15 @@ public class ASPClientSocket {
         aspWebSocketManager.run(); //start socket which will auto reconnect on disconnect
     }
 
+    public boolean getSocketStarted(){
+        return socketStarted;
+    }
+
+    public boolean getWebSocketStarted(){
+        return webSocketStarted;
+    }
+
+    public boolean getAudioSocketStarted(){
+        return audioSocketStarted;
+    }
 }

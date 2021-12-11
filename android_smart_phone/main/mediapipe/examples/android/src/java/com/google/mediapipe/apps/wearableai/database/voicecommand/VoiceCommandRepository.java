@@ -16,6 +16,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.google.mediapipe.apps.wearableai.database.phrase.Phrase;
+
 import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
 
 public class VoiceCommandRepository {
@@ -68,6 +70,15 @@ public class VoiceCommandRepository {
     public LiveData<VoiceCommandEntity> getVoiceCommand(int id) {
         return mVoiceCommandDao.get_by_id(id);
     }
+
+    public LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster) {
+        return mVoiceCommandDao.getVoiceCommands(commandName, isMaster);
+    }
+
+    public LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster) {
+        return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster);
+    }
+
 
     public VoiceCommandEntity getLatestCommand(String command) throws ExecutionException, InterruptedException {
 

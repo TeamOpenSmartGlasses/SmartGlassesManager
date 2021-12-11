@@ -11,7 +11,7 @@ public abstract class VoiceCommand {
     protected ArrayList<String> commandList;
     protected ArrayList<String> wakeWordList;
 
-    public abstract boolean runCommand(VoiceCommandServer vsServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime);
+    public abstract boolean runCommand(VoiceCommandServer vsServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime, long transcriptId);
 
     public String getCommandName(){
         return commandName;

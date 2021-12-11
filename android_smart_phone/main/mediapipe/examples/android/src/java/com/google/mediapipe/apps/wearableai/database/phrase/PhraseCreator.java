@@ -21,7 +21,7 @@ import android.util.Log;
 public class PhraseCreator {
     public static final String LOG_TAG = PhraseCreator.class.getName();
 
-    public static void create(String words, String medium, Context context, PhraseRepository repo) {
+    public static long create(String words, String medium, Context context, PhraseRepository repo) {
         /*
         Location may return right away or in a minute, null or not
         Because of this, insert each phrase without location synchronously, and after getting id back
@@ -58,5 +58,6 @@ public class PhraseCreator {
             else{
             }
         });
+        return id;
     }
 }

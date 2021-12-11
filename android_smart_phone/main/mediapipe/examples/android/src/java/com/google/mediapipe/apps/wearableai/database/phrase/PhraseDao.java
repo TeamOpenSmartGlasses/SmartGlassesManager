@@ -12,6 +12,8 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
+import java.lang.Integer;
+
 import java.util.List;
 
 @Dao
@@ -40,4 +42,7 @@ public interface PhraseDao {
 
     @Query("SELECT * FROM PhraseTable ORDER BY ABS(:timestamp - timestamp) LIMIT 1")
     Phrase getByNearestTimestamp(long timestamp);
+
+    @Query("SELECT * FROM PhraseTable WHERE id IN (:ids)")
+    List<Phrase> getPhrases(List<Long> ids);
 }

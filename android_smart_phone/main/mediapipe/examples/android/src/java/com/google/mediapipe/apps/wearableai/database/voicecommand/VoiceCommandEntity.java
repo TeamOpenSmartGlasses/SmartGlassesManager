@@ -43,12 +43,10 @@ public class VoiceCommandEntity {
     private boolean isMaster;
 
     //argument key
-    @NonNull
     @ColumnInfo(name = "argKey")
     private String argKey;
 
     //argument value
-    @NonNull
     @ColumnInfo(name = "argValue")
     private String argValue;
 
@@ -56,11 +54,14 @@ public class VoiceCommandEntity {
     @ColumnInfo(name = "timestamp")
     private long timestamp;
 
-    @NonNull
     @ColumnInfo(name = "medium")
     private String medium;
 
-    public VoiceCommandEntity(@NonNull String commandName, @NonNull String commandSpoken, @NonNull String wakeWord, @NonNull boolean isMaster, @NonNull String argKey, @NonNull String argValue, @NonNull long timestamp, @NonNull String medium) {
+    @NonNull
+    @ColumnInfo(name = "transcriptId")
+    private long transcriptId;
+
+    public VoiceCommandEntity(@NonNull String commandName, @NonNull String commandSpoken, @NonNull String wakeWord, @NonNull boolean isMaster, @NonNull String argKey, @NonNull String argValue, @NonNull long timestamp, @NonNull String medium, @NonNull long transcriptId) {
         this.commandName = commandName;
         this.commandSpoken = commandSpoken;
         this.wakeWord = wakeWord;
@@ -69,6 +70,7 @@ public class VoiceCommandEntity {
         this.argValue = argValue;
         this.timestamp = timestamp;
         this.medium = medium;
+        this.transcriptId = transcriptId;
     }
 
     public String getCommandName(){return this.commandName;}
@@ -79,6 +81,7 @@ public class VoiceCommandEntity {
     public boolean getIsMaster(){return this.isMaster;}
     public long getTimestamp(){return this.timestamp;}
     public String getMedium(){return this.medium;}
+    public long getTranscriptId(){return this.transcriptId;}
     public int getId(){return this.id;}
     public void setId(int id){this.id = id;}
 }

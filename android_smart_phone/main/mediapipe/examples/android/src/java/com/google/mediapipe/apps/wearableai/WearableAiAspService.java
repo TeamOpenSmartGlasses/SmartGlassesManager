@@ -3,21 +3,6 @@
 //if we restartSocket() then SendThread or ReceiveThread fails, it will set the mConnectState back to 0 even though we are currently trying to connect
 //need to have some handler that only send mConnectState = 0 if it's currently = 2. If it's =1, then don't change it
 
-
-// Copyright 2019 The MediaPipe Authors.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package com.google.mediapipe.apps.wearableai;
 
 import java.util.concurrent.ExecutionException;
@@ -26,6 +11,7 @@ import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
 import com.google.mediapipe.apps.wearableai.speechrecvosk.SpeechRecVosk;
 import com.google.mediapipe.apps.wearableai.voicecommand.VoiceCommandServer;
 
+import java.lang.NullPointerException;
 import java.util.Arrays;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseDao;
@@ -488,7 +474,7 @@ public class WearableAiAspService extends LifecycleService {
 
 
     //start vosk
-    SpeechRecVosk speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable);
+    SpeechRecVosk speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
   }
 
   public void startSocket(){
@@ -774,9 +760,12 @@ public class WearableAiAspService extends LifecycleService {
         @Override
         public void run() {
             try {
+                Log.d(TAG, "Starting new socket, waiting for connection...");
                 serverSocket = new ServerSocket(SERVER_PORT);
+                //serverSocket.setSoTimeout(2000);
                 try {
                     socket = serverSocket.accept();
+                    Log.d(TAG, "Got socket connection.");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
                     input = new DataInputStream(new DataInputStream(socket.getInputStream()));
@@ -839,7 +828,7 @@ public class WearableAiAspService extends LifecycleService {
 }
 
     //receives messages
-    private  class ReceiveThread implements Runnable {
+    private class ReceiveThread implements Runnable {
         @Override
         public void run() {
             //System.out.println("Receive Started, mconnect: " + mConnectState);
@@ -1148,6 +1137,9 @@ public class WearableAiAspService extends LifecycleService {
 
             e.printStackTrace();
             Log.d(TAG, "getBroadcast" + e.getMessage());
+        } catch (NullPointerException e){
+            Log.d(TAG, "Null pointer on getBroadcastAdress, probably means we arent' connected to wifi AND we don't have a live wifi hotspot");
+            return null;
         }
         return null;
     }
@@ -1157,6 +1149,10 @@ public class WearableAiAspService extends LifecycleService {
             byte[] sendData = messageStr.getBytes();
             InetAddress my_ip = getIpAddress();
             InetAddress bca_ip = getBroadcastAddress(my_ip);
+            if (bca_ip == null){
+                //this probably means we aren't connect to or hosting WiFi
+                return;
+            }
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, bca_ip, PORT_NUM);
             adv_socket.send(sendPacket);
         } catch (IOException e){
@@ -1180,9 +1176,7 @@ public class WearableAiAspService extends LifecycleService {
 
     class SendAdvThread extends Thread {
         public void run() {
-            //send three times as the Vuzix sucks at receiving - hit it hard and fast lol - cayden
-            sendBroadcast(adv_key);
-            sendBroadcast(adv_key);
+            //send broadcast so ASG knows our address
             sendBroadcast(adv_key);
         }
     }
@@ -1260,18 +1254,18 @@ public class WearableAiAspService extends LifecycleService {
     }
 
     private void handleDataStream(JSONObject data){
-        try {
-            String typeOf = data.getString("type");
-            if (typeOf.equals("transcript")){
-                Log.d(TAG, "SAVING TRANSCRIPT TO ROOM DATABASE");
-                String transcript = data.getString("transcript");
-                PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mPhraseRepository);
-            } else if (typeOf.equals("affective_search_query")){
-                //runAffectiveSearch(data.getString("emotion"));
-            }
-        } catch (JSONException e){
-            e.printStackTrace();
-    }
+//        try {
+//            String typeOf = data.getString("type");
+//            if (typeOf.equals("transcript")){
+//                Log.d(TAG, "SAVING TRANSCRIPT TO ROOM DATABASE");
+//                String transcript = data.getString("transcript");
+//                long id = PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mPhraseRepository);
+//            } else if (typeOf.equals("affective_search_query")){
+//                //runAffectiveSearch(data.getString("emotion"));
+//            }
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//    }
 
 
 

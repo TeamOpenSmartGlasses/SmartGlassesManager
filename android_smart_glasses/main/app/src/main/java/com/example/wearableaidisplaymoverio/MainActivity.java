@@ -151,9 +151,6 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, WearableAiService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
-        //start the audio service
-        StartAudioService();
-
 //        //setup camera preview
 //        preview = (SurfaceView) findViewById(R.id.preview);
 //        previewHolder = preview.getHolder();
@@ -872,23 +869,6 @@ public class MainActivity extends Activity {
     };
 
 
-    /** Defines callbacks for service binding, passed to bindService() */
-    private ServiceConnection audio_service_connection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            AudioService.LocalBinder binder = (AudioService.LocalBinder) service;
-//            mService = binder.getService();
-//            mBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-//            mBound = false;
-        }
-    };
 
     public void captureVisualSearchImage(){
         Log.d(TAG, "sending visual search image");
@@ -937,26 +917,6 @@ public class MainActivity extends Activity {
             default:
                 return super.onKeyUp(keyCode, event);
         }
-    }
-
-    //Audio recording service - maybe to be moved into WearableAI service
-    public void StartAudioService() {
-        Log.i(TAG, "Starting the foreground-thread");
-
-//        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
-//        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
-//        ContextCompat.startForegroundService(this, serviceIntent);
-        startService(new Intent(this, AudioService.class));
-        // Bind to that service
-        Intent intent = new Intent(this, AudioService.class);
-        bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
-    }
-
-    public void StopAudioService() {
-        Log.i(TAG, "Stopping the foreground-thread");
-
-        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
-        this.getApplicationContext().stopService(serviceIntent);
     }
 
     // Note  from authour - From what I've seen you don't need the wake-lock or wifi-lock below for the audio-recorder to persist through screen-off.
