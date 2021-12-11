@@ -30,10 +30,12 @@ class MxtVoiceCommand extends VoiceCommand {
 
         //find tags and return a list of the tags that were found
         ArrayList<String> foundTags = this.parseKeyValueArgs(postArgs, "tag");
-        for (int i = 0; i < foundTags.size(); i++){
-            //save tag command
-            Log.d(TAG, "Saving tag: " + foundTags.get(i));
-            VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+        if (foundTags != null){
+            for (int i = 0; i < foundTags.size(); i++){
+                //save tag command
+                Log.d(TAG, "Saving tag: " + foundTags.get(i));
+                VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+            }
         }
 
         return true;

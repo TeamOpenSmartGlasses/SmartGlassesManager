@@ -201,9 +201,20 @@ public class SpeechRecVosk implements RecognitionListener {
             //Below, we do a parsing of Vosk's silly string output
             JSONObject voskResponse = new JSONObject(hypothesis);
             String transcript = voskResponse.getString("text");
+
+            //don't save null or empty transcripts
             if (transcript == null || transcript.trim().isEmpty()){
                 return;
             }
+
+            //don't save transcripts that always appear incorrect
+            String [] badHitWords = {"huh", "her", "hit", "cut", "this", "if", "but", "by", "hi", "ha", "a", "the", "det", "it", "you"};
+            for (int i = 0; i < badHitWords.length; i++){
+                if (transcript.equals(badHitWords[i])){
+                    return;
+                }
+            }
+
             //save transcript
             long transcriptId = 0l;
             Log.d(TAG, "SAVING TRANSCRIPT TO ROOM DATABASE");

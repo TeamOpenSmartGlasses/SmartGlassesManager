@@ -130,6 +130,9 @@ public class MxtTagBinsUi extends Fragment implements ItemClickListener {
         AutoCompleteTextView tagMenu = v.findViewById(R.id.tag_menu_tv);
         tagMenu.setAdapter(adapter);
 
+        //set menu to first option
+        tagMenu.setText(tagMenu.getAdapter().getItem(0).toString(), false);
+
         //setup listener
         tagMenu.setOnItemClickListener(new OnItemClickListener() {
             @Override

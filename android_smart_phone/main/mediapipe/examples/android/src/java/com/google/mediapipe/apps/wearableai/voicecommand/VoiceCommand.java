@@ -30,25 +30,26 @@ public abstract class VoiceCommand {
         int hitLocation = text.indexOf(key);
 
         if (hitLocation != -1){
-            //text after hit
-            String afterText = text.substring(hitLocation);
-
             //find the next spaces
-            int firstSpaceLocation = afterText.indexOf(" "); //the space after the hit word
-            if (firstSpaceLocation == -1){ //if no space after hit word, then there is no key-value pair
+            int firstSpaceLocation = text.substring(hitLocation).indexOf(" "); //the space after the hit word
+            if (firstSpaceLocation == -1){ //if no space after hit word, then we are at end of string and thus there is no key-value pair
                 return hits;
             }
-            int secondSpaceLocation = afterText.substring(firstSpaceLocation + 1).indexOf(" ");
+
+            //text after hit
+            String afterText = text.substring(hitLocation + key.length() + 1); //+1 for space after word
+
+            int secondSpaceLocation = afterText.indexOf(" ");
 
             //word after hit
             String hit;
             String restString;
             if (secondSpaceLocation != -1){
-                hit = text.substring(hitLocation + firstSpaceLocation + 1, hitLocation + firstSpaceLocation + 1 + secondSpaceLocation); //+1 for spaces
+                hit = afterText.substring(0, secondSpaceLocation);
                 hits.add(hit);
-                restString = afterText.substring(hitLocation + firstSpaceLocation + 1 + secondSpaceLocation);
+                restString = afterText.substring(secondSpaceLocation + 1);
             } else { //if no space, it's the rest of the string
-                hit = text.substring(hitLocation + firstSpaceLocation + 1);
+                hit = afterText;
                 hits.add(hit);
                 return hits;
             }
