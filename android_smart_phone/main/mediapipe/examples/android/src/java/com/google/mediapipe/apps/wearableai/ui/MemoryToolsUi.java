@@ -56,6 +56,15 @@ public class MemoryToolsUi extends Fragment {
             }
         });
 
+        final Button mxtTagBinsButton = view.findViewById(R.id.mxt_tag_bins);
+            mxtTagBinsButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Log.d(TAG, "clicked mxt_tag_bins button");
+                    navController.navigate(R.id.nav_mxt_tag_bins);
+            }
+        });
+
+
     }
 
 

@@ -79,6 +79,10 @@ public class VoiceCommandRepository {
         return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster);
     }
 
+    public LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster, String argKey, String argValue) {
+        return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster, argKey, argValue);
+    }
+
 
     public VoiceCommandEntity getLatestCommand(String command) throws ExecutionException, InterruptedException {
 

@@ -41,6 +41,16 @@
             android:id="@+id/action_nav_memory_tools_to_nav_mxt_cache"
             app:destination="@id/nav_mxt_cache" />
     </fragment>
+    <fragment
+        android:id="@+id/nav_mxt_tag_bins"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MxtTagBinsUi"
+        tools:layout="@layout/mxt_tag_bins_fragment"
+        android:label="MXT Tag Bins" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_mxt_tag_bins"
+            app:destination="@id/nav_mxt_tag_bins" />
+    </fragment>
+
 
 
 </navigation>

@@ -312,7 +312,6 @@ public class AudioSystem {
             try {
                 Log.d(TAG, "Starting new socket, waiting for connection...");
                 serverSocket = new ServerSocket(PORT);
-                serverSocket.setSoTimeout(3000);
                 try {
                     socket = serverSocket.accept();
                     socket.setSoTimeout(3000);
