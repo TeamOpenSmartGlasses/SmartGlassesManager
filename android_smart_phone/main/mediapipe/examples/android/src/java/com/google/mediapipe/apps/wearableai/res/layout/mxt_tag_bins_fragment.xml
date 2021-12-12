@@ -10,6 +10,7 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:saveEnabled="false"
         android:hint="@string/tag_label"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,6 +19,7 @@
         <AutoCompleteTextView
             android:id="@+id/tag_menu_tv"
             android:layout_width="match_parent"
+            android:focusable="false"
             android:layout_height="wrap_content"
             android:inputType="none" />
 
@@ -37,6 +39,7 @@
 
     <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/add_phrase_text"
+        android:saveEnabled="false"
         android:layout_width="309dp"
         android:layout_height="46dp"
         android:layout_gravity="left"

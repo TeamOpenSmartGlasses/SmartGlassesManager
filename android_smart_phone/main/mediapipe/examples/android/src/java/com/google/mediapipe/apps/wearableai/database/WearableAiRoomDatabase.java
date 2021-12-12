@@ -20,7 +20,10 @@ import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotion
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandDao;
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEntity;
 
-@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class}, version = 1, exportSchema = false)
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileDao;
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileEntity;
+
+@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class}, version = 1, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class WearableAiRoomDatabase extends RoomDatabase {
 
@@ -31,6 +34,7 @@ public abstract class WearableAiRoomDatabase extends RoomDatabase {
     public abstract PhraseDao phraseDao();
     public abstract FacialEmotionDao facialEmotionDao();
     public abstract VoiceCommandDao voiceCommandDao();
+    public abstract MediaFileDao mediaFileDao();
 
     public static WearableAiRoomDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {

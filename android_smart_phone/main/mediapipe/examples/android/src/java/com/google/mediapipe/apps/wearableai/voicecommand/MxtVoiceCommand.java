@@ -14,8 +14,8 @@ class MxtVoiceCommand extends VoiceCommand {
 
     MxtVoiceCommand(){
         this.commandName = "mxt";
-        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"mxt", "m x t", "mx t", "save speech", "remember speech"}));
-        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"mxt", "m x t", "mx t"}));
+        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));
+        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));
     }
 
     @Override

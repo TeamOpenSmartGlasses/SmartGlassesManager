@@ -147,83 +147,28 @@ public class MainActivity extends AppCompatActivity {
 
     private  final String TAG = "WearableAi_MainActivity";
 
-    //Vosk stuff
-    /* Used to handle permission request */
-    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
+        //set main view
+        setContentView(R.layout.activity_main);
 
-    //set main view
-    setContentView(R.layout.activity_main);
+        //start wearable ai service
+        startWearableAiService();
+    }
 
-    //start wearable ai service
-    startWearableAiService();
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
 
-//      final Button killServiceButton = findViewById(R.id.kill_wearableai_service);
-//         killServiceButton.setOnClickListener(new View.OnClickListener() {
-//             public void onClick(View v) {
-//                 // Code here executes on main thread after user presses button
-//                 stopWearableAiService();
-//             }
-//         });
-//
-//      final Button runAffectiveMemoryButton = findViewById(R.id.run_affective_mem);
-//         runAffectiveMemoryButton.setOnClickListener(new View.OnClickListener() {
-//             public void onClick(View v) {
-//                 // Code here executes on main thread after user presses button
-//                 sendWearableAiServiceMessage(WearableAiAspService.ACTION_RUN_AFFECTIVE_MEM);
-//             }
-//         });
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
 
-//        // Check if user has given permission to record audio, init the model after permission is granted
-//        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
-//        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
-//        } else {
-//            initModel();
-//            //recognizeMicrophone();
-//        }
-//
-//        findViewById(R.id.recognize_mic).setOnClickListener(view -> recognizeMicrophone());
-
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-  }
-
-  @Override
-  protected void onPause() {
-    super.onPause();
-  }
-
-//  @Override
-//  public void onRequestPermissionsResult(
-//      int requestCode, String[] permissions, int[] grantResults) {
-//    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//    PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//  }
-
-   public void stopWearableAiService() {
-        if (!isMyServiceRunning(WearableAiAspService.class)) return;
-        Intent stopIntent = new Intent(this, WearableAiAspService.class);
-        stopIntent.setAction(WearableAiAspService.ACTION_STOP_FOREGROUND_SERVICE);
-        Log.d(TAG, "MainActivity stopping WearableAI service");
-        startService(stopIntent);
-   }
-
-   public void sendWearableAiServiceMessage(String message) {
-        if (!isMyServiceRunning(WearableAiAspService.class)) return;
-        Intent messageIntent = new Intent(this, WearableAiAspService.class);
-        messageIntent.setAction(message);
-        Log.d(TAG, "Sending WearableAi Service this message: " + message);
-        startService(messageIntent);
-   }
-
-   public void startWearableAiService() {
+    public void startWearableAiService() {
         if (isMyServiceRunning(WearableAiAspService.class)) return;
         Intent startIntent = new Intent(this, WearableAiAspService.class);
         startIntent.setAction(WearableAiAspService.ACTION_START_FOREGROUND_SERVICE);
@@ -241,6 +186,5 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
-
 
 }

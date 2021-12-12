@@ -30,6 +30,11 @@ import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandDa
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandCreator;
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEntity;
 
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileRepository;
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileDao;
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileCreator;
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileEntity;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -175,7 +180,14 @@ public class WearableAiAspService extends LifecycleService {
 
     private AspWebsocketServer asgWebSocket; 
 
-    private  final String TAG = "WearableAi_ASP_Service";
+    private static final String TAG = "WearableAi_ASP_Service";
+
+    //images saving info
+    private long lastImageSave = 0;
+    private float imageSaveFrequency = 0.5f; //fps
+
+    //speech recognition
+    private SpeechRecVosk speechRecVosk;
 
     //SOCKET STUFF
     //acutal socket
@@ -313,12 +325,14 @@ public class WearableAiAspService extends LifecycleService {
     private FacialEmotionRepository mFacialEmotionRepository = null;
     private List<FacialEmotion> mAllFacialEmotionsSnapshot;
     private VoiceCommandRepository mVoiceCommandRepository = null;
+    private MediaFileRepository mMediaFileRepository = null;
 
   @Override
   public void onCreate() {
     mPhraseRepository = new PhraseRepository(getApplication());
     mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
     mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
+    mMediaFileRepository = new MediaFileRepository(getApplication());
 
     //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
      dataObservable = PublishSubject.create();
@@ -474,7 +488,7 @@ public class WearableAiAspService extends LifecycleService {
 
 
     //start vosk
-    SpeechRecVosk speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
+    speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
   }
 
   public void startSocket(){
@@ -566,7 +580,6 @@ public class WearableAiAspService extends LifecycleService {
 
         return maxi_idx;
     }
-
 
   // Used to obtain the content view for this application. If you are extending this class, and
   // have a custom layout, override this method and return the custom layout.
@@ -879,6 +892,9 @@ public class WearableAiAspService extends LifecycleService {
                 } else if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //an ack id
                 } else if ((b1 == img_id[0]) && (b2 == img_id[1])){ //an img id
                     if (raw_data != null) {
+                        //remember the time we received it
+                        long imageTime = System.currentTimeMillis();
+
                         //ping back the client to let it know we received the message
                         sendBytes(ack_id, null);
 
@@ -887,8 +903,12 @@ public class WearableAiAspService extends LifecycleService {
                         //send through mediapipe
                         bitmapProducer.newFrame(bitmap);
 
-                        //save image
-                        //savePicture(raw_data);
+                        //save 1 image at set frequency
+                        long currTime = System.currentTimeMillis();
+                        if (((currTime - lastImageSave) / 1000) >= (1 / imageSaveFrequency)){ // divide by 1000 to convert to fps (per second) instead of per millisecond
+                            savePicture(raw_data, imageTime);
+                            lastImageSave = currTime;
+                        }
                     }
                 } else {
                     break;
@@ -1001,14 +1021,14 @@ public class WearableAiAspService extends LifecycleService {
         }
     }
 
-    private void savePicture(byte[] data){
+    private void savePicture(byte[] data, long imageTime){
 //        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
         File pictureFileDir = getDir();
         //System.out.println("TRYING TO SAVE AT LOCATION: " + pictureFileDir.toString());
 
         if (!pictureFileDir.exists() && !pictureFileDir.mkdirs()) {
+            Log.d(TAG, "Save picture failed because dir was not acceptable: " + pictureFileDir.getPath());
             return;
-
         }
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_mm_dd_hh_mm_ss_SSS");
@@ -1027,12 +1047,43 @@ public class WearableAiAspService extends LifecycleService {
         } catch (Exception error) {
             error.printStackTrace();
         }
+
+        //now save a reference to this media file image to the room database
+        savePictureToDatabase(filename, imageTime);
     }
 
-    private  File getDir() {
-        //File sdDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File sdDir = this.getCacheDir();
-        return sdDir; //new File(sdDir, "WearableAiMobileCompute");
+    private File getDir() {
+        //name of dir where we save images
+        String dirName = "WearableAiMobileCompute";
+
+        //return spot on SD card IF it's available, otherwise, return internal pictures directory
+        File saveDir;
+        if (canWriteOnExternalStorage()){
+            // get the path to sdcard
+            //saveDir = this.getExternalStorageDirectory();
+            saveDir = this.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        } else {
+            //saveDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            saveDir = this.getFilesDir();
+        }
+        // to this path add a new directory path
+        File dir = new File(saveDir.getAbsolutePath(), dirName);
+
+        // create this directory if not already created
+        dir.mkdir();
+
+        return dir;
+    }
+
+    public static boolean canWriteOnExternalStorage() {
+       // get the state of your external storage
+       String state = Environment.getExternalStorageState();
+       if (Environment.MEDIA_MOUNTED.equals(state)) {
+        // if storage is mounted return true
+          Log.v(TAG, "Yes, can write to external storage.");
+          return true;
+       }
+       return false;
     }
 
     private  void throwBrokenSocket(){
@@ -1229,12 +1280,7 @@ public class WearableAiAspService extends LifecycleService {
                     startForeground(1234, updateNotification());
                     break;
                 case ACTION_STOP_FOREGROUND_SERVICE:
-                    asgWebSocket.destroy();
-                    stopForeground(true);
                     stopSelf();
-                    break;
-                case ACTION_RUN_AFFECTIVE_MEM:
-                    //runAffectiveMemory();
                     break;
             }
         }
@@ -1254,307 +1300,25 @@ public class WearableAiAspService extends LifecycleService {
     }
 
     private void handleDataStream(JSONObject data){
-//        try {
-//            String typeOf = data.getString("type");
-//            if (typeOf.equals("transcript")){
-//                Log.d(TAG, "SAVING TRANSCRIPT TO ROOM DATABASE");
-//                String transcript = data.getString("transcript");
-//                long id = PhraseCreator.create(transcript, "transcript_ASG", getApplicationContext(), mPhraseRepository);
-//            } else if (typeOf.equals("affective_search_query")){
-//                //runAffectiveSearch(data.getString("emotion"));
-//            }
-//        } catch (JSONException e){
-//            e.printStackTrace();
-//    }
-
-
-
-        //gets all phrases, parses out most recent phrase, and, print to debug
-//         try{
-//            mAllPhrasesSnapshot = mPhraseRepository.getAllPhrasesSnapshot();
-//            Phrase lastPhrase = mAllPhrasesSnapshot.get(0);
-//            String lastPhraseTranscript = lastPhrase.getPhrase();
-//
-//            Log.d(TAG, "MOST RECENT TRANSCRIPT: ");
-//            Log.d(TAG, lastPhraseTranscript);
-//         } catch (ExecutionException | InterruptedException e) {
-//             e.printStackTrace();
-//         }
-
-
     }
 
 
     private void saveFacialEmotion(String faceEmotion){
         Log.d(TAG, "SAVING FACIAL EMOTION: " + faceEmotion);
         FacialEmotionCreator.create(faceEmotion, "pov_camera_ASG", getApplicationContext(), mFacialEmotionRepository);
-        //gets all face emotinos, parses out most recent and print to debug
-//         try{
-//            mAllFacialEmotionsSnapshot = mFacialEmotionRepository.getAllFacialEmotionsSnapshot();
-//            FacialEmotion lastFacialEmotion = mAllFacialEmotionsSnapshot.get(0);
-//            String lastFacialEmotionTranscript = lastFacialEmotion.getFacialEmotion();
-//
-//            Log.d(TAG, "MOST RECENT Face Emotion: ");
-//            Log.d(TAG, lastFacialEmotionTranscript);
-//         } catch (ExecutionException | InterruptedException e) {
-//             e.printStackTrace();
-//         }
-
-
     }
 
-    
-//    private void runAffectiveSearch(String emotion){
-//    try{
-//            VoiceCommandEntity latestStartConvoCommand = mVoiceCommandRepository.getLatestCommand("start conversation");
-//            VoiceCommandEntity latestStopConvoCommand = mVoiceCommandRepository.getLatestCommand("stop conversation");
-//            Date startTime = latestStartConvoCommand.getTimestamp();
-//            Date endTime = latestStopConvoCommand.getTimestamp();
-//            Log.d(TAG, "Convo timeframe - " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", startTime) + " to " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", endTime));
-//
-//            Log.d(TAG, "getting facial emotions from conversation");
-//            List<FacialEmotion> facialEmotionsConvo = mFacialEmotionRepository.getFacialEmotionsRange(startTime, endTime);
-//            List<Phrase> phrasesConvo = mPhraseRepository.getPhraseRange(startTime, endTime);
-//            //engagementAlgorithm(facialEmotionsConvo); //sends top n most engaged transcripts to be displayed on ASG
-//            //summarizerAlgorithm(phrasesConvo, facialEmotionsConvo); //send an affective conversation summary to be displayed on ASG
-//            affectiveSearch(facialEmotionsConvo, emotion);
-//        } catch (ExecutionException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    //AFFECTIVE MEMORY EXTENSION
-//    private void runAffectiveMemory(){
-//        Log.d(TAG, "RUNNING AFFECTIVE MEMORY");
-//        try{
-//            VoiceCommandEntity latestStartConvoCommand = mVoiceCommandRepository.getLatestCommand("start conversation");
-//            VoiceCommandEntity latestStopConvoCommand = mVoiceCommandRepository.getLatestCommand("stop conversation");
-//            Date startTime = latestStartConvoCommand.getTimestamp();
-//            Date endTime = latestStopConvoCommand.getTimestamp();
-//            Log.d(TAG, "Convo timeframe - " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", startTime) + " to " + String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", endTime));
-//
-//            Log.d(TAG, "getting facial emotions from conversation");
-//            List<FacialEmotion> facialEmotionsConvo = mFacialEmotionRepository.getFacialEmotionsRange(startTime, endTime);
-//            List<Phrase> phrasesConvo = mPhraseRepository.getPhraseRange(startTime, endTime);
-//            //engagementAlgorithm(facialEmotionsConvo); //sends top n most engaged transcripts to be displayed on ASG
-//            summarizerAlgorithm(phrasesConvo, facialEmotionsConvo); //send an affective conversation summary to be displayed on ASG
-//            //affectiveSearch(facialEmotionsConvo, "sad");
-//        } catch (ExecutionException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    //code here copied from engagement algorithm for sake of time, should refactor
-//    private void summarizerAlgorithm(List<Phrase> phraseList, List<FacialEmotion> facialEmotionsList){
-//        int windowSize = 10000; //length of window, in milliseconds
-//        int stride = windowSize / 1; //how fine should our jumps be
-//
-//        //get the start and end time we need to process
-//        //we should update Date to java.time so it
-//        Date startTime = facialEmotionsList.get(facialEmotionsList.size() - 1).getTimestamp();
-//        Date endTime = facialEmotionsList.get(0).getTimestamp();
-//        Date t = new Date(startTime.getTime() + stride); //marks the end of the stride
-//        float engaged = 0f;
-//        float curr_count = 0f;
-//        ArrayList<Float> engagedScores = new ArrayList();
-//        ArrayList<Date> engagedTimes = new ArrayList();
-//
-//        //loop through all facial emotions
-//        for (int i = 0; i < facialEmotionsList.size(); i++){
-//            FacialEmotion fe = facialEmotionsList.get(facialEmotionsList.size() - 1 - i);
-//            //if the current timestamp is before the end of the current stride
-//            if (!fe.getTimestamp().before(t)){
-//                engagedScores.add(engaged / curr_count);
-//                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
-//                engagedTimes.add(t_half);
-//                engaged = 0;
-//                curr_count = 1;
-//                t = new Date(t.getTime() + stride);
-//            }
-//            //if neutral, then 0, else is 1
-//            if (!fe.getFacialEmotion().equals("neutral")){
-//                engaged = engaged + 1;
-//            }
-//            curr_count = curr_count + 1;
-//        }
-//
-//        //loop through all phrases and make json object of conversation and affective information
-//        try {
-//            JSONObject affectiveConversation = new JSONObject();
-//            JSONArray phraseArray = new JSONArray();
-//            for (int i = 0; i < phraseList.size(); i++){
-//                Phrase cPhrase = phraseList.get(i);
-//                Date cTime = cPhrase.getTimestamp();
-//                int idx = getNearestDate(engagedTimes, cTime);
-//                float score = engagedScores.get(i);
-//                JSONObject phraseObj = new JSONObject();
-//                phraseObj.put("phrase", cPhrase.getPhrase());
-//                phraseObj.put("timestamp", cPhrase.getTimestamp().getTime());
-//                phraseObj.put("affective_engagement", score);
-//                phraseArray.put(phraseObj);
-//            }
-//            affectiveConversation.put("type", "affective_conversation");
-//            affectiveConversation.put("phrases", phraseArray);
-//            asgWebSocket.sendJson(affectiveConversation);
-//        } catch (JSONException e){
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private void engagementAlgorithm(List<FacialEmotion> facialEmotionsList){
-//        int windowSize = 10000; //length of window, in milliseconds
-//        int stride = windowSize / 1; //how fine should our jumps be
-//
-//        //get the start and end time we need to process
-//        //we should update Date to java.time so it
-//        Date startTime = facialEmotionsList.get(facialEmotionsList.size() - 1).getTimestamp();
-//        Date endTime = facialEmotionsList.get(0).getTimestamp();
-//        Date t = new Date(startTime.getTime() + stride); //marks the end of the stride
-//        float engaged = 0f;
-//        float curr_count = 0f;
-//        ArrayList<Float> engagedScores = new ArrayList();
-//        ArrayList<Date> engagedTimes = new ArrayList();
-//
-//        //loop through all facial emotions
-//        for (int i = 0; i < facialEmotionsList.size(); i++){
-//            FacialEmotion fe = facialEmotionsList.get(facialEmotionsList.size() - 1 - i);
-//            //if the current timestamp is before the end of the current stride
-//            if (!fe.getTimestamp().before(t)){
-//                engagedScores.add(engaged / curr_count);
-//                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
-//                engagedTimes.add(t_half);
-//                engaged = 0;
-//                curr_count = 1;
-//                t = new Date(t.getTime() + stride);
-//            }
-//            //if neutral, then 0, else is 1
-//            if (!fe.getFacialEmotion().equals("neutral")){
-//                engaged = engaged + 1;
-//            }
-//            curr_count = curr_count + 1;
-//        }
-//        Log.d(TAG, engagedScores.toString());
-//        Log.d(TAG, engagedTimes.toString());
-//
-//        for (int i = 0; i < engagedTimes.size(); i++){
-//            try {
-//                Log.d(TAG, "PULLING PHRASE BY TIMESTAMP "+ String.format("%tY-%<tm-%<td %<tH:%<tM:%<tS", engagedTimes.get(i)) + " : ");
-//                Phrase phrase = mPhraseRepository.getByNearestTimestamp(engagedTimes.get(i));
-//                Log.d(TAG, phrase.getPhrase());
-//            } catch (ExecutionException | InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        //get the top n transcripts
-//        ArrayList<String> topTranscripts = new ArrayList();
-//        int n = 3; //top n transcripts
-//        JSONObject affectiveMemoryObj = new JSONObject();
-//        try {
-//            affectiveMemoryObj.put("type", "affective_mem_transcripts");
-//            affectiveMemoryObj.put("time_made", System.currentTimeMillis());
-//            for (int i = 0; i < n; i++){
-//                //stupid convoluted Java argmax
-//                float score = Collections.max(engagedScores);
-//                int idx = engagedScores.indexOf(score);
-//                Date t_transcript = engagedTimes.get(idx);
-//                //drop the old values now that we have them
-//                engagedScores.remove(idx);
-//                engagedTimes.remove(idx);
-//                //get transcript closest to that time
-//                try {
-//                    Phrase phrase = mPhraseRepository.getByNearestTimestamp(t_transcript);
-//                    Log.d(TAG, phrase.getPhrase());
-//                    topTranscripts.add(phrase.getPhrase());
-//                    affectiveMemoryObj.put(Integer.toString(i), phrase.getPhrase());
-//                } catch (ExecutionException | InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        } catch (JSONException e){
-//            e.printStackTrace();
-//        }
-//        Log.d(TAG, affectiveMemoryObj.toString());
-//        asgWebSocket.sendJson(affectiveMemoryObj);
-//    }
-//
-//    public int getNearestDate(ArrayList<Date> dates, Date targetDate) {
-//        Date nearestDate = null;
-//        int index = 0;
-//        long prevDiff = -1;
-//        long targetTS = targetDate.getTime();
-//        for (int i = 0; i < dates.size(); i++) {
-//            Date date = dates.get(i);
-//            long currDiff = Math.abs(date.getTime() - targetTS);
-//            if (prevDiff == -1 || currDiff < prevDiff) {
-//                prevDiff = currDiff;
-//                nearestDate = date;
-//                index = i;
-//            }
-//        }
-//        return index;
-//    }
-//
-//    //code here copied from engagement algorithm for sake of time, should refactor
-//    private void affectiveSearch(List<FacialEmotion> facialEmotionsList, String emotion){
-//        Log.d(TAG, "emotion is: " + emotion);
-//        int windowSize = 10000; //length of window, in milliseconds
-//        int stride = windowSize / 1; //how fine should our jumps be
-//
-//        //get the start and end time we need to process
-//        //we should update Date to java.time so it
-//        Date startTime = facialEmotionsList.get(facialEmotionsList.size() - 1).getTimestamp();
-//        Date endTime = facialEmotionsList.get(0).getTimestamp();
-//        Date t = new Date(startTime.getTime() + stride); //marks the end of the stride
-//        float emotionV = 0f;
-//        float curr_count = 0f;
-//        ArrayList<Float> emotionScores = new ArrayList();
-//        ArrayList<Date> emotionTimes = new ArrayList();
-//
-//        //loop through all facial emotions
-//        for (int i = 0; i < facialEmotionsList.size(); i++){
-//            FacialEmotion fe = facialEmotionsList.get(facialEmotionsList.size() - 1 - i);
-//            //if the current timestamp is before the end of the current stride
-//            if (!fe.getTimestamp().before(t)){
-//                emotionScores.add(emotionV / curr_count);
-//                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
-//                emotionTimes.add(t_half);
-//                emotionV = 0;
-//                curr_count = 1;
-//                t = new Date(t.getTime() + stride);
-//            }
-//            //if neutral, then 0, else is 1
-//            if (!fe.getFacialEmotion().equals(emotion)){
-//                emotionV = emotionV + 1;
-//            }
-//            curr_count = curr_count + 1;
-//            //if we're on the last one, save what we have so far
-//            if (i == (facialEmotionsList.size() - 1)){
-//                emotionScores.add(emotionV / curr_count);
-//                Date t_half = new Date(t.getTime() - (stride/2)); //the end minus half the stride length, i.e. the middle of this window
-//                emotionTimes.add(t_half);
-//                emotionV = 0;
-//                curr_count = 1;
-//            }
-//        }
-//
-//        //find the time where the given emotion was highest
-//        //stupid convoluted Java argmax
-//        float score = Collections.max(emotionScores);
-//        int idx = emotionScores.indexOf(score);
-//        Date t_search = emotionTimes.get(idx);
-//
-//        //get transcript closest to that time
-//        try {
-//            Phrase phrase = mPhraseRepository.getByNearestTimestamp(t_search);
-//            Log.d(TAG, "Affective search for emotion " + emotion + ": " + phrase.getPhrase());
-//            JSONObject affectiveSearchQuery = new JSONObject();
-//            affectiveSearchQuery.put("type", "affective_search_query");
-//            affectiveSearchQuery.put("emotion", emotion);
-//            affectiveSearchQuery.put("phrase", phrase.getPhrase());
-//            asgWebSocket.sendJson(affectiveSearchQuery);
-//        } catch (JSONException | ExecutionException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
+
+    private void savePictureToDatabase(String localPath, long timestamp){
+        Log.d(TAG, "SAVING IMAGE : " + localPath);
+        MediaFileCreator.create(localPath, "image", timestamp, timestamp, mMediaFileRepository);
+    }
+
+    @Override
+    public void onDestroy() {
+        asgWebSocket.destroy();
+        speechRecVosk.destroy();
+        stopForeground(true);
+    }
+
 }

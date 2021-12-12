@@ -18,6 +18,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+
 import java.util.List;
 
 import com.google.mediapipe.apps.wearableai.database.phrase.Phrase;
@@ -42,14 +45,17 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListener {
     public static final int CACHE_ACTIVITY_REQUEST_CODE = 4; //I don't know what these are for yet but this looks cool
 
     private PhraseViewModel mPhraseViewModel;
+    
+    private NavController navController;
 
     @Override
     public void onClick(View view, Phrase phrase){
-//        Intent intent = new Intent(MainActivity.this, ViewPhraseActivity.class);
-//        intent.putExtra("phrase", phrase.getId());
-//        startActivityForResult(intent, VIEW_PHRASE_ACTIVITY_REQUEST_CODE);
-        //pass on this for now, need to make the phrase view thing a fragment as well
-        Log.d("cayden", "click on stream");
+        Log.d(TAG, "Click on transcript");
+
+        //open a fragment which shows in-depth, contextual view of that transcript
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("phrase", phrase);
+        navController.navigate(R.id.nav_phrase_context, bundle);
     }
 
     public AllTranscriptsUi() {
@@ -71,6 +77,8 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListener {
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
+        navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
+
         RecyclerView recyclerView = view.findViewById(R.id.phrase_wall);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setReverseLayout(true);

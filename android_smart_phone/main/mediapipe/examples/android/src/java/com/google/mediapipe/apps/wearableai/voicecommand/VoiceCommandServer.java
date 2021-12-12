@@ -193,8 +193,8 @@ public class VoiceCommandServer {
     //private ArrayList<String> voiceCommands;
     private Context mContext;
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.75;
-    private final double commandThreshold = 0.75;
+    private final double wakeWordThreshold = 0.8;
+    private final double commandThreshold = 0.8;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -211,7 +211,7 @@ public class VoiceCommandServer {
         voiceCommands = new ArrayList<VoiceCommand>();
         voiceCommands.add(new MxtVoiceCommand());
 
-        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
+        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
     }
     
     public void setObservable(PublishSubject observable){

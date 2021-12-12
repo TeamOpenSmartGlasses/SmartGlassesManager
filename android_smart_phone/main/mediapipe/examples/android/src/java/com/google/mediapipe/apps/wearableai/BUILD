@@ -142,6 +142,7 @@ android_library(
             "@maven//:androidx_navigation_navigation_runtime",
             "@maven//:androidx_fragment_fragment",
             "@maven//:info_debatty_java_string_similarity",
+            "@maven//:org_threeten_threetenbp",
         ],
     assets = [
         "//mediapipe/graphs/wearable_ai_gpu:wearable_ai_gpu.binarypb",

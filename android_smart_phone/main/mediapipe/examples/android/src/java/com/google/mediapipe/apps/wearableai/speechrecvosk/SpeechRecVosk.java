@@ -65,6 +65,7 @@ public class SpeechRecVosk implements RecognitionListener {
     PublishSubject<JSONObject> dataObservable;
     //receive audio stream
     PublishSubject<byte []> audioObservable;
+    Disposable audioSub;
 
     public SpeechRecVosk(Context context, PublishSubject<byte []> audioObservable, PublishSubject<JSONObject> dataObservable, PhraseRepository mPhraseRepository){
         mContext = context;
@@ -77,7 +78,7 @@ public class SpeechRecVosk implements RecognitionListener {
 
         //receive audio
         this.audioObservable = audioObservable;
-        Disposable audioSub = this.audioObservable.subscribe(i -> handleAudioStream(i));
+        audioSub = this.audioObservable.subscribe(i -> handleAudioStream(i));
 
         //setup the object which will pass audio bytes to vosk
         audioSenderStreamVosk = new ArrayBlockingQueue(1024);
@@ -145,11 +146,7 @@ public class SpeechRecVosk implements RecognitionListener {
     }
 
     public void destroy() {
-//        if (speechService != null) {
-//            speechService.stop();
-//            speechService.shutdown();
-//        }
-
+        audioSub.dispose();
         if (speechStreamService != null) {
             speechStreamService.stop();
         }

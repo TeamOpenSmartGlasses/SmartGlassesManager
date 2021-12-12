@@ -19,6 +19,9 @@ import android.widget.Button;
 import java.util.ArrayList;
 import android.widget.EditText;
 
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+
 import java.util.Arrays;
 import java.util.List;
 import java.lang.Long;
@@ -42,15 +45,19 @@ public class MxtCacheUi extends Fragment implements ItemClickListener {
 
     private VoiceCommandViewModel mVoiceCommandViewModel;
     private PhraseViewModel mPhraseViewModel;
+    
+    private NavController navController;
 
     @Override
     public void onClick(View view, Phrase phrase){
-//        Intent intent = new Intent(MainActivity.this, ViewVoiceCommandActivity.class);
-//        intent.putExtra("voiceCommand", voiceCommand.getId());
-//        startActivityForResult(intent, VIEW_PHRASE_ACTIVITY_REQUEST_CODE);
-        //pass on this for now, need to make the voiceCommand view thing a fragment as well
-        Log.d("cayden", "click on stream");
+        Log.d(TAG, "Click on transcript");
+
+        //open a fragment which shows in-depth, contextual view of that transcript
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("phrase", phrase);
+        navController.navigate(R.id.nav_phrase_context, bundle);
     }
+
 
     public MxtCacheUi() {
         // Required empty public constructor
@@ -71,6 +78,10 @@ public class MxtCacheUi extends Fragment implements ItemClickListener {
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
+        //create NavController
+        navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
+
+        //setup list of phrases
         RecyclerView recyclerView = view.findViewById(R.id.phrase_wall);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setReverseLayout(true);
