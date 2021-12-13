@@ -13,7 +13,7 @@ class MxtVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_MxtVoiceCommand";
 
     MxtVoiceCommand(){
-        this.commandName = "mxt";
+        this.commandName = "save speech";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));
     }
@@ -30,14 +30,22 @@ class MxtVoiceCommand extends VoiceCommand {
 
         //find tags and return a list of the tags that were found
         ArrayList<String> foundTags = this.parseKeyValueArgs(postArgs, "tag");
-        if (foundTags != null){
+        String displayString = null;
+        if (foundTags != null){ //save the tags and add them to the display string for user
+            //make the display string
+            displayString = "Saving in tag bins: ";
             for (int i = 0; i < foundTags.size(); i++){
                 //save tag command
                 Log.d(TAG, "Saving tag: " + foundTags.get(i));
                 VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+
+                //add to display string
+                displayString = displayString + foundTags.get(i) + ", ";
             }
+            displayString = displayString.substring(0, displayString.length() - 2); //get rid of last comma and space
         }
 
+        sendResult(vcServer, true, this.commandName, displayString);
         return true;
     }
 

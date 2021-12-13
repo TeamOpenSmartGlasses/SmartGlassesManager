@@ -114,6 +114,9 @@ public class AspWebsocketServer extends WebSocketServer {
             } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)){
                 Log.d(TAG, "AspWebsocketServer got FINAL_TRANSCRIPT, sending to ASG");
                 sendJson(data);
+            } else if (type.equals(MessageTypes.VOICE_COMMAND_RESPONSE)){
+                Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_RESPONSE, sending to ASG");
+                sendJson(data);
             }
         } catch (JSONException e){
             e.printStackTrace();

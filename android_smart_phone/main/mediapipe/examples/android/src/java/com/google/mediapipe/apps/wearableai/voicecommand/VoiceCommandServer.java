@@ -186,7 +186,7 @@ import info.debatty.java.stringsimilarity.*;
 public class VoiceCommandServer {
     private  final String TAG = "WearableAi_VoiceCommand";
     //one stream to receive transcripts, data, etc.
-    private PublishSubject<JSONObject> dataObservable;
+    public PublishSubject<JSONObject> dataObservable;
     private Disposable dataSubscriber;
 
     //voice command stuff

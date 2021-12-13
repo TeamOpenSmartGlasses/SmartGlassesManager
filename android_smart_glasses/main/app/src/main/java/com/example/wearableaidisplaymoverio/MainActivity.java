@@ -563,6 +563,8 @@ public class MainActivity extends Activity {
                 } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
                     String command_response_text = intent.getStringExtra(GlboxClientSocket.COMMAND_RESPONSE);
                     Log.d(TAG, command_response_text);
+                    //change newlines to <br/>
+                    command_response_text = command_response_text.replaceAll("\n", "<br/>");
                     textHolder.add(Html.fromHtml("<p><font color='#EE0000'>" + command_response_text.trim() + "</font></p>"));
                     if (curr_mode.equals("llc")) {
                         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());

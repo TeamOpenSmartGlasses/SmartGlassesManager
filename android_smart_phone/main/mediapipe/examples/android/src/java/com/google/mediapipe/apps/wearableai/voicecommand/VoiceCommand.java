@@ -3,6 +3,12 @@ package com.google.mediapipe.apps.wearableai.voicecommand;
 import android.util.Log;
 import java.util.ArrayList;
 
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import com.google.mediapipe.apps.wearableai.MessageTypes;
+
 //parse interpret
 public abstract class VoiceCommand {
     public String TAG = "WearableAi_VoiceCommand";
@@ -11,7 +17,34 @@ public abstract class VoiceCommand {
     protected ArrayList<String> commandList;
     protected ArrayList<String> wakeWordList;
 
-    public abstract boolean runCommand(VoiceCommandServer vsServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime, long transcriptId);
+    public abstract boolean runCommand(VoiceCommandServer vcServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime, long transcriptId);
+
+    public void sendResult(VoiceCommandServer vcServer, boolean success, String commandName, String displayString){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
+            commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
+
+            //build the display string
+            String commandResponseDisplayString = "";
+            if (success){
+                commandResponseDisplayString = "COMMAND SUCESS: " + commandName;
+            } else {
+                commandResponseDisplayString = "COMMAND FAILED: " + commandName;
+            }
+            if (displayString != null){
+                 commandResponseDisplayString = commandResponseDisplayString + "\n" + displayString;
+            }
+
+            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, commandResponseDisplayString);
+
+            //send the command result
+            vcServer.dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 
     public String getCommandName(){
         return commandName;
