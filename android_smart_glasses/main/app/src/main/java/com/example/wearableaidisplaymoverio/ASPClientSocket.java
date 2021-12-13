@@ -511,6 +511,15 @@ public class ASPClientSocket {
                 intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 Log.d(TAG, "F. Transcript is: " + data.getString(MessageTypes.TRANSCRIPT_TEXT));
+            } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_RESPONSE)) {
+            Log.d(TAG, "voice command result received");
+                boolean responseResult = data.getBoolean(MessageTypes.COMMAND_RESULT);
+                String displayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
+                final Intent intent = new Intent();
+                intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, displayString);
+                intent.putExtra(MessageTypes.COMMAND_RESULT, responseResult);
+                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             } else if (typeOf.equals("affective_mem_transcripts")) {
                 final Intent intent = new Intent();
                 intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
