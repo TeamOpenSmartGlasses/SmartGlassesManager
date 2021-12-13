@@ -215,7 +215,7 @@ public class WearableAiService extends HiddenCameraService {
             asp_client_socket.startSocket();
         }
         if (!asp_client_socket.getWebSocketStarted()) {
-            //asp_client_socket.startWebSocket();
+            asp_client_socket.startWebSocket();
         }
 
         //then start the audio system which will send audio to the asp
