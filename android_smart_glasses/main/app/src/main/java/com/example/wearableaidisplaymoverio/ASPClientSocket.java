@@ -24,6 +24,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -133,6 +134,9 @@ public class ASPClientSocket {
 
     public static void setIp(String ip){
         SERVER_IP = ip;
+        if (aspWebSocketManager != null) {
+            aspWebSocketManager.setNewIp(ip);
+        }
     }
 
     public static ASPClientSocket getInstance(){
@@ -491,11 +495,23 @@ public class ASPClientSocket {
     private void parseData(JSONObject data){
         Log.d(TAG, "Parsing data");
         try {
-            String typeOf = data.getString("type");
-            if (typeOf.equals("transcript") && (aspWebSocketManager != null) && (aspWebSocketManager.getConnectionState() == 2)) {
-                aspWebSocketManager.sendJson(data);
-            }
-            else if (typeOf.equals("affective_mem_transcripts")) {
+            String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (typeOf.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
+                Log.d(TAG, "intermediate_transcript_cid received");
+                String intermediate_transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT);
+                final Intent intent = new Intent();
+                intent.putExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT, intermediate_transcript);
+                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                Log.d(TAG, "I. Transcript is: " + intermediate_transcript);
+            } else if (typeOf.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+                Log.d(TAG, "final_transcript_cid received");
+                final Intent intent = new Intent();
+                intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, data.toString());
+                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+                Log.d(TAG, "F. Transcript is: " + data.getString(MessageTypes.TRANSCRIPT_TEXT));
+            } else if (typeOf.equals("affective_mem_transcripts")) {
                 final Intent intent = new Intent();
                 intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
                 intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);

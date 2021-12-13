@@ -2,6 +2,7 @@ package com.example.wearableaidisplaymoverio.comms;
 
 import static com.example.wearableaidisplaymoverio.ASPClientSocket.TAG;
 
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -54,6 +55,15 @@ public class WebSocketManager implements Runnable{
         //create new URI to connect with
         try{
             this.serverURI = new URI("ws://" + ip + ":" + port);
+        } catch (URISyntaxException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void setNewIp(String ip){
+        int prevPort = serverURI.getPort();
+        try {
+            this.serverURI = new URI("ws://" + ip + ":" + Integer.toString(prevPort));
         } catch (URISyntaxException e){
             e.printStackTrace();
         }

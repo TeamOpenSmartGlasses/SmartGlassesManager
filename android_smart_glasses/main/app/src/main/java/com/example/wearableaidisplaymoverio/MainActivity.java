@@ -508,9 +508,10 @@ public class MainActivity extends Activity {
                 if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)) {
                     try {
                         JSONObject transcript_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT));
-                        JSONObject nlp = transcript_object.getJSONObject("nlp");
-                        JSONArray nouns = nlp.getJSONArray("nouns");
-                        String transcript = transcript_object.getString("transcript");
+//                        JSONObject nlp = transcript_object.getJSONObject("nlp");
+//                        JSONArray nouns = nlp.getJSONArray("nouns");
+                        JSONArray nouns = new JSONArray(); //for now, since we haven't implemented NLP on ASP, we just make this empty
+                        String transcript = transcript_object.getString(MessageTypes.TRANSCRIPT_TEXT);
                         if ((nouns.length() == 0)) {
                             textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
                         } else {
