@@ -31,6 +31,10 @@ public class VoiceCommandRepository {
         mAllVoiceCommands = mVoiceCommandDao.getAllVoiceCommands();
     }
 
+    public void destroy(){
+    }
+
+
     public LiveData<List<VoiceCommandEntity>> getAllVoiceCommands() {
         return mAllVoiceCommands;
     }

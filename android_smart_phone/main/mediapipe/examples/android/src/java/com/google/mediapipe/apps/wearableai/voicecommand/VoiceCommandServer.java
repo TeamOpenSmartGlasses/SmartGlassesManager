@@ -20,6 +20,8 @@
 
 package com.google.mediapipe.apps.wearableai.voicecommand;
 
+import com.google.mediapipe.apps.wearableai.MessageTypes;
+
 import java.util.concurrent.ExecutionException;
 import java.lang.InterruptedException;
 import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
@@ -220,8 +222,8 @@ public class VoiceCommandServer {
 
     private void handleDataStream(JSONObject data){
         try {
-            String dataType = data.getString("type");
-            if (dataType.equals("transcript")){
+            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)){
                 parseTranscript(data);
             }
         } catch (JSONException e){
@@ -234,9 +236,9 @@ public class VoiceCommandServer {
         long transcriptTime = 0l;
         long transcriptId = 0l;
         try{
-            transcript = data.getString("transcript").toLowerCase();
-            transcriptTime = data.getLong("time");
-            transcriptId = data.getLong("id");
+            transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT).toLowerCase();
+            transcriptTime = data.getLong(MessageTypes.TIMESTAMP);
+            transcriptId = data.getLong(MessageTypes.TRANSCRIPT_ID);
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -357,7 +359,7 @@ public class VoiceCommandServer {
             }
             Log.d(TAG, "emotion is: " + emotion);
             JSONObject affective_search_query = new JSONObject();
-            affective_search_query.put("type", "affective_search_query");
+            affective_search_query.put(MessageTypes.MESSAGE_TYPE_LOCAL, "affective_search_query");
             affective_search_query.put("emotion", emotion);
             dataObservable.onNext(affective_search_query);
         } catch (JSONException e){

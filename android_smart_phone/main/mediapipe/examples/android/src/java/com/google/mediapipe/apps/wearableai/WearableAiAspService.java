@@ -193,6 +193,8 @@ public class WearableAiAspService extends LifecycleService {
     //acutal socket
     ServerSocket serverSocket;
     Socket socket;
+    boolean shouldDie = false;
+
     //socket threads
     Thread SocketThread = null;
     Thread ReceiveThread = null;
@@ -345,8 +347,6 @@ public class WearableAiAspService extends LifecycleService {
       //start voice command server to parse transcript for voice command
       voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
 
-      ////runAffectiveMemory();
-
     //mediapipe stuffs
     try {
       applicationInfo =
@@ -485,7 +485,6 @@ public class WearableAiAspService extends LifecycleService {
     //start audio streaming from ASG
     audioSystem = new AudioSystem(audioObservable);
     audioSystem.startAudio(this);
-
 
     //start vosk
     speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
@@ -778,6 +777,7 @@ public class WearableAiAspService extends LifecycleService {
                 //serverSocket.setSoTimeout(2000);
                 try {
                     socket = serverSocket.accept();
+                    socket.setSoTimeout(3000);
                     Log.d(TAG, "Got socket connection.");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
@@ -823,7 +823,7 @@ public class WearableAiAspService extends LifecycleService {
         //check if we are still connected.
         //if not , reconnect,
         //if we are connected, send a heart beat to make sure we are still connected
-        if (mConnectState == 0) {
+        if (mConnectState == 0 && !shouldDie) {
             restartSocket();
         } else if (mConnectState == 2){
             //make sure we don't have a ton of outbound heart beats unresponded to
@@ -924,16 +924,7 @@ public class WearableAiAspService extends LifecycleService {
         outbound_heart_beats = 0;
 
         //close the previous socket now that it's broken/being restarted
-        try {
-            if (serverSocket != null && (!serverSocket.isClosed())) {
-                output.close();
-                input.close();
-                serverSocket.close();
-                socket.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        killSocket();
 
         //make sure socket thread has joined before throwing off a new one
         try {
@@ -946,6 +937,27 @@ public class WearableAiAspService extends LifecycleService {
         SocketThread = new Thread(new SocketThread());
         SocketThread.start();
     }
+
+    private void killSocket(){
+        try {
+            if (serverSocket != null && (!serverSocket.isClosed())) {
+                Log.d(TAG, "Closing socket, input, serverSocket, etc.");
+                serverSocket.close();
+            }
+            if (socket != null){
+                socket.close();
+            }
+            if (output != null){
+                output.close();
+            }
+            if (input != null){
+                input.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public byte[] my_int_to_bb_be(int myInteger){
         return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(myInteger).array();
@@ -1316,9 +1328,32 @@ public class WearableAiAspService extends LifecycleService {
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "WearableAiAspService killing itself and all its children");
+
+        //kill this socket
+        shouldDie = true;
+        killSocket();
+
+        //kill mediapipe
+        converter.close();
+
+        //kill data transmitters
+        dataObservable.onComplete();
+        audioObservable.onComplete();
+
+        //kill AudioSystem
+        audioSystem.destroy();
+
+        //kill asgWebSocket
         asgWebSocket.destroy();
+
+        //kill vosk
         speechRecVosk.destroy();
+
+        //close room database(s)
+        WearableAiRoomDatabase.destroy();
         stopForeground(true);
+
     }
 
 }

@@ -53,6 +53,8 @@ import android.util.Log;
 public class AudioSystem {
     private static String TAG = "WearableAi_AudioSystem";
 
+    private boolean shouldDie;
+
     private String secretKey;
 
     // the audio recording options - same on ASG
@@ -109,35 +111,6 @@ public class AudioSystem {
         startSocket();
     }
 
-//    public void startSocket(){
-//        //start first socketThread
-//        if (socket == null) {
-//            mConnectState = 1;
-//            Log.d(TAG, "onCreate starting");
-//            Log.d(TAG, "starting socket");
-//            SocketThread = new Thread(new SocketThread());
-//            SocketThread.start();
-//
-//            //setup handler to handle keeping connection alive, all subsequent start of SocketThread
-//            //start a new handler thread to send heartbeats
-//            HandlerThread thread = new HandlerThread("HeartBeater");
-//            thread.start();
-//            Handler handler = new Handler(thread.getLooper());
-//            final int delay = 3000;
-//            final int min_delay = 3000;
-//            final int max_delay = 4000;
-//            Random rand = new Random();
-//            handler.postDelayed(new Runnable() {
-//                public void run() {
-//                    heartBeat();
-//                    //random delay for heart beat so as to disallow synchronized failure between client and server
-//                    int random_delay = rand.nextInt((max_delay - min_delay) + 1) + min_delay;
-//                    handler.postDelayed(this, random_delay);
-//                }
-//            }, delay);
-//        }
-//    }
-//
     public void startSocket(){
         //start first socketThread
         if (socket == null) {
@@ -189,7 +162,7 @@ public class AudioSystem {
         //check if we are still connected.
         //if not , reconnect,
         //if we are connected, send a heart beat to make sure we are still connected
-        if (mConnectState == 0) {
+        if ((mConnectState == 0) && (shouldDie == false)) {
             restartSocket();
         } else if (mConnectState == 2){
             //make sure we don't have a ton of outbound heart beats unresponded to
@@ -236,21 +209,7 @@ public class AudioSystem {
         outbound_heart_beats = 0;
 
         //close the previous socket now that it's broken/being restarted
-        try {
-            if (serverSocket != null && (!serverSocket.isClosed())) {
-                Log.d(TAG, "Closing socket, input, serverSocket, etc.");
-                serverSocket.close();
-                socket.close();
-            }
-            if (output != null){
-                output.close();
-            }
-            if (input != null){
-                input.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        killSocket();
 
         //make sure socket thread has joined before throwing off a new one
         try {
@@ -263,6 +222,27 @@ public class AudioSystem {
         SocketThread = new Thread(new SocketThread());
         SocketThread.start();
     }
+
+    private void killSocket(){
+        try {
+            if (serverSocket != null && (!serverSocket.isClosed())) {
+                Log.d(TAG, "Closing socket, input, serverSocket, etc.");
+                serverSocket.close();
+            }
+            if (socket != null){
+                socket.close();
+            }
+            if (output != null){
+                output.close();
+            }
+            if (input != null){
+                input.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
 //    static class SocketThread implements Runnable {
@@ -465,6 +445,11 @@ public class AudioSystem {
     public byte [] decryptBytes(byte [] input) {
         byte [] decryptedBytes = AES.decrypt(input, secretKey);
         return decryptedBytes;
+    }
+
+    public void destroy(){
+        shouldDie = true;
+        killSocket();
     }
 
 }

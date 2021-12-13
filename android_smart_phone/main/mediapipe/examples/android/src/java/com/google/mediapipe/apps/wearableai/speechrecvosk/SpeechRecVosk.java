@@ -34,6 +34,7 @@ import org.json.JSONObject;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseCreator;
 import com.google.mediapipe.apps.wearableai.speechrecvosk.SpeechStreamQueueServiceVosk;
+import com.google.mediapipe.apps.wearableai.MessageTypes;
 
 //queue
 import java.util.concurrent.BlockingQueue;
@@ -82,13 +83,6 @@ public class SpeechRecVosk implements RecognitionListener {
 
         //setup the object which will pass audio bytes to vosk
         audioSenderStreamVosk = new ArrayBlockingQueue(1024);
-        //VoskAudioBytesStream voskAudioBytesStream = new VoskAudioBytesStream();
-//        try{
-//            //audioAdderStreamVosk = new PipedOutputStream();
-//            //audioSenderStreamVosk = new PipedInputStream(audioAdderStreamVosk);
-//        } catch (IOException e){
-//            e.printStackTrace();
-//        }
 
         //start vosk ASR
         LibVosk.setLogLevel(LogLevel.INFO);
@@ -146,7 +140,7 @@ public class SpeechRecVosk implements RecognitionListener {
     }
 
     public void destroy() {
-        audioSub.dispose();
+        Log.d(TAG, "Destroying VOSK");
         if (speechStreamService != null) {
             speechStreamService.stop();
         }
@@ -156,7 +150,6 @@ public class SpeechRecVosk implements RecognitionListener {
     //receive audio and send to vosk
     private void handleAudioStream(byte [] data){
         try {
-            Log.d(TAG, "audio buffer size: " + audioSenderStreamVosk.size());
             audioSenderStreamVosk.put(data);
         } catch (InterruptedException e) {
             setErrorState(e.getMessage());
@@ -189,15 +182,24 @@ public class SpeechRecVosk implements RecognitionListener {
     }
 
     public void handleResult(String hypothesis){
-        Log.d(TAG, "VOSK: " + hypothesis + "\n");
-        //https://github.com/alphacep/vosk-android-demo/issues/81
         long transcriptTime = System.currentTimeMillis();
+        handleTranscript(hypothesis, MessageTypes.FINAL_TRANSCRIPT, transcriptTime);
+        }
 
+    public void handleTranscript(String hypothesis, String transcriptType, long transcriptTime){
         //save transcript then send to other services in app
         try {
             //Below, we do a parsing of Vosk's silly string output
+            //https://github.com/alphacep/vosk-android-demo/issues/81
             JSONObject voskResponse = new JSONObject(hypothesis);
-            String transcript = voskResponse.getString("text");
+            String transcript;
+            if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
+                transcript = voskResponse.getString("text");
+            } else if (transcriptType.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
+                transcript = voskResponse.getString("partial");
+            } else {
+                return;
+            }
 
             //don't save null or empty transcripts
             if (transcript == null || transcript.trim().isEmpty()){
@@ -212,27 +214,28 @@ public class SpeechRecVosk implements RecognitionListener {
                 }
             }
 
-            //save transcript
+            //save transcript if final
             long transcriptId = 0l;
-            Log.d(TAG, "SAVING TRANSCRIPT TO ROOM DATABASE");
-            transcriptId = PhraseCreator.create(transcript, "transcript_ASG", mContext, mPhraseRepository);
+            if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
+                transcriptId = PhraseCreator.create(transcript, "transcript_ASG", mContext, mPhraseRepository);
+            }
 
             //send to other services
             JSONObject transcriptObj = new JSONObject();
-            transcriptObj.put("type", "transcript");
-            transcriptObj.put("transcript", transcript);
-            transcriptObj.put("id", transcriptId);
-            transcriptObj.put("time", transcriptTime);
+            transcriptObj.put(MessageTypes.MESSAGE_TYPE_LOCAL, transcriptType);
+            transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
+            if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
+                transcriptObj.put(MessageTypes.TRANSCRIPT_ID, transcriptId);
+            }
+            transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             dataObservable.onNext(transcriptObj);
         } catch (JSONException e){
             e.printStackTrace();
         }
-
     }
 
     @Override
     public void onFinalResult(String hypothesis) {
-        Log.d(TAG, "VOSK, final: " + hypothesis + "\n");
         if (speechStreamService != null) {
             speechStreamService = null;
         }
@@ -240,7 +243,8 @@ public class SpeechRecVosk implements RecognitionListener {
 
     @Override
     public void onPartialResult(String hypothesis) {
-        Log.d(TAG, "VOSK, partial: " + hypothesis + "\n");
+        long transcriptTime = System.currentTimeMillis();
+        handleTranscript(hypothesis, MessageTypes.INTERMEDIATE_TRANSCRIPT, transcriptTime);
     }
 
     @Override

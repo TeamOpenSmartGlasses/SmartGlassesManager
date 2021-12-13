@@ -26,6 +26,9 @@ public class FacialEmotionRepository {
         mAllFacialEmotions = mFacialEmotionDao.getAllFacialEmotions();
     }
 
+    public void destroy(){
+    }
+
     public LiveData<List<FacialEmotion>> getAllFacialEmotions() {
         return mAllFacialEmotions;
     }

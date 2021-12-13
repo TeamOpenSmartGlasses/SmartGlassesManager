@@ -29,6 +29,9 @@ public class MediaFileRepository {
         mMediaFileDao = db.mediaFileDao();
     }
 
+    public void destroy(){
+    }
+
     public MediaFileEntity getClosestMediaFileSnapshot(String mediaType, long timestamp) throws ExecutionException, InterruptedException {
 
         Callable<MediaFileEntity> callable = new Callable<MediaFileEntity>() {
