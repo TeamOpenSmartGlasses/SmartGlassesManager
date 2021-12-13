@@ -30,6 +30,10 @@ public class VoiceCommandViewModel extends AndroidViewModel {
     //mxt
     public LiveData<List<Phrase>> getMxtCache() {return mRepository.getVoiceCommandPhrases("mxt", true);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
 
+
+    public LiveData<List<Phrase>> getTagBin(String tag) {return mRepository.getVoiceCommandPhrases("mxt", false, "tag", tag);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
+
+
 //    public void addVoiceCommand(String word, String medium) {
 //        VoiceCommandCreator.create(word, medium, getApplication().getApplicationContext(), mRepository);
 //    }

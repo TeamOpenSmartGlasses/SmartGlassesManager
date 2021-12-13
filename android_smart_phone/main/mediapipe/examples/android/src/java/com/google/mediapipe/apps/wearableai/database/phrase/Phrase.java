@@ -11,9 +11,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
+import java.io.Serializable;
 
+//this is serializable so we can pass it through a bundle or turn it into json. In the future, making is parecebable may make sense for program speed. Right now, serializable makes sense as it's faster to implement and we are nowhere near performance issues for the one or two phrases we must pass around
 @Entity(tableName = "PhraseTable")
-public class Phrase {
+public class Phrase implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
@@ -38,6 +40,7 @@ public class Phrase {
     private String address;
 
     public Phrase(@NonNull String phrase, @NonNull long timestamp, @NonNull String medium, Location location, String address) {
+        super(); //serializable
         this.phrase = phrase;
         this.timestamp = timestamp;
         this.medium = medium;

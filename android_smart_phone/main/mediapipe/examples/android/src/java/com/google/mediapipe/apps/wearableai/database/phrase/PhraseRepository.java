@@ -30,6 +30,9 @@ public class PhraseRepository {
         mAllPhrases = mPhraseDao.getAllPhrases();
     }
 
+    public void destroy(){
+    }
+
     public LiveData<List<Phrase>> getAllPhrases() {
         return mAllPhrases;
     }

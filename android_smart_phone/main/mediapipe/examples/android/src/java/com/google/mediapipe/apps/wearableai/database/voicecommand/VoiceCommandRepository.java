@@ -31,6 +31,10 @@ public class VoiceCommandRepository {
         mAllVoiceCommands = mVoiceCommandDao.getAllVoiceCommands();
     }
 
+    public void destroy(){
+    }
+
+
     public LiveData<List<VoiceCommandEntity>> getAllVoiceCommands() {
         return mAllVoiceCommands;
     }
@@ -77,6 +81,10 @@ public class VoiceCommandRepository {
 
     public LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster) {
         return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster);
+    }
+
+    public LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster, String argKey, String argValue) {
+        return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster, argKey, argValue);
     }
 
 

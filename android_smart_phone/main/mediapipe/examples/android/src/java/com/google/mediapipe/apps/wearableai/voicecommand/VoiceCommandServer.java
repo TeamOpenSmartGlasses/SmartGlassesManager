@@ -20,6 +20,8 @@
 
 package com.google.mediapipe.apps.wearableai.voicecommand;
 
+import com.google.mediapipe.apps.wearableai.MessageTypes;
+
 import java.util.concurrent.ExecutionException;
 import java.lang.InterruptedException;
 import com.google.mediapipe.apps.wearableai.database.WearableAiRoomDatabase;
@@ -177,6 +179,9 @@ import org.json.JSONException;
 
 import java.util.Arrays;
 
+//fuzzy string matching
+import info.debatty.java.stringsimilarity.*;
+
 //parse interpret
 public class VoiceCommandServer {
     private  final String TAG = "WearableAi_VoiceCommand";
@@ -189,6 +194,9 @@ public class VoiceCommandServer {
     private ArrayList<String> wakeWords;
     //private ArrayList<String> voiceCommands;
     private Context mContext;
+    //voice command fuzzy search threshold
+    private final double wakeWordThreshold = 0.8;
+    private final double commandThreshold = 0.8;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -205,7 +213,7 @@ public class VoiceCommandServer {
         voiceCommands = new ArrayList<VoiceCommand>();
         voiceCommands.add(new MxtVoiceCommand());
 
-        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
+        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
     }
     
     public void setObservable(PublishSubject observable){
@@ -214,8 +222,8 @@ public class VoiceCommandServer {
 
     private void handleDataStream(JSONObject data){
         try {
-            String dataType = data.getString("type");
-            if (dataType.equals("transcript")){
+            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)){
                 parseTranscript(data);
             }
         } catch (JSONException e){
@@ -228,9 +236,9 @@ public class VoiceCommandServer {
         long transcriptTime = 0l;
         long transcriptId = 0l;
         try{
-            transcript = data.getString("transcript").toLowerCase();
-            transcriptTime = data.getLong("time");
-            transcriptId = data.getLong("id");
+            transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT).toLowerCase();
+            transcriptTime = data.getLong(MessageTypes.TIMESTAMP);
+            transcriptId = data.getLong(MessageTypes.TRANSCRIPT_ID);
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -240,12 +248,13 @@ public class VoiceCommandServer {
             //check if any of the wake words match
             for (int j = 0; j < voiceCommands.get(i).getWakeWords().size(); j++){
                 String currWakeWord = voiceCommands.get(i).getWakeWords().get(j);
-                int wakeWordLocation = transcript.indexOf(currWakeWord);
+                int wakeWordLocation = findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
                 if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     //we found a command, now get its arguments and run it
                     String preArgs = transcript.substring(0, wakeWordLocation);
                     String postArgs = transcript.substring(wakeWordLocation + currWakeWord.length());
                     voiceCommands.get(i).runCommand(this, preArgs, currWakeWord, j, postArgs, transcriptTime, transcriptId);
+                    return;
                 }
             }
         }
@@ -253,12 +262,13 @@ public class VoiceCommandServer {
         //loop through all global wake words to see if any match
         for (int i = 0; i < wakeWords.size(); i++){
             String currWakeWord = wakeWords.get(i);
-            int wakeWordLocation = transcript.indexOf(currWakeWord);
+            int wakeWordLocation = findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
             if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                 //we found a command, now get its arguments and run it
                 String preArgs = transcript.substring(0, wakeWordLocation);
                 String rest = transcript.substring(wakeWordLocation);
                 parseCommand(preArgs, currWakeWord, rest, transcriptTime, transcriptId);
+                return;
             }
 
         }
@@ -268,13 +278,32 @@ public class VoiceCommandServer {
         for (int i = 0; i < voiceCommands.size(); i++){
             for (int j = 0; j < voiceCommands.get(i).getCommands().size(); j++){
                 String currCommand = voiceCommands.get(i).getCommands().get(j);
-                int commandLocation = rest.indexOf(currCommand);
+                int commandLocation = findNearMatches(rest, currCommand, commandThreshold);
                 if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     String postArgs = rest.substring(commandLocation + currCommand.length());
                     voiceCommands.get(i).runCommand(this, preArgs, wakeWord, j, postArgs, transcriptTime, transcriptId);
+                    return;
                 }
             }
         }
+    }
+
+    private int findNearMatches(String incomingString, String toFindString, double threshold){
+        JaroWinkler jw = new JaroWinkler();
+        int extraChars = 2; //some small number of chars before and after string in case the fuzzy match and what appears in trancript aren't exactly the same length
+        for (int i = 0; i < (incomingString.length() - toFindString.length() - extraChars); i++) {
+            String substring = incomingString.substring(i, i + toFindString.length() + extraChars);
+            double distance = jw.similarity(substring, toFindString);
+            if (distance > threshold){
+                Log.d(TAG, "fuzzy match found");
+                Log.d(TAG, incomingString);
+                Log.d(TAG, toFindString);
+                Log.d(TAG, Double.toString(distance));
+                Log.d(TAG, Integer.toString(i));
+                return i;
+            }
+        }
+        return -1;
     }
 
 //    private void runCommand(String preArgs, String wakeWord, String command, String postArgs){
@@ -330,7 +359,7 @@ public class VoiceCommandServer {
             }
             Log.d(TAG, "emotion is: " + emotion);
             JSONObject affective_search_query = new JSONObject();
-            affective_search_query.put("type", "affective_search_query");
+            affective_search_query.put(MessageTypes.MESSAGE_TYPE_LOCAL, "affective_search_query");
             affective_search_query.put("emotion", emotion);
             dataObservable.onNext(affective_search_query);
         } catch (JSONException e){

@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.app.ActivityManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import android.content.ComponentName;
 
 import com.google.mediapipe.apps.wearableai.WearableAiAspService;
 
@@ -60,13 +61,13 @@ public class MainUi extends Fragment {
             }
         });
 
-//        final Button runAffectiveMemoryButton = view.findViewById(R.id.run_affective_mem);
-//            runAffectiveMemoryButton.setOnClickListener(new View.OnClickListener() {
-//                public void onClick(View v) {
-//                // Code here executes on main thread after user presses button
-//                sendWearableAiServiceMessage(WearableAiAspService.ACTION_RUN_AFFECTIVE_MEM);
-//            }
-//        });
+        final Button startHotspotButton = view.findViewById(R.id.start_hotspot);
+            startHotspotButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                // Code here executes on main thread after user presses button
+                launchHotspotSettings();
+            }
+        });
 
     }
 
@@ -105,6 +106,15 @@ public class MainUi extends Fragment {
         return false;
     }
 
+    //open hotspot settings
+    private void launchHotspotSettings(){
+        final Intent intent = new Intent(Intent.ACTION_MAIN, null);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        final ComponentName cn = new ComponentName("com.android.settings", "com.android.settings.TetherSettings");
+        intent.setComponent(cn);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity( intent);
+    }
 
 
 }

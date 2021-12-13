@@ -18,7 +18,7 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 public class AspWebsocketServer extends WebSocketServer {
     //data observable we can send data through
-    private static PublishSubject dataObservable;
+    private static PublishSubject<JSONObject> dataObservable;
 
     private static int connected = 0;
 
@@ -95,13 +95,36 @@ public class AspWebsocketServer extends WebSocketServer {
 
     }
 
-    public void setObservable(PublishSubject observable){
+    //receive observable to send and receive data
+    public void setObservable(PublishSubject<JSONObject> observable){
         dataObservable = observable;
+        Disposable dataSub = dataObservable.subscribe(i -> handleDataStream(i));
     }
+
+    //this receives data from the data observable. For now, this class decides what to send and what not to send to the ASG
+    private void handleDataStream(JSONObject data){
+        //first check if it's a type we should handle
+        try{
+            String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (type.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)){
+                Log.d(TAG, "AspWebsocketServer got INTERMEDIATE_TRANSCRIPT, sending to ASG");
+                //data.put(MessageTypes.MESSAGE_TYPE_LOCAL, data.getString(MessageTypes.MESSAGE_TYPE_ASG)); //change the type to the type for ASG
+                //data.remove(MessageTypes.MESSAGE_TYPE_ASG);
+                sendJson(data);
+            } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)){
+                Log.d(TAG, "AspWebsocketServer got FINAL_TRANSCRIPT, sending to ASG");
+                sendJson(data);
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
 
     //need to call this so if we get "Force Stop"ped, we will clean up sockets so we can connect on restart
     public void destroy(){
         connected = 0;
+        //dataObservable.unsubscribe();
         try{
             stop(3);
         } catch (InterruptedException e){

@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.lang.InterruptedException;
 import java.io.InputStream;
 
+import android.util.Log;
+
+import java.util.concurrent.TimeUnit;
 
 import java.util.concurrent.BlockingQueue;
 
@@ -36,6 +39,9 @@ import java.util.concurrent.BlockingQueue;
  * {@link RecognitionListener}
  */
 public class SpeechStreamQueueServiceVosk {
+    private final String TAG = "WearableAi_SpeechStreamQueueServiceVosk";
+
+    private boolean shouldDie = false;
 
     private final Recognizer recognizer;
     private final BlockingQueue<byte []> inputStream;
@@ -99,10 +105,12 @@ public class SpeechStreamQueueServiceVosk {
             return false;
 
         try {
+            shouldDie = true;
             recognizerThread.interrupt();
             recognizerThread.join();
         } catch (InterruptedException e) {
             // Restore the interrupted status.
+            e.printStackTrace();
             Thread.currentThread().interrupt();
         }
 
@@ -135,11 +143,14 @@ public class SpeechStreamQueueServiceVosk {
 
             byte[] buffer;// = new byte[bufferSize];
 
-            while (!interrupted()
+            while (!shouldDie && !interrupted()
                     && ((timeoutSamples == NO_TIMEOUT) || (remainingSamples > 0))) {
                 try {
                     //int nread = inputStream.read(buffer, 0, buffer.length);
-                    buffer = inputStream.take();
+                    buffer = inputStream.poll(250, TimeUnit.MILLISECONDS); //we poll so that, if we need to kill this thread with an interrupt, we don't block forever on take() and never leave the loop
+                    if (buffer == null){ //if null, we want to loop again
+                        continue;
+                    }
                     int nread = buffer.length;
                     if (nread < 0) {
                         break;

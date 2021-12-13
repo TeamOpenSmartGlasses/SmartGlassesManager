@@ -1,5 +1,7 @@
 package com.google.mediapipe.apps.wearableai.database;
 
+import android.util.Log;
+
 import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
@@ -20,9 +22,13 @@ import com.google.mediapipe.apps.wearableai.database.facialemotion.FacialEmotion
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandDao;
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEntity;
 
-@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class}, version = 1, exportSchema = false)
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileDao;
+import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileEntity;
+
+@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class}, version = 1, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class WearableAiRoomDatabase extends RoomDatabase {
+    private static final String TAG = "WearableAi_WearableAiRoomDatabase";
 
     private static volatile WearableAiRoomDatabase INSTANCE;
     private static final int NUMBER_OF_THREADS = 4;
@@ -31,6 +37,7 @@ public abstract class WearableAiRoomDatabase extends RoomDatabase {
     public abstract PhraseDao phraseDao();
     public abstract FacialEmotionDao facialEmotionDao();
     public abstract VoiceCommandDao voiceCommandDao();
+    public abstract MediaFileDao mediaFileDao();
 
     public static WearableAiRoomDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
@@ -42,6 +49,16 @@ public abstract class WearableAiRoomDatabase extends RoomDatabase {
             }
         }
         return INSTANCE;
+    }
+
+    public static void destroy(){
+        Log.d(TAG, "onDestroy: --------");
+        if(INSTANCE!=null){
+          if(INSTANCE.isOpen()) {
+            INSTANCE.close();
+          }
+          INSTANCE=null;
+        }
     }
 
 }

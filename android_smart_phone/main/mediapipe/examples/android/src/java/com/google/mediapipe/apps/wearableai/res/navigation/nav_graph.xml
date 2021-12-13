@@ -41,6 +41,31 @@
             android:id="@+id/action_nav_memory_tools_to_nav_mxt_cache"
             app:destination="@id/nav_mxt_cache" />
     </fragment>
-
-
+    <fragment
+        android:id="@+id/nav_mxt_tag_bins"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MxtTagBinsUi"
+        tools:layout="@layout/mxt_tag_bins_fragment"
+        android:label="MXT Tag Bins" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_mxt_tag_bins"
+            app:destination="@id/nav_mxt_tag_bins" />
+        <action
+            android:id="@+id/action_nav_mxt_tag_bins_to_nav_phrase_context"
+            app:destination="@id/nav_phrase_context" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_phrase_context"
+        android:name="com.google.mediapipe.apps.wearableai.ui.PhraseContextUi"
+        tools:layout="@layout/phrase_context_fragment"
+        android:label="Phrase Context" >
+        <action
+            android:id="@+id/action_nav_all_transcripts_to_nav_phrase_context"
+            app:destination="@id/nav_phrase_context" />
+        <action
+            android:id="@+id/action_nav_mxt_cache_to_nav_phrase_context"
+            app:destination="@id/nav_phrase_context" />
+        <action
+            android:id="@+id/action_nav_phrase_context_to_nav_mxt_tag_bins"
+            app:destination="@id/nav_mxt_tag_bins" />
+    </fragment>
 </navigation>
