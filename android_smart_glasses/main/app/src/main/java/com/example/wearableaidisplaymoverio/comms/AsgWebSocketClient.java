@@ -60,6 +60,11 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     }
 
+    public void sendHeartBeat(){
+        Log.d(TAG, "send heartbeat");
+        send("ping");
+    }
+
     public AsgWebSocketClient(WebSocketManager manager, URI serverURI) {
         super(serverURI);
         connected = 0;

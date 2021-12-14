@@ -58,6 +58,21 @@ public class WebSocketManager implements Runnable{
         } catch (URISyntaxException e){
             e.printStackTrace();
         }
+
+        //start a heartbeat, which will try to send a heartbeat every n seconds iff the connection appears to be open. This will reveal if the other end has closed the connection and we weren't notified
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final int delay = 3000;
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                //if the ws doesn't exist or is not open, then the manager already knows we A) need to restart b) are starting, so don't send heart beat
+                if (ws != null) {
+                    if (ws.getConnectionState() == 2 && !ws.isClosed()) {
+                        ws.sendHeartBeat();
+                    }
+                }
+                handler.postDelayed(this, delay); //run again in delay milliseconds
+            }
+        }, delay);
     }
 
     public void setNewIp(String ip){
@@ -92,20 +107,6 @@ public class WebSocketManager implements Runnable{
                 }
             }
         }, delay);
-
-
-//        while(connected != 2) {
-//            try {
-//                Log.d(TAG, "Trying to connect...");
-//                ws = new AsgWebSocketClient(this, serverURI);
-//                ws.setObservable(dataObservable);
-//                ws.setSourceName(mySourceName);
-//                ws.connectBlocking();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            connected = ws.getConnectionState();
-//        }
     }
 
     protected void onClose(){
