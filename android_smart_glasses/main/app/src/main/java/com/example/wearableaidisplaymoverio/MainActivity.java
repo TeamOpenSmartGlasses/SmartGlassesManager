@@ -147,9 +147,7 @@ public class MainActivity extends Activity {
 
         //create the WearableAI service if it isn't already running
         startService(new Intent(this, WearableAiService.class));
-        // Bind to that service
-        Intent intent = new Intent(this, WearableAiService.class);
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        bindWearableAiService();
 
 //        //setup camera preview
 //        preview = (SurfaceView) findViewById(R.id.preview);
@@ -351,6 +349,8 @@ public class MainActivity extends Activity {
 
         registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
 
+        bindWearableAiService();
+
         if (curr_mode == "llc"){
             scrollToBottom(liveLifeCaptionsText);
         }
@@ -363,6 +363,8 @@ public class MainActivity extends Activity {
     @Override
     public void onPause() {
         super.onPause();
+
+        unbindWearableAiService();
 
         //unregister receiver
         unregisterReceiver(mComputeUpdateReceiver);
@@ -949,5 +951,15 @@ public class MainActivity extends Activity {
         wifiLock.release();
     }
 
+    public void bindWearableAiService(){
+        // Bind to that service
+        Intent intent = new Intent(this, WearableAiService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    public void unbindWearableAiService() {
+        // Bind to that service
+        unbindService(connection);
+    }
 }
 
