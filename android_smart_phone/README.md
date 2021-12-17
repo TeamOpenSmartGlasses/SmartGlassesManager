@@ -36,3 +36,11 @@ However we have successfully tested using both `vosk-model-en-us-0.22` and `vosk
 
 Keras-VGG16-places365/ is the places365 system converted to a tensorflowlite model for our WearableAI graph that is currently running on the ASP
 
+## TODO
+
+Move this whole thing to Gradle+Android Studio and remove MediaPipe code. If we want to use mediapipe again in the future, use this setup to build a WearableAI mediapipe AAR
+
+## References / Acknowledgements
+
+- Build system taken from MediaPipe
+- Facial recognition from: https://github.com/shubham0204/FaceRecognition_With_FaceNet_Android
