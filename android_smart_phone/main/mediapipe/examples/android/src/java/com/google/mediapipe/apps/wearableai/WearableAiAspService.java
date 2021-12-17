@@ -35,6 +35,9 @@ import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileDao;
 import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileCreator;
 import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileEntity;
 
+//face rec
+import com.google.mediapipe.apps.wearableai.facialrecognition.FaceRecApi;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -178,6 +181,7 @@ public class WearableAiAspService extends LifecycleService {
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
     public static final String ACTION_RUN_AFFECTIVE_MEM = "ACTION_RUN_AFFECTIVE_MEM";
 
+    //socket
     private AspWebsocketServer asgWebSocket; 
 
     private static final String TAG = "WearableAi_ASP_Service";
@@ -317,6 +321,9 @@ public class WearableAiAspService extends LifecycleService {
   //voice command system
   VoiceCommandServer voiceCommandServer;
 
+  //facial rec system
+  private FaceRecApi faceRecApi;
+
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
     PublishSubject<byte []> audioObservable;
@@ -331,6 +338,7 @@ public class WearableAiAspService extends LifecycleService {
 
   @Override
   public void onCreate() {
+    //setup room database interfaces
     mPhraseRepository = new PhraseRepository(getApplication());
     mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
     mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
@@ -347,102 +355,12 @@ public class WearableAiAspService extends LifecycleService {
       //start voice command server to parse transcript for voice command
       voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
 
-    //mediapipe stuffs
-    try {
-      applicationInfo =
-          getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-    } catch (NameNotFoundException e) {
-      Log.e(TAG, "Cannot find application info: " + e);
-    }
+    //start face recognizer
+    faceRecApi = new FaceRecApi(this);
+    faceRecApi.setup();
 
-    previewDisplayView = new SurfaceView(this);
-    //setupPreviewDisplayView();
-
-    // Initialize asset manager so that MediaPipe native libraries can access the app assets, e.g.,
-    // binary graphs.
-    AndroidAssetUtil.initializeNativeAssetManager(this);
-    eglManager = new EglManager(null);
-    processor =
-        new FrameProcessor(
-            this,
-            eglManager.getNativeContext(),
-            applicationInfo.metaData.getString("binaryGraphName"),
-            applicationInfo.metaData.getString("inputVideoStreamName"),
-            applicationInfo.metaData.getString("outputVideoStreamName"));
-    processor
-        .getVideoSurfaceOutput()
-        .setFlipY(
-            applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
-
-    //set processor focal length side packet for specific camera
-    float focalLength = 100; //random, I have no idea what this is supposed to be, TODO
-    Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
-    if (!haveAddedSidePackets) {
-        Map<String, Packet> inputSidePackets = new HashMap<>();
-        inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
-        processor.setInputSidePackets(inputSidePackets);
-        haveAddedSidePackets = true;
-    }
-
-    //add a callback to process the holistic + iris output of the mediapipe perception pipeline
-    processor.addPacketCallback(
-      OUTPUT_LANDMARKS_STREAM_NAME,
-      (packet) -> {
-        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-        try {
-          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-          if (landmarks == null) {
-            return;
-          } else {
-              processWearableAiOutput(landmarks, System.currentTimeMillis());
-          }
-        } catch (InvalidProtocolBufferException e) {
-          Log.e(TAG, "Couldn't Exception received - " + e);
-          return;
-        }
-      });
-
-    //add a callback to process the facial emotion output of the mediapipe perception pipeline
-    processor.addPacketCallback(
-      OUTPUT_FACE_EMOTION_STREAM_NAME,
-      (packet) -> {
-          //extract face_emotion_vector from packet
-          
-            float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
-            //update face emotion
-            mSocialInteraction.updateFaceEmotion(face_emotion_vector, System.currentTimeMillis());
-            
-            String faceEmotion = facialEmotionList[getMaxIdxFloat(face_emotion_vector)];
-            saveFacialEmotion(faceEmotion);
-
-            //get facial emotion
-//           int most_frequent_facial_emotion = mSocialInteraction.getFacialEmotionMostFrequent(30);
-//           Log.d(TAG, "FACE EMO F. : " + most_frequent_facial_emotion);
-
-//        Log.d(TAG, "FACE EMOTION CALLBACK");
-//        for (int i = 0; i < face_emotion_vector.length; i++){
-//            Log.d(TAG, "Face emotion model output at " + i + "::: " + face_emotion_vector[i]);
-//        }
-      });
-
-    //add a callback to process the pose + left hand + right hand body language
-    processor.addPacketCallback(
-      OUTPUT_BODY_LANGUAGE_LANDMARKS_STREAM_NAME,
-      (packet) -> {
-        byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
-        try {
-//              NormalizedLandmarkList landmarks = PacketGetter.getProto(packet, NormalizedLandmarkList.class);
-          NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
-          if (landmarks == null) {
-            return;
-          } else {
-                mSocialInteraction.updateBodyLanguageLandmarks(landmarks, System.currentTimeMillis());
-          }
-        } catch (InvalidProtocolBufferException e) {
-          Log.e(TAG, "Couldn't Exception received - " + e);
-          return;
-        }
-      });
+      //setup mediapipe
+      setupMediapipe();
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
@@ -477,10 +395,6 @@ public class WearableAiAspService extends LifecycleService {
     //start first socketThread
     startSocket();
 
-    //setup mediapipe
-    converter = new BitmapConverter(eglManager.getContext());
-    converter.setConsumer(processor);
-    startProducer();
 
     //start audio streaming from ASG
     audioSystem = new AudioSystem(audioObservable);
@@ -898,23 +812,31 @@ public class WearableAiAspService extends LifecycleService {
                         //ping back the client to let it know we received the message
                         sendBytes(ack_id, null);
 
-                        //convert to bitmap
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
-                        //send through mediapipe
-                        bitmapProducer.newFrame(bitmap);
-
-                        //save 1 image at set frequency
-                        long currTime = System.currentTimeMillis();
-                        if (((currTime - lastImageSave) / 1000) >= (1 / imageSaveFrequency)){ // divide by 1000 to convert to fps (per second) instead of per millisecond
-                            savePicture(raw_data, imageTime);
-                            lastImageSave = currTime;
-                        }
+                        handleImage(raw_data, imageTime);
                     }
                 } else {
                     break;
                 }
             }
             throwBrokenSocket();
+        }
+    }
+
+    private void handleImage(byte [] raw_data, long imageTime){
+        //convert to bitmap
+        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
+
+        //send through facial recognition
+        faceRecApi.analyze(bitmap);
+
+        //send through mediapipe
+        //bitmapProducer.newFrame(bitmap);
+
+        //save 1 image at set frequency
+        long currTime = System.currentTimeMillis();
+        if (((currTime - lastImageSave) / 1000) >= (1 / imageSaveFrequency)){ // divide by 1000 to convert to fps (per second) instead of per millisecond
+            savePicture(raw_data, imageTime);
+            lastImageSave = currTime;
         }
     }
 
@@ -1353,6 +1275,111 @@ public class WearableAiAspService extends LifecycleService {
         //close room database(s)
         WearableAiRoomDatabase.destroy();
         stopForeground(true);
+
+    }
+
+    public void setupMediapipe(){
+        //mediapipe stuffs
+        try {
+          applicationInfo =
+              getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+        } catch (NameNotFoundException e) {
+          Log.e(TAG, "Cannot find application info: " + e);
+        }
+
+        previewDisplayView = new SurfaceView(this);
+        //setupPreviewDisplayView();
+
+        // Initialize asset manager so that MediaPipe native libraries can access the app assets, e.g.,
+        // binary graphs.
+        AndroidAssetUtil.initializeNativeAssetManager(this);
+        eglManager = new EglManager(null);
+        processor =
+            new FrameProcessor(
+                this,
+                eglManager.getNativeContext(),
+                applicationInfo.metaData.getString("binaryGraphName"),
+                applicationInfo.metaData.getString("inputVideoStreamName"),
+                applicationInfo.metaData.getString("outputVideoStreamName"));
+        processor
+            .getVideoSurfaceOutput()
+            .setFlipY(
+                applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
+
+        //set processor focal length side packet for specific camera
+        float focalLength = 100; //random, I have no idea what this is supposed to be, TODO
+        Packet focalLengthSidePacket = processor.getPacketCreator().createFloat32(focalLength);
+        if (!haveAddedSidePackets) {
+            Map<String, Packet> inputSidePackets = new HashMap<>();
+            inputSidePackets.put(FOCAL_LENGTH_STREAM_NAME, focalLengthSidePacket);
+            processor.setInputSidePackets(inputSidePackets);
+            haveAddedSidePackets = true;
+        }
+
+        //add a callback to process the holistic + iris output of the mediapipe perception pipeline
+        processor.addPacketCallback(
+          OUTPUT_LANDMARKS_STREAM_NAME,
+          (packet) -> {
+            byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+            try {
+              NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+              if (landmarks == null) {
+                return;
+              } else {
+                  processWearableAiOutput(landmarks, System.currentTimeMillis());
+              }
+            } catch (InvalidProtocolBufferException e) {
+              Log.e(TAG, "Couldn't Exception received - " + e);
+              return;
+            }
+          });
+
+        //add a callback to process the facial emotion output of the mediapipe perception pipeline
+        processor.addPacketCallback(
+          OUTPUT_FACE_EMOTION_STREAM_NAME,
+          (packet) -> {
+              //extract face_emotion_vector from packet
+              
+                float[] face_emotion_vector = PacketGetter.getFloat32Vector(packet);
+                //update face emotion
+                mSocialInteraction.updateFaceEmotion(face_emotion_vector, System.currentTimeMillis());
+                
+                String faceEmotion = facialEmotionList[getMaxIdxFloat(face_emotion_vector)];
+                saveFacialEmotion(faceEmotion);
+
+                //get facial emotion
+    //           int most_frequent_facial_emotion = mSocialInteraction.getFacialEmotionMostFrequent(30);
+    //           Log.d(TAG, "FACE EMO F. : " + most_frequent_facial_emotion);
+
+    //        Log.d(TAG, "FACE EMOTION CALLBACK");
+    //        for (int i = 0; i < face_emotion_vector.length; i++){
+    //            Log.d(TAG, "Face emotion model output at " + i + "::: " + face_emotion_vector[i]);
+    //        }
+          });
+
+        //add a callback to process the pose + left hand + right hand body language
+        processor.addPacketCallback(
+          OUTPUT_BODY_LANGUAGE_LANDMARKS_STREAM_NAME,
+          (packet) -> {
+            byte[] landmarksRaw = PacketGetter.getProtoBytes(packet);
+            try {
+    //              NormalizedLandmarkList landmarks = PacketGetter.getProto(packet, NormalizedLandmarkList.class);
+              NormalizedLandmarkList landmarks = NormalizedLandmarkList.parseFrom(landmarksRaw);
+              if (landmarks == null) {
+                return;
+              } else {
+                    mSocialInteraction.updateBodyLanguageLandmarks(landmarks, System.currentTimeMillis());
+              }
+            } catch (InvalidProtocolBufferException e) {
+              Log.e(TAG, "Couldn't Exception received - " + e);
+              return;
+            }
+          });
+
+        //setup mediapipe
+        converter = new BitmapConverter(eglManager.getContext());
+        converter.setConsumer(processor);
+        startProducer();
 
     }
 

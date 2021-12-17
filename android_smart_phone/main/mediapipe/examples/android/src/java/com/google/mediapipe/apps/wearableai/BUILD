@@ -16,6 +16,9 @@ licenses(["notice"])
 
 package(default_visibility = ["//visibility:private"])
 
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_android_library")
+
+
 cc_binary(
     name = "libmediapipe_jni.so",
     linkshared = 1,
@@ -77,6 +80,7 @@ android_binary(
     name = "wearableai",
     custom_package = "com.google.mediapipe.apps.wearableai",
     manifest = "AndroidManifest.xml",
+    nocompress_extensions = ["tflite"],
     manifest_values = {
         "applicationId": "com.google.mediapipe.apps.wearableai",
         "appName": "Wearable AI",
@@ -97,6 +101,44 @@ android_binary(
     visibility = ["//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:__subpackages__"],
 )
 
+kt_android_library(
+        name = "wearableai_kotlin",
+        manifest = "AndroidManifest.xml",
+        custom_package = "com.google.mediapipe.apps.wearableai",
+        srcs = glob(["**/*.kt"]),
+        resource_files = glob(["res/**"]),
+        deps = [
+            #face rec lib,
+            '@maven//:androidx_core_core_ktx',
+            ##TensorFlow Lite dependencies,
+            '@maven//:org_tensorflow_tensorflow_lite_2_4_0',
+            '@maven//:org_tensorflow_tensorflow_lite_gpu_2_4_0',
+            '@maven//:org_tensorflow_tensorflow_lite_support_0_1_0',
+            ##Kotlin Coroutines,
+            '@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_core_1_4_1',
+            '@maven//:org_jetbrains_kotlinx_kotlinx_coroutines_android_1_4_1',
+            ##DocumentFile and ExitInterface,
+            "@maven//:androidx_documentfile_documentfile_1_0_1",
+            "@maven//:androidx_exifinterface_exifinterface_1_3_3",
+            #materialui
+            "//third_party:androidx_constraint_layout",
+            "//third_party:androidx_material",
+            ## MLKit Face Detection
+            '@maven//:com_google_mlkit_face_detection',
+            #nav + fragment
+            "@maven//:androidx_navigation_navigation_fragment",
+            "@maven//:androidx_navigation_navigation_ui",
+            "@maven//:androidx_navigation_navigation_runtime",
+            "@maven//:androidx_fragment_fragment",
+            "@maven//:org_jetbrains_kotlin_kotlin_reflect",
+            "//third_party:androidx_appcompat",
+            "@maven//:com_google_guava_guava",
+                ],
+        assets = glob(["kotlin_assets/*"]),
+        assets_dir = "kotlin_assets/",
+        visibility = ["//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:__subpackages__"],
+        )
+
 android_library(
         name = "wearableai_main",
         #javacopts = ["-Xlint"],
@@ -105,6 +147,7 @@ android_library(
         srcs = glob(["**/*.java"]),
         resource_files = glob(["res/**"]),
         deps = [
+            "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:wearableai_kotlin",
             "@maven//:net_java_dev_jna_jna",
             ":androidx_room_room_compiler_library",
             ":mediapipe_jni_lib",

@@ -29,10 +29,15 @@ import com.google.mediapipe.apps.wearableai.WearableAiAspService;
 
 import android.app.ActivityManager;
 
+import android.os.Build;
+import android.Manifest;
+
 import java.util.List;
 import java.util.ArrayList;
 import android.os.IBinder;
 import android.content.Intent;
+
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -133,6 +138,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
 
+import androidx.core.content.ContextCompat;
 import android.content.Context;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -147,12 +153,19 @@ public class MainActivity extends AppCompatActivity {
 
     private  final String TAG = "WearableAi_MainActivity";
 
+    //permissions
+    public final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+    public final int EXTERNAL_REQUEST = 138;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         //set main view
         setContentView(R.layout.activity_main);
+
+        //before anything, get permissions
+        requestForPermission();
 
         //start wearable ai service
         startWearableAiService();
@@ -186,5 +199,29 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
+
+    //handle permissions
+    public boolean requestForPermission() {
+        boolean isPermissionOn = true;
+        final int version = Build.VERSION.SDK_INT;
+        if (version >= 23) {
+            if (!canAccessExternalSd()) {
+                isPermissionOn = false;
+                requestPermissions(EXTERNAL_PERMS, EXTERNAL_REQUEST);
+            }
+        }
+
+        return isPermissionOn;
+    }
+
+    public boolean canAccessExternalSd() {
+        return (hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE));
+    }
+
+    private boolean hasPermission(String perm) {
+        return (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(this, perm));
+
+    }
+    //^^^ handle permissions
 
 }

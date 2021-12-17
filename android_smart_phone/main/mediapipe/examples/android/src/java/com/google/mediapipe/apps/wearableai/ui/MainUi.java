@@ -53,6 +53,14 @@ public class MainUi extends Fragment {
             }
         });
 
+        final Button faceRecButton = view.findViewById(R.id.face_rec);
+            faceRecButton.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Log.d(TAG, "clicked face rec button");
+                    navController.navigate(R.id.action_nav_main_ui_to_nav_face_rec);
+            }
+        });
+
         final Button killServiceButton = view.findViewById(R.id.kill_wearableai_service);
             killServiceButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {

@@ -59,7 +59,7 @@ public class AspWebsocketServer extends WebSocketServer {
             Log.d(TAG, "TRANSCRIPT: " + json_obj.getString("transcript"));
             dataObservable.onNext(json_obj);
         } catch (JSONException e){
-            e.printStackTrace();
+            //if we send a string (like ping), this will get thrown , which is fine
         }
     }
 

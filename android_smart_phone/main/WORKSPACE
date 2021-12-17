@@ -12,6 +12,70 @@ http_archive(
 load("@bazel_skylib//lib:versions.bzl", "versions")
 versions.check(minimum_bazel_version = "3.4.0")
 
+# setup kotlin bazel toolchains
+#rules_kotlin_version = "1.5.0-beta-4"
+#rules_kotlin_sha = "4fd769fb0db5d3c6240df8a9500515775101964eebdf85a3f9f0511130885fde"
+#rules_kotlin_version = "legacy-1.3.0"
+##rules_kotlin_sha = "4fd769fb0db5d3c6240df8a9500515775101964eebdf85a3f9f0511130885fde"
+##rules_kotlin_sha = "e4185409c787c18f332ae83a73827aab6e77058a48ffee0cac01123408cbc89a"
+#http_archive(
+#    name = "io_bazel_rules_kotlin",
+#    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % rules_kotlin_version],
+#    type = "zip",
+#    strip_prefix = "rules_kotlin-%s" % rules_kotlin_version,
+#    sha256 = rules_kotlin_sha,
+#)
+#
+#load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+#
+#register_toolchains("@//third_party:kotlin_toolchain")
+##kotlin_repositories() # if you want the default. Otherwise see custom kotlinc distribution below
+##kotlin_repositories(
+##    compiler_release = kotlinc_version(
+##        release = "1.3.31", # just the numeric version
+##        sha256 = "107325d56315af4f59ff28db6837d03c2660088e3efeb7d4e41f3e01bb848d6a"
+##    )
+##)
+#
+#load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+#
+#KOTLIN_VERSION = "1.4.32"
+#KOTLINC_RELEASE_SHA = "dfef23bb86bd5f36166d4ec1267c8de53b3827c446d54e82322c6b6daad3594c"
+#
+#KOTLINC_RELEASE = {
+#    "urls": [
+#        "https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION),
+#    ],
+#    "sha256": KOTLINC_RELEASE_SHA,
+#}
+#
+#kotlin_repositories(compiler_release = KOTLINC_RELEASE)
+
+# Download master or specific revisions
+http_archive(
+    name = "io_bazel_rules_kotlin_master",
+    strip_prefix = "rules_kotlin-master",
+    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/refs/heads/master.zip"],
+)
+
+load("@io_bazel_rules_kotlin_master//src/main/starlark/release_archive:repository.bzl", "archive_repository")
+
+archive_repository(
+    name = "io_bazel_rules_kotlin",
+    source_repository_name = "io_bazel_rules_kotlin_master",
+)
+
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
+
+kotlin_repositories()
+
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
+
+kt_register_toolchains()
+
+#kt_register_toolchains() # to use the default toolchain, otherwise see toolchains below
+# ^^^ setup kotlin bazel toolchains
+
 
 # ABSL cpp library lts_2020_09_23
 http_archive(
@@ -310,6 +374,8 @@ http_archive(
     build_file = "@//third_party:google_toolbox_for_mac.BUILD",
 )
 
+
+
 # Maven dependencies.
 
 RULES_JVM_EXTERNAL_TAG = "3.2"
@@ -399,12 +465,29 @@ maven_install(
         "androidx.navigation:navigation-ui:2.0.0",
         "androidx.navigation:navigation-runtime:2.0.0",
         "androidx.fragment:fragment:1.2.0",
+        #"androidx.activity:activity-ktx:1.3.1",
 
         #fuzzy string matching
         "info.debatty:java-string-similarity:2.0.0",
 
         #java.util.time backport
         "org.threeten:threetenbp:1.5.2",
+
+        #face rec lib
+        'androidx.core:core-ktx:1.6.0',
+        "org.jetbrains.kotlin:kotlin-reflect:1.5.0-M1",
+         ##MLKit Face Detection
+        'com.google.mlkit:face-detection:16.1.2',
+        ##TensorFlow Lite dependencies
+        'org.tensorflow:tensorflow-lite:2.4.0',
+        'org.tensorflow:tensorflow-lite-gpu:2.4.0',
+        'org.tensorflow:tensorflow-lite-support:0.1.0',
+        ##Kotlin Coroutines
+        'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1',
+        'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1',
+        ##DocumentFile and ExitInterface
+        "androidx.documentfile:documentfile:1.0.1",
+        "androidx.exifinterface:exifinterface:1.3.3",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",
