@@ -520,6 +520,11 @@ public class ASPClientSocket {
                 intent.putExtra(MessageTypes.COMMAND_RESULT, responseResult);
                 intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+            } else if (typeOf.equals(MessageTypes.FACE_SIGHTING_EVENT)) {
+                final Intent intent = new Intent();
+                intent.setAction(MessageTypes.FACE_SIGHTING_EVENT);
+                intent.putExtra(MessageTypes.FACE_NAME, data.getString(MessageTypes.FACE_NAME));
+                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             } else if (typeOf.equals("affective_mem_transcripts")) {
                 final Intent intent = new Intent();
                 intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
@@ -551,12 +556,12 @@ public class ASPClientSocket {
     }
 
     public void startWebSocket(){
-        webSocketStarted = true;
         //start a thread to hold the websocket connection to ASP
         aspWebSocketManager = new WebSocketManager(SERVER_IP, "8887");
         aspWebSocketManager.setObservable(dataObservable);
         aspWebSocketManager.setSourceName("asg_web_socket"); //should be pulled from R.string
         aspWebSocketManager.run(); //start socket which will auto reconnect on disconnect
+        webSocketStarted = true;
     }
 
     public boolean getSocketStarted(){

@@ -47,7 +47,7 @@ class FaceRecFrameAnalyser( private var context: Context , private var whichMode
     // Default is Models.FACENET ; Quantized models are faster
     private val model = FaceNetModel( context , whichModel )
 
-    private val nameScoreHashmap = HashMap<String,ArrayList<Float>>()
+    private val nameScoreHashmap = HashMap<Long,ArrayList<Float>>()
     private var subject = FloatArray( model.embeddingDim )
 
     // Used to determine whether the incoming frame should be dropped or processed.
@@ -55,131 +55,139 @@ class FaceRecFrameAnalyser( private var context: Context , private var whichMode
 
     // Store the face embeddings in a ( String , FloatArray ) ArrayList.
     // Where String -> name of the person and FloatArray -> Embedding of the face.
-    var faceList = ArrayList<Pair<String,FloatArray>>()
+    var faceList = ArrayList<Pair<Long,FloatArray>>()
 
     // Use any one of the two metrics, "cosine" or "l2"
     private val metricToBeUsed = "cosine"
 
     @SuppressLint("UnsafeOptInUsageError")
-    fun analyze(image: Bitmap) {
+    fun analyze(image: Bitmap, imageTime : Long, imageId : Long, onPredictionResultsCallback: (predictions : ArrayList<Pair<Prediction, FloatArray>>, imageTime : Long, imageId : Long) -> Unit) {
         // If the previous frame is still being processed, then skip this frame
-        if ( isProcessing || faceList.size == 0 ) {
+        if ( isProcessing ) {
             return
         }
         else {
             isProcessing = true
 
             // Rotated bitmap for the FaceNet model
-            //val frameBitmap = BitmapUtils.imageToBitmap( image.image!! , image.imageInfo.rotationDegrees )
-            //val frameBitmap = BitmapUtils.imageToBitmap( image.image!! , image.imageInfo.rotationDegrees )
-            //output = rotateBitmap( image, rotationDegrees.toFloat() )
             val frameBitmap = image
-
-            // Configure frameHeight and frameWidth for output2overlay transformation matrix.
-//            if ( !boundingBoxOverlay.areDimsInit ) {
-//                boundingBoxOverlay.frameHeight = frameBitmap.height
-//                boundingBoxOverlay.frameWidth = frameBitmap.width
-//            }
 
             val inputImage = InputImage.fromBitmap( frameBitmap, 0 )
             detector.process(inputImage)
                 .addOnSuccessListener { faces ->
                     CoroutineScope( Dispatchers.Default ).launch {
-                        runModel( faces , frameBitmap )
+                        runModel( faces , frameBitmap, imageTime, imageId, onPredictionResultsCallback )
                     }
                 }
                 .addOnCompleteListener {
-//                    image.close()
                 }
         }
     }
 
-    private suspend fun runModel( faces : List<Face> , cameraFrameBitmap : Bitmap ){
+    private suspend fun runModel( faces : List<Face> , cameraFrameBitmap : Bitmap, imageTime: Long, imageId : Long, onPredictionResultsCallback: (predictions : ArrayList<Pair<Prediction, FloatArray>>, imageTime : Long, imageId : Long) -> Unit ){
         withContext( Dispatchers.Default ) {
-            val predictions = ArrayList<Prediction>()
+            val predictions = ArrayList<Pair<Prediction,FloatArray>>()
             for (face in faces) {
+                Logger.log("Detected face, running face rec model for that face");
+                // Crop the frame using face.boundingBox.
+                // Convert the cropped Bitmap to a ByteBuffer.
+                // Finally, feed the ByteBuffer to the FaceNet model.
+                val croppedBitmap = BitmapUtils.cropRectFromBitmap( cameraFrameBitmap , face.boundingBox )
+                subject = model.getFaceEmbedding( croppedBitmap )
+
+                //if we have no saved faces, just return unknown
                 try {
-                    // Crop the frame using face.boundingBox.
-                    // Convert the cropped Bitmap to a ByteBuffer.
-                    // Finally, feed the ByteBuffer to the FaceNet model.
-                    val croppedBitmap = BitmapUtils.cropRectFromBitmap( cameraFrameBitmap , face.boundingBox )
-                    subject = model.getFaceEmbedding( croppedBitmap )
-
-                    // Perform clustering ( grouping )
-                    // Store the clusters in a HashMap. Here, the key would represent the 'name'
-                    // of that cluster and ArrayList<Float> would represent the collection of all
-                    // L2 norms/ cosine distances.
-                    for ( i in 0 until faceList.size ) {
-                        // If this cluster ( i.e an ArrayList with a specific key ) does not exist,
-                        // initialize a new one.
-                        if ( nameScoreHashmap[ faceList[ i ].first ] == null ) {
-                            // Compute the L2 norm and then append it to the ArrayList.
-                            val p = ArrayList<Float>()
-                            if ( metricToBeUsed == "cosine" ) {
-                                p.add( cosineSimilarity( subject , faceList[ i ].second ) )
-                            }
-                            else {
-                                p.add( L2Norm( subject , faceList[ i ].second ) )
-                            }
-                            nameScoreHashmap[ faceList[ i ].first ] = p
-                        }
-                        // If this cluster exists, append the L2 norm/cosine score to it.
-                        else {
-                            if ( metricToBeUsed == "cosine" ) {
-                                nameScoreHashmap[ faceList[ i ].first ]?.add( cosineSimilarity( subject , faceList[ i ].second ) )
-                            }
-                            else {
-                                nameScoreHashmap[ faceList[ i ].first ]?.add( L2Norm( subject , faceList[ i ].second ) )
-                            }
-                        }
-                    }
-
-                    // Compute the average of all scores norms for each cluster.
-                    val avgScores = nameScoreHashmap.values.map{ scores -> scores.toFloatArray().average() }
-                    Logger.log( "Average score for each user : $nameScoreHashmap" )
-
-                    val names = nameScoreHashmap.keys.toTypedArray()
-                    nameScoreHashmap.clear()
-
-                    // Calculate the minimum L2 distance from the stored average L2 norms.
-                    val bestScoreUserName: String = if ( metricToBeUsed == "cosine" ) {
-                        // In case of cosine similarity, choose the highest value.
-                        if ( avgScores.maxOrNull()!! > model.model.cosineThreshold ) {
-                            names[ avgScores.indexOf( avgScores.maxOrNull()!! ) ]
-                        }
-                        else {
-                            "Unknown"
-                        }
-                    } else {
-                        // In case of L2 norm, choose the lowest value.
-                        if ( avgScores.minOrNull()!! > model.model.l2Threshold ) {
-                            "Unknown"
-                        }
-                        else {
-                            names[ avgScores.indexOf( avgScores.minOrNull()!! ) ]
-                        }
-                    }
-                    Logger.log( "Person identified as $bestScoreUserName" )
-                    predictions.add(
-                        Prediction(
-                            face.boundingBox,
-                            bestScoreUserName
+                    if (faceList.size == 0) {
+                        Logger.log("Adding unknown prediction because face list is empty");
+                        predictions.add(
+                                Pair( Prediction(
+                                        face.boundingBox,
+                                        null
+                                    ),
+                                    subject
+                                )
                         )
-                    )
-                }
-                catch ( e : Exception ) {
-                    // If any exception occurs with this box and continue with the next boxes.
-                    Log.e( "Model" , "Exception in FaceRecFrameAnalyser : ${e.message}" )
-                    continue
-                }
-            }
-            withContext( Dispatchers.Main ) {
-                // Clear the BoundingBoxOverlay and set the new results ( boxes ) to be displayed.
-//                boundingBoxOverlay.faceBoundingBoxes = predictions
-//                boundingBoxOverlay.invalidate()
+                    } else {
+                        // Perform clustering ( grouping )
+                        // Store the clusters in a HashMap. Here, the key would represent the 'name'
+                        // of that cluster and ArrayList<Float> would represent the collection of all
+                        // L2 norms/ cosine distances.
+                        for ( i in 0 until faceList.size ) {
+                            // If this cluster ( i.e an ArrayList with a specific key ) does not exist,
+                            // initialize a new one.
+                            if ( nameScoreHashmap[ faceList[ i ].first ] == null ) {
+                                // Compute the L2 norm and then append it to the ArrayList.
+                                val p = ArrayList<Float>()
+                                if ( metricToBeUsed == "cosine" ) {
+                                    p.add( cosineSimilarity( subject , faceList[ i ].second ) )
+                                }
+                                else {
+                                    p.add( L2Norm( subject , faceList[ i ].second ) )
+                                }
+                                nameScoreHashmap[ faceList[ i ].first ] = p
+                            }
+                            // If this cluster exists, append the L2 norm/cosine score to it.
+                            else {
+                                if ( metricToBeUsed == "cosine" ) {
+                                    nameScoreHashmap[ faceList[ i ].first ]?.add( cosineSimilarity( subject , faceList[ i ].second ) )
+                                }
+                                else {
+                                    nameScoreHashmap[ faceList[ i ].first ]?.add( L2Norm( subject , faceList[ i ].second ) )
+                                }
+                            }
+                        }
+                        Logger.log("Got predictions: " + predictions.size);
 
-                isProcessing = false
+                        // Compute the average of all scores norms for each cluster.
+                        val avgScores = nameScoreHashmap.values.map{ scores -> scores.toFloatArray().average() }
+                        Logger.log( "Average score for each user : $nameScoreHashmap" )
+
+                        val names = nameScoreHashmap.keys.toTypedArray()
+                        nameScoreHashmap.clear()
+
+                        // Calculate the minimum L2 distance from the stored average L2 norms.
+                        val bestScoreUserName: Long? = if ( metricToBeUsed == "cosine" ) {
+                            // In case of cosine similarity, choose the highest value.
+                            if ( avgScores.maxOrNull()!! > model.model.cosineThreshold ) {
+                                names[ avgScores.indexOf( avgScores.maxOrNull()!! ) ]
+                            }
+                            else {
+                                null
+                            }
+                        } else {
+                            // In case of L2 norm, choose the lowest value.
+                            if ( avgScores.minOrNull()!! > model.model.l2Threshold ) {
+                                null
+                            }
+                            else {
+                                names[ avgScores.indexOf( avgScores.minOrNull()!! ) ]
+                            }
+                        }
+                        predictions.add(
+                            Pair( Prediction(
+                                    face.boundingBox,
+                                    bestScoreUserName
+                                ),
+                                subject
+                            )
+                        )
+                    }
+            } catch ( e : Exception ) {
+                    // If any exception occurs with this box and continue with the next boxes.
+                    Logger.log( "Exception in FaceRecFrameAnalyser : ${e.message}" )
+                    continue
             }
+        }
+        withContext( Dispatchers.Main ) {
+            // Send predictions to call class
+            if (predictions.size > 0){
+                Logger.log( "Calling callaback" )
+                onPredictionResultsCallback(predictions, imageTime, imageId)
+            }
+
+            // record that the processing is complete
+            isProcessing = false
+        }
         }
     }
 

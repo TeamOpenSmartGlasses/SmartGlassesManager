@@ -46,7 +46,6 @@ public class MediaFileRepository {
         return future.get();
     }
 
-
     public long insert(MediaFileEntity mediaFile) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         Callable<Long> insertCallable = () -> mMediaFileDao.insert(mediaFile);
@@ -59,6 +58,20 @@ public class MediaFileRepository {
             e.printStackTrace();
         }
         return rowId;
+    }
+
+    public MediaFileEntity getMediaFilebyId(long id) throws ExecutionException, InterruptedException {
+
+        Callable<MediaFileEntity> callable = new Callable<MediaFileEntity>() {
+            @Override
+            public MediaFileEntity call() throws Exception {
+                return mMediaFileDao.getMediaFilebyId(id);
+            }
+        };
+
+        Future<MediaFileEntity> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        return future.get();
     }
 
 

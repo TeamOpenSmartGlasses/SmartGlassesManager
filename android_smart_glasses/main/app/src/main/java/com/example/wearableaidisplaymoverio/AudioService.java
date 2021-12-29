@@ -59,6 +59,8 @@ public class AudioService extends Service {
     //encryption key - TEMPORARILY HARD CODED - change to local storage, user can set
     private String secretKey;
 
+    private static boolean firstConnect = false;
+
     private static int socketTimeout = 10000;
 
     private long lastAudioUpdate = 0;
@@ -254,7 +256,7 @@ public class AudioService extends Service {
         //check if we are still connected.
         //if not , reconnect,
         //we don't need to actively send heart beats from the client, as it's assumed that we are ALWAYS streaming data. Later, if we have periods of time where no data is sent, we will want to send a heart beat perhaps. but the client doesn't really need to, we just need to check if we are still connected
-        if (mConnectState == 0) {
+        if (firstConnect && mConnectState == 0) { //check if firstConnect, cuz we shouldn't restart if we never connected yet in the first place
             restartSocket();
         }
 
@@ -340,6 +342,7 @@ public class AudioService extends Service {
                 System.out.println("AudioService server CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 mConnectState = 2;
+                firstConnect = true;
                 //make the thread that will send
                 if (SendThread == null) { //if the thread is null, make a new one (the first one)
                     SendThread = new Thread(new AudioService.SendThread());

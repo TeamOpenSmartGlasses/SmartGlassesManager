@@ -16,4 +16,4 @@ package com.google.mediapipe.apps.wearableai.facialrecognition
 
 import android.graphics.Rect
 
-data class Prediction( var bbox : Rect, var label : String , var maskLabel : String = "" )
+data class Prediction( var bbox : Rect, var label : Long?, var maskLabel : String = "" )

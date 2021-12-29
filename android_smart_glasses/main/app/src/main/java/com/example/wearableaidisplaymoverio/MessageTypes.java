@@ -18,5 +18,9 @@ public class MessageTypes {
     public static final String VOICE_COMMAND_RESPONSE = "VOICE_COMMAND_RESPONSE";
     public static final String COMMAND_RESULT = "COMMAND_RESULT";
     public static final String COMMAND_RESPONSE_DISPLAY_STRING = "COMMAND_RESPONSE_DISPLAY_STRING";
+
+    //FACE/PERSON SIGHTING
+    public static final String FACE_SIGHTING_EVENT = "FACE_SIGHTING_EVENT";
+    public static final String FACE_NAME = "FACE_NAME";
 }
 

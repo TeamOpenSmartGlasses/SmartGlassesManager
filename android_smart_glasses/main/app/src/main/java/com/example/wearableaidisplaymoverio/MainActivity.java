@@ -63,6 +63,12 @@ public class MainActivity extends Activity {
 
     public String TAG = "WearableAiDisplay";
 
+    public long lastFaceUpdateTime = 0;
+    public long faceUpdateInterval = 5000; //milliseconds
+
+    //current person recognized's names
+    public ArrayList<String> faceNames = new ArrayList<String>();
+
     //store information from visual search response
     List<String> thumbnailImages;
     List<String> visualSearchNames;
@@ -194,8 +200,26 @@ public class MainActivity extends Activity {
             case "textblock":
                 setupTextBlock();
                 break;
+            case "wearablefacerecognizer":
+                showWearableFaceRecognizer();
+                break;
         }
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
+    }
+
+    private void showWearableFaceRecognizer(){
+        setContentView(R.layout.wearable_face_recognizer);
+        TextView faceRecTitle = findViewById(R.id.face_rec_title);
+        faceRecTitle.setText("Face detected!\nName: " + faceNames.get(0));
+
+//        //for now, show for n seconds and then return to llc
+//        int show_time = 3000; //milliseconds
+//        Handler handler = new Handler();
+//        handler.postDelayed(new Runnable() {
+//            public void run() {
+//                setupLlcUi();
+//            }
+//        }, show_time);
     }
 
     private void setupVisualSearchViewfinder() {
@@ -471,6 +495,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT);
+        intentFilter.addAction(MessageTypes.FACE_SIGHTING_EVENT);
 
         intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
         intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY);
@@ -567,7 +592,7 @@ public class MainActivity extends Activity {
                     Log.d(TAG, command_response_text);
                     //change newlines to <br/>
                     command_response_text = command_response_text.replaceAll("\n", "<br/>");
-                    textHolder.add(Html.fromHtml("<p><font color='#EE0000'>" + command_response_text.trim() + "</font></p>"));
+                    textHolder.add(Html.fromHtml("<p><font color='#00CC00'>" + command_response_text.trim() + "</font></p>"));
                     if (curr_mode.equals("llc")) {
                         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                     }
@@ -692,6 +717,16 @@ public class MainActivity extends Activity {
                 });
 
 
+            } else if (MessageTypes.FACE_SIGHTING_EVENT.equals(action)) {
+                String currName = intent.getStringExtra(MessageTypes.FACE_NAME);
+                faceNames.clear();
+                faceNames.add(currName);
+                long timeSinceLastFaceUpdate = System.currentTimeMillis() - lastFaceUpdateTime;
+                if (timeSinceLastFaceUpdate > faceUpdateInterval){
+                    Toast.makeText(MainActivity.this, "Saw: " + currName, Toast.LENGTH_SHORT).show();
+                    lastFaceUpdateTime = System.currentTimeMillis();
+                }
+                //switchMode("wearablefacerecognizer");
             } else if (GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT.equals(action)) {
                 String str_data = intent.getStringExtra(GlboxClientSocket.AFFECTIVE_SUMMARY_RESULT);
                 Log.d(TAG, str_data);

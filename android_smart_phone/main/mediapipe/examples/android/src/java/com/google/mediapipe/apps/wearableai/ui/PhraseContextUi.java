@@ -28,6 +28,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import java.io.File;
 
+//bitmap utils
+import com.google.mediapipe.apps.wearableai.utils.BitmapJavaUtils;
+
 //date/time
 //import org.threeten.bp.LocalDateTime;
 //import org.threeten.bp.format.DateTimeFormatter;
@@ -125,7 +128,7 @@ public class PhraseContextUi extends Fragment {
             //imageViewImage.setImageResource(R.drawable.elon);
             //set the image of the image view
             String imagePath = currentImage.getLocalPath();
-            Bitmap imageBitmap = loadImageFromStorage(imagePath);
+            Bitmap imageBitmap = BitmapJavaUtils.loadImageFromStorage(imagePath);
             if (imageBitmap != null){
                 imageViewImage.setImageBitmap(imageBitmap);
             } else {
@@ -155,15 +158,6 @@ public class PhraseContextUi extends Fragment {
         }, 10);
     }
 
-    public Bitmap loadImageFromStorage(String path){
-        File imgFile = new  File(path);
-        if(imgFile.exists()){
-            Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-            return myBitmap;
-        } else {
-            return null;
-        }
-    }
 
     public String getPrettyDate(long timestamp){
         LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());

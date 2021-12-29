@@ -20,10 +20,11 @@ import android.util.Log;
 public class MediaFileCreator {
     public static final String TAG = "WearableAi_MediaFileCreator";
 
-    public static void create(String localPath, String mediaType, long startTimestamp, long endTimestamp, MediaFileRepository repo) {
+    public static long create(String localPath, String mediaType, long startTimestamp, long endTimestamp, MediaFileRepository repo) {
 
         MediaFileEntity mediaFile = new MediaFileEntity(localPath, mediaType, startTimestamp, endTimestamp);
         long id = repo.insert(mediaFile);  // This insert blocks until database write has completed
         Log.d(TAG, "Saved mediaFile to database");
+        return id;
     }
 }

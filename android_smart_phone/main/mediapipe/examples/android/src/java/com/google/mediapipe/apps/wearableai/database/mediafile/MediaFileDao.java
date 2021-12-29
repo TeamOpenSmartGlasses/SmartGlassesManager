@@ -19,7 +19,7 @@ import java.util.List;
 public interface MediaFileDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    long insert(MediaFileEntity voiceCommand);
+    long insert(MediaFileEntity mediaFile);
 
     @Query("DELETE FROM MediaFileTable")
     void deleteAll();
@@ -39,8 +39,8 @@ public interface MediaFileDao {
 //    @Query("SELECT * from MediaFileTable WHERE commandName=:command ORDER BY timestamp DESC LIMIT 1")
 //    MediaFileEntity getLatestCommand(String command);
 //
-//    @Query("SELECT * FROM MediaFileTable WHERE ID = :id")
-//    LiveData<MediaFileEntity> get_by_id(int id);
+    @Query("SELECT * FROM MediaFileTable WHERE ID = :id")
+    MediaFileEntity getMediaFilebyId(long id);
 //
 //    @Query("SELECT * from MediaFileTable WHERE commandName=:commandName AND isMaster=:isMaster ORDER BY timestamp DESC")
 //    LiveData<List<MediaFileEntity>> getMediaFiles(String commandName, boolean isMaster);

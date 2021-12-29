@@ -13,6 +13,8 @@ import com.google.mediapipe.apps.wearableai.voicecommand.VoiceCommandServer;
 
 import java.lang.NullPointerException;
 import java.util.Arrays;
+
+//database
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseDao;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseViewModel;
@@ -34,6 +36,11 @@ import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileReposito
 import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileDao;
 import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileCreator;
 import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileEntity;
+
+import com.google.mediapipe.apps.wearableai.database.person.PersonRepository;
+import com.google.mediapipe.apps.wearableai.database.person.PersonDao;
+import com.google.mediapipe.apps.wearableai.database.person.PersonCreator;
+import com.google.mediapipe.apps.wearableai.database.person.PersonEntity;
 
 //face rec
 import com.google.mediapipe.apps.wearableai.facialrecognition.FaceRecApi;
@@ -181,6 +188,8 @@ public class WearableAiAspService extends LifecycleService {
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
     public static final String ACTION_RUN_AFFECTIVE_MEM = "ACTION_RUN_AFFECTIVE_MEM";
 
+    private boolean isMediaPipeSetup = false;
+
     //socket
     private AspWebsocketServer asgWebSocket; 
 
@@ -252,8 +261,6 @@ public class WearableAiAspService extends LifecycleService {
     public int PORT_NUM = 8891;
     public DatagramSocket adv_socket;
     public String adv_key = "WearableAiCyborg";
-
-    private Context mContext;
 
     //social metrics
     //facial_emotion_list
@@ -335,32 +342,30 @@ public class WearableAiAspService extends LifecycleService {
     private List<FacialEmotion> mAllFacialEmotionsSnapshot;
     private VoiceCommandRepository mVoiceCommandRepository = null;
     private MediaFileRepository mMediaFileRepository = null;
+    private PersonRepository mPersonRepository = null;
 
   @Override
   public void onCreate() {
+    //check for wifi hotspot, warn user if it's not on
+    boolean isHotspotOn = isHotspotOn();
+    Log.d(TAG, "HOTSPOT STATE IS: " + Boolean.toString(isHotspotOn));
     //setup room database interfaces
     mPhraseRepository = new PhraseRepository(getApplication());
     mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
     mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
     mMediaFileRepository = new MediaFileRepository(getApplication());
+    mPersonRepository = new PersonRepository(getApplication());
 
     //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
-     dataObservable = PublishSubject.create();
-     audioObservable = PublishSubject.create();
-     Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
+    dataObservable = PublishSubject.create();
+    audioObservable = PublishSubject.create();
+    Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
 
-      //start websocket to ASG
-      startAsgWebSocketConnection();
+    //start websocket to ASG
+    startAsgWebSocketConnection();
 
-      //start voice command server to parse transcript for voice command
-      voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
-
-    //start face recognizer
-    faceRecApi = new FaceRecApi(this);
-    faceRecApi.setup();
-
-      //setup mediapipe
-      setupMediapipe();
+    //start voice command server to parse transcript for voice command
+    voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
@@ -374,9 +379,6 @@ public class WearableAiAspService extends LifecycleService {
     } catch (UnknownHostException e) {
         e.printStackTrace();
     }
-
-    //start advertising socket thread which tells smart glasses which IP to connect to
-    mContext = this;
 
     //open the UDP socket to broadcast our ip address
     openSocket();
@@ -395,13 +397,29 @@ public class WearableAiAspService extends LifecycleService {
     //start first socketThread
     startSocket();
 
-
     //start audio streaming from ASG
     audioSystem = new AudioSystem(audioObservable);
     audioSystem.startAudio(this);
 
+    //setup mediapipe
+    setupMediapipe();
+
     //start vosk
     speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
+
+    //start face recognizer - use handler because it takes a long time to setup (if this gets optimized, maybe we won't need a handler)
+    //also need handler because permissions take a second to kick in, and faceRecApi fails if file permissions aren't granted - need to look into this - cayden
+    HandlerThread thread = new HandlerThread("MainWearableAiAspService");
+    thread.start();
+    Handler mainHandler = new Handler(thread.getLooper());
+    LifecycleService mContext = this;
+    mainHandler.postDelayed(new Runnable() {
+        public void run() {
+            faceRecApi = new FaceRecApi(mContext, mPersonRepository);
+            faceRecApi.setDataObservable(dataObservable);
+            faceRecApi.setup();
+        }
+    }, 10);
   }
 
   public void startSocket(){
@@ -826,17 +844,23 @@ public class WearableAiAspService extends LifecycleService {
         //convert to bitmap
         Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
 
-        //send through facial recognition
-        faceRecApi.analyze(bitmap);
-
         //send through mediapipe
-        //bitmapProducer.newFrame(bitmap);
+//        if (isMediaPipeSetup){
+//            bitmapProducer.newFrame(bitmap);
+//        }
 
-        //save 1 image at set frequency
+        //save and process 1 image at set frequency
         long currTime = System.currentTimeMillis();
         if (((currTime - lastImageSave) / 1000) >= (1 / imageSaveFrequency)){ // divide by 1000 to convert to fps (per second) instead of per millisecond
-            savePicture(raw_data, imageTime);
+            //save image
+            Long imageId = savePicture(raw_data, imageTime);
+            if (imageId == null){
+                return;
+            }
             lastImageSave = currTime;
+
+            //send through facial recognition
+            faceRecApi.analyze(bitmap, imageTime, imageId);
         }
     }
 
@@ -955,14 +979,14 @@ public class WearableAiAspService extends LifecycleService {
         }
     }
 
-    private void savePicture(byte[] data, long imageTime){
+    private Long savePicture(byte[] data, long imageTime){
 //        byte[] data = Base64.encodeToString(ata, Base64.DEFAULT).getBytes();
         File pictureFileDir = getDir();
         //System.out.println("TRYING TO SAVE AT LOCATION: " + pictureFileDir.toString());
 
         if (!pictureFileDir.exists() && !pictureFileDir.mkdirs()) {
             Log.d(TAG, "Save picture failed because dir was not acceptable: " + pictureFileDir.getPath());
-            return;
+            return null;
         }
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_mm_dd_hh_mm_ss_SSS");
@@ -983,7 +1007,8 @@ public class WearableAiAspService extends LifecycleService {
         }
 
         //now save a reference to this media file image to the room database
-        savePictureToDatabase(filename, imageTime);
+        Long imageId = savePictureToDatabase(filename, imageTime);
+        return imageId;
     }
 
     private File getDir() {
@@ -1243,9 +1268,10 @@ public class WearableAiAspService extends LifecycleService {
     }
 
 
-    private void savePictureToDatabase(String localPath, long timestamp){
+    private long savePictureToDatabase(String localPath, long timestamp){
         Log.d(TAG, "SAVING IMAGE : " + localPath);
-        MediaFileCreator.create(localPath, "image", timestamp, timestamp, mMediaFileRepository);
+        long imageId = MediaFileCreator.create(localPath, "image", timestamp, timestamp, mMediaFileRepository);
+        return imageId;
     }
 
     @Override
@@ -1380,7 +1406,7 @@ public class WearableAiAspService extends LifecycleService {
         converter = new BitmapConverter(eglManager.getContext());
         converter.setConsumer(processor);
         startProducer();
-
+        isMediaPipeSetup = true;
     }
 
 }

@@ -329,7 +329,7 @@ public class BluetoothMic {
     /**
      * Try to connect to audio headset in onTick.
      */
-    private CountDownTimer mCountDown = new CountDownTimer(3000, 1000)
+    private CountDownTimer mCountDown = new CountDownTimer(999, 333)
     {
 
         @SuppressWarnings("synthetic-access")

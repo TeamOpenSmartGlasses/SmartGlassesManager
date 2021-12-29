@@ -29,7 +29,7 @@ public abstract class VoiceCommand {
             //build the display string
             String commandResponseDisplayString = "";
             if (success){
-                commandResponseDisplayString = "COMMAND SUCESS: " + commandName;
+                commandResponseDisplayString = "COMMAND SUCCESS: " + commandName;
             } else {
                 commandResponseDisplayString = "COMMAND FAILED: " + commandName;
             }

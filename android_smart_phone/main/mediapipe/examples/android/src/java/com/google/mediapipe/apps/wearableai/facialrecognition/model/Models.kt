@@ -17,7 +17,7 @@ class Models {
             "FaceNet-512" ,
             "facenet_512.tflite" ,
             0.3f ,
-            23.56f ,
+            15.56f ,
             512 ,
             160
         )

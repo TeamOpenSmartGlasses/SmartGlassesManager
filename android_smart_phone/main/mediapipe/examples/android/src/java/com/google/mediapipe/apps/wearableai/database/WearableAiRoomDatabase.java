@@ -25,7 +25,10 @@ import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEn
 import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileDao;
 import com.google.mediapipe.apps.wearableai.database.mediafile.MediaFileEntity;
 
-@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class}, version = 1, exportSchema = false)
+import com.google.mediapipe.apps.wearableai.database.person.PersonDao;
+import com.google.mediapipe.apps.wearableai.database.person.PersonEntity;
+
+@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class, PersonEntity.class}, version = 1, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class WearableAiRoomDatabase extends RoomDatabase {
     private static final String TAG = "WearableAi_WearableAiRoomDatabase";
@@ -38,12 +41,13 @@ public abstract class WearableAiRoomDatabase extends RoomDatabase {
     public abstract FacialEmotionDao facialEmotionDao();
     public abstract VoiceCommandDao voiceCommandDao();
     public abstract MediaFileDao mediaFileDao();
+    public abstract PersonDao personDao();
 
     public static WearableAiRoomDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (WearableAiRoomDatabase.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(), WearableAiRoomDatabase.class, "phrase_database")
+                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(), WearableAiRoomDatabase.class, "wearableai_database")
                             .build();
                 }
             }

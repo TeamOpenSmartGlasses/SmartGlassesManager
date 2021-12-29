@@ -9,4 +9,9 @@
     <color name="colorPhraseBackground">#dfd8d8</color>
     <color name="colorMainBackground">#dfd8d8</color>
     <color name="recyclertextcolor">#222222</color>
+
+    <color name="red">#FFFA0000</color>
+    <color name="green">#FF00BE00</color>
+    <color name="blue">#FF0000AF</color>
+</resources>
 </resources>

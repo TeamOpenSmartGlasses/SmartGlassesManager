@@ -30,6 +30,7 @@ public class AspWebsocketServer extends WebSocketServer {
     public AspWebsocketServer(int port)
     {
         super(new InetSocketAddress(port));
+        setReuseAddr(true);
     }
 
     public AspWebsocketServer(InetSocketAddress address)
@@ -82,7 +83,7 @@ public class AspWebsocketServer extends WebSocketServer {
     {
         //LogHelper.e(TAG, "Server started!");
         connected = 1;
-        setConnectionLostTimeout(3);
+        setConnectionLostTimeout(2);
     }
 
     public void sendJson(JSONObject data){
@@ -116,6 +117,9 @@ public class AspWebsocketServer extends WebSocketServer {
                 sendJson(data);
             } else if (type.equals(MessageTypes.VOICE_COMMAND_RESPONSE)){
                 Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_RESPONSE, sending to ASG");
+                sendJson(data);
+            } else if (type.equals(MessageTypes.FACE_SIGHTING_EVENT)){
+                Log.d(TAG, "AspWebsocketServer got FACE_SIGHTING_EVENT, sending to ASG");
                 sendJson(data);
             }
         } catch (JSONException e){
