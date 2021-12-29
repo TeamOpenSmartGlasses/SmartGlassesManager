@@ -268,9 +268,9 @@ public class WearableAiService extends HiddenCameraService {
                 CameraConfig cameraConfig = new CameraConfig()
                         .getBuilder(this)
                         .setCameraFacing(CameraFacing.REAR_FACING_CAMERA)
-                        .setCameraResolution(CameraResolution.MEDIUM_RESOLUTION)
+                        .setCameraResolution(CameraResolution.HIGH_RESOLUTION)
                         .setImageFormat(CameraImageFormat.FORMAT_JPEG)
-                        .setCameraFocus(CameraFocus.NO_FOCUS)
+                        .setCameraFocus(CameraFocus.AUTO)
                         .build();
 
                 startCamera(cameraConfig);

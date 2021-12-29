@@ -9,6 +9,7 @@ import android.util.Log;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
 
 import org.java_websocket.client.WebSocketClient;
 import org.json.JSONObject;
@@ -87,20 +88,22 @@ public class WebSocketManager implements Runnable{
     @Override
     public void run() {
         final Handler handler = new Handler(Looper.getMainLooper());
-        final int delay = 2000; // 1000 milliseconds == 1 second
+        final int delay = 1000; // 1000 milliseconds == 1 second
 
         handler.postDelayed(new Runnable() {
             public void run() {
+                boolean connected = false;
                 try {
                     Log.d(TAG, "Trying to connect...");
                     ws = new AsgWebSocketClient(WebSocketManager.this, serverURI);
                     ws.setObservable(dataObservable);
                     ws.setSourceName(mySourceName);
-                    ws.connectBlocking();
+                    ws.setReuseAddr(true);
+                    connected = ws.connectBlocking(1000, TimeUnit.MILLISECONDS); //add this so we don't get stuck trying to connect if the ip address updated
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                if (ws.getConnectionState() == 0 || ws.isClosed()){
+                if (!connected || ws.getConnectionState() == 0 || ws.isClosed()){
                     ws.killme = true;
                     ws.stop();
                     handler.postDelayed(this, delay); //run again in delay milliseconds if we didn't successfully connect

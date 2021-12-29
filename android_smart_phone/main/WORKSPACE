@@ -312,6 +312,7 @@ http_archive(
 android_ndk_repository(
     name = "androidndk",
     path = "/home/cayden/Android/Sdk/ndk-bundle/android-ndk-r18b",
+    api_level = 21,
 )
 
 android_sdk_repository(
@@ -444,6 +445,7 @@ maven_install(
         "androidx.sqlite:sqlite:2.0.1",
         "androidx.lifecycle:lifecycle-extensions:" + LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-livedata-core:" + LIFECYCLE_VERSION,
+        "androidx.lifecycle:lifecycle-livedata-ktx:" + LIFECYCLE_VERSION,
         "androidx.lifecycle:lifecycle-viewmodel:2.2.0",
         "androidx.lifecycle:lifecycle-service:" + LIFECYCLE_VERSION,
 

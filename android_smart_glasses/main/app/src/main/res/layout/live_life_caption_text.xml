@@ -17,7 +17,7 @@
         android:layout_width="384dp"
         android:layout_height="705dp"
         android:text=""
-        android:textSize="22dp"
+        android:textSize="18dp"
         android:scrollbars = "vertical"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"

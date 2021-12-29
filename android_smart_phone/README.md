@@ -38,7 +38,8 @@ Keras-VGG16-places365/ is the places365 system converted to a tensorflowlite mod
 
 ## TODO
 
-Move this whole thing to Gradle+Android Studio and remove MediaPipe code. If we want to use mediapipe again in the future, use this setup to build a WearableAI mediapipe AAR
+- save face rec bounding box in database and in face encoding object 
+    - and display cropped face in face rec ui, so we can tag multiple multiple people
 
 ## References / Acknowledgements
 

@@ -62,7 +62,13 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     public void sendHeartBeat(){
         Log.d(TAG, "send heartbeat");
-        send("ping");
+        try {
+            JSONObject ping = new JSONObject();
+            ping.put("ping", "ping");
+            send(ping.toString());
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
     public AsgWebSocketClient(WebSocketManager manager, URI serverURI) {
