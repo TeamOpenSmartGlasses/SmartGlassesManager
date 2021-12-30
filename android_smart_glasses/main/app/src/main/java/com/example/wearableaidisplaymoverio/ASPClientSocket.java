@@ -189,8 +189,12 @@ public class ASPClientSocket {
         mConnectState = 1;
         if (socket != null && (!socket.isClosed())){
             try {
-                output.close();
-                input.close();
+                if (output != null) {
+                    output.close();
+                }
+                if (input != null) {
+                    input.close();
+                }
                 socket.close();
             } catch (IOException e) {
                 System.out.println("FAILED TO CLOSE SOCKET, SOMETHING IS WRONG");
