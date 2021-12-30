@@ -22,10 +22,7 @@ package com.google.mediapipe.apps.wearableai;
 
 import androidx.navigation.NavController;
 
-import com.google.mediapipe.apps.wearableai.LandmarksTranslator;
-import com.google.mediapipe.apps.wearableai.SocialInteraction;
 import com.google.mediapipe.apps.wearableai.WearableAiAspService;
-
 
 import android.app.ActivityManager;
 

@@ -1,4 +1,4 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.utils;
 
 import android.util.Base64;
 

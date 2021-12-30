@@ -1,4 +1,4 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.comms;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -48,7 +48,11 @@ import java.net.InterfaceAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import com.google.mediapipe.apps.wearableai.utils.AES;
+
 import android.util.Log;
+
+import com.google.mediapipe.apps.wearableai.R;
 
 public class AudioSystem {
     private static String TAG = "WearableAi_AudioSystem";

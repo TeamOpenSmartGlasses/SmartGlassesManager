@@ -1,4 +1,4 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.sensors;
 
 import android.graphics.Bitmap;
 import android.opengl.GLES20;

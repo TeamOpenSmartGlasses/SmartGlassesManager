@@ -55,7 +55,7 @@ import org.json.JSONObject
 import org.json.JSONArray
 import org.json.JSONException
 
-import com.google.mediapipe.apps.wearableai.MessageTypes
+import com.google.mediapipe.apps.wearableai.comms.MessageTypes
 
 //database
 import com.google.mediapipe.apps.wearableai.database.person.PersonCreator;

@@ -1,12 +1,9 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.sensors;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
-
-
-
 
 public class BmpProducer extends Thread {
 
@@ -17,7 +14,7 @@ public class BmpProducer extends Thread {
     Bitmap bmp;
     Boolean first;
 
-    BmpProducer(Context context){
+    public BmpProducer(Context context){
         first = false;
 //        bmp = BitmapFactory.decodeResource(context.getResources(), R.drawable.img2);
 //        bmp = Bitmap.createScaledBitmap(bmp,480,640,true);

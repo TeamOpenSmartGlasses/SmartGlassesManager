@@ -1,4 +1,4 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.affectivecomputing;
 
 //translate number to name for the stack of landmarks from pose, left hand, right hand
 class PoseAndHandsTranslator {

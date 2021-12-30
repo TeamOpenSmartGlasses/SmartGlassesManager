@@ -1,9 +1,8 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.affectivecomputing;
 
-import com.google.mediapipe.apps.wearableai.SocialMetricBoolean;
-import com.google.mediapipe.apps.wearableai.SocialMetricClass;
-import com.google.mediapipe.apps.wearableai.BodyLanguageDecode;
-
+//import com.google.mediapipe.apps.wearableai.SocialMetricBoolean;
+//import com.google.mediapipe.apps.wearableai.SocialMetricClass;
+//import com.google.mediapipe.apps.wearableai.BodyLanguageDecode;
 
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
@@ -13,7 +12,7 @@ import android.util.Log;
 
 //this class is instantiated for every individual we have an interaction with. A series of social states becomes a a history and live state of an individual we know
 //eventually there will values this is instantiated with that we get from our memories of that indivudal, so we can do anomoly detection easily and form archetypes
-class SocialInteraction {
+public class SocialInteraction {
     private  final String TAG = "WearableAi_SocialInteraction";
 
     //timing of interactions
@@ -24,7 +23,7 @@ class SocialInteraction {
     private SocialMetricClass facial_emotion; //facial emotion classes ['Angry', 'Disgusted', 'Fearful', 'Happy', 'Sad', 'Surprised', 'Neutral']
     private BodyLanguageDecode body_language; //facial emotion classes ['Angry', 'Disgusted', 'Fearful', 'Happy', 'Sad', 'Surprised', 'Neutral']
 
-    SocialInteraction(){
+    public SocialInteraction(){
         this.eye_contact = new SocialMetricBoolean(3000); 
         this.facial_emotion = new SocialMetricClass(7, 3000);
         this.body_language = new BodyLanguageDecode();

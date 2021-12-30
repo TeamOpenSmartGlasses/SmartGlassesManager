@@ -34,7 +34,7 @@ import org.json.JSONObject;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseCreator;
 import com.google.mediapipe.apps.wearableai.speechrecvosk.SpeechStreamQueueServiceVosk;
-import com.google.mediapipe.apps.wearableai.MessageTypes;
+import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
 
 //queue
 import java.util.concurrent.BlockingQueue;

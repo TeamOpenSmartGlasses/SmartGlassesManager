@@ -1,4 +1,4 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.affectivecomputing;
 
 
 import java.util.*;
@@ -9,7 +9,7 @@ import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 
 //import com.google.mediapipe.apps.wearableai.LandmarksTranslate.PoseAndHandsTranslator;
-import com.google.mediapipe.apps.wearableai.PoseAndHandsTranslator;
+//import com.google.mediapipe.apps.wearableai.PoseAndHandsTranslator;
 
 //takes in NormalizedLandmarkList with a stack of output vectors from Pose estimation landmarks, left hand landmarks, right hand landmarks
 class BodyLanguageDecode {

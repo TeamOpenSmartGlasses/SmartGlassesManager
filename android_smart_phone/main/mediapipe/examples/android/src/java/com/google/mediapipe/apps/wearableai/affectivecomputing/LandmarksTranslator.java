@@ -1,6 +1,6 @@
-package com.google.mediapipe.apps.wearableai;
+package com.google.mediapipe.apps.wearableai.affectivecomputing;
 
-class LandmarksTranslator {
+public class LandmarksTranslator {
     //NOSE
     public static int nose_bottom = 1;
     public static int nose_mid = 4;

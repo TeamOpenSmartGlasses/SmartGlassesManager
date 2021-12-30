@@ -20,7 +20,7 @@
 
 package com.google.mediapipe.apps.wearableai.voicecommand;
 
-import com.google.mediapipe.apps.wearableai.MessageTypes;
+import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
 
 import java.util.concurrent.ExecutionException;
 import java.lang.InterruptedException;

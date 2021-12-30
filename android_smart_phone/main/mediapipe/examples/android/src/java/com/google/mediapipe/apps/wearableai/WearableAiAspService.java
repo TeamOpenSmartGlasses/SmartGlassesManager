@@ -42,6 +42,18 @@ import com.google.mediapipe.apps.wearableai.database.person.PersonDao;
 import com.google.mediapipe.apps.wearableai.database.person.PersonCreator;
 import com.google.mediapipe.apps.wearableai.database.person.PersonEntity;
 
+//comms
+import com.google.mediapipe.apps.wearableai.comms.AspWebsocketServer;
+import com.google.mediapipe.apps.wearableai.comms.AudioSystem;
+
+//affective computing
+import com.google.mediapipe.apps.wearableai.affectivecomputing.SocialInteraction;
+import com.google.mediapipe.apps.wearableai.affectivecomputing.LandmarksTranslator;
+
+//sensors
+import com.google.mediapipe.apps.wearableai.sensors.BitmapConverter;
+import com.google.mediapipe.apps.wearableai.sensors.BmpProducer;
+
 //face rec
 import com.google.mediapipe.apps.wearableai.facialrecognition.FaceRecApi;
 

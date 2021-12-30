@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.lang.InterruptedException;
 
 //rxjava
-//import com.google.mediapipe.apps.wearableai.MessageTypes;
+//import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
 //import io.reactivex.rxjava3.disposables.Disposable;
 //import io.reactivex.rxjava3.subjects.PublishSubject;
 

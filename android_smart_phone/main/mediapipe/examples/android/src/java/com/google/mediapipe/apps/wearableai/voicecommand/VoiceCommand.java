@@ -7,7 +7,7 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import com.google.mediapipe.apps.wearableai.MessageTypes;
+import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
 
 //parse interpret
 public abstract class VoiceCommand {
