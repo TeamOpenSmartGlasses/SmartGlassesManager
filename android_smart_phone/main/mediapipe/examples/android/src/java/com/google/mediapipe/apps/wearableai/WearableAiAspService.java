@@ -57,6 +57,9 @@ import com.google.mediapipe.apps.wearableai.sensors.BmpProducer;
 //face rec
 import com.google.mediapipe.apps.wearableai.facialrecognition.FaceRecApi;
 
+//nlp
+import com.google.mediapipe.apps.wearableai.nlp.WearableReferencerAutocite;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -343,6 +346,9 @@ public class WearableAiAspService extends LifecycleService {
   //facial rec system
   private FaceRecApi faceRecApi;
 
+  //nlp system
+  private WearableReferencerAutocite mWearableReferencerAutocite;
+
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
     PublishSubject<byte []> audioObservable;
@@ -415,6 +421,10 @@ public class WearableAiAspService extends LifecycleService {
 
     //setup mediapipe
     setupMediapipe();
+
+    //start nlp
+    mWearableReferencerAutocite = new WearableReferencerAutocite(this);
+    mWearableReferencerAutocite.setObservable(dataObservable);
 
     //start vosk
     speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);

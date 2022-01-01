@@ -31,7 +31,7 @@ class MxtVoiceCommand extends VoiceCommand {
         //find tags and return a list of the tags that were found
         ArrayList<String> foundTags = this.parseKeyValueArgs(postArgs, "tag");
         String displayString = null;
-        if (foundTags != null){ //save the tags and add them to the display string for user
+        if (foundTags != null && foundTags.size() != 0){ //save the tags and add them to the display string for user
             //make the display string
             displayString = "Saving in tag bins: ";
             for (int i = 0; i < foundTags.size(); i++){

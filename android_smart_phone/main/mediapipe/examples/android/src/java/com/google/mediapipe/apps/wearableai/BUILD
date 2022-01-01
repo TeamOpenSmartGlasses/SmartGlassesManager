@@ -115,6 +115,8 @@ kt_android_library(
             "@maven//:com_alphacephei_vosk_model_en",
             "@maven//:info_debatty_java_string_similarity",
             "@maven//:org_threeten_threetenbp",
+            #CSV
+            "@maven//:com_opencsv_opencsv",
             #SPECIAL DEP - this is our normal assets folder
             "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai/assets:wearableai_assets",
 

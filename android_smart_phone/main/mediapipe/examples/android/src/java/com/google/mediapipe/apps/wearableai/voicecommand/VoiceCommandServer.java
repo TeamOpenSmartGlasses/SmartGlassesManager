@@ -179,8 +179,8 @@ import org.json.JSONException;
 
 import java.util.Arrays;
 
-//fuzzy string matching
-import info.debatty.java.stringsimilarity.*;
+//nlp
+import com.google.mediapipe.apps.wearableai.nlp.NlpUtils;
 
 //parse interpret
 public class VoiceCommandServer {
@@ -189,11 +189,16 @@ public class VoiceCommandServer {
     public PublishSubject<JSONObject> dataObservable;
     private Disposable dataSubscriber;
 
+    //nlp
+    private NlpUtils nlpUtils;
+
     //voice command stuff
     private ArrayList<VoiceCommand> voiceCommands;
     private ArrayList<String> wakeWords;
+
     //private ArrayList<String> voiceCommands;
     private Context mContext;
+
     //voice command fuzzy search threshold
     private final double wakeWordThreshold = 0.8;
     private final double commandThreshold = 0.8;
@@ -202,6 +207,9 @@ public class VoiceCommandServer {
     public VoiceCommandRepository mVoiceCommandRepository;
 
     public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, Context context){
+        //setup nlp
+        nlpUtils = NlpUtils.getInstance(context);
+
         mVoiceCommandRepository = voiceCommandRepository;
 
         mContext = context;
@@ -248,7 +256,7 @@ public class VoiceCommandServer {
             //check if any of the wake words match
             for (int j = 0; j < voiceCommands.get(i).getWakeWords().size(); j++){
                 String currWakeWord = voiceCommands.get(i).getWakeWords().get(j);
-                int wakeWordLocation = findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
+                int wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
                 if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     //we found a command, now get its arguments and run it
                     String preArgs = transcript.substring(0, wakeWordLocation);
@@ -262,7 +270,7 @@ public class VoiceCommandServer {
         //loop through all global wake words to see if any match
         for (int i = 0; i < wakeWords.size(); i++){
             String currWakeWord = wakeWords.get(i);
-            int wakeWordLocation = findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
+            int wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
             if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                 //we found a command, now get its arguments and run it
                 String preArgs = transcript.substring(0, wakeWordLocation);
@@ -278,7 +286,7 @@ public class VoiceCommandServer {
         for (int i = 0; i < voiceCommands.size(); i++){
             for (int j = 0; j < voiceCommands.get(i).getCommands().size(); j++){
                 String currCommand = voiceCommands.get(i).getCommands().get(j);
-                int commandLocation = findNearMatches(rest, currCommand, commandThreshold);
+                int commandLocation = nlpUtils.findNearMatches(rest, currCommand, commandThreshold);
                 if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     String postArgs = rest.substring(commandLocation + currCommand.length());
                     voiceCommands.get(i).runCommand(this, preArgs, wakeWord, j, postArgs, transcriptTime, transcriptId);
@@ -288,23 +296,6 @@ public class VoiceCommandServer {
         }
     }
 
-    private int findNearMatches(String incomingString, String toFindString, double threshold){
-        JaroWinkler jw = new JaroWinkler();
-        int extraChars = 2; //some small number of chars before and after string in case the fuzzy match and what appears in trancript aren't exactly the same length
-        for (int i = 0; i < (incomingString.length() - toFindString.length() - extraChars); i++) {
-            String substring = incomingString.substring(i, i + toFindString.length() + extraChars);
-            double distance = jw.similarity(substring, toFindString);
-            if (distance > threshold){
-                Log.d(TAG, "fuzzy match found");
-                Log.d(TAG, incomingString);
-                Log.d(TAG, toFindString);
-                Log.d(TAG, Double.toString(distance));
-                Log.d(TAG, Integer.toString(i));
-                return i;
-            }
-        }
-        return -1;
-    }
 
 //    private void runCommand(String preArgs, String wakeWord, String command, String postArgs){
 //        Log.d(TAG, "RUN COMMAND with postARgs:" + postArgs);

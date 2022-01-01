@@ -490,6 +490,9 @@ maven_install(
         ##DocumentFile and ExitInterface
         "androidx.documentfile:documentfile:1.0.1",
         "androidx.exifinterface:exifinterface:1.3.3",
+
+        #CSVs
+        "com.opencsv:opencsv:4.6",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",
