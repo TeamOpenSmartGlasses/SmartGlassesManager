@@ -197,7 +197,10 @@ public class BluetoothMic {
         mContext.registerReceiver(bluetoothStateReceiver,
                 new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED));
 
-        //startup the SCO connection
+        //first, start recording on local microphone
+        bluetoothAudio = false;
+        startRecording();
+        //the, immediately try to startup the SCO connection
         mIsCountDownOn = true;
         mCountDown.start();
     }
@@ -329,7 +332,7 @@ public class BluetoothMic {
     /**
      * Try to connect to audio headset in onTick.
      */
-    private CountDownTimer mCountDown = new CountDownTimer(999, 333)
+    private CountDownTimer mCountDown = new CountDownTimer(1000, 300)
     {
 
         @SuppressWarnings("synthetic-access")

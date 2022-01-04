@@ -117,12 +117,11 @@ public class AudioService extends Service {
             switch (action) {
                 case ACTION_START_COMMS:
                     SERVER_IP = intent.getExtras().getString("address_to_send");
-                    //start the socket thread which will send the raw audio data
-                    startSocket();
 
                     // do heavy work on a background thread
                     //StartRecorder();
 
+                    //follow this order for speed
                     //start audio from bluetooth headset
                     BluetoothMic blutoothAudio = new BluetoothMic(this, new AudioChunkCallback(){
                         @Override
@@ -130,9 +129,13 @@ public class AudioService extends Service {
                             receiveChunk(chunk);
                         }
                     });
+
+                    //start the socket thread which will send the raw audio data
+                    startSocket();
                     break;
                 case ACTION_NEW_IP:
-                    SERVER_IP = intent.getExtras().getString("address_to_send");
+                    String newIp = intent.getExtras().getString("address_to_send");
+                    SERVER_IP = newIp;
             }
         }
 
@@ -199,9 +202,6 @@ public class AudioService extends Service {
 //
 //        mAudioManager.setSpeakerphoneOn(false);
 //        mAudioManager.setMode(mAudioManager.MODE_NORMAL);
-
-
-
     }
 
     @Override
@@ -306,30 +306,33 @@ public class AudioService extends Service {
         return decryptedBytes;
     }
 
-    public void sendBytes(byte [] data){
-        //only try to send data if the socket is connected state
-        if (mConnectState != 2){
-            return;
-        }
+//    public void sendBytes(byte [] data){
+//        //only try to send data if the socket is connected state
+//        if (mConnectState != 2){
+//            return;
+//        }
+//
+//        //combine those into a payload
+//        ByteArrayOutputStream outputStream;
+//        try {
+//            outputStream = new ByteArrayOutputStream();
+//            outputStream.write(data);
+//        } catch (IOException e){
+//            mConnectState = 0;
+//            return;
+//        }
+//        byte [] payload = outputStream.toByteArray();
+//
+//        //send it in a background thread
+//        try {
+//            data_queue.add(payload);
+//        } catch (IllegalStateException e) {
+//            e.printStackTrace();
+//            Log.d(TAG, "Queue is full, skipping this one");
+//        }
+//    }
 
-        //combine those into a payload
-        ByteArrayOutputStream outputStream;
-        try {
-            outputStream = new ByteArrayOutputStream();
-            outputStream.write(data);
-        } catch (IOException e){
-            mConnectState = 0;
-            return;
-        }
-        byte [] payload = outputStream.toByteArray();
-
-        //send it in a background thread
-        try {
-            data_queue.add(payload);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-            Log.d(TAG, "Queue is full, skipping this one");
-        }
+    public void sendBytes(byte [] data) {
     }
 
     static class SocketThread implements Runnable {
@@ -337,7 +340,7 @@ public class AudioService extends Service {
             try {
                 System.out.println("TRYING TO CONNECT AudioService server at IP: " + SERVER_IP);
                 socket = new Socket();
-                //socket.setSoTimeout(3000);
+                socket.setSoTimeout(5000);
                 socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT), socketTimeout);
                 System.out.println("AudioService server CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
@@ -401,6 +404,7 @@ public class AudioService extends Service {
 
 
     //AUDIO stuff
+//    NOTE - we are now using bluetoothMic class to get SCO mic or local mic, not using the below AudioRecorder
     public void StartRecorder() {
         Log.i(TAG, "Starting the audio stream");
         currentlySendingAudio = true;
@@ -413,11 +417,13 @@ public class AudioService extends Service {
     }
 
     private void receiveChunk(ByteBuffer chunk){
-        byte[] audio_bytes = chunk.array();
+        if (mConnectState == 2) {
+            byte[] audio_bytes = chunk.array();
 
-        byte [] encrypted_audio_bytes = encryptBytes(audio_bytes);
+            byte[] encrypted_audio_bytes = encryptBytes(audio_bytes);
 
-        sendBytes(encrypted_audio_bytes);
+            sendBytes(encrypted_audio_bytes);
+        }
     }
 
     private void startStreaming() {

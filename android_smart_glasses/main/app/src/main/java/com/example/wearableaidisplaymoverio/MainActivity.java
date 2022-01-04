@@ -9,6 +9,7 @@ import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -36,7 +37,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.view.Window;
@@ -45,6 +49,7 @@ import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
 
+import com.example.wearableaidisplaymoverio.comms.WifiUtils;
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
@@ -65,6 +70,13 @@ public class MainActivity extends Activity {
 
     public long lastFaceUpdateTime = 0;
     public long faceUpdateInterval = 5000; //milliseconds
+
+
+    public final static String ACTION_UI_UPDATE = "com.example.wearableaidisplaymoverio.UI_UPDATE";
+    public final static String PHONE_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.PHONE_CONN_STATUS_UPDATE";
+    public final static String WIFI_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.WIFI_CONN_STATUS_UPDATE";
+    public final static String BATTERY_CHARGING_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_CHARGIN_STATUS_UPDATE";
+    public final static String BATTERY_LEVEL_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_LEVEL_STATUS_UPDATE";
 
     //current person recognized's names
     public ArrayList<String> faceNames = new ArrayList<String>();
@@ -125,17 +137,38 @@ public class MainActivity extends Activity {
     long lastIntermediateMillis = 0;
     long intermediateTranscriptPeriod = 40; //milliseconds
 
+    //HUD ui
+    private TextView mClockTextView;
+    private boolean clockRunning = false;
+    private ImageView mWifiStatusImageView;
+    private ImageView mPhoneStatusImageView;
+    private ImageView mBatteryStatusImageView;
+
+    //device status
+    private TextView mBatteryStatusTextView;
+    boolean phoneConnected = false;
+    boolean wifiConnected;
+    boolean batteryFull;
+    float batteryLevel;
+    boolean batteryCharging = false;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //setup main view
+        switchMode("llc");
+
+        //setup the HUD ui
+        setupHud();
 
         //set full screen for Moverio
-        long FLAG_SMARTFULLSCREEN = 0x80000000;
-        Window win = getWindow();
-        WindowManager.LayoutParams winParams = win.getAttributes();
-        winParams.flags |= FLAG_SMARTFULLSCREEN;
-        win.setAttributes(winParams);
+//        long FLAG_SMARTFULLSCREEN = 0x80000000;
+//        Window win = getWindow();
+//        WindowManager.LayoutParams winParams = win.getAttributes();
+//        winParams.flags |= FLAG_SMARTFULLSCREEN;
+//        win.setAttributes(winParams);
 
         //keep the screen on throughout
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -168,9 +201,88 @@ public class MainActivity extends Activity {
 //                takeAndSendPicture();
 //            }
 //        });
-        switchMode("llc");
+
     }
 
+    private void setupHud(){
+        //setup wifi status
+        updateWifiHud();
+
+        //setup phone connect status
+        updatePhoneHud();
+
+        //setup battery connect status
+        updateBatteryHud();
+
+        //setup clock
+        mClockTextView = (TextView) findViewById(R.id.clock_text_view);
+        if (! clockRunning) {
+            clockRunning = true;
+            Handler handler = new Handler();
+            handler.post(new Runnable() {
+                public void run() {
+                    // Default time format for current locale, with respect (on API 22+) to user's 12/24-hour
+                    // settings. I couldn't find any simple way to respect it back to API 14.
+                    Log.d(TAG, "Setting time...");
+                    //String prettyTime = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date()) + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
+                    String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
+                    mClockTextView.setText(prettyTime);
+                    Log.d(TAG, "Time set.");
+                    handler.postDelayed(this, 1000);
+                }
+            });
+        }
+    }
+
+    private void updateWifiHud(){
+        mWifiStatusImageView = (ImageView) findViewById(R.id.wifi_image_view);
+        wifiConnected = WifiUtils.checkWifiOnAndConnected(this);
+        Drawable wifiOnDrawable = this.getDrawable(R.drawable.wifi_on_green);
+        Drawable wifiOffDrawable = this.getDrawable(R.drawable.wifi_off_red);
+        if (wifiConnected) {
+            mWifiStatusImageView.setImageDrawable(wifiOnDrawable);
+        } else {
+            mWifiStatusImageView.setImageDrawable(wifiOffDrawable);
+        }
+    }
+
+    private void updatePhoneHud(){
+        mPhoneStatusImageView = (ImageView) findViewById(R.id.phone_status_image_view);
+        Drawable phoneOnDrawable = this.getDrawable(R.drawable.phone_connected_green);
+        Drawable phoneOffDrawable = this.getDrawable(R.drawable.phone_disconnected_red);
+        if (phoneConnected) {
+            mPhoneStatusImageView.setImageDrawable(phoneOnDrawable);
+        } else {
+            mPhoneStatusImageView.setImageDrawable(phoneOffDrawable);
+        }
+    }
+
+    private void updateBatteryHud(){
+        //set the icon
+        mBatteryStatusImageView = (ImageView) findViewById(R.id.battery_status_image_view);
+        Drawable batteryFullDrawable = this.getDrawable(R.drawable.full_battery_green);
+        Drawable batteryFullChargingDrawable = this.getDrawable(R.drawable.full_battery_charging_green);
+        Drawable batteryLowDrawable = this.getDrawable(R.drawable.low_battery_red);
+        Drawable batteryLowChargingDrawable = this.getDrawable(R.drawable.low_battery_charging_red);
+        if (batteryFull) {
+            if (batteryCharging) {
+                mBatteryStatusImageView.setImageDrawable(batteryFullChargingDrawable);
+            } else {
+                mBatteryStatusImageView.setImageDrawable(batteryFullDrawable);
+            }
+        } else {
+            mBatteryStatusImageView.setImageDrawable(batteryLowDrawable);
+            if (batteryCharging) {
+                mBatteryStatusImageView.setImageDrawable(batteryLowChargingDrawable);
+            } else {
+                mBatteryStatusImageView.setImageDrawable(batteryFullDrawable);
+            }
+        }
+
+        //set the text
+        mBatteryStatusTextView = (TextView) findViewById(R.id.battery_percentage_text_view);
+        mBatteryStatusTextView.setText((int)batteryLevel + "%");
+    }
 
     private void switchMode(String mode) {
         Log.d(TAG, "SWITCH MODE RUNNING WITH NEW MODE: " + mode);
@@ -500,6 +612,8 @@ public class MainActivity extends Activity {
         intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
         intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY);
 
+        intentFilter.addAction(ACTION_UI_UPDATE);
+
         return intentFilter;
     }
 
@@ -507,7 +621,31 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if (curr_mode.equals("social") && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
+            if (ACTION_UI_UPDATE.equals(action)) {
+                Log.d(TAG, "GOT ACTION_UI_UPDATE");
+                if (intent.hasExtra(PHONE_CONN_STATUS_UPDATE)) {
+                    phoneConnected = intent.getBooleanExtra(PHONE_CONN_STATUS_UPDATE, false);
+                    Log.d(TAG, "SET phoneConnected as: " + phoneConnected);
+                    updatePhoneHud();
+                }
+                if (intent.hasExtra(BATTERY_CHARGING_STATUS_UPDATE)){
+                    batteryCharging = intent.getBooleanExtra(BATTERY_CHARGING_STATUS_UPDATE, false);
+                    updateBatteryHud();
+                }
+                if (intent.hasExtra(BATTERY_LEVEL_STATUS_UPDATE)){
+                    batteryLevel = intent.getFloatExtra(BATTERY_LEVEL_STATUS_UPDATE, 100f);
+                    if (batteryLevel > 40f) {
+                        batteryFull = true;
+                    } else {
+                        batteryFull = false;
+                    }
+                    updateBatteryHud();
+                }
+                if (intent.hasExtra(WIFI_CONN_STATUS_UPDATE)){
+                    wifiConnected = intent.getBooleanExtra(WIFI_CONN_STATUS_UPDATE, false);
+                    updateWifiHud();
+                }
+        } else if (curr_mode.equals("social") && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
                 if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
                     setGuiMessage(message, eyeContact5MetricTextView, "%");
@@ -533,6 +671,7 @@ public class MainActivity extends Activity {
                 }
             } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)) {
                 if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)) {
+                    Log.d(TAG, "got final transcript");
                     try {
                         JSONObject transcript_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT));
 //                        JSONObject nlp = transcript_object.getJSONObject("nlp");
@@ -579,6 +718,7 @@ public class MainActivity extends Activity {
                         System.out.println(e);
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
+                    Log.d(TAG, "got final transcript");
                     //only update this transcript if it's been n milliseconds since the last intermediate update
                     if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
                         lastIntermediateMillis = System.currentTimeMillis();
@@ -729,7 +869,6 @@ public class MainActivity extends Activity {
                 //switchMode("wearablefacerecognizer");
             } else if (GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT.equals(action)) {
                 String str_data = intent.getStringExtra(GlboxClientSocket.AFFECTIVE_SUMMARY_RESULT);
-                Log.d(TAG, str_data);
                 textBlockHolder = str_data;
                 switchMode("textblock");
             }
@@ -900,6 +1039,9 @@ public class MainActivity extends Activity {
             WearableAiService.LocalBinder binder = (WearableAiService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
+
+            //get update of ui information
+            mService.requestUiUpdate();
         }
 
         @Override
@@ -918,8 +1060,6 @@ public class MainActivity extends Activity {
         if (mBound) {
             //byte[] curr_cam_image = mService.getCurrentCameraImage();
             mService.sendGlBoxCurrImage();
-        } else {
-            Log.d(TAG, "Mboudn not true yo");
         }
         Log.d(TAG, "visual search image has been sent");
     }

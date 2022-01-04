@@ -10,4 +10,8 @@
     <color name="yellow">#FFFFFF00</color>
     <color name="hud_text">#FFFFFFFF</color>
     <color name="hud_bg">#FF000000</color>
+    <color name="white_transparent">#33FFFFFF</color>
+    <color name="green_icon">#FF66BB6A</color>
+    <color name="red_icon">#FFE53935</color>
+    <color name="yellow_icon">#FFFFEB3B</color>
 </resources>

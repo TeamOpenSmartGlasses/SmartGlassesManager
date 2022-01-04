@@ -35,6 +35,7 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 //singleton clientsocket class for connecting o ASP
 public class ASPClientSocket {
+    public static String TAG = "WearableAiAsg_AspClientSocket";
     //data observable we can send data through
     private static PublishSubject<JSONObject> dataObservable;
     private static Disposable dataSubscriber;
@@ -65,7 +66,6 @@ public class ASPClientSocket {
     public final static String ACTION_AFFECTIVE_SEARCH_QUERY = "com.example.wearableaidisplaymoverio.ACTION_AFFECTIVE_SEARCH_QUERY";
     public final static String AFFECTIVE_SEARCH_QUERY_RESULT = "com.example.wearableaidisplaymoverio.AFFECTIVE_SEARCH_QUERY_RESULT";
 
-    public static String TAG = "WearableAiDisplayMoverio";
     //singleton instance
     private static ASPClientSocket clientsocket;
     //socket data
@@ -151,7 +151,7 @@ public class ASPClientSocket {
         //start first socketThread
         if (socket == null) {
             mConnectState = 1;
-            Log.d(TAG, "onCreate starting");
+            Log.d(TAG, "startSocket starting");
             SocketThread = new Thread(new SocketThread());
             SocketThread.start();
 
@@ -180,6 +180,7 @@ public class ASPClientSocket {
         //if not , reconnect,
         //we don't need to actively send heart beats from the client, as it's assumed that we are ALWAYS streaming data. Later, if we have periods of time where no data is sent, we will want to send a heart beat perhaps. but the client doesn't really need to, we just need to check if we are still connected
         if (mConnectState == 0) {
+            updateUi();
             restartSocket();
         }
     }
@@ -303,12 +304,16 @@ public class ASPClientSocket {
             try {
                 System.out.println("TRYING TO CONNECT AspClient Socket on IP: " + SERVER_IP + " and port: " + SERVER_PORT);
                 socket = new Socket();
+                socket.setSoTimeout(5000);
                 socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT), socketTimeout);
                 System.out.println("CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 input = new DataInputStream(new DataInputStream(socket.getInputStream()));
                 mConnectState = 2;
+
+                //update UI so user knows we're connected
+                updateUi();
                 //make the threads that will send and receive
                 if (ReceiveThread == null) { //if the thread is null, make a new one (the first one)
                     ReceiveThread = new Thread(new ReceiveThread());
@@ -497,11 +502,9 @@ public class ASPClientSocket {
     }
 
     private void parseData(JSONObject data){
-        Log.d(TAG, "Parsing data");
         try {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (typeOf.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
-                Log.d(TAG, "intermediate_transcript_cid received");
                 String intermediate_transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT);
                 final Intent intent = new Intent();
                 intent.putExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT, intermediate_transcript);
@@ -509,14 +512,13 @@ public class ASPClientSocket {
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 Log.d(TAG, "I. Transcript is: " + intermediate_transcript);
             } else if (typeOf.equals(MessageTypes.FINAL_TRANSCRIPT)) {
-                Log.d(TAG, "final_transcript_cid received");
                 final Intent intent = new Intent();
                 intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, data.toString());
                 intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 Log.d(TAG, "F. Transcript is: " + data.getString(MessageTypes.TRANSCRIPT_TEXT));
             } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_RESPONSE)) {
-            Log.d(TAG, "voice command result received");
+                Log.d(TAG, "voice command result received");
                 boolean responseResult = data.getBoolean(MessageTypes.COMMAND_RESULT);
                 String displayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
                 final Intent intent = new Intent();
@@ -578,5 +580,21 @@ public class ASPClientSocket {
 
     public boolean getAudioSocketStarted(){
         return audioSocketStarted;
+    }
+
+    private static void updateUi() {
+        boolean connected = false;
+        if (mConnectState == 2){
+            connected = true;
+        }
+        //tell WearableAI service new info that the ui needs
+        try {
+            JSONObject uiUpdate = new JSONObject();
+            uiUpdate.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.UI_UPDATE_ACTION);
+            uiUpdate.put(MessageTypes.PHONE_CONNECTION_STATUS, connected);
+            dataObservable.onNext(uiUpdate);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 }

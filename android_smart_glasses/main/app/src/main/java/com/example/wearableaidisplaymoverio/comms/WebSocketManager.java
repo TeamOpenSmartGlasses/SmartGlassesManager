@@ -26,6 +26,10 @@ public class WebSocketManager implements Runnable{
     PublishSubject<JSONObject> dataObservable;
     String mySourceName;
 
+    private static Handler handler;
+    private static int delay;
+    private static boolean firstRun = true;
+
     public void setObservable(PublishSubject<JSONObject> dataO){
         dataObservable = dataO;
     }
@@ -50,6 +54,9 @@ public class WebSocketManager implements Runnable{
     }
 
     public WebSocketManager(String ip, String port){
+        handler = new Handler(Looper.getMainLooper());
+        delay = 3000; // 1000 milliseconds == 1 second
+
         if (port == null){
             port = "8887";
         }
@@ -61,14 +68,16 @@ public class WebSocketManager implements Runnable{
         }
 
         //start a heartbeat, which will try to send a heartbeat every n seconds iff the connection appears to be open. This will reveal if the other end has closed the connection and we weren't notified
-        final Handler handler = new Handler(Looper.getMainLooper());
-        final int delay = 3000;
         handler.postDelayed(new Runnable() {
             public void run() {
                 //if the ws doesn't exist or is not open, then the manager already knows we A) need to restart b) are starting, so don't send heart beat
                 if (ws != null) {
                     if (ws.getConnectionState() == 2 && !ws.isClosed()) {
+                        Log.d(TAG, "tryna send heart beat");
                         ws.sendHeartBeat();
+                        Log.d(TAG, "done did send heart beat");
+                    } else {
+                        Log.d(TAG, "not even gonna tryna send eart beat");
                     }
                 }
                 handler.postDelayed(this, delay); //run again in delay milliseconds
@@ -87,9 +96,14 @@ public class WebSocketManager implements Runnable{
 
     @Override
     public void run() {
-        final Handler handler = new Handler(Looper.getMainLooper());
-        final int delay = 1000; // 1000 milliseconds == 1 second
-
+        int currDelay;
+        if (firstRun){
+            Log.d(TAG, "first run, so go fast");
+            currDelay = 1;
+        } else {
+            currDelay = delay;
+        }
+        firstRun = false;
         handler.postDelayed(new Runnable() {
             public void run() {
                 boolean connected = false;
@@ -99,22 +113,45 @@ public class WebSocketManager implements Runnable{
                     ws.setObservable(dataObservable);
                     ws.setSourceName(mySourceName);
                     ws.setReuseAddr(true);
-                    connected = ws.connectBlocking(1000, TimeUnit.MILLISECONDS); //add this so we don't get stuck trying to connect if the ip address updated
+                    connected = ws.connectBlocking(5000, TimeUnit.MILLISECONDS); //add this so we don't get stuck trying to connect if the ip address updated
+                    Log.d(TAG, "Web socket connected: " + connected);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 if (!connected || ws.getConnectionState() == 0 || ws.isClosed()){
-                    ws.killme = true;
                     ws.stop();
                     handler.postDelayed(this, delay); //run again in delay milliseconds if we didn't successfully connect
                 }
             }
-        }, delay);
+        }, currDelay);
     }
 
     protected void onClose(){
-        Log.d(TAG, "WebSocketManager onClose called");
-        ws.stop();
+        //reconnect
+        Runnable restarter = new Runnable() {
+            public void run() {
+                Log.d(TAG, "Starting new run after onClose called...");
+                runny();
+            }
+        };
+
+        //must put this on handler as onClose here is called by onClose in socket, and we need to make sure socket it done shutting down before restarting
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                Log.d(TAG, "WebSocketManager onClose called");
+                boolean closed = ws.stop();
+                if (! closed){
+                    Log.d(TAG, "WARNING: Old ws did not properly close");
+                }
+                Log.d(TAG, "onClose Stopped web socket");
+                Log.d(TAG, "Starting new run after onClose called...");
+                handler.postDelayed(restarter, delay);
+            }
+        }, 10);
+    }
+
+    //this is because we need to delay this running, but there is a namespace overlap with run()
+    protected void runny(){
         run();
     }
 }
