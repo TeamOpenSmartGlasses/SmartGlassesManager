@@ -11,9 +11,18 @@ You can either use the officially released APK (on Github or <emexwearables.com>
 3. Change the SDK and NDK in ./main/WORKSPACE to point to your own Android SDK install (if you don't have one, install Android Studio and download an SDK and NDK)
 4. Run this command:
 ```
-./build_single_android.sh mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai
+bazel build -c opt --config=android_arm64 --java_runtime_version=1.8 --noincremental_dexing --verbose_failures mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:wearableai;
 ```
 5. You have now built the application!
+6. For subsequent builds where you don't change anything in WORKSPACE file, use the following command for faster build:
+```
+bazel build -c opt --config=android_arm64 --java_runtime_version=1.8 --noincremental_dexing --verbose_failures --fetch=false mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:wearableai;
+```
+
+### Autociter - temporary note
+For right now, the number we send references to is hardcoded in nlp/WearableReferencerAutocite.java. Change the line that says "PUT NUMBER HERE" to contain the phone number you wish to send to. This will soon be changed to be user-supplied value in the ASP ui.
+
+Further, for now, to add references to your database, update the Csv in assets/assets/wearable_referencer_references.csv. This also will be moved to a user-facing ui shortly.
  
 ### Note / WARNING
 

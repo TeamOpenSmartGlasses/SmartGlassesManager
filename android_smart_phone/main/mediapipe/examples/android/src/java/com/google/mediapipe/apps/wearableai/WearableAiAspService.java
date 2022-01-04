@@ -45,6 +45,7 @@ import com.google.mediapipe.apps.wearableai.database.person.PersonEntity;
 //comms
 import com.google.mediapipe.apps.wearableai.comms.AspWebsocketServer;
 import com.google.mediapipe.apps.wearableai.comms.AudioSystem;
+import com.google.mediapipe.apps.wearableai.comms.SmsComms;
 
 //affective computing
 import com.google.mediapipe.apps.wearableai.affectivecomputing.SocialInteraction;
@@ -349,6 +350,9 @@ public class WearableAiAspService extends LifecycleService {
   //nlp system
   private WearableReferencerAutocite mWearableReferencerAutocite;
 
+  //sms system
+  private SmsComms smsComms;
+
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
     PublishSubject<byte []> audioObservable;
@@ -365,8 +369,9 @@ public class WearableAiAspService extends LifecycleService {
   @Override
   public void onCreate() {
     //check for wifi hotspot, warn user if it's not on
-    boolean isHotspotOn = isHotspotOn();
-    Log.d(TAG, "HOTSPOT STATE IS: " + Boolean.toString(isHotspotOn));
+//    boolean isHotspotOn = isHotspotOn();
+//    Log.d(TAG, "HOTSPOT STATE IS: " + Boolean.toString(isHotspotOn));
+
     //setup room database interfaces
     mPhraseRepository = new PhraseRepository(getApplication());
     mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
@@ -378,18 +383,6 @@ public class WearableAiAspService extends LifecycleService {
     dataObservable = PublishSubject.create();
     audioObservable = PublishSubject.create();
     Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
-
-    //start websocket to ASG
-    startAsgWebSocketConnection();
-
-    //start voice command server to parse transcript for voice command
-    voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
-
-    //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
-    mSocialInteraction = new SocialInteraction();
-
-    //create a new queue to hold outbound message
-    queue = new ArrayBlockingQueue<byte[]>(50);
 
     //get IP address
     try {
@@ -404,30 +397,46 @@ public class WearableAiAspService extends LifecycleService {
     //send broadcast
     final Handler adv_handler = new Handler();
     final int delay = 1000; // 1000 milliseconds == 1 second
-
     adv_handler.postDelayed(new Runnable() {
         public void run() {
             new Thread(new SendAdvThread()).start();
             adv_handler.postDelayed(this, delay);
         }
-    }, delay);
+    }, 5);
+
+    //the order below is to minimize time between launch and transcription appearing on the ASG
+    //start audio streaming from ASG
+    audioSystem = new AudioSystem(this, dataObservable);
+    //audioSystem.startAudio(this);
+
+    //start websocket to ASG
+    startAsgWebSocketConnection();
+
+    //start vosk
+    speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
 
     //start first socketThread
     startSocket();
 
-    //start audio streaming from ASG
-    audioSystem = new AudioSystem(audioObservable);
-    audioSystem.startAudio(this);
+    //start voice command server to parse transcript for voice command
+    voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
+
+    //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
+    mSocialInteraction = new SocialInteraction();
+
+    //create a new queue to hold outbound message
+    queue = new ArrayBlockingQueue<byte[]>(50);
 
     //setup mediapipe
-    setupMediapipe();
+    //setupMediapipe();
 
     //start nlp
     mWearableReferencerAutocite = new WearableReferencerAutocite(this);
     mWearableReferencerAutocite.setObservable(dataObservable);
 
-    //start vosk
-    speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
+    //start sms system
+    smsComms = SmsComms.getInstance();
+    smsComms.setObservable(dataObservable);
 
     //start face recognizer - use handler because it takes a long time to setup (if this gets optimized, maybe we won't need a handler)
     //also need handler because permissions take a second to kick in, and faceRecApi fails if file permissions aren't granted - need to look into this - cayden
@@ -731,7 +740,7 @@ public class WearableAiAspService extends LifecycleService {
                 //serverSocket.setSoTimeout(2000);
                 try {
                     socket = serverSocket.accept();
-                    socket.setSoTimeout(3000);
+                    socket.setSoTimeout(10000);
                     Log.d(TAG, "Got socket connection.");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
@@ -1296,6 +1305,11 @@ public class WearableAiAspService extends LifecycleService {
         return imageId;
     }
 
+    private void killMediapipe(){
+        //kill mediapipe
+        converter.close();
+    }
+
     @Override
     public void onDestroy() {
         Log.d(TAG, "WearableAiAspService killing itself and all its children");
@@ -1304,15 +1318,14 @@ public class WearableAiAspService extends LifecycleService {
         shouldDie = true;
         killSocket();
 
-        //kill mediapipe
-        converter.close();
-
         //kill data transmitters
         dataObservable.onComplete();
         audioObservable.onComplete();
 
         //kill AudioSystem
         audioSystem.destroy();
+
+        //killMediapipe();
 
         //kill asgWebSocket
         asgWebSocket.destroy();
@@ -1323,7 +1336,6 @@ public class WearableAiAspService extends LifecycleService {
         //close room database(s)
         WearableAiRoomDatabase.destroy();
         stopForeground(true);
-
     }
 
     public void setupMediapipe(){

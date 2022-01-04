@@ -22,4 +22,16 @@ public class MessageTypes {
     //FACE/PERSON SIGHTING
     public static final String FACE_SIGHTING_EVENT = "FACE_SIGHTING_EVENT";
     public static final String FACE_NAME = "FACE_NAME";
+
+    //SMS
+    public static final String SMS_REQUEST_SEND = "SMS_REQUEST_SEND";
+    public static final String SMS_MESSAGE_TEXT = "SMS_MESSAGE_TEXT";
+    public static final String SMS_PHONE_NUMBER = "SMS_PHONE_NUMBER";
+
+    //AUDIO
+    public static final String AUDIO_CHUNK_ENCRYPTED = "AUDIO_CHUNK_ENCRYPTED";
+    public static final String AUDIO_CHUNK_DECRYPTED = "AUDIO_CHUNK_DECRYPTED";
+    public static final String AUDIO_DATA = "AUDIO_DATA";
 }
+
+

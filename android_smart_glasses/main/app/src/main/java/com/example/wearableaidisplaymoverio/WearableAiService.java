@@ -2,9 +2,11 @@ package com.example.wearableaidisplaymoverio;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -13,12 +15,15 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -42,6 +47,8 @@ import com.androidhiddencamera.config.CameraFacing;
 import com.androidhiddencamera.config.CameraFocus;
 import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
+import com.example.wearableaidisplaymoverio.comms.WifiStatusCallback;
+import com.example.wearableaidisplaymoverio.comms.WifiUtils;
 import com.example.wearableaidisplaymoverio.sensors.AudioChunkCallback;
 import com.example.wearableaidisplaymoverio.sensors.BluetoothMic;
 import com.example.wearableaidisplaymoverio.sensors.BluetoothScanner;
@@ -86,11 +93,18 @@ public class WearableAiService extends HiddenCameraService {
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
 
+    //device status
+    boolean phoneConnected = false;
+    boolean wifiConnected;
+    float batteryPercentage;
+    boolean batteryIsCharging;
+
     private boolean audioSocketStarted = false;
 
     //image stream handling
     private int img_count = 0;
-    private long last_sent_time = 0;
+    private long last_sent_time = 0l;
+    private long lastImageTime = 0l;
     private int fps_to_send = 3; //speed we send HD frames from wearable to mobile compute unit
 
     //ASP socket
@@ -127,14 +141,18 @@ public class WearableAiService extends HiddenCameraService {
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
+    private Disposable dataSubscriber;
 
     //bluetooth sensors
     private BluetoothScanner mBluetoothScanner;
 
+    //audio system
+    AudioSystem audioSystem;
+
     @Override
     public void onCreate() {
         dataObservable = PublishSubject.create();
-        Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
+        dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
 
         //setup our connection to the ASP
         asp_client_socket = ASPClientSocket.getInstance(this);
@@ -144,6 +162,11 @@ public class WearableAiService extends HiddenCameraService {
         //this will start the asp socket when ASP address is received and ASP is not connected. If ASP socket already running, it will update the ASP address (useful when ASP IP changes, like on new wifi)
         Thread adv_thread = new Thread(new ReceiveAdvThread());
         adv_thread.start();
+
+        //setup audio streaming
+        audioSystem = new AudioSystem(this);
+        audioSystem.setObservable(dataObservable);
+        audioSystem.startStreaming();
 
         //start glbox thread
         //then start a thread to connect to the glbox
@@ -157,6 +180,24 @@ public class WearableAiService extends HiddenCameraService {
         //start sensor scan
 //        mBluetoothScanner = new BluetoothScanner(this);
 //        mBluetoothScanner.startScan();
+
+        //register for battery information
+        this.registerReceiver(this.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
+        //register for wifi information
+        IntentFilter wifiFilter = new IntentFilter();
+        wifiFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+        WifiStatusCallback wifiConnectCallback = new WifiStatusCallback() {
+            @Override
+            public void onSuccess(boolean connected) {
+                wifiConnected = connected;
+                if (!wifiConnected){ //if wifi connects, then phone must disconnect too
+                    phoneConnected = false;
+                }
+                updateUi();
+            }
+        };
+        this.registerReceiver(new WifiUtils.WifiReceiver(wifiConnectCallback), wifiFilter);
     }
 
     private void setupObservervables() {
@@ -165,10 +206,29 @@ public class WearableAiService extends HiddenCameraService {
 
     class ReceiveAdvThread extends Thread {
         public void run() {
-            //first get the ASP IP from its UDP broadcast, then we can start the ASP
-            while (true){
-                receiveUdpBroadcast();
-            }
+            receiveUdpBroadcast();
+//            try {
+//                //Keep a socket open to listen to all the UDP trafic that is destined for this port
+//                socket = new DatagramSocket(PORT_NUM, InetAddress.getByName("0.0.0.0"));
+//                socket.setBroadcast(true);
+//
+//                //first get the ASP IP from its UDP broadcast, then we can start the ASP
+//                while (true){
+//                    HandlerThread thread = new HandlerThread("AdvReceiver");
+//                    thread.start();
+//                    Handler receiveAdvHandler = new Handler(thread.getLooper());
+//                    receiveAdvHandler.postDelayed(new
+//                    Runnable() {
+//                        public void run () {
+////                            receiveUdpBroadcast();
+////                            receiveAdvHandler.postDelayed(this, 100);
+//                        }
+//                    }, 5);
+//                }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            Log.d(TAG, "Exception: " + e);
+//        }
 
         }
     }
@@ -191,39 +251,53 @@ public class WearableAiService extends HiddenCameraService {
 
             while (true) {
                 //Receive a packet
-                byte[] recvBuf = new byte[2600];
+                byte[] recvBuf = new byte[64];
                 DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
                 socket.receive(packet);
 
                 //Packet received
                 String data = new String(packet.getData()).trim();
+//                Log.d(TAG, "Got adv string: " + data + "; of size: " + data.getBytes("UTF-8").length);
                 if (data.equals(asp_adv_key)) {
+//                    Log.d(TAG, "got key, starting up sockets");
                     asp_address = packet.getAddress().getHostAddress();
+//                    Log.d(TAG, "new address: " + asp_address);
                     asp_client_socket.setIp(asp_address);
-                    sendAudioServiceNewIp(asp_address);
+                    //sendAudioServiceNewIp(asp_address);
                     asp_comms_starter();
                 }
+                SystemClock.sleep(500); //this is how we delay the loop from running too fast, there is probably a better way, but setting up a hanlder failed with no error, so this works for now
             }
-        } catch (IOException ex) {
-            Log.d(TAG, "Exception: " + ex);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "Exception: " + e);
         }
     }
 
     public void asp_comms_starter() {
-        //start comms to ASP
-        if (!asp_client_socket.getSocketStarted()) {
-            asp_client_socket.startSocket();
-        }
+//        Log.d(TAG, "start asp_comms_starter");
+        //start the audio system which will send audio to the asp
+        //start the audio service
+//        Log.d(TAG, "asp_comms_starter audio");
+//        if (!audioSocketStarted) {
+//            audioSocketStarted = true;
+//            //StartAudioService(asp_address);
+//        }
+
+//        Log.d(TAG, "asp_comms_starter web socket");
+        //start the web socket to communicate with ASP, to replace TCP socket below
         if (!asp_client_socket.getWebSocketStarted()) {
             asp_client_socket.startWebSocket();
         }
 
-        //then start the audio system which will send audio to the asp
-        //start the audio service
-        if (!audioSocketStarted) {
-            audioSocketStarted = true;
-            StartAudioService(asp_address);
+//        Log.d(TAG, "asp_comms_starter tcp socket");
+        //start comms to ASP
+        if (!asp_client_socket.getSocketStarted()) {
+            asp_client_socket.startSocket();
         }
+
+
+
     }
 
 
@@ -275,7 +349,6 @@ public class WearableAiService extends HiddenCameraService {
 
                 startCamera(cameraConfig);
                 //startup a task that will take and send a picture every 10 seconds
-                final Handler handler = new Handler();
                 final int init_camera_delay = 2000; // 1000 milliseconds
                 final int delay = 200; //5Hz
 
@@ -453,7 +526,14 @@ public class WearableAiService extends HiddenCameraService {
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         long curr_time = System.currentTimeMillis();
-        float now_frame_rate = (1 / (curr_time - last_sent_time));
+        float now_frame_rate = 1000f * (1f / (float)(curr_time - last_sent_time));
+        float currFrameRate = 1000f * (1f / (float)(curr_time - lastImageTime));
+//        Log.d(TAG, "lastImageTime: " + (long)lastImageTime);
+//        Log.d(TAG, "period: " + (curr_time - lastImageTime));
+//        Log.d(TAG, "currTime: " + curr_time);
+//        Log.d(TAG, "FPS real: " + currFrameRate);
+//        Log.d(TAG, "FPS save: " + now_frame_rate);
+        lastImageTime = curr_time;
         if (now_frame_rate <= fps_to_send) {
             Camera.Parameters parameters = camera.getParameters();
             int width = parameters.getPreviewSize().width;
@@ -503,25 +583,7 @@ public class WearableAiService extends HiddenCameraService {
         glbox_client_socket.sendBytes(img_id, curr_cam_image, "image");
     }
 
-    private void handleDataStream(JSONObject data) {
-//        try {
-//            String typeOf = data.getString("type");
-//            if (typeOf.equals("affective_mem_transcripts")) {
-//                int i = 0;
-//                while (true) {
-//                    if (!data.has(Integer.toString(i))) {
-//                        break;
-//                    }
-//                    String transcript = data.getString(Integer.toString(i));
-//                    Log.d(TAG, "Affective mem #" + i + " is " + transcript);
-//                    i++;
-//                }
-//            }
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-    }
-    //Audio recording service - maybe to be moved into WearableAI service
+    //Audio recording service
     public void StartAudioService(String address_to_send) {
         Log.i(TAG, "Starting the Audio Service");
 
@@ -535,6 +597,7 @@ public class WearableAiService extends HiddenCameraService {
         // Bind to that service
         Intent intent = new Intent(this, AudioService.class);
         bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
+        Log.i(TAG, "Sent start AudioService");
     }
 
     public void StopAudioService() {
@@ -588,5 +651,52 @@ public class WearableAiService extends HiddenCameraService {
 //            mBound = false;
         }
     };
+
+    private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
+        @Override
+        public void onReceive(Context ctxt, Intent intent) {
+            // Are we charging / charged?
+            int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            batteryIsCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL;
+
+            //what is the charge level?
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            batteryPercentage = level * 100 / (float)scale;
+            Log.d(TAG, "BATTERY PERCENTAGE IS: " + batteryPercentage);
+            Log.d(TAG, "BATTERY IS charging: " + batteryIsCharging);
+            updateUi();
+        }
+    };
+
+    private void updateUi() {
+        //send to main ui
+        final Intent intent = new Intent();
+        intent.setAction(MainActivity.ACTION_UI_UPDATE);
+        intent.putExtra(MainActivity.BATTERY_LEVEL_STATUS_UPDATE, batteryPercentage);
+        intent.putExtra(MainActivity.BATTERY_CHARGING_STATUS_UPDATE, batteryIsCharging);
+        intent.putExtra(MainActivity.WIFI_CONN_STATUS_UPDATE, wifiConnected);
+        intent.putExtra(MainActivity.PHONE_CONN_STATUS_UPDATE, phoneConnected);
+        mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+    }
+
+    public void requestUiUpdate(){
+        updateUi();
+    }
+
+    private void handleDataStream(JSONObject data){
+        try {
+            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (dataType.equals(MessageTypes.UI_UPDATE_ACTION)){
+                if (data.has(MessageTypes.PHONE_CONNECTION_STATUS)){
+                    phoneConnected = data.getBoolean(MessageTypes.PHONE_CONNECTION_STATUS);
+                    updateUi();
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
 

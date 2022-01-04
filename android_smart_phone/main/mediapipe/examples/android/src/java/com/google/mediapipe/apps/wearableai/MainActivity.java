@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
     private  final String TAG = "WearableAi_MainActivity";
 
     //permissions
-    public final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+    public final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.SEND_SMS};
     public final int EXTERNAL_REQUEST = 138;
 
     @Override

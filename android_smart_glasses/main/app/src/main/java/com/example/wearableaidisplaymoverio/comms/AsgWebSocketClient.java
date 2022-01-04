@@ -25,19 +25,24 @@ package com.example.wearableaidisplaymoverio.comms;
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import static com.example.wearableaidisplaymoverio.ASPClientSocket.TAG;
-
+import android.content.Intent;
 import android.util.Log;
+
+import com.example.wearableaidisplaymoverio.ASPClientSocket;
+import com.example.wearableaidisplaymoverio.MessageTypes;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.WebSocket;
 
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /**
@@ -45,13 +50,15 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
  * important callbacks are overloaded.
  */
 public class AsgWebSocketClient extends WebSocketClient {
+    private String TAG = "WearableAI_WebSocketClient";
     private int connected = 0;
     private URI serverURI;
     private WebSocketManager webSocketManager;
-    public boolean killme = false;
+    public boolean killme = true; //shouldn't try to stay alive until we are born - i.e. one successful connect
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
+    Disposable dataSubscriber;
 
     private String mySourceName;
 
@@ -64,6 +71,7 @@ public class AsgWebSocketClient extends WebSocketClient {
         Log.d(TAG, "send heartbeat");
         try {
             JSONObject ping = new JSONObject();
+            ping.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.PING);
             ping.put("ping", "ping");
             send(ping.toString());
         } catch (JSONException e){
@@ -87,11 +95,11 @@ public class AsgWebSocketClient extends WebSocketClient {
     private void setup(){
         //dataObservable = PublishSubject.create();
         mySourceName = "web_socket";
-        setConnectionLostTimeout(3);
     }
 
     public void setObservable(PublishSubject<JSONObject> dataO){
         dataObservable = dataO;
+        dataSubscriber = dataObservable.subscribe(i -> parseData(i));
     }
 
     public void setSourceName(String name){
@@ -102,22 +110,34 @@ public class AsgWebSocketClient extends WebSocketClient {
         return dataObservable;
     }
 
-    public void stop(){
+    //stop this socket, the socket will NOT try to restart itself after this, so whoever calls this must handle restart, thus should only be called by WebSocketManager
+    public boolean stop(){
+        killme = true;
+        Log.d(TAG, "Stopping Web socket");
         connected = 0;
-        close();
+        try {
+            closeBlocking();
+        } catch (InterruptedException e){
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
+        killme = false;
         connected = 2;
-        System.out.println("opened connection");
+        Log.d(TAG, "opened connection");
+        setConnectionLostTimeout(6);
+        startConnectionLostTimer();
         // if you plan to refuse connection based on ip or httpfields overload: onWebsocketHandshakeReceivedAsClient
     }
 
     @Override
     public void onMessage(String message) {
         try {
-            System.out.println("received: " + message);
+            Log.d(TAG, "received: " + message);
             JSONObject json_message = new JSONObject(message);
             json_message.put("local_source", mySourceName); //ad our set name so rest of program knows the source of this message
             dataObservable.onNext(json_message);
@@ -133,19 +153,21 @@ public class AsgWebSocketClient extends WebSocketClient {
     @Override
     public void onClose(int code, String reason, boolean remote) {
         connected = 0;
+        dataSubscriber.dispose();
 
-        if (remote && !killme) {
+        if (!killme) {
             webSocketManager.onClose(); //tell manager that we are done and it should make a new socket to reconnect
         }
 
         // The codes are documented in class org.java_websocket.framing.CloseFrame
-        System.out.println(
+        Log.d(TAG,
                 "Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: "
                         + reason);
     }
 
     @Override
     public void onError(Exception ex) {
+        Log.d(TAG, "Web Socket error!");
         ex.printStackTrace();
         // if the error is fatal then onClose will be called additionally
     }
@@ -161,6 +183,32 @@ public class AsgWebSocketClient extends WebSocketClient {
 //            return 0;
 //        }
         return connected;
+    }
+
+
+    private void parseData(JSONObject data){
+        try {
+            String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (typeOf.equals(MessageTypes.AUDIO_CHUNK_ENCRYPTED)) {
+                sendJson(data);
+//            } else if (typeOf.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void sendJson(JSONObject data){
+        String encodedData = data.toString();
+        sendString(encodedData);
+    }
+
+    public void sendString(String data){
+        if (connected == 2){
+            send(data);
+        } else {
+            Log.d(TAG, "CANNOT SEND JSON, NOT CONNECTED");
+        }
     }
 
 }

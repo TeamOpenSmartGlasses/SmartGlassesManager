@@ -33,9 +33,11 @@ public class WearableReferencerAutocite {
 
     //voice command fuzzy search threshold
     private final double referenceThreshold = 0.90;
-    private final int keywordIndex = 5;
-    private final int authorsIndex = 3;
     private final int titleIndex = 1;
+    private final int yearIndex = 2;
+    private final int authorsIndex = 3;
+    private final int linkIndex = 4;
+    private final int keywordIndex = 5;
     private final int titleMinWordLen = 5;
     private final int refCountThresh = 2; //how many reference hits before we suggest the reference
 
@@ -119,6 +121,22 @@ public class WearableReferencerAutocite {
         }
         for (Integer i : potentialReferences){
             Log.d(TAG, "Possible reference: " + myReferences.get(i)[titleIndex]);
+            sendReferenceToConversationPartner(myReferences.get(i));
+        }
+    }
+
+    private void sendReferenceToConversationPartner(String [] ref){
+        Log.d(TAG, "Sending reference to conversation partner...");
+        String prettyReference = ref[titleIndex] + ", " + ref[authorsIndex] + ", " + ref[linkIndex];
+        try{
+            JSONObject sendRef = new JSONObject();
+            sendRef.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SMS_REQUEST_SEND);
+            sendRef.put(MessageTypes.SMS_PHONE_NUMBER, "5555555555"); //PUT NUMBER HERE
+            sendRef.put(MessageTypes.SMS_MESSAGE_TEXT, prettyReference);
+
+            dataObservable.onNext(sendRef);
+        } catch (JSONException e){
+            e.printStackTrace();
         }
     }
 

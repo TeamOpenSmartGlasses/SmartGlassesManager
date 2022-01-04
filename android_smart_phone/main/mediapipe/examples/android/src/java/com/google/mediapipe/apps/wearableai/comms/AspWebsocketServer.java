@@ -48,8 +48,15 @@ public class AspWebsocketServer extends WebSocketServer {
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-        connected = 1;
         Log.d(TAG, "onClose called");
+        for (WebSocket connToCheck : clients.values()){ // there was a race condition where the ASG would recconnect before the socket was marked as closed, so the ASP thought their was no connection (connected = 1), but there actually was a connection, so now we check to see if any of the sockets in the clients hashmap is still open
+            if (connToCheck.isOpen()){ //exit, because we have a live connection to the ASG
+                Log.d(TAG, "onClose found open connection, so not setting connected=1");
+                return;
+            }
+        }
+        Log.d(TAG, "onClose set connected=1");
+        connected = 1;
     }
 
     @Override
@@ -57,10 +64,16 @@ public class AspWebsocketServer extends WebSocketServer {
         Log.d(TAG, "GOT MESSAGE: " + message);
         try {
             JSONObject json_obj = new JSONObject(message);
-            Log.d(TAG, "TRANSCRIPT: " + json_obj.getString("transcript"));
             dataObservable.onNext(json_obj);
+//            String messageType = json_obj.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+//            if (messageType.equals(MessageTypes.AUDIO_CHUNK){
+//                dataObservable.onNext(json_obj);
+//            } else if (messageType.equals(MessageTypes.AUDIO_CHUNK)) {
+//                dataObservable.onNext(json_obj);
+//            }
         } catch (JSONException e){
-            //if we send a string (like ping), this will get thrown , which is fine
+            //if we send a string, this will get thrown, all messages should be JSON or byte []
+            e.printStackTrace();
         }
     }
 
@@ -84,6 +97,7 @@ public class AspWebsocketServer extends WebSocketServer {
         //LogHelper.e(TAG, "Server started!");
         connected = 1;
         setConnectionLostTimeout(2);
+        startConnectionLostTimer();
     }
 
     public void sendJson(JSONObject data){

@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 
 //android
+import android.util.Base64;
 import android.content.Context;
 import android.util.Log;
 import android.content.Context;
@@ -30,6 +31,10 @@ import java.io.PipedOutputStream;
 import java.util.Arrays;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseRepository;
 import com.google.mediapipe.apps.wearableai.database.phrase.PhraseCreator;
@@ -64,6 +69,7 @@ public class SpeechRecVosk implements RecognitionListener {
 
     //receive/send data stream
     PublishSubject<JSONObject> dataObservable;
+    Disposable dataSub;
     //receive audio stream
     PublishSubject<byte []> audioObservable;
     Disposable audioSub;
@@ -76,10 +82,11 @@ public class SpeechRecVosk implements RecognitionListener {
 
         //receive/send data
         this.dataObservable = dataObservable;
+        dataSub = this.dataObservable.subscribe(i -> handleDataStream(i));
 
         //receive audio
-        this.audioObservable = audioObservable;
-        audioSub = this.audioObservable.subscribe(i -> handleAudioStream(i));
+        //this.audioObservable = audioObservable;
+        //audioSub = this.audioObservable.subscribe(i -> handleDataStream(i));
 
         //setup the object which will pass audio bytes to vosk
         audioSenderStreamVosk = new ArrayBlockingQueue(1024);
@@ -148,10 +155,16 @@ public class SpeechRecVosk implements RecognitionListener {
 
 
     //receive audio and send to vosk
-    private void handleAudioStream(byte [] data){
+    private void handleDataStream(JSONObject data){
         try {
-            audioSenderStreamVosk.put(data);
-        } catch (InterruptedException e) {
+            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (dataType.equals(MessageTypes.AUDIO_CHUNK_DECRYPTED)){
+                Log.d(TAG, "HANDLING DECRYPTED DATA IN AudioSystem");
+                String encodedPlainData = data.getString(MessageTypes.AUDIO_DATA);
+                byte [] decodedPlainData = Base64.decode(encodedPlainData, Base64.DEFAULT);
+                audioSenderStreamVosk.put(decodedPlainData);
+            }
+        } catch (InterruptedException | JSONException e) {
             setErrorState(e.getMessage());
         }
     }

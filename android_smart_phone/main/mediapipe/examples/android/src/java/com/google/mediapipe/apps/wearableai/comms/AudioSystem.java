@@ -15,11 +15,17 @@ import org.vosk.android.SpeechService;
 import org.vosk.android.SpeechStreamService;
 import org.vosk.android.StorageService;
 
+import android.util.Base64;
+
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import org.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -94,22 +100,28 @@ public class AudioSystem {
     private static Socket socket;
 
     //send audio to to other services in the app
-    PublishSubject audioObservable;
+    PublishSubject<JSONObject> dataObservable;
+    Disposable dataSubscriber;
 
-    public AudioSystem(PublishSubject<byte []> audioObservable){
-        this.audioObservable = audioObservable;
+    Context context;
+
+    public AudioSystem(Context context, PublishSubject<JSONObject> dataObservable){
+        this.context = context;
+
+        //set the key for encryption
+        secretKey = context.getResources().getString(R.string.key);
+
+        this.dataObservable = dataObservable;
+        dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
     }
 
 
     //send_queue of data to send through the socket
     private  BlockingQueue<byte []> send_queue;
 
-    public void startAudio(Context context){
+    public void startAudio(){
         //make a new queue to hold data to send
         send_queue = new ArrayBlockingQueue<byte[]>(50);
-
-        //set the key for encryption
-        secretKey = context.getResources().getString(R.string.key);
 
         //start the socket thread which will send the raw audio data
         startSocket();
@@ -217,7 +229,9 @@ public class AudioSystem {
 
         //make sure socket thread has joined before throwing off a new one
         try {
+            Log.d(TAG, "Waiting socket thread join");
             SocketThread.join();
+            Log.d(TAG, "Socket thread joined");
         } catch (InterruptedException e){
             e.printStackTrace();
         }
@@ -423,8 +437,8 @@ public class AudioSystem {
                     int chunk_len = 6416; //until we use a better protocol to specify start and end of packet, we need to to match the number in asg
                     byte [] raw_data = new byte[chunk_len];
                     input.readFully(raw_data, 0, chunk_len); // read the body
-                    byte [] plain_audio_bytes = decryptBytes(raw_data);
-                    audioObservable.onNext(plain_audio_bytes);
+                    //byte [] plain_audio_bytes = decryptBytes(raw_data);
+                    //dataObservable.onNext(plain_audio_bytes);
                 } catch (IOException e) {
                     Log.d(TAG, "Audio service receive thread broken.");
                     e.printStackTrace();
@@ -447,6 +461,8 @@ public class AudioSystem {
     }
 
     public byte [] decryptBytes(byte [] input) {
+        Log.d(TAG,"ljngth of about to encrypt data: " + input.length);
+        Log.d(TAG,"secret key: " + secretKey);
         byte [] decryptedBytes = AES.decrypt(input, secretKey);
         return decryptedBytes;
     }
@@ -456,4 +472,33 @@ public class AudioSystem {
         killSocket();
     }
 
+    private void handleDataStream(JSONObject data){
+        try {
+            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (dataType.equals(MessageTypes.AUDIO_CHUNK_ENCRYPTED)){
+                handleEncryptedData(data);
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    //here we decode, decrypt, the encode again. It's not pretty, but it allows us to use a JSON event bus, which makes things way more manageable and modular
+    private void handleEncryptedData(JSONObject data){
+        Log.d(TAG, "HANDLING ENCRYPTED DATA IN AudioSystem");
+        try{
+            String encodedData = data.getString(MessageTypes.AUDIO_DATA);
+            byte [] decodedData = Base64.decode(encodedData, Base64.DEFAULT);
+            byte [] plainData = decryptBytes(decodedData);
+            String encodedPlainData = Base64.encodeToString(plainData, Base64.DEFAULT);
+
+            //make new object and send as decrypted data
+            JSONObject decryptedData = new JSONObject();
+            decryptedData.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUDIO_CHUNK_DECRYPTED);
+            decryptedData.put(MessageTypes.AUDIO_DATA, encodedPlainData);
+            dataObservable.onNext(decryptedData);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 }
