@@ -75,6 +75,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.exceptions.UndeliverableException;
+import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 import io.reactivex.rxjava3.subjects.Subject;
@@ -99,7 +101,7 @@ public class WearableAiService extends HiddenCameraService {
     float batteryPercentage;
     boolean batteryIsCharging;
 
-    private boolean audioSocketStarted = false;
+//    private boolean audioSocketStarted = false;
 
     //image stream handling
     private int img_count = 0;
@@ -151,6 +153,14 @@ public class WearableAiService extends HiddenCameraService {
 
     @Override
     public void onCreate() {
+        //set the error handler for rxjava
+        RxJavaPlugins.setErrorHandler(throwable -> {
+            throwable.printStackTrace();
+            if (throwable instanceof  UndeliverableException){
+                Log.d(TAG, "Got RXJAVA error UndeliverableException.... carrying on.");
+            }
+        }); // nothing or some logging
+
         dataObservable = PublishSubject.create();
         dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
 
@@ -583,22 +593,22 @@ public class WearableAiService extends HiddenCameraService {
         glbox_client_socket.sendBytes(img_id, curr_cam_image, "image");
     }
 
-    //Audio recording service
-    public void StartAudioService(String address_to_send) {
-        Log.i(TAG, "Starting the Audio Service");
-
-//        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
-//        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
-//        ContextCompat.startForegroundService(this, serviceIntent);
-        Intent audioService = new Intent(this, AudioService.class);
-        audioService.setAction(AudioService.ACTION_START_COMMS);
-        audioService.putExtra("address_to_send", address_to_send);
-        startService(audioService);
-        // Bind to that service
-        Intent intent = new Intent(this, AudioService.class);
-        bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
-        Log.i(TAG, "Sent start AudioService");
-    }
+//    //Audio recording service
+//    public void StartAudioService(String address_to_send) {
+//        Log.i(TAG, "Starting the Audio Service");
+//
+////        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
+////        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
+////        ContextCompat.startForegroundService(this, serviceIntent);
+//        Intent audioService = new Intent(this, AudioService.class);
+//        audioService.setAction(AudioService.ACTION_START_COMMS);
+//        audioService.putExtra("address_to_send", address_to_send);
+//        startService(audioService);
+//        // Bind to that service
+//        Intent intent = new Intent(this, AudioService.class);
+//        bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
+//        Log.i(TAG, "Sent start AudioService");
+//    }
 
     public void StopAudioService() {
         Log.i(TAG, "Stopping the foreground-thread");
@@ -633,24 +643,23 @@ public class WearableAiService extends HiddenCameraService {
         return false;
     }
 
-
-    /** Defines callbacks for service binding, passed to bindService() */
-    private ServiceConnection audio_service_connection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            AudioService.LocalBinder binder = (AudioService.LocalBinder) service;
-//            mService = binder.getService();
-//            mBound = true;
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-//            mBound = false;
-        }
-    };
+//    /** Defines callbacks for service binding, passed to bindService() */
+//    private ServiceConnection audio_service_connection = new ServiceConnection() {
+//
+//        @Override
+//        public void onServiceConnected(ComponentName className,
+//                                       IBinder service) {
+//            // We've bound to LocalService, cast the IBinder and get LocalService instance
+//            AudioService.LocalBinder binder = (AudioService.LocalBinder) service;
+////            mService = binder.getService();
+////            mBound = true;
+//        }
+//
+//        @Override
+//        public void onServiceDisconnected(ComponentName arg0) {
+////            mBound = false;
+//        }
+//    };
 
     private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
         @Override
