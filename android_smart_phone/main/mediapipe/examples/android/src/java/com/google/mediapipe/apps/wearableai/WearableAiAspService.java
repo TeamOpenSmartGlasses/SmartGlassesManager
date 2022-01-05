@@ -98,6 +98,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
 import android.view.SurfaceHolder;
+import android.os.Binder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -197,14 +198,22 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
+
 /** Main activity of WearableAI compute module android app. */
 public class WearableAiAspService extends LifecycleService {
+    // Service Binder given to clients
+    private final IBinder binder = new LocalBinder();
+
     private static final String TAG_FOREGROUND_SERVICE = "FOREGROUND_SERVICE";
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
     public static final String ACTION_RUN_AFFECTIVE_MEM = "ACTION_RUN_AFFECTIVE_MEM";
 
     private boolean isMediaPipeSetup = false;
+
+    //handler for adv
+    private Handler adv_handler;
 
     //socket
     private AspWebsocketServer asgWebSocket; 
@@ -395,7 +404,7 @@ public class WearableAiAspService extends LifecycleService {
     openSocket();
 
     //send broadcast
-    final Handler adv_handler = new Handler();
+    adv_handler = new Handler();
     final int delay = 1000; // 1000 milliseconds == 1 second
     adv_handler.postDelayed(new Runnable() {
         public void run() {
@@ -1253,9 +1262,16 @@ public class WearableAiAspService extends LifecycleService {
     }
 
    //service stuffs
+    public class LocalBinder extends Binder {
+        WearableAiAspService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return WearableAiAspService.this;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
     }
 
     @Override
@@ -1313,6 +1329,9 @@ public class WearableAiAspService extends LifecycleService {
     @Override
     public void onDestroy() {
         Log.d(TAG, "WearableAiAspService killing itself and all its children");
+
+        //stop advertising broadcasting IP
+        adv_handler.removeCallbacksAndMessages(null);
 
         //kill this socket
         shouldDie = true;
@@ -1442,5 +1461,37 @@ public class WearableAiAspService extends LifecycleService {
         startProducer();
         isMediaPipeSetup = true;
     }
+
+    //allow ui to control Autociter/wearable referencer
+    public void startAutociter(String phoneNumber){
+        try{
+            JSONObject startAutociterMessage = new JSONObject();
+            startAutociterMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUTOCITER_START);
+            startAutociterMessage.put(MessageTypes.AUTOCITER_PHONE_NUMBER, phoneNumber);
+            dataObservable.onNext(startAutociterMessage);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void stopAutociter(){
+        try{
+            JSONObject stopAutociterMessage = new JSONObject();
+            stopAutociterMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUTOCITER_STOP);
+            dataObservable.onNext(stopAutociterMessage);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public boolean getAutociterStatus(){
+        return mWearableReferencerAutocite.getIsActive();
+    }
+
+
+    public String getPhoneNumber(){
+        return mWearableReferencerAutocite.getPhoneNumber();
+    }
+    //^^^^^^allow ui to control Autociter/wearable referencer
 
 }

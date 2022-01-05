@@ -32,6 +32,11 @@ public class MessageTypes {
     public static final String AUDIO_CHUNK_ENCRYPTED = "AUDIO_CHUNK_ENCRYPTED";
     public static final String AUDIO_CHUNK_DECRYPTED = "AUDIO_CHUNK_DECRYPTED";
     public static final String AUDIO_DATA = "AUDIO_DATA";
+
+    //AUTOCITER/WEARABLE-REFERENCER
+    public static final String AUTOCITER_START = "AUTOCITER_START";
+    public static final String AUTOCITER_STOP = "AUTOCITER_STOP";
+    public static final String AUTOCITER_PHONE_NUMBER = "AUTOCITER_PHONE_NUMBER";
 }
 
 

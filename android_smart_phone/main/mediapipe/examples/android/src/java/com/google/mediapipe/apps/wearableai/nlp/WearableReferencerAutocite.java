@@ -26,6 +26,9 @@ import java.io.InputStreamReader;
 public class WearableReferencerAutocite {
     private static final String TAG = "WearableIntelligenceSystem_WearableReferencer";
 
+    private boolean isActive = false; //should this class be processing data?
+    private String phoneNumber; //what phone number should be sending SMS to?
+
     private final String referencesFileName = "wearable_referencer_references.csv";
     private List<String []> myReferences;
     private Context context;
@@ -45,6 +48,7 @@ public class WearableReferencerAutocite {
 
     //receive/send data stream
     PublishSubject<JSONObject> dataObservable;
+    Disposable dataSub;
 
     public WearableReferencerAutocite(Context context){
         this.context = context;
@@ -55,9 +59,6 @@ public class WearableReferencerAutocite {
     }
 
     private void openReferencesFile(){
-//        CSVReader reader = new CSVReader(new FileReader("yourfile.csv"));
-//        CSVReader reader = new CSVReader(new FileReader("yourfile.csv"));
-//      
         try{
             InputStream csvFileStream = context.getAssets().open(referencesFileName);
             InputStreamReader csvStreamReader = new InputStreamReader(csvFileStream);
@@ -78,7 +79,18 @@ public class WearableReferencerAutocite {
     //receive observable to send and receive data
     public void setObservable(PublishSubject<JSONObject> observable){
         dataObservable = observable;
-        Disposable dataSub = dataObservable.subscribe(i -> handleDataStream(i));
+        dataSub = dataObservable.subscribe(i -> handleDataStream(i));
+    }
+
+    public void setActive(String phoneNumber){
+        Log.d(TAG, "SETTING ACTIVE");
+        this.phoneNumber = phoneNumber;
+        isActive = true;
+    }
+
+    public void setInactive(){
+        Log.d(TAG, "SETTING INACTIVE");
+        isActive = false;
     }
 
     //this receives data from the data observable. This function decides what to parse
@@ -86,15 +98,23 @@ public class WearableReferencerAutocite {
         //first check if it's a type we should handle
         try{
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (type.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)){
-                Log.d(TAG, "WearableReferencer got INTERMEDIATE_TRANSCRIPT");
-            } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)){
-                Log.d(TAG, "WearableReferencer got FINAL_TRANSCRIPT, parsing");
-                try{
-                    String transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT);
-                    parseString(transcript);
-                } catch (JSONException e){
-                    e.printStackTrace();
+            if (type.equals(MessageTypes.AUTOCITER_START)){
+                String phoneNumberLocal = data.getString(MessageTypes.AUTOCITER_PHONE_NUMBER);
+                setActive(phoneNumberLocal);
+            } else if (type.equals(MessageTypes.AUTOCITER_STOP)){
+                setInactive();
+            }
+            if (isActive){ //only look for transcripts and parse the if we are currently active
+                if (type.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)){
+                    Log.d(TAG, "WearableReferencer got INTERMEDIATE_TRANSCRIPT");
+                } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)){
+                    Log.d(TAG, "WearableReferencer got FINAL_TRANSCRIPT, parsing");
+                    try{
+                        String transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT);
+                        parseString(transcript);
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                    }
                 }
             }
         } catch (JSONException e){
@@ -131,7 +151,7 @@ public class WearableReferencerAutocite {
         try{
             JSONObject sendRef = new JSONObject();
             sendRef.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SMS_REQUEST_SEND);
-            sendRef.put(MessageTypes.SMS_PHONE_NUMBER, "5555555555"); //PUT NUMBER HERE
+            sendRef.put(MessageTypes.SMS_PHONE_NUMBER, phoneNumber);
             sendRef.put(MessageTypes.SMS_MESSAGE_TEXT, prettyReference);
 
             dataObservable.onNext(sendRef);
@@ -152,6 +172,14 @@ public class WearableReferencerAutocite {
         String[] newStringArray = new String[myList.size()];
         myStringArray = myList.toArray(newStringArray);
         return myStringArray;
+    }
+
+    public boolean getIsActive(){
+        return isActive;
+    }
+
+    public String getPhoneNumber(){
+        return phoneNumber;
     }
 
 }
