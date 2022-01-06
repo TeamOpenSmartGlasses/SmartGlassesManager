@@ -116,6 +116,7 @@ public class WebSocketManager implements Runnable{
                     connected = ws.connectBlocking(5000, TimeUnit.MILLISECONDS); //add this so we don't get stuck trying to connect if the ip address updated
                     Log.d(TAG, "Web socket connected: " + connected);
                 } catch (Exception e) {
+                    connected = false;
                     e.printStackTrace();
                 }
                 if (!connected || ws.getConnectionState() == 0 || ws.isClosed()){
@@ -144,10 +145,9 @@ public class WebSocketManager implements Runnable{
                     Log.d(TAG, "WARNING: Old ws did not properly close");
                 }
                 Log.d(TAG, "onClose Stopped web socket");
-                Log.d(TAG, "Starting new run after onClose called...");
                 handler.postDelayed(restarter, delay);
             }
-        }, 10);
+        }, 100);
     }
 
     //this is because we need to delay this running, but there is a namespace overlap with run()

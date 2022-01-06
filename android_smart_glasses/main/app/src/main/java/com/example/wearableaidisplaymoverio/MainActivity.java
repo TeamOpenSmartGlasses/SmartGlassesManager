@@ -19,6 +19,7 @@ import android.hardware.Camera;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.StrictMode;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spanned;
@@ -66,7 +67,7 @@ public class MainActivity extends Activity {
     WearableAiService mService;
     boolean mBound = false;
 
-    public String TAG = "WearableAiDisplay";
+    public static String TAG = "WearableAiDisplay_MainActivity";
 
     public long lastFaceUpdateTime = 0;
     public long faceUpdateInterval = 5000; //milliseconds
@@ -155,6 +156,16 @@ public class MainActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate running");
+        //help us find potential issues in dev
+        if (BuildConfig.DEBUG){
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build());
+        }
+
         super.onCreate(savedInstanceState);
 
         //setup main view
@@ -163,56 +174,25 @@ public class MainActivity extends Activity {
         //setup the HUD ui
         setupHud();
 
-        //set full screen for Moverio
-//        long FLAG_SMARTFULLSCREEN = 0x80000000;
-//        Window win = getWindow();
-//        WindowManager.LayoutParams winParams = win.getAttributes();
-//        winParams.flags |= FLAG_SMARTFULLSCREEN;
-//        win.setAttributes(winParams);
-
         //keep the screen on throughout
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        //hint, use this to allow it to turn off:
-
-
-//        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-//                Intent i = new Intent(getApplicationContext(), FullImageActivity.class);
-//                i.putExtra("id", position);
-//                startActivity(i);
-//            }
-//        });
-
 
         //create the WearableAI service if it isn't already running
         startService(new Intent(this, WearableAiService.class));
         bindWearableAiService();
-
-//        //setup camera preview
-//        preview = (SurfaceView) findViewById(R.id.preview);
-//        previewHolder = preview.getHolder();
-//        previewHolder.addCallback(surfaceCallback);
-//        previewHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-
-        //setup take picture button
-//        takePictureButton = (Button) findViewById(R.id.captureImage);
-//        takePictureButton.setOnClickListener(new View.OnClickListener() {
-//            public void onClick(View v) {
-//                takeAndSendPicture();
-//            }
-//        });
-
+        Log.d(TAG, "onCreate complete");
     }
 
     private void setupHud(){
+        Log.d(TAG, "setupHud running");
         //setup wifi status
-        updateWifiHud();
-
+//        updateWifiHud();
+//
         //setup phone connect status
         updatePhoneHud();
-
-        //setup battery connect status
-        updateBatteryHud();
+//
+//        //setup battery connect status
+//        updateBatteryHud();
 
         //setup clock
         mClockTextView = (TextView) findViewById(R.id.clock_text_view);
@@ -232,11 +212,13 @@ public class MainActivity extends Activity {
                 }
             });
         }
+        Log.d(TAG, "setupHud complete");
     }
 
     private void updateWifiHud(){
+        Log.d(TAG, "updateWifiHud start...");
         mWifiStatusImageView = (ImageView) findViewById(R.id.wifi_image_view);
-        wifiConnected = WifiUtils.checkWifiOnAndConnected(this);
+        //wifiConnected = WifiUtils.checkWifiOnAndConnected(this); //check wifi status - don't need now that we have listener in service
         Drawable wifiOnDrawable = this.getDrawable(R.drawable.wifi_on_green);
         Drawable wifiOffDrawable = this.getDrawable(R.drawable.wifi_off_red);
         if (wifiConnected) {
@@ -244,9 +226,11 @@ public class MainActivity extends Activity {
         } else {
             mWifiStatusImageView.setImageDrawable(wifiOffDrawable);
         }
+        Log.d(TAG, "updateWifiHud complete.");
     }
 
     private void updatePhoneHud(){
+        Log.d(TAG, "updatePhoneHud start...");
         mPhoneStatusImageView = (ImageView) findViewById(R.id.phone_status_image_view);
         Drawable phoneOnDrawable = this.getDrawable(R.drawable.phone_connected_green);
         Drawable phoneOffDrawable = this.getDrawable(R.drawable.phone_disconnected_red);
@@ -255,9 +239,11 @@ public class MainActivity extends Activity {
         } else {
             mPhoneStatusImageView.setImageDrawable(phoneOffDrawable);
         }
+        Log.d(TAG, "updatePhoneHud complete.");
     }
 
     private void updateBatteryHud(){
+        Log.d(TAG, "updateBatteryHud start.");
         //set the icon
         mBatteryStatusImageView = (ImageView) findViewById(R.id.battery_status_image_view);
         Drawable batteryFullDrawable = this.getDrawable(R.drawable.full_battery_green);
@@ -282,6 +268,8 @@ public class MainActivity extends Activity {
         //set the text
         mBatteryStatusTextView = (TextView) findViewById(R.id.battery_percentage_text_view);
         mBatteryStatusTextView.setText((int)batteryLevel + "%");
+
+        Log.d(TAG, "updateBatteryHud complete.");
     }
 
     private void switchMode(String mode) {
@@ -317,6 +305,7 @@ public class MainActivity extends Activity {
                 break;
         }
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
+        Log.d(TAG, "SWITCH MODE COMPLETE");
     }
 
     private void showWearableFaceRecognizer(){
@@ -599,6 +588,7 @@ public class MainActivity extends Activity {
     }
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
+        Log.d(TAG, "makeComputeUpdateIntentFilter running");
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
         intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
@@ -614,18 +604,20 @@ public class MainActivity extends Activity {
 
         intentFilter.addAction(ACTION_UI_UPDATE);
 
+        Log.d(TAG, "makeComputeUpdateIntentFilter retruning");
         return intentFilter;
     }
 
     private final BroadcastReceiver mComputeUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "GOT BROADCAST");
             final String action = intent.getAction();
+            Log.d(TAG, action);
             if (ACTION_UI_UPDATE.equals(action)) {
                 Log.d(TAG, "GOT ACTION_UI_UPDATE");
                 if (intent.hasExtra(PHONE_CONN_STATUS_UPDATE)) {
                     phoneConnected = intent.getBooleanExtra(PHONE_CONN_STATUS_UPDATE, false);
-                    Log.d(TAG, "SET phoneConnected as: " + phoneConnected);
                     updatePhoneHud();
                 }
                 if (intent.hasExtra(BATTERY_CHARGING_STATUS_UPDATE)){
@@ -872,11 +864,13 @@ public class MainActivity extends Activity {
                 textBlockHolder = str_data;
                 switchMode("textblock");
             }
+            Log.d(TAG, "Done BROADCAST");
         }
     };
 
 
     private Spanned getCurrentTranscriptScrollText() {
+        Log.d(TAG, "getCurrentTranscriptScorllText running");
         Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
         //limit textHolder to our maximum size
         while ((textHolder.size() - textHolderSizeLimit) > 0){
@@ -890,6 +884,7 @@ public class MainActivity extends Activity {
                 current_transcript_scroll = (Spanned) TextUtils.concat(current_transcript_scroll, textHolder.get(i));
             }
         }
+        Log.d(TAG, "getCurrentTranscriptScorllText returning");
         return current_transcript_scroll;
     }
 
@@ -912,6 +907,7 @@ public class MainActivity extends Activity {
 
     //stuff for the charts
     private void setChartData() {
+        Log.d(TAG, "setChartData running");
 
         float max = 100;
         ArrayList<PieEntry> values = new ArrayList<>();
@@ -946,6 +942,7 @@ public class MainActivity extends Activity {
         //chart.animateY(1400, Easing.EaseInOutQuad);
 
         chart.invalidate();
+        Log.d(TAG, "setChartData complete");
     }
 
     private void moveOffScreen() {
@@ -1013,6 +1010,7 @@ public class MainActivity extends Activity {
         tv.post(new Runnable() {
             @Override
             public void run() {
+                Log.d(TAG, "scrollToBottom runnable running");
                 int lc = tv.getLineCount();
                 if (lc == 0){
                     return;
@@ -1024,6 +1022,7 @@ public class MainActivity extends Activity {
                     tv.scrollTo(0, scrollAmount);
                 else
                     tv.scrollTo(0, 0);
+                Log.d(TAG, "scrollToBottom runnable complete");
             }
         });
 
@@ -1036,12 +1035,14 @@ public class MainActivity extends Activity {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
+            Log.d(TAG, "onServiceConnected running");
             WearableAiService.LocalBinder binder = (WearableAiService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
 
             //get update of ui information
             mService.requestUiUpdate();
+            Log.d(TAG, "onServiceConnected complete");
         }
 
         @Override
@@ -1128,13 +1129,17 @@ public class MainActivity extends Activity {
 
     public void bindWearableAiService(){
         // Bind to that service
+        Log.d(TAG, "Binding to WAI service.");
         Intent intent = new Intent(this, WearableAiService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        Log.d(TAG, "Bound to WAI service.");
     }
 
     public void unbindWearableAiService() {
         // Bind to that service
+        Log.d(TAG, "Unbinding to WAI service.");
         unbindService(connection);
+        Log.d(TAG, "Unbound to WAI service.");
     }
 }
 

@@ -320,12 +320,6 @@ public class WearableAiService extends HiddenCameraService {
         System.out.println("HIDDEN CAMERA SERVICE DESTROYED");
     }
 
-//    @Nullable
-//    @Override
-//    public IBinder onBind(Intent intent) {
-//        return null;
-//    }
-
     public class LocalBinder extends Binder {
         WearableAiService getService() {
             // Return this instance of LocalService so clients can call public methods
@@ -354,7 +348,7 @@ public class WearableAiService extends HiddenCameraService {
                         .setCameraFacing(CameraFacing.REAR_FACING_CAMERA)
                         .setCameraResolution(CameraResolution.HIGH_RESOLUTION)
                         .setImageFormat(CameraImageFormat.FORMAT_JPEG)
-                        .setCameraFocus(CameraFocus.AUTO)
+                        .setCameraFocus(CameraFocus.NO_FOCUS)
                         .build();
 
                 startCamera(cameraConfig);

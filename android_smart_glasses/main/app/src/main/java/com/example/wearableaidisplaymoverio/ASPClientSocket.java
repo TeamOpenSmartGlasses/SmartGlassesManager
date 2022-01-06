@@ -51,7 +51,7 @@ public class ASPClientSocket {
 
     //broadcast intent string
     //broadcast intent string
-    public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_DATA";
+    public final static String ACTION_RECEIVE_MESSAGE = "com.example.wearableaidisplaymoverio.ACTION_RECEIVE_MESSAGE";
     public final static String EXTRAS_MESSAGE = "com.example.wearableaidisplaymoverio.EXTRAS_MESSAGE";
     public final static String EYE_CONTACT_5_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_5";
     public final static String EYE_CONTACT_30_MESSAGE = "com.example.wearableaidisplaymoverio.EYE_CONTACT_30";
@@ -72,6 +72,7 @@ public class ASPClientSocket {
     static Thread SocketThread = null;
     static Thread ReceiveThread = null;
     static Thread SendThread = null;
+    static Thread WebSocketThread = null;
     static private DataOutputStream output;
     //ids of message types
     //socket message ids
@@ -113,7 +114,7 @@ public class ASPClientSocket {
     private static Context mContext;
 
     private boolean socketStarted = false;
-    private boolean webSocketStarted = false;
+    private static boolean webSocketStarted = false;
     private boolean audioSocketStarted = false;
 
     private ASPClientSocket(Context context){
@@ -306,7 +307,7 @@ public class ASPClientSocket {
                 socket = new Socket();
                 socket.setSoTimeout(5000);
                 socket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT), socketTimeout);
-                System.out.println("CONNECTED!");
+                Log.d(TAG, "CONNECTED!");
                 output = new DataOutputStream(socket.getOutputStream());
                 //input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 input = new DataInputStream(new DataInputStream(socket.getInputStream()));
@@ -314,12 +315,13 @@ public class ASPClientSocket {
 
                 //update UI so user knows we're connected
                 updateUi();
+
                 //make the threads that will send and receive
                 if (ReceiveThread == null) { //if the thread is null, make a new one (the first one)
                     ReceiveThread = new Thread(new ReceiveThread());
                     ReceiveThread.start();
                 } else if (!ReceiveThread.isAlive()) { //if the thread is not null but it's dead, let it join then start a new one
-                    Log.d(TAG, "IN SocketThread, WAITING FOR receive THREAD JOING");
+                    Log.d(TAG, "IN SocketThread, WAITING FOR RECEIVETHREAD JOING");
                     try {
                         ReceiveThread.join(); //make sure socket thread has joined before throwing off a new one
                     } catch (InterruptedException e) {
@@ -561,13 +563,20 @@ public class ASPClientSocket {
         dataSubscriber = dataObservable.subscribe(i -> parseData(i));
     }
 
-    public void startWebSocket(){
-        //start a thread to hold the websocket connection to ASP
-        aspWebSocketManager = new WebSocketManager(SERVER_IP, "8887");
-        aspWebSocketManager.setObservable(dataObservable);
-        aspWebSocketManager.setSourceName("asg_web_socket"); //should be pulled from R.string
-        aspWebSocketManager.run(); //start socket which will auto reconnect on disconnect
+    public static void startWebSocket(){
         webSocketStarted = true;
+        WebSocketThread = new Thread(new WebSocketThread());
+        WebSocketThread.start();
+    }
+
+    static class WebSocketThread implements Runnable {
+        public void run() {
+            //start a thread to hold the websocket connection to ASP
+            aspWebSocketManager = new WebSocketManager(SERVER_IP, "8887");
+            aspWebSocketManager.setObservable(dataObservable);
+            aspWebSocketManager.setSourceName("asg_web_socket"); //should be pulled from R.string
+            aspWebSocketManager.run(); //start socket which will auto reconnect on disconnect
+        }
     }
 
     public boolean getSocketStarted(){
