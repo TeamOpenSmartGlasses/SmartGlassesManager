@@ -488,52 +488,52 @@ public class WearableAiAspService extends LifecycleService {
             }, hb_delay);
 
             //start a thread which send computed social data to smart glasses display every n seconds
-            final Handler metrics_handler = new Handler();
-            final int metrics_delay = 2500;
-
-            metrics_handler.postDelayed(new Runnable() {
-                public void run() {
-                    count = count + 1;
-                    //get time and start times of metrics
-                    //WOW need to make this programmatic with time windows somehow - just hard coding as we don't
-                    //even know what this will end up being - cayden
-                    long curr_time = System.currentTimeMillis();
-                    long start_time_5 = curr_time - 5000; //5 seconds window
-                    long start_time_30 = curr_time - 30000; //30 seconds window
-                    long start_time_300 = curr_time - 300000; //5 minutes
-
-                    //get predicted metrics
-                    float eye_contact_percentage_5 = mSocialInteraction.getEyeContactPercentage(start_time_5);
-                    float eye_contact_percentage_30 = mSocialInteraction.getEyeContactPercentage(start_time_30);
-                    float eye_contact_percentage_300 = mSocialInteraction.getEyeContactPercentage(start_time_300);
-                    int round_eye_contact_percentage_5 = Math.round(eye_contact_percentage_5);
-                    int round_eye_contact_percentage_30 = Math.round(eye_contact_percentage_30);
-                    int round_eye_contact_percentage_300 = Math.round(eye_contact_percentage_300);
-                    int facial_emotion_idx_5 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_5);
-                    int facial_emotion_idx_30 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_30);
-                    int facial_emotion_idx_300 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_300);
-
-
-                    int head_touch = mSocialInteraction.getBodyLanguage(start_time_300);
-
-                    //load payloads and send
-                    byte [] eye_contact_data_send_5 = my_int_to_bb_be(round_eye_contact_percentage_5);
-                    byte [] eye_contact_data_send_30 = my_int_to_bb_be(round_eye_contact_percentage_30);
-                    byte [] eye_contact_data_send_300 = my_int_to_bb_be(round_eye_contact_percentage_300);
-                    byte [] facial_emotion_data_send_5 = facial_emotion_list[facial_emotion_idx_5].getBytes();
-                    byte [] facial_emotion_data_send_30 = facial_emotion_list[facial_emotion_idx_30].getBytes();
-                    byte [] facial_emotion_data_send_300 = facial_emotion_list[facial_emotion_idx_300].getBytes();
-                    if (mConnectState == 2){
-                        sendBytes(eye_contact_info_id_5, eye_contact_data_send_5);
-                        sendBytes(eye_contact_info_id_30, eye_contact_data_send_30);
-                        sendBytes(eye_contact_info_id_300, eye_contact_data_send_300);
-                        sendBytes(facial_emotion_info_id_5, facial_emotion_data_send_5);
-                        sendBytes(facial_emotion_info_id_30, facial_emotion_data_send_30);
-                        sendBytes(facial_emotion_info_id_300, facial_emotion_data_send_300);
-                    }
-                    metrics_handler.postDelayed(this, metrics_delay);
-                }
-            }, metrics_delay);
+//            final Handler metrics_handler = new Handler();
+//            final int metrics_delay = 2500;
+//
+//            metrics_handler.postDelayed(new Runnable() {
+//                public void run() {
+//                    count = count + 1;
+//                    //get time and start times of metrics
+//                    //WOW need to make this programmatic with time windows somehow - just hard coding as we don't
+//                    //even know what this will end up being - cayden
+//                    long curr_time = System.currentTimeMillis();
+//                    long start_time_5 = curr_time - 5000; //5 seconds window
+//                    long start_time_30 = curr_time - 30000; //30 seconds window
+//                    long start_time_300 = curr_time - 300000; //5 minutes
+//
+//                    //get predicted metrics
+//                    float eye_contact_percentage_5 = mSocialInteraction.getEyeContactPercentage(start_time_5);
+//                    float eye_contact_percentage_30 = mSocialInteraction.getEyeContactPercentage(start_time_30);
+//                    float eye_contact_percentage_300 = mSocialInteraction.getEyeContactPercentage(start_time_300);
+//                    int round_eye_contact_percentage_5 = Math.round(eye_contact_percentage_5);
+//                    int round_eye_contact_percentage_30 = Math.round(eye_contact_percentage_30);
+//                    int round_eye_contact_percentage_300 = Math.round(eye_contact_percentage_300);
+//                    int facial_emotion_idx_5 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_5);
+//                    int facial_emotion_idx_30 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_30);
+//                    int facial_emotion_idx_300 = mSocialInteraction.getFacialEmotionMostFrequent(start_time_300);
+//
+//
+//                    int head_touch = mSocialInteraction.getBodyLanguage(start_time_300);
+//
+//                    //load payloads and send
+//                    byte [] eye_contact_data_send_5 = my_int_to_bb_be(round_eye_contact_percentage_5);
+//                    byte [] eye_contact_data_send_30 = my_int_to_bb_be(round_eye_contact_percentage_30);
+//                    byte [] eye_contact_data_send_300 = my_int_to_bb_be(round_eye_contact_percentage_300);
+//                    byte [] facial_emotion_data_send_5 = facial_emotion_list[facial_emotion_idx_5].getBytes();
+//                    byte [] facial_emotion_data_send_30 = facial_emotion_list[facial_emotion_idx_30].getBytes();
+//                    byte [] facial_emotion_data_send_300 = facial_emotion_list[facial_emotion_idx_300].getBytes();
+//                    if (mConnectState == 2){
+//                        sendBytes(eye_contact_info_id_5, eye_contact_data_send_5);
+//                        sendBytes(eye_contact_info_id_30, eye_contact_data_send_30);
+//                        sendBytes(eye_contact_info_id_300, eye_contact_data_send_300);
+//                        sendBytes(facial_emotion_info_id_5, facial_emotion_data_send_5);
+//                        sendBytes(facial_emotion_info_id_30, facial_emotion_data_send_30);
+//                        sendBytes(facial_emotion_info_id_300, facial_emotion_data_send_300);
+//                    }
+//                    metrics_handler.postDelayed(this, metrics_delay);
+//                }
+//            }, metrics_delay);
         }
 
     }

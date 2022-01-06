@@ -99,7 +99,6 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     public void setObservable(PublishSubject<JSONObject> dataO){
         dataObservable = dataO;
-        dataSubscriber = dataObservable.subscribe(i -> parseData(i));
     }
 
     public void setSourceName(String name){
@@ -115,12 +114,17 @@ public class AsgWebSocketClient extends WebSocketClient {
         killme = true;
         Log.d(TAG, "Stopping Web socket");
         connected = 0;
-        try {
-            closeBlocking();
-        } catch (InterruptedException e){
-            e.printStackTrace();
-            return false;
+        if (! isClosed()) {
+            try {
+                closeBlocking();
+                Log.d(TAG, "Successfully closed");
+            } catch (InterruptedException e) {
+                Log.d(TAG, "Failed to close");
+                e.printStackTrace();
+                return false;
+            }
         }
+//        close();
         return true;
     }
 
@@ -128,9 +132,10 @@ public class AsgWebSocketClient extends WebSocketClient {
     public void onOpen(ServerHandshake handshakedata) {
         killme = false;
         connected = 2;
-        Log.d(TAG, "opened connection");
+        Log.d(TAG, "Web Socket CONNECTED");
         setConnectionLostTimeout(6);
         startConnectionLostTimer();
+        dataSubscriber = dataObservable.subscribe(i -> parseData(i));
         // if you plan to refuse connection based on ip or httpfields overload: onWebsocketHandshakeReceivedAsClient
     }
 
@@ -152,10 +157,15 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
+        Log.d(TAG, "onClose called");
         connected = 0;
-        dataSubscriber.dispose();
+        if (dataSubscriber != null) {
+            Log.d(TAG, "displose data subscriber");
+            dataSubscriber.dispose();
+        }
 
         if (!killme) {
+            Log.d(TAG, "Ask manager to restart me");
             webSocketManager.onClose(); //tell manager that we are done and it should make a new socket to reconnect
         }
 
@@ -163,6 +173,7 @@ public class AsgWebSocketClient extends WebSocketClient {
         Log.d(TAG,
                 "Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: "
                         + reason);
+        Log.d(TAG, "onClose complete");
     }
 
     @Override
