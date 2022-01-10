@@ -76,7 +76,6 @@ public class SmsComms {
 
     //this receives data from the data observable
     private void handleDataStream(JSONObject data){
-        Log.d(TAG, "Parsing incoming data");
         //first check if it's a type we should handle
         try{
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);

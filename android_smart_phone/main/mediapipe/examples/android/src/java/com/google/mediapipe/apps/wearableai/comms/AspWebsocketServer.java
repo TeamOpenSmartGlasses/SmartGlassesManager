@@ -61,7 +61,6 @@ public class AspWebsocketServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String message) {
-        Log.d(TAG, "GOT MESSAGE: " + message);
         try {
             JSONObject json_obj = new JSONObject(message);
             dataObservable.onNext(json_obj);
@@ -134,6 +133,9 @@ public class AspWebsocketServer extends WebSocketServer {
                 sendJson(data);
             } else if (type.equals(MessageTypes.FACE_SIGHTING_EVENT)){
                 Log.d(TAG, "AspWebsocketServer got FACE_SIGHTING_EVENT, sending to ASG");
+                sendJson(data);
+            } else if (type.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
+                Log.d(TAG, "AspWebsocketServer got SEARCH_ENGINE_RESULT, sending to ASG");
                 sendJson(data);
             }
         } catch (JSONException e){

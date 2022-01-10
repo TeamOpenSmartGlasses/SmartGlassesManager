@@ -17,3 +17,8 @@ requests==2.26.0
 google-cloud-language
 google-cloud-translate
 pycrypto
+flask
+flask-restful
+flask-cors
+duckduckgo_search
+opengraph_py3

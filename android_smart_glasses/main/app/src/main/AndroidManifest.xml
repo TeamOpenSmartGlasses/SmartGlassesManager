@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.wearableaidisplaymoverio">
+    package="com.example.wearableintelligencesystemandroidsmartglasses">
 
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -24,7 +24,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.WearableAiDisplayMoverio">
-        <activity android:name=".MainActivity">
+        <activity android:name="com.wearableintelligencesystem.androidsmartglasses.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -32,12 +32,12 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".WearableAiService"
+            android:name="com.wearableintelligencesystem.androidsmartglasses.WearableAiService"
             android:label="CameraService" >
         </service>
-        <service android:name=".sensors.MuseService" android:enabled="true"/>
+        <service android:name="com.wearableintelligencesystem.androidsmartglasses.sensors.MuseService" android:enabled="true"/>
 
-        <service android:name=".AudioService" android:enabled="true" android:exported="true"></service>
+        <service android:name="com.wearableintelligencesystem.androidsmartglasses.AudioService" android:enabled="true" android:exported="true"></service>
 
         <!-- Receive Wi-Fi connection state changes -->
 <!--        <receiver android:name=".comms.WifiUtils$WifiReceiver">-->

@@ -159,7 +159,6 @@ public class SpeechRecVosk implements RecognitionListener {
         try {
             String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (dataType.equals(MessageTypes.AUDIO_CHUNK_DECRYPTED)){
-                Log.d(TAG, "HANDLING DECRYPTED DATA IN AudioSystem");
                 String encodedPlainData = data.getString(MessageTypes.AUDIO_DATA);
                 byte [] decodedPlainData = Base64.decode(encodedPlainData, Base64.DEFAULT);
                 audioSenderStreamVosk.put(decodedPlainData);

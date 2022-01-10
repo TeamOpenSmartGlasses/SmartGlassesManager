@@ -461,15 +461,14 @@ public class AudioSystem {
     }
 
     public byte [] decryptBytes(byte [] input) {
-        Log.d(TAG,"ljngth of about to encrypt data: " + input.length);
-        Log.d(TAG,"secret key: " + secretKey);
         byte [] decryptedBytes = AES.decrypt(input, secretKey);
         return decryptedBytes;
     }
 
     public void destroy(){
         shouldDie = true;
-        killSocket();
+        dataSubscriber.dispose();
+        //killSocket();
     }
 
     private void handleDataStream(JSONObject data){
@@ -485,7 +484,6 @@ public class AudioSystem {
 
     //here we decode, decrypt, the encode again. It's not pretty, but it allows us to use a JSON event bus, which makes things way more manageable and modular
     private void handleEncryptedData(JSONObject data){
-        Log.d(TAG, "HANDLING ENCRYPTED DATA IN AudioSystem");
         try{
             String encodedData = data.getString(MessageTypes.AUDIO_DATA);
             byte [] decodedData = Base64.decode(encodedData, Base64.DEFAULT);

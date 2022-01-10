@@ -1,4 +1,4 @@
-package com.google.mediapipe.apps.wearableai.comms;
+package com.wearableintelligencesystem.androidsmartglasses;
 
 public class MessageTypes {
     //top level
@@ -29,17 +29,22 @@ public class MessageTypes {
     public static final String SMS_PHONE_NUMBER = "SMS_PHONE_NUMBER";
 
     //AUDIO
+    //AUDIO
     public static final String AUDIO_CHUNK_ENCRYPTED = "AUDIO_CHUNK_ENCRYPTED";
     public static final String AUDIO_CHUNK_DECRYPTED = "AUDIO_CHUNK_DECRYPTED";
     public static final String AUDIO_DATA = "AUDIO_DATA";
 
-    //AUTOCITER/WEARABLE-REFERENCER
-    public static final String AUTOCITER_START = "AUTOCITER_START";
-    public static final String AUTOCITER_STOP = "AUTOCITER_STOP";
-    public static final String AUTOCITER_PHONE_NUMBER = "AUTOCITER_PHONE_NUMBER";
+
+    //COMMS
+    public static final String PING = "PING";
+
+    //UI
+    public static final String UI_UPDATE_ACTION = "UI_UPDATE_ACTION";
+    public static final String PHONE_CONNECTION_STATUS = "PHONE_CONNECTION_STATUS";
 
     //command responses to show
     public final static String NATURAL_LANGUAGE_QUERY = "NATURAL_LANGUAGE_QUERY";
+    public final static String TEXT_RESPONSE = "NATURAL_LANGUAGE_QUERY";
     public final static String TEXT_QUERY = "TEXT_QUERY";
     public final static String VISUAL_SEARCH_RESULT = "VISUAL_SEARCH_RESULT";
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
@@ -47,7 +52,6 @@ public class MessageTypes {
     public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
-
 }
 
 

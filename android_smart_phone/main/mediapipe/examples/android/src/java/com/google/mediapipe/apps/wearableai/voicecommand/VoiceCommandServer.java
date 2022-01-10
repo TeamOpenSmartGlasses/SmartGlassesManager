@@ -220,6 +220,8 @@ public class VoiceCommandServer {
         //get all voice commands
         voiceCommands = new ArrayList<VoiceCommand>();
         voiceCommands.add(new MxtVoiceCommand());
+        voiceCommands.add(new NaturalLanguageQueryVoiceCommand());
+        voiceCommands.add(new SearchEngineVoiceCommand());
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
     }

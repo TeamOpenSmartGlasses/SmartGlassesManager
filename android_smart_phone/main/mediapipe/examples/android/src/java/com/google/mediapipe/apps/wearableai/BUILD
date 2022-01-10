@@ -117,6 +117,8 @@ kt_android_library(
             "@maven//:org_threeten_threetenbp",
             #CSV
             "@maven//:com_opencsv_opencsv",
+            #HTTP
+            "@maven//:com_android_volley_volley",
             #SPECIAL DEP - this is our normal assets folder
             "//mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai/assets:wearableai_assets",
 

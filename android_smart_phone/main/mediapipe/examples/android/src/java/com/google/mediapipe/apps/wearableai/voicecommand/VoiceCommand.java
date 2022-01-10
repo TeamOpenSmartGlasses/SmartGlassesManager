@@ -45,6 +45,21 @@ public abstract class VoiceCommand {
             e.printStackTrace();
         }
     }
+    
+    public void sendMessage(VoiceCommandServer vcServer, String displayString){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
+
+            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
+
+            //send the command result
+            vcServer.dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 
     public String getCommandName(){
         return commandName;

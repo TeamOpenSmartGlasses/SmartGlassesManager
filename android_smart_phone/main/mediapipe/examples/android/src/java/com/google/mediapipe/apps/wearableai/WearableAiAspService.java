@@ -46,6 +46,8 @@ import com.google.mediapipe.apps.wearableai.database.person.PersonEntity;
 import com.google.mediapipe.apps.wearableai.comms.AspWebsocketServer;
 import com.google.mediapipe.apps.wearableai.comms.AudioSystem;
 import com.google.mediapipe.apps.wearableai.comms.SmsComms;
+import com.google.mediapipe.apps.wearableai.comms.RestServerComms;
+import com.google.mediapipe.apps.wearableai.comms.VolleyCallback;
 
 //affective computing
 import com.google.mediapipe.apps.wearableai.affectivecomputing.SocialInteraction;
@@ -375,6 +377,9 @@ public class WearableAiAspService extends LifecycleService {
     private MediaFileRepository mMediaFileRepository = null;
     private PersonRepository mPersonRepository = null;
 
+    //REST server
+    private RestServerComms restServerComms;
+
   @Override
   public void onCreate() {
     //check for wifi hotspot, warn user if it's not on
@@ -429,6 +434,9 @@ public class WearableAiAspService extends LifecycleService {
 
     //start voice command server to parse transcript for voice command
     voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
+
+    //start rest server connection handler
+    restServerComms = RestServerComms.getInstance(this);
 
     //setup single interaction instance - later to be done dynamically based on seeing and recognizing a new face
     mSocialInteraction = new SocialInteraction();
@@ -1306,8 +1314,103 @@ public class WearableAiAspService extends LifecycleService {
     }
 
     private void handleDataStream(JSONObject data){
+        //first check if it's a type we should handle
+        try{
+            String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (type.equals(MessageTypes.NATURAL_LANGUAGE_QUERY)){
+                sendNaturalLanguageQuery(data);
+            } else if (type.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
+                sendSearchEngineQuery(data);
+            } 
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
+    private void sendCommandResponse(String response){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
+            commandResponseObject.put(MessageTypes.COMMAND_RESULT, true);
+            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, response);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendSearchEngineResults(JSONObject results){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
+            commandResponseObject.put(MessageTypes.SEARCH_ENGINE_RESULT_DATA, results.toString());
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+
+    private void sendNaturalLanguageQuery(JSONObject data){
+        Log.d(TAG, "Running sendNaturalLanguageQuery");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("query", data.get(MessageTypes.TEXT_QUERY));
+            restServerComms.restRequest(RestServerComms.NATURAL_LANGUAGE_QUERY_SEND_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                    public void onSuccess(JSONObject result){
+                        Log.d(TAG, "GOT natural language REST RESULT:");
+                        Log.d(TAG, result.toString());
+                        try{
+                            sendCommandResponse("Answer: " + result.getString("response"));
+                        } catch (JSONException e){
+                            e.printStackTrace();
+                        }
+                    }
+                @Override
+                public void onFailure(){
+                    sendCommandResponse("Query failed, please try again.");
+                }
+
+                });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendSearchEngineQuery(JSONObject data){
+        Log.d(TAG, "Running sendSearchEngineQuery");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("query", data.get(MessageTypes.TEXT_QUERY));
+            restServerComms.restRequest(RestServerComms.SEARCH_ENGINE_QUERY_SEND_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                public void onSuccess(JSONObject result){
+                    Log.d(TAG, "GOT search engine REST RESULT:");
+                    Log.d(TAG, result.toString());
+                    sendCommandResponse("Search success, displaying results.");
+                    try{
+                        sendSearchEngineResults(result.getJSONObject("response"));
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                public void onFailure(){
+                    sendCommandResponse("Search failed, please try again.");
+                }
+
+            });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 
     private void saveFacialEmotion(String faceEmotion){
         Log.d(TAG, "SAVING FACIAL EMOTION: " + faceEmotion);
