@@ -29,6 +29,7 @@ import android.renderscript.Type;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
+import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -561,6 +562,24 @@ public class WearableAiService extends HiddenCameraService {
             last_sent_time = curr_time;
         }
         img_count++;
+    }
+
+    public void sendVisualSearch(){
+        Log.d(TAG, "Sending visual search query");
+        //encode image jpg as base64
+        Bitmap bitmap = BitmapFactory.decodeByteArray(curr_cam_image, 0, curr_cam_image.length);
+        byte[] jpg = bmpToJpg(bitmap);
+        String imgString = Base64.encodeToString(jpg, Base64.DEFAULT);
+
+        //send image
+        try{
+            JSONObject visualSearch = new JSONObject();
+            visualSearch.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VISUAL_SEARCH_QUERY);
+            visualSearch.put(MessageTypes.VISUAL_SEARCH_IMAGE, imgString);
+            dataObservable.onNext(visualSearch);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
     public Allocation renderScriptNV21ToRGBA8888(Context context, int width, int height, byte[] nv21) {
