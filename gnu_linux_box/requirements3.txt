@@ -1,7 +1,0 @@
-flask
-flask_restful
-flask_cors
-duckduckgo_search
-opengraph_py3
-spacy
-wikipedia

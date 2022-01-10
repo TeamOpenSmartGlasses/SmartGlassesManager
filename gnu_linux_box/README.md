@@ -47,3 +47,19 @@ Change url and query text as required
 ```
 curl -X POST -F "query=who's the president of the us" http://127.0.0.1:5000/natural_language_query -vvv
 ```
+
+## Deploy your own server
+
+1. Setup a cloud connected Linux box (tested on Ubuntu 18 LTS AWS EC2)
+2. Install nginx
+3. Clone the repo at /var/www/html
+4. Add the two .confi files at `gnu_linux_box/backend/deploy` to `/etc/nginx/site-available` and activate them with:
+```
+sudo rm /etc/nginx/sites-enabled/default
+sudo ln /etc/nginx/sites-available/wis_backend.conf /etc/nginx/sites-enabled/
+sudo ln /etc/nginx/sites-available/wis_ssl.conf /etc/nginx/sites-enabled/
+sudo systemctl restart nginx
+```
+5. Setup the backend to run by setting up virtualenv and installing requirements (discussed above)
+6. Copy the service service file to `/etc/systemd/system`
+7. Enable the service file with `sudo systemctl start wis_gunicorn && sudo systemctl enable wis_gunicorn`
