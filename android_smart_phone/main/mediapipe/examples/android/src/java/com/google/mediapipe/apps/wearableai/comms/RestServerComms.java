@@ -40,7 +40,7 @@ public class RestServerComms {
         // Instantiate the RequestQueue.
         mContext = context;
         mRequestQueue = Volley.newRequestQueue(mContext);
-        serverUrl = "http://192.168.1.188:5000";
+        serverUrl = "https://wis.emexwearables.com/api";
     }
 
     //handles requesting data, sending data
