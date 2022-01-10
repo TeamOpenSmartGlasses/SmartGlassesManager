@@ -4,6 +4,8 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import android.content.Context;
+
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandRepository;
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandDao;
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandCreator;
@@ -12,7 +14,8 @@ import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEn
 class MxtVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_MxtVoiceCommand";
 
-    MxtVoiceCommand(){
+    MxtVoiceCommand(Context context){
+        super(context);
         this.commandName = "save speech";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));

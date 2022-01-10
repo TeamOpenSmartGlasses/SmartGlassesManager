@@ -200,8 +200,8 @@ public class VoiceCommandServer {
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.80;
-    private final double commandThreshold = 0.87;
+    private final double wakeWordThreshold = 0.90;
+    private final double commandThreshold = 0.90;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -219,9 +219,10 @@ public class VoiceCommandServer {
 
         //get all voice commands
         voiceCommands = new ArrayList<VoiceCommand>();
-        voiceCommands.add(new MxtVoiceCommand());
-        voiceCommands.add(new NaturalLanguageQueryVoiceCommand());
-        voiceCommands.add(new SearchEngineVoiceCommand());
+        voiceCommands.add(new MxtVoiceCommand(context));
+        voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
+        voiceCommands.add(new SearchEngineVoiceCommand(context));
+        voiceCommands.add(new SwitchModesVoiceCommand(context));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
     }

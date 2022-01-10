@@ -194,12 +194,14 @@ public class AsgWebSocketClient extends WebSocketClient {
     }
 
 
+    //this to be moved into the ASPRepresentative class
     private void parseData(JSONObject data){
         try {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (typeOf.equals(MessageTypes.AUDIO_CHUNK_ENCRYPTED)) {
                 sendJson(data);
-//            } else if (typeOf.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+            } else if (typeOf.equals(MessageTypes.VISUAL_SEARCH_QUERY)) {
+                sendJson(data);
             }
         } catch (JSONException e){
             e.printStackTrace();

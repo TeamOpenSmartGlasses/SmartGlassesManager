@@ -32,14 +32,16 @@ public class NlpUtils {
         jw = new JaroWinkler();//probably should change this to somethings else. A failure, for example, is that the strings {effective memory : affective memory} have similiarity of 0.85, but strings {fective memory : affective memory} have similirity of 0.96 ... not great
     }
 
-    public static int findNearMatches(String incomingString, String toFindString, double threshold){
+    public int findNearMatches(String incomingString, String toFindString, double threshold){
         //int extraChars = 2; //some small number of chars before and after string in case the fuzzy match and what appears in trancript aren't exactly the same length
         //for (int i = 0; i < (incomingString.length() - toFindString.length() - extraChars); i++) {
         int highestIndex = -1;
         double highestDistance = -1d;
+        toFindString = toFindString.replaceAll("\\s+$", ""); //replace any leading/trailing spaces
         for (int i = 0; i <= (incomingString.length() - toFindString.length()); i++) {
             //String substring = incomingString.substring(i, i + toFindString.length() + extraChars);
             String substring = incomingString.substring(i, i + toFindString.length());
+            Log.d(TAG, "comparing: " + toFindString + "; with: " + substring);
             double distance = jw.similarity(substring, toFindString);
             if (distance > highestDistance){
                 highestIndex = i;
@@ -55,7 +57,7 @@ public class NlpUtils {
         }
     }
 
-    public static int findNumMatches(String incomingString, String [] toMatch, double thresh){
+    public int findNumMatches(String incomingString, String [] toMatch, double thresh){
         int matchCount = 0;
         for (int j = 0; j < toMatch.length; j++){
             int matchLocation = findNearMatches(incomingString, toMatch[j], thresh);

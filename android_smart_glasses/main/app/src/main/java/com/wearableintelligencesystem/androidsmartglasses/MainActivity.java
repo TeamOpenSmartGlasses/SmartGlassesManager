@@ -166,7 +166,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         //setup main view
-        switchMode("llc");
+        switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
 
         //setup the HUD ui
         setupHud();
@@ -181,15 +181,6 @@ public class MainActivity extends Activity {
     }
 
     private void setupHud(){
-        Log.d(TAG, "setupHud running");
-        //setup wifi status
-//        updateWifiHud();
-//
-        //setup phone connect status
-        updatePhoneHud();
-//
-//        //setup battery connect status
-//        updateBatteryHud();
 
         //setup clock
         if (! clockRunning) {
@@ -210,7 +201,26 @@ public class MainActivity extends Activity {
                     handler.postDelayed(this, 1000);
                 }
             });
+        } else{
+            //do just one update so user doesn't have to wait
+            String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
+            mClockTextView = (TextView) findViewById(R.id.clock_text_view);
+            if (mClockTextView != null) {
+                mClockTextView.setText(prettyTime);
+            }
+            Log.d(TAG, "Time set.");
         }
+
+        Log.d(TAG, "setupHud running");
+        //setup wifi status
+        updateWifiHud();
+//
+        //setup phone connect status
+        updatePhoneHud();
+
+        //setup battery connect status
+        updateBatteryHud();
+
         Log.d(TAG, "setupHud complete");
     }
 
@@ -285,34 +295,35 @@ public class MainActivity extends Activity {
         Log.d(TAG, "SWITCH MODE RUNNING WITH NEW MODE: " + mode);
         curr_mode = mode;
         switch (mode) {
-            case "social":
-                setupSocialIntelligenceUi();
-                break;
-            case "llc":
-                setupLlcUi();
-                break;
-            case "blank":
+            case MessageTypes.MODE_BLANK:
                 blankUi();
                 break;
-            case "translate":
+            case MessageTypes.MODE_LANGUAGE_TRANSLATE:
                 setupTranslateUi();
                 break;
-            case "visualsearchviewfind":
-                setupVisualSearchViewfinder();
-                break;
-            case "visualsearchgridview":
-                setContentView(R.layout.image_gridview);
-                break;
-            case "textlist":
+            case MessageTypes.MODE_TEXT_LIST:
                 setupTextList();
                 break;
-            case "textblock":
+            case MessageTypes.MODE_TEXT_BLOCK:
                 setupTextBlock();
                 break;
-            case "wearablefacerecognizer":
+            case MessageTypes.MODE_WEARABLE_FACE_RECOGNIZER:
                 showWearableFaceRecognizer();
                 break;
+            case MessageTypes.MODE_VISUAL_SEARCH:
+                setupVisualSearchViewfinder();
+                break;
+            case MessageTypes.MODE_REFERENCE_GRID:
+                setContentView(R.layout.image_gridview);
+                break;
+            case MessageTypes.MODE_SOCIAL_MODE:
+                setupSocialIntelligenceUi();
+                break;
+            case MessageTypes.MODE_LIVE_LIFE_CAPTIONS:
+                setupLlcUi();
+                break;
         }
+
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
         Log.d(TAG, "SWITCH MODE COMPLETE");
     }
@@ -386,12 +397,11 @@ public class MainActivity extends Activity {
         }
 
         //update the current preview frame in
-        //for now, show for n seconds and then return to llc
         int frame_delay = 50; //milliseconds
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                if (curr_mode.equals("visualsearchviewfind")) {
+                if (curr_mode.equals(MessageTypes.MODE_VISUAL_SEARCH)) {
                     updateViewFindFrame();
                 }
             }
@@ -401,6 +411,9 @@ public class MainActivity extends Activity {
     private void setupLlcUi() {
         //live life captions mode gui setup
         setContentView(R.layout.live_life_caption_text);
+
+        setupHud();
+
         liveLifeCaptionsText = (TextView) findViewById(R.id.livelifecaptionstextview);
         liveLifeCaptionsText.setMovementMethod(new ScrollingMovementMethod());
         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
@@ -485,15 +498,17 @@ public class MainActivity extends Activity {
     public void onResume() {
         super.onResume();
 
+        setupHud();
+
         registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
 
         bindWearableAiService();
 
-        if (curr_mode == "llc"){
+        if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)){
             scrollToBottom(liveLifeCaptionsText);
         }
 
-        if (curr_mode == "translate"){
+        if (curr_mode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)){
             scrollToBottom(translateText);
         }
     }
@@ -635,12 +650,17 @@ public class MainActivity extends Activity {
                     String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
                     //run visual search results
                     if (typeOf.equals(MessageTypes.VISUAL_SEARCH_RESULT)){
-                        String payloadString = data.getString("payload");
+                        String payloadString = data.getString(MessageTypes.VISUAL_SEARCH_DATA);
                         showVisualSearchResults(new JSONArray(payloadString));
                     } else if (typeOf.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
                         showSearchEngineResults(data);
+                    } else if (typeOf.equals(MessageTypes.ACTION_SWITCH_MODES)){
+                        //parse out the name of the mode
+                        String modeName = data.getString(MessageTypes.NEW_MODE);
+                        //switch to that mode
+                        switchMode(modeName);
                     }
-                } catch(JSONException e){
+            } catch(JSONException e){
                     e.printStackTrace();
                 }
             } else if (ACTION_UI_UPDATE.equals(action)) {
@@ -666,7 +686,7 @@ public class MainActivity extends Activity {
                     wifiConnected = intent.getBooleanExtra(WIFI_CONN_STATUS_UPDATE, false);
                     updateWifiHud();
                 }
-        } else if (curr_mode.equals("social") && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
+        } else if (curr_mode.equals(MessageTypes.MODE_SOCIAL_MODE) && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
                 if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
                     String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
                     setGuiMessage(message, eyeContact5MetricTextView, "%");
@@ -732,7 +752,7 @@ public class MainActivity extends Activity {
                             textHolder.add(Html.fromHtml(textBuilder));
                         }
 
-                        if (curr_mode.equals("llc")) {
+                        if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
                             liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                         }
                     } catch (JSONException e) {
@@ -744,7 +764,7 @@ public class MainActivity extends Activity {
                     if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
                         lastIntermediateMillis = System.currentTimeMillis();
                         String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
-                        if (curr_mode.equals("llc")) {
+                        if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
                             liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
                         }
                     }
@@ -754,7 +774,7 @@ public class MainActivity extends Activity {
                     //change newlines to <br/>
                     command_response_text = command_response_text.replaceAll("\n", "<br/>");
                     textHolder.add(Html.fromHtml("<p><font color='#00CC00'>" + command_response_text.trim() + "</font></p>"));
-                    if (curr_mode.equals("llc")) {
+                    if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
                         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                     }
                 }
@@ -814,7 +834,7 @@ public class MainActivity extends Activity {
                         Log.d(TAG, "MainActivity Affective mem #" + i + " is " + transcript);
                         i++;
                     }
-                    switchMode("textlist");
+                    switchMode(MessageTypes.MODE_TEXT_LIST);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -824,7 +844,7 @@ public class MainActivity extends Activity {
                     JSONObject affective_query_result = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_SEARCH_QUERY_RESULT));
                     textBlockHolder = "";
                     textBlockHolder = "Most " + affective_query_result.getString("emotion") + " of last conversation: \n\n" + affective_query_result.getString("phrase");
-                    switchMode("textblock");
+                    switchMode(MessageTypes.MODE_TEXT_BLOCK);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -834,7 +854,7 @@ public class MainActivity extends Activity {
 
                 translateTextHolder.add(Html.fromHtml("<p>" + translation_result_text + "</p>"));
 
-                if (curr_mode.equals("translate")) {
+                if (curr_mode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)) {
                     translateText.setText(getCurrentTranslateScrollText());
                 }
             } else if (GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT.equals(action)) {
@@ -848,11 +868,11 @@ public class MainActivity extends Activity {
                     Toast.makeText(MainActivity.this, "Saw: " + currName, Toast.LENGTH_SHORT).show();
                     lastFaceUpdateTime = System.currentTimeMillis();
                 }
-                //switchMode("wearablefacerecognizer");
+                //switchMode(MessageTypes.MODE_WEARABLE_FACE_RECOGNIZER);
             } else if (GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT.equals(action)) {
                 String str_data = intent.getStringExtra(GlboxClientSocket.AFFECTIVE_SUMMARY_RESULT);
                 textBlockHolder = str_data;
-                switchMode("textblock");
+                switchMode(MessageTypes.MODE_TEXT_BLOCK);
             }
             Log.d(TAG, "Done BROADCAST");
         }
@@ -1050,7 +1070,8 @@ public class MainActivity extends Activity {
 
         if (mBound) {
             //byte[] curr_cam_image = mService.getCurrentCameraImage();
-            mService.sendGlBoxCurrImage();
+            //mService.sendGlBoxCurrImage();
+            mService.sendVisualSearch();
         }
         Log.d(TAG, "visual search image has been sent");
     }
@@ -1069,18 +1090,18 @@ public class MainActivity extends Activity {
         switch (keyCode) {
             case KeyEvent.KEYCODE_ENTER:
                 Log.d(TAG, "keycode _ enter felt");
-                if (curr_mode.equals("visualsearchviewfind")){
+                if (curr_mode.equals(MessageTypes.MODE_VISUAL_SEARCH)){
                     captureVisualSearchImage();
                     return true;
-                } else if (curr_mode.equals("visualsearchgridview")){
+                } else if (curr_mode.equals(MessageTypes.MODE_VISUAL_SEARCH)){
                     selectVisualSearchResult();
                     return true;
                 } else {
                     return super.onKeyUp(keyCode, event);
                 }
             case KeyEvent.KEYCODE_DEL:
-                if (!curr_mode.equals("llc")) {
-                    switchMode("llc");
+                if (!curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
+                    switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
                     return true;
                 } else {
                     return super.onKeyUp(keyCode, event);
@@ -1150,8 +1171,9 @@ public class MainActivity extends Activity {
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }
+
         //setup gridview to view grid of visual search images
-        switchMode("visualsearchgridview");
+        switchMode(MessageTypes.MODE_REFERENCE_GRID);
         gridviewImages = (GridView) findViewById(R.id.gridview);
         gridViewImageAdapter = new ImageAdapter(this);
         String[] simpleThumbArray = new String[thumbnailImages.size()];

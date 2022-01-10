@@ -8,6 +8,8 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import android.content.Context;
+
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandRepository;
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandDao;
 import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
@@ -18,7 +20,8 @@ import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEn
 class SearchEngineVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_SearchEngineVoiceCommand";
 
-    SearchEngineVoiceCommand(){
+    SearchEngineVoiceCommand(Context context){
+        super(context);
         this.commandName = "search engine";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"wikipedia", "search engine", "google", "search for", "search web for", "show web results for"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"search web for", "show web results for"}));

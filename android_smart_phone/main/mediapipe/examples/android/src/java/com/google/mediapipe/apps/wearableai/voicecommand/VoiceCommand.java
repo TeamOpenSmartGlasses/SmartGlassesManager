@@ -2,12 +2,14 @@ package com.google.mediapipe.apps.wearableai.voicecommand;
 
 import android.util.Log;
 import java.util.ArrayList;
+import android.content.Context;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
+import com.google.mediapipe.apps.wearableai.nlp.NlpUtils;
 
 //parse interpret
 public abstract class VoiceCommand {
@@ -16,6 +18,12 @@ public abstract class VoiceCommand {
     protected String commandName;
     protected ArrayList<String> commandList;
     protected ArrayList<String> wakeWordList;
+
+    protected NlpUtils nlpUtils;
+
+    public VoiceCommand(Context context){
+        nlpUtils = NlpUtils.getInstance(context);
+    }
 
     public abstract boolean runCommand(VoiceCommandServer vcServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime, long transcriptId);
 
@@ -111,5 +119,20 @@ public abstract class VoiceCommand {
 
         return hits;
     }
+
+
+//    public void sendResults(JSONObject results){
+//        try{
+//            //send the command result to web socket, to send to asg
+//            dataObservable.onNext(results);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    public void findMatch(String subString, String fullString){
+//        return match;
+//    }
+
 
 }

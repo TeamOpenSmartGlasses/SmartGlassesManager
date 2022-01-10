@@ -8,6 +8,8 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import android.content.Context;
+
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandRepository;
 import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandDao;
 import com.google.mediapipe.apps.wearableai.comms.MessageTypes;
@@ -18,7 +20,8 @@ import com.google.mediapipe.apps.wearableai.database.voicecommand.VoiceCommandEn
 class NaturalLanguageQueryVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_NaturalLanguageQueryVoiceCommand";
 
-    NaturalLanguageQueryVoiceCommand(){
+    NaturalLanguageQueryVoiceCommand(Context context){
+        super(context);
         this.commandName = "natural language query";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"quick query", "voice query"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"quick query", "voice query"}));

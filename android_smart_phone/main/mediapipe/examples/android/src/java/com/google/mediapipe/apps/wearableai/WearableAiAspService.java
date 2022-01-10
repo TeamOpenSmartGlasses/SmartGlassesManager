@@ -1321,6 +1321,8 @@ public class WearableAiAspService extends LifecycleService {
                 sendNaturalLanguageQuery(data);
             } else if (type.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
                 sendSearchEngineQuery(data);
+            } else if (type.equals(MessageTypes.VISUAL_SEARCH_QUERY)){
+                sendVisualSearchQuery(data);
             } 
         } catch (JSONException e){
             e.printStackTrace();
@@ -1351,6 +1353,48 @@ public class WearableAiAspService extends LifecycleService {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendVisualSearchResults(JSONArray results){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VISUAL_SEARCH_RESULT);
+            commandResponseObject.put(MessageTypes.VISUAL_SEARCH_DATA, results.toString());
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendVisualSearchQuery(JSONObject data){
+        Log.d(TAG, "Running sendVisualSearchQuery");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("image", data.getString(MessageTypes.VISUAL_SEARCH_IMAGE));
+            restServerComms.restRequest(RestServerComms.VISUAL_SEARCH_QUERY_SEND_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                    public void onSuccess(JSONObject result){
+                        Log.d(TAG, "GOT visual search REST RESULT:");
+                        Log.d(TAG, result.toString());
+                            sendCommandResponse("Search success, displaying results.");
+                        try{
+                            sendVisualSearchResults(result.getJSONArray("response"));
+                        } catch (JSONException e){
+                            e.printStackTrace();
+                        }
+                    }
+                @Override
+                public void onFailure(){
+                    sendCommandResponse("Search failed, please try again.");
+                }
+
+                });
         } catch (JSONException e){
             e.printStackTrace();
         }
