@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio.sensors;
+package com.wearableintelligencesystem.androidsmartglasses.sensors;
 
 //thanks to MuServe for most code
 
@@ -38,22 +38,16 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.provider.ContactsContract;
 //import android.support.v4.app.NotificationCompat;
 //import android.support.v4.app.NotificationCompat;
 
 import android.util.Log;
-import android.view.View;
-import android.widget.RemoteViews;
 
-import com.example.wearableaidisplaymoverio.MainActivity;
-import com.example.wearableaidisplaymoverio.R;
+import com.wearableintelligencesystem.androidsmartglasses.MainActivity;
+import com.example.wearableintelligencesystemandroidsmartglasses.R;
 
-import java.lang.reflect.Array;
-import java.math.BigInteger;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import androidx.core.app.NotificationCompat;

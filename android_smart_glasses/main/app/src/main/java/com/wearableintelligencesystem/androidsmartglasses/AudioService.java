@@ -1,14 +1,11 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -21,36 +18,20 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
+import com.wearableintelligencesystem.androidsmartglasses.sensors.AudioChunkCallback;
+import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothMic;
+import com.wearableintelligencesystem.androidsmartglasses.utils.AES;
+import com.example.wearableintelligencesystemandroidsmartglasses.R;
 
-import com.example.wearableaidisplaymoverio.sensors.AudioChunkCallback;
-import com.example.wearableaidisplaymoverio.sensors.BluetoothMic;
-import com.example.wearableaidisplaymoverio.utils.AES;
-
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.ShortBufferException;
-import javax.crypto.spec.SecretKeySpec;
 
 public class AudioService extends Service {
     public static final String ACTION_START_COMMS = "ACTION_START_COMMS";

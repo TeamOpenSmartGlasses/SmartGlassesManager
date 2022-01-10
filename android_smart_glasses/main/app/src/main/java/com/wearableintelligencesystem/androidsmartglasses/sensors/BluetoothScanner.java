@@ -1,17 +1,13 @@
-package com.example.wearableaidisplaymoverio.sensors;
+package com.wearableintelligencesystem.androidsmartglasses.sensors;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.example.wearableaidisplaymoverio.R;
 
 public class BluetoothScanner {
     private String TAG = "WearableAI_BluetoothScanner";

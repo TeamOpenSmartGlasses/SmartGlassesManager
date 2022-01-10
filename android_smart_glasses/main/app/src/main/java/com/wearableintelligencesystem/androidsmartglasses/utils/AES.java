@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio.utils;
+package com.wearableintelligencesystem.androidsmartglasses.utils;
 
 import android.util.Base64;
 

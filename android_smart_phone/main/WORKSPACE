@@ -318,6 +318,8 @@ android_ndk_repository(
 android_sdk_repository(
     name = "androidsdk",
     path = "/home/cayden/biggem/programs/Android/Sdk",
+#    api_level = 29,
+#    build_tools_version = "29.0.1"
 )
 
 # iOS basic build deps.
@@ -493,6 +495,9 @@ maven_install(
 
         #CSVs
         "com.opencsv:opencsv:4.6",
+
+        #http(s) lib
+        'com.android.volley:volley:1.2.1'
     ],
     repositories = [
         "https://repo1.maven.org/maven2",

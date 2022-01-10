@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio.comms;
+package com.wearableintelligencesystem.androidsmartglasses.comms;
 
 /*
  * Copyright (c) 2010-2020 Nathan Rajlich
@@ -25,17 +25,14 @@ package com.example.wearableaidisplaymoverio.comms;
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import android.content.Intent;
 import android.util.Log;
 
-import com.example.wearableaidisplaymoverio.ASPClientSocket;
-import com.example.wearableaidisplaymoverio.MessageTypes;
+import com.wearableintelligencesystem.androidsmartglasses.MessageTypes;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.WebSocket;
 
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.handshake.ServerHandshake;

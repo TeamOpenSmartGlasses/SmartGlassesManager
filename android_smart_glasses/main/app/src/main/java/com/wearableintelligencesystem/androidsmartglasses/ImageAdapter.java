@@ -1,13 +1,13 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
 /**
  * Created by sigit on 26/01/16.
  */
+import com.example.wearableintelligencesystemandroidsmartglasses.R;
 import com.squareup.picasso.Picasso;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;

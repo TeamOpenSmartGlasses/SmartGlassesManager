@@ -1,39 +1,23 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.media.AudioTrack;
-import android.media.MediaRecorder;
-import android.os.Binder;
-import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.IBinder;
 import android.util.Base64;
 import android.util.Log;
 
-import com.example.wearableaidisplaymoverio.utils.AES;
-import com.example.wearableaidisplaymoverio.sensors.AudioChunkCallback;
-import com.example.wearableaidisplaymoverio.sensors.BluetoothMic;
+import com.wearableintelligencesystem.androidsmartglasses.sensors.AudioChunkCallback;
+import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothMic;
+import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.utils.AES;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;

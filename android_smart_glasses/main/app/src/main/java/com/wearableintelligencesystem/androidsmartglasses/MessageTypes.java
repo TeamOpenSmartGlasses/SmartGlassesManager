@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
 public class MessageTypes {
     //top level
@@ -41,6 +41,17 @@ public class MessageTypes {
     //UI
     public static final String UI_UPDATE_ACTION = "UI_UPDATE_ACTION";
     public static final String PHONE_CONNECTION_STATUS = "PHONE_CONNECTION_STATUS";
+
+    //command responses to show
+    public final static String NATURAL_LANGUAGE_QUERY = "NATURAL_LANGUAGE_QUERY";
+    public final static String TEXT_RESPONSE = "NATURAL_LANGUAGE_QUERY";
+    public final static String TEXT_QUERY = "TEXT_QUERY";
+    public final static String VISUAL_SEARCH_RESULT = "VISUAL_SEARCH_RESULT";
+    public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
+    public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
+    public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";
+    public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
+    public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
 }
 
 

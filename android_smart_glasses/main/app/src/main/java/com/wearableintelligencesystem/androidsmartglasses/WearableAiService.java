@@ -1,24 +1,21 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
 import android.Manifest;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
-import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Environment;
-import android.os.FileUtils;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -30,15 +27,11 @@ import android.renderscript.RenderScript;
 import android.renderscript.ScriptIntrinsicYuvToRGB;
 import android.renderscript.Type;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.Toast;
 
-import android.hardware.Camera;
 import com.androidhiddencamera.CameraConfig;
 import com.androidhiddencamera.CameraError;
 import com.androidhiddencamera.HiddenCameraService;
@@ -47,11 +40,10 @@ import com.androidhiddencamera.config.CameraFacing;
 import com.androidhiddencamera.config.CameraFocus;
 import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
-import com.example.wearableaidisplaymoverio.comms.WifiStatusCallback;
-import com.example.wearableaidisplaymoverio.comms.WifiUtils;
-import com.example.wearableaidisplaymoverio.sensors.AudioChunkCallback;
-import com.example.wearableaidisplaymoverio.sensors.BluetoothMic;
-import com.example.wearableaidisplaymoverio.sensors.BluetoothScanner;
+import com.wearableintelligencesystem.androidsmartglasses.comms.WifiStatusCallback;
+import com.wearableintelligencesystem.androidsmartglasses.comms.WifiUtils;
+import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothScanner;
+import com.example.wearableintelligencesystemandroidsmartglasses.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -66,20 +58,13 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import io.reactivex.rxjava3.core.Observable;
+
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.exceptions.UndeliverableException;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.reactivex.rxjava3.subjects.PublishSubject;
-import io.reactivex.rxjava3.subjects.PublishSubject;
-import io.reactivex.rxjava3.subjects.Subject;
 
 /**
  * Class strongly based on app example from : https://github.com/kevalpatel2106/android-hidden-camera, Created by Keval on 11-Nov-16 @author {@link 'https://github.com/kevalpatel2106'}
@@ -208,6 +193,19 @@ public class WearableAiService extends HiddenCameraService {
             }
         };
         this.registerReceiver(new WifiUtils.WifiReceiver(wifiConnectCallback), wifiFilter);
+
+//        //unlock the screen every n seconds
+//        HandlerThread thread = new HandlerThread("AdvReceiver");
+//        thread.start();
+//        Handler handler = new Handler(thread.getLooper());
+//        handler.postDelayed(new
+//            Runnable() {
+//                public void run () {
+//                    Log.d(TAG, "WAKEING UP THE SCREEN");
+//                    wakeupScreen();
+//                    handler.postDelayed(this, 10000);
+//                }
+//            }, 5000);
     }
 
     private void setupObservervables() {
@@ -546,7 +544,7 @@ public class WearableAiService extends HiddenCameraService {
             YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
+            yuv.compressToJpeg(new Rect(0, 0, width, height), 75, out);
 
             byte[] bytes = out.toByteArray();
             //this will slow down frame rate - need to make asynchronous in future
@@ -699,6 +697,29 @@ public class WearableAiService extends HiddenCameraService {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    //wake up the screen
+    private void wakeupScreen() {
+        new AsyncTask<Void, Void, Exception>() {
+            @Override
+            protected Exception doInBackground(Void... params) {
+                try {
+                    PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                    PowerManager.WakeLock fullWakeLock = powerManager.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "WIS:Loneworker-FULL WAKE LOCK");
+                    fullWakeLock.acquire(); // turn on
+                    try {
+                        Thread.sleep(1000); // turn on duration
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    fullWakeLock.release();
+                } catch (Exception e) {
+                    return e;
+                }
+                return null;
+            }
+        }.execute();
     }
 
 }

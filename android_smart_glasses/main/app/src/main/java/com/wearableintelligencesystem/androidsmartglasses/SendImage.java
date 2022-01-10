@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
 import android.os.AsyncTask;
 import android.util.Base64;

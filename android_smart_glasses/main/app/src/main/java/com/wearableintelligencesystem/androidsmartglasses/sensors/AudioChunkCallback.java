@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio.sensors;
+package com.wearableintelligencesystem.androidsmartglasses.sensors;
 
 import java.nio.ByteBuffer;
 

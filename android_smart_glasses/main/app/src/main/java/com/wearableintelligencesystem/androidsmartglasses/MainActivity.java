@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,7 +10,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 
@@ -44,19 +43,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Toast;
 
-import androidx.core.content.ContextCompat;
-
-import com.example.wearableaidisplaymoverio.comms.WifiUtils;
+import com.example.wearableintelligencesystemandroidsmartglasses.BuildConfig;
+import com.example.wearableintelligencesystemandroidsmartglasses.R;
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -106,10 +103,10 @@ public class MainActivity extends Activity {
     int textHolderSizeLimit = 10; // how many lines maximum in the text holder
     TextView liveLifeCaptionsText;
 
-    //wikipedia ui
-    TextView wikipediaResultTitle;
-    TextView wikipediaResultSummary;
-    ImageView wikipediaResultImage;
+    //referenceCard ui
+    TextView referenceCardResultTitle;
+    TextView referenceCardResultSummary;
+    ImageView referenceCardResultImage;
 
     //translate ui
     ArrayList<Spanned> translateTextHolder = new ArrayList<>();
@@ -195,7 +192,6 @@ public class MainActivity extends Activity {
 //        updateBatteryHud();
 
         //setup clock
-        mClockTextView = (TextView) findViewById(R.id.clock_text_view);
         if (! clockRunning) {
             clockRunning = true;
             Handler handler = new Handler();
@@ -206,7 +202,10 @@ public class MainActivity extends Activity {
                     Log.d(TAG, "Setting time...");
                     //String prettyTime = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date()) + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
                     String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
-                    mClockTextView.setText(prettyTime);
+                    mClockTextView = (TextView) findViewById(R.id.clock_text_view);
+                    if (mClockTextView != null) {
+                        mClockTextView.setText(prettyTime);
+                    }
                     Log.d(TAG, "Time set.");
                     handler.postDelayed(this, 1000);
                 }
@@ -218,6 +217,10 @@ public class MainActivity extends Activity {
     private void updateWifiHud(){
         Log.d(TAG, "updateWifiHud start...");
         mWifiStatusImageView = (ImageView) findViewById(R.id.wifi_image_view);
+
+        if (mWifiStatusImageView == null){
+            return;
+        }
         //wifiConnected = WifiUtils.checkWifiOnAndConnected(this); //check wifi status - don't need now that we have listener in service
         Drawable wifiOnDrawable = this.getDrawable(R.drawable.wifi_on_green);
         Drawable wifiOffDrawable = this.getDrawable(R.drawable.wifi_off_red);
@@ -232,6 +235,9 @@ public class MainActivity extends Activity {
     private void updatePhoneHud(){
         Log.d(TAG, "updatePhoneHud start...");
         mPhoneStatusImageView = (ImageView) findViewById(R.id.phone_status_image_view);
+        if (mPhoneStatusImageView == null){
+            return;
+        }
         Drawable phoneOnDrawable = this.getDrawable(R.drawable.phone_connected_green);
         Drawable phoneOffDrawable = this.getDrawable(R.drawable.phone_disconnected_red);
         if (phoneConnected) {
@@ -246,6 +252,9 @@ public class MainActivity extends Activity {
         Log.d(TAG, "updateBatteryHud start.");
         //set the icon
         mBatteryStatusImageView = (ImageView) findViewById(R.id.battery_status_image_view);
+        if (mBatteryStatusImageView == null){
+            return;
+        }
         Drawable batteryFullDrawable = this.getDrawable(R.drawable.full_battery_green);
         Drawable batteryFullChargingDrawable = this.getDrawable(R.drawable.full_battery_charging_green);
         Drawable batteryLowDrawable = this.getDrawable(R.drawable.low_battery_red);
@@ -415,6 +424,10 @@ public class MainActivity extends Activity {
         });
         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
         scrollToBottom(liveLifeCaptionsText);
+
+        if (mBound){
+            mService.requestUiUpdate();
+        }
     }
 
     private void setupTranslateUi() {
@@ -603,6 +616,7 @@ public class MainActivity extends Activity {
         intentFilter.addAction(ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY);
 
         intentFilter.addAction(ACTION_UI_UPDATE);
+        intentFilter.addAction(ASPClientSocket.ACTION_UI_DATA);
 
         Log.d(TAG, "makeComputeUpdateIntentFilter retruning");
         return intentFilter;
@@ -614,7 +628,22 @@ public class MainActivity extends Activity {
             Log.d(TAG, "GOT BROADCAST");
             final String action = intent.getAction();
             Log.d(TAG, action);
-            if (ACTION_UI_UPDATE.equals(action)) {
+            if (ASPClientSocket.ACTION_UI_DATA.equals(action)) {
+                Log.d(TAG, "found something search engine");
+                try {
+                    JSONObject data = new JSONObject(intent.getStringExtra(ASPClientSocket.RAW_MESSAGE_JSON_STRING));
+                    String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+                    //run visual search results
+                    if (typeOf.equals(MessageTypes.VISUAL_SEARCH_RESULT)){
+                        String payloadString = data.getString("payload");
+                        showVisualSearchResults(new JSONArray(payloadString));
+                    } else if (typeOf.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
+                        showSearchEngineResults(data);
+                    }
+                } catch(JSONException e){
+                    e.printStackTrace();
+                }
+            } else if (ACTION_UI_UPDATE.equals(action)) {
                 Log.d(TAG, "GOT ACTION_UI_UPDATE");
                 if (intent.hasExtra(PHONE_CONN_STATUS_UPDATE)) {
                     phoneConnected = intent.getBooleanExtra(PHONE_CONN_STATUS_UPDATE, false);
@@ -734,28 +763,28 @@ public class MainActivity extends Activity {
             } else if (GlboxClientSocket.ACTION_WIKIPEDIA_RESULT.equals(action)) {
                 try {
                     //change the view to the wikipeida results page
-                    setContentView(R.layout.wikipedia_content);
-                    wikipediaResultTitle = (TextView) findViewById(R.id.wikipedia_result_title);
-                    wikipediaResultSummary = (TextView) findViewById(R.id.wikipedia_result_summary);
-                    wikipediaResultImage = (ImageView) findViewById(R.id.wikipedia_result_image);
+                    setContentView(R.layout.reference_card);
+                    referenceCardResultTitle = (TextView) findViewById(R.id.reference_card_result_title);
+                    referenceCardResultSummary = (TextView) findViewById(R.id.reference_card_result_summary);
+                    referenceCardResultImage = (ImageView) findViewById(R.id.reference_card_result_image);
 
                     //get content
-                    JSONObject wikipedia_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.WIKIPEDIA_RESULT));
-                    String title = wikipedia_object.getString("title");
-                    String summary = wikipedia_object.getString("summary");
-                    String img_path = wikipedia_object.getString("image_path");
+                    JSONObject reference_card_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.WIKIPEDIA_RESULT));
+                    String title = reference_card_object.getString("title");
+                    String summary = reference_card_object.getString("summary");
+                    String img_path = reference_card_object.getString("image_path");
 
                     //set the text
-                    wikipediaResultTitle.setText(title);
-                    wikipediaResultSummary.setText(summary);
-                    wikipediaResultSummary.setMovementMethod(new ScrollingMovementMethod());
-                    wikipediaResultSummary.setSelected(true);
+                    referenceCardResultTitle.setText(title);
+                    referenceCardResultSummary.setText(summary);
+                    referenceCardResultSummary.setMovementMethod(new ScrollingMovementMethod());
+                    referenceCardResultSummary.setSelected(true);
 
                     //open the image and display
                     File imgFile = new File(img_path);
                     if (imgFile.exists()) {
                         Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                        wikipediaResultImage.setImageBitmap(myBitmap);
+                        referenceCardResultImage.setImageBitmap(myBitmap);
                     }
 
                     //for now, show for n seconds and then return to llc
@@ -809,45 +838,6 @@ public class MainActivity extends Activity {
                     translateText.setText(getCurrentTranslateScrollText());
                 }
             } else if (GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT.equals(action)) {
-                Log.d(TAG, "received visual search image results");
-                String str_data = intent.getStringExtra(GlboxClientSocket.VISUAL_SEARCH_RESULT);
-                thumbnailImages = new ArrayList<String>();
-                visualSearchNames = new ArrayList<String>();
-                try {
-                    JSONArray data = new JSONArray(str_data);
-                    for (int i = 0; i < data.length(); i++) {
-                        //get thumnail image urls
-                        String thumbnailUrl = data.getJSONObject(i).getString("thumbnailUrl");
-                        thumbnailImages.add(thumbnailUrl);
-
-                        //get names of items
-                        String name = data.getJSONObject(i).getString("name");
-                        visualSearchNames.add(name);
-                    }
-
-                } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
-                }
-                //setup gridview to view grid of visual search images
-                switchMode("visualsearchgridview");
-                gridviewImages = (GridView) findViewById(R.id.gridview);
-                gridViewImageAdapter = new ImageAdapter(context);
-                String[] simpleThumbArray = new String[thumbnailImages.size()];
-                thumbnailImages.toArray(simpleThumbArray);
-                gridViewImageAdapter.imageTotal = simpleThumbArray.length;
-                gridViewImageAdapter.mThumbIds = simpleThumbArray;
-                gridviewImages.setDrawSelectorOnTop(false);
-                gridviewImages.setSelector(R.drawable.selector_image_gridview);
-                gridviewImages.setAdapter(gridViewImageAdapter);
-                gridviewImages.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    public void onItemClick(AdapterView<?> parent, View v,
-                                            int position, long id) {
-                        Log.d(TAG, "Selected position: " + position);
-                        selectVisualSearchResult();
-                        gridViewImageAdapter.notifyDataSetChanged();
-                    }
-                });
-
 
             } else if (MessageTypes.FACE_SIGHTING_EVENT.equals(action)) {
                 String currName = intent.getStringExtra(MessageTypes.FACE_NAME);
@@ -1140,6 +1130,87 @@ public class MainActivity extends Activity {
         Log.d(TAG, "Unbinding to WAI service.");
         unbindService(connection);
         Log.d(TAG, "Unbound to WAI service.");
+    }
+
+    public void showVisualSearchResults(JSONArray data){
+        Log.d(TAG, "received visual search image results");
+        thumbnailImages = new ArrayList<String>();
+        visualSearchNames = new ArrayList<String>();
+        try {
+            for (int i = 0; i < data.length(); i++) {
+                //get thumnail image urls
+                String thumbnailUrl = data.getJSONObject(i).getString("thumbnailUrl");
+                thumbnailImages.add(thumbnailUrl);
+
+                //get names of items
+                String name = data.getJSONObject(i).getString("name");
+                visualSearchNames.add(name);
+            }
+
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+        //setup gridview to view grid of visual search images
+        switchMode("visualsearchgridview");
+        gridviewImages = (GridView) findViewById(R.id.gridview);
+        gridViewImageAdapter = new ImageAdapter(this);
+        String[] simpleThumbArray = new String[thumbnailImages.size()];
+        thumbnailImages.toArray(simpleThumbArray);
+        gridViewImageAdapter.imageTotal = simpleThumbArray.length;
+        gridViewImageAdapter.mThumbIds = simpleThumbArray;
+        gridviewImages.setDrawSelectorOnTop(false);
+        gridviewImages.setSelector(R.drawable.selector_image_gridview);
+        gridviewImages.setAdapter(gridViewImageAdapter);
+        gridviewImages.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View v,
+                                    int position, long id) {
+                Log.d(TAG, "Selected position: " + position);
+                selectVisualSearchResult();
+                gridViewImageAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    private void showSearchEngineResults(JSONObject data) {
+        Log.d(TAG, "showSearchEngineResults");
+        try {
+            //parse out the response object - one result for now
+            JSONObject search_engine_result = new JSONObject(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
+            //JSONArray search_engine_results = new JSONArray(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
+            //JSONObject search_engine_result = search_engine_results.getJSONObject(0); //get the first result
+
+            //change the view to the search results page
+            setContentView(R.layout.reference_card);
+            referenceCardResultTitle = (TextView) findViewById(R.id.reference_card_result_title);
+            referenceCardResultSummary = (TextView) findViewById(R.id.reference_card_result_summary);
+            referenceCardResultImage = (ImageView) findViewById(R.id.reference_card_result_image);
+
+            //get content
+            String title = search_engine_result.getString("title");
+            String summary = search_engine_result.getString("summary");
+            String img_url = search_engine_result.getString("image");
+
+            //set the text
+            referenceCardResultTitle.setText(title);
+            referenceCardResultSummary.setText(summary);
+            referenceCardResultSummary.setMovementMethod(new ScrollingMovementMethod());
+            referenceCardResultSummary.setSelected(true);
+
+            //pull image from web and display in imageview
+            Picasso.with(this).load(img_url).into(referenceCardResultImage);
+
+            //for now, show for n seconds and then return to llc
+            int search_show_time = 12000; //milliseconds
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+                    setupLlcUi();
+                }
+            }, search_show_time);
+
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
     }
 }
 

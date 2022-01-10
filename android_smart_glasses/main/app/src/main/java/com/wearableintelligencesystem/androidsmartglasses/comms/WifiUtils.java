@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio.comms;
+package com.wearableintelligencesystem.androidsmartglasses.comms;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,8 +8,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
-
-import androidx.appcompat.widget.ThemedSpinnerAdapter;
 
 public class WifiUtils {
     public static String TAG = "WearableAiAsg_WifiUtils";

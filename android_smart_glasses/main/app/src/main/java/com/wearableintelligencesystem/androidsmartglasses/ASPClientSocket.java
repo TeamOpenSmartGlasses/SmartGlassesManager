@@ -1,8 +1,8 @@
-package com.example.wearableaidisplaymoverio;
+package com.wearableintelligencesystem.androidsmartglasses;
 
 import android.content.Context;
-import com.example.wearableaidisplaymoverio.comms.AsgWebSocketClient;
-import com.example.wearableaidisplaymoverio.comms.WebSocketManager;
+
+import com.wearableintelligencesystem.androidsmartglasses.comms.WebSocketManager;
 
 import android.content.Intent;
 import android.os.Handler;
@@ -12,23 +12,17 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
@@ -59,6 +53,9 @@ public class ASPClientSocket {
     public final static String FACIAL_EMOTION_5_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_5";
     public final static String FACIAL_EMOTION_30_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_30";
     public final static String FACIAL_EMOTION_300_MESSAGE = "com.example.wearableaidisplaymoverio.FACIAL_EMOTION_300";
+
+    public final static String ACTION_UI_DATA = "ACTION_UI_DATA";
+    public final static String RAW_MESSAGE_JSON_STRING = "RAW_MESSAGE_JSON_STRING";
 
     public final static String ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST = "com.example.wearableaidisplaymoverio.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST";
     public final static String AFFECTIVE_MEM_TRANSCRIPT_LIST = "com.example.wearableaidisplaymoverio.AFFECTIVE_MEM_TRANSCRIPT_LIST";
@@ -506,6 +503,19 @@ public class ASPClientSocket {
     private void parseData(JSONObject data){
         try {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+
+            //the first bit does a bunch of if statement. The new, better way of doing things is our syncing of data across ASP and ASG with MessageTypes shared class. Now, we just pass a JSON string through to the UI if it's a MessageType that it needs to see, and let the UI deal with how to parse/handle it
+            String [] uiMessages = new String[] {MessageTypes.NATURAL_LANGUAGE_QUERY, MessageTypes.SEARCH_ENGINE_RESULT, MessageTypes.VISUAL_SEARCH_RESULT, MessageTypes.TRANSLATION_RESULT};
+            for (String uiMessage : uiMessages){
+               if (typeOf.equals(uiMessage)){
+                   final Intent intent = new Intent();
+                   intent.setAction(ACTION_UI_DATA);
+                   intent.putExtra(RAW_MESSAGE_JSON_STRING, data.toString());
+                   mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+               }
+            }
+
+            //manual parsing, kept here until someone updates the ui to handle like above
             if (typeOf.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
                 String intermediate_transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT);
                 final Intent intent = new Intent();
@@ -521,11 +531,11 @@ public class ASPClientSocket {
                 Log.d(TAG, "F. Transcript is: " + data.getString(MessageTypes.TRANSCRIPT_TEXT));
             } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_RESPONSE)) {
                 Log.d(TAG, "voice command result received");
-                boolean responseResult = data.getBoolean(MessageTypes.COMMAND_RESULT);
+                //boolean responseResult = data.getBoolean(MessageTypes.COMMAND_RESULT);
                 String displayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
                 final Intent intent = new Intent();
                 intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, displayString);
-                intent.putExtra(MessageTypes.COMMAND_RESULT, responseResult);
+                //intent.putExtra(MessageTypes.COMMAND_RESULT, responseResult);
                 intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             } else if (typeOf.equals(MessageTypes.FACE_SIGHTING_EVENT)) {

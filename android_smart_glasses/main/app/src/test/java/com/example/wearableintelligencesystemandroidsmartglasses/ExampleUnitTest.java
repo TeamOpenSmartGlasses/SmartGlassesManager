@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio;
+package com.example.androidsmartglasses;
 
 import org.junit.Test;
 

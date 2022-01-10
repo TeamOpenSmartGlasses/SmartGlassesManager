@@ -1,8 +1,5 @@
-package com.example.wearableaidisplaymoverio.comms;
+package com.wearableintelligencesystem.androidsmartglasses.comms;
 
-import static com.example.wearableaidisplaymoverio.ASPClientSocket.TAG;
-
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -11,7 +8,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
-import org.java_websocket.client.WebSocketClient;
 import org.json.JSONObject;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;

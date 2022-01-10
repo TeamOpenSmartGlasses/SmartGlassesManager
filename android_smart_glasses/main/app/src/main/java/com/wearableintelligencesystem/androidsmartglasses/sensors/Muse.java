@@ -1,4 +1,4 @@
-package com.example.wearableaidisplaymoverio.sensors;
+package com.wearableintelligencesystem.androidsmartglasses.sensors;
 
 //thanks to MuServe for code
 //https://github.com/CaydenPierce/MuServe
