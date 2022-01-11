@@ -27,8 +27,6 @@ package com.wearableintelligencesystem.androidsmartglasses.comms;
 
 import android.util.Log;
 
-import com.wearableintelligencesystem.androidsmartglasses.MessageTypes;
-
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -121,7 +119,6 @@ public class AsgWebSocketClient extends WebSocketClient {
                 return false;
             }
         }
-//        close();
         return true;
     }
 
@@ -202,8 +199,10 @@ public class AsgWebSocketClient extends WebSocketClient {
                 sendJson(data);
             } else if (typeOf.equals(MessageTypes.VISUAL_SEARCH_QUERY)) {
                 sendJson(data);
+            } else if (typeOf.equals(MessageTypes.POV_IMAGE)) {
+                sendJson(data);
             }
-        } catch (JSONException e){
+    } catch (JSONException e){
             e.printStackTrace();
         }
     }

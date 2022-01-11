@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartglasses;
+package com.wearableintelligencesystem.androidsmartglasses.archive;
 
 import android.content.Context;
 import android.content.Intent;

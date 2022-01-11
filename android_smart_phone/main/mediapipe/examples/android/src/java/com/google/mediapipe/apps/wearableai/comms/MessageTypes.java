@@ -3,8 +3,11 @@ package com.google.mediapipe.apps.wearableai.comms;
 public class MessageTypes {
     //top level
     public static final String MESSAGE_TYPE_LOCAL = "MESSAGE_TYPE_LOCAL";
-    public static final String MESSAGE_TYPE_ASG = "MESSAGE_TYPE_ASG";
-    public static final String SEND_TO_ASG = "SEND_TO_ASG";
+
+    //DATA TYPES
+    public static final String POV_IMAGE = "POV_IMAGE";
+    public static final String JPG_BYTES_BASE64 = "JPG_BYTES_BASE64";
+    public static final String IMAGE_ID = "IMAGE_ID";
 
     //specific message types (after MESSAGE_TYPE_*)
     //TRANSCRIPTS

@@ -64,12 +64,6 @@ public class AspWebsocketServer extends WebSocketServer {
         try {
             JSONObject json_obj = new JSONObject(message);
             dataObservable.onNext(json_obj);
-//            String messageType = json_obj.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-//            if (messageType.equals(MessageTypes.AUDIO_CHUNK){
-//                dataObservable.onNext(json_obj);
-//            } else if (messageType.equals(MessageTypes.AUDIO_CHUNK)) {
-//                dataObservable.onNext(json_obj);
-//            }
         } catch (JSONException e){
             //if we send a string, this will get thrown, all messages should be JSON or byte []
             e.printStackTrace();

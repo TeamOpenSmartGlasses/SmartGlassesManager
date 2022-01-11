@@ -41,7 +41,6 @@ public class NlpUtils {
         for (int i = 0; i <= (incomingString.length() - toFindString.length()); i++) {
             //String substring = incomingString.substring(i, i + toFindString.length() + extraChars);
             String substring = incomingString.substring(i, i + toFindString.length());
-            Log.d(TAG, "comparing: " + toFindString + "; with: " + substring);
             double distance = jw.similarity(substring, toFindString);
             if (distance > highestDistance){
                 highestIndex = i;
