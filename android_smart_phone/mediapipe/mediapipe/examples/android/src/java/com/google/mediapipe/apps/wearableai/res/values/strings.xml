@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">WIS</string>
+    <string name="key">TEMPORARYKEY_CHANGETHISKEY</string>
+    <string name="no_camera_access" translatable="false">Please grant camera permissions.</string>
+    <string name="medium_text">text</string>
+    <string name="memory_hint">Enter memory to save here</string>
+    <string name="tag_label">Choose Tag</string>
+
+    <string-array name="exposed_dropdown_content">
+        <item>Wearable</item>
+        <item>Engineering</item>
+        <item>Ideas</item>
+        <item>Personal</item>
+    </string-array>
+</resources>

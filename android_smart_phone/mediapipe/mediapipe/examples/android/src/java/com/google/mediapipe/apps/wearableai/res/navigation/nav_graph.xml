@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_settings">
+
+    <fragment
+        android:id="@+id/nav_main_ui"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MainUi"
+        tools:layout="@layout/main_ui_fragment"
+        android:label="Home Main Page" >
+        <action
+            android:id="@+id/action_nav_main_ui_to_nav_memory_tools"
+            app:destination="@id/nav_memory_tools" />
+        <action
+            android:id="@+id/action_nav_main_ui_to_nav_social_tools"
+            app:destination="@id/nav_social_tools" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.google.mediapipe.apps.wearableai.ui.SettingsUi"
+        tools:layout="@layout/settings_fragment"
+        android:label="Settings" >
+    </fragment>
+    <fragment
+        android:id="@+id/nav_memory_tools"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MemoryToolsUi"
+        tools:layout="@layout/memory_tools_fragment"
+        android:label="Memory Tools" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_main_ui"
+            app:destination="@id/nav_main_ui" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_social_tools"
+        android:name="com.google.mediapipe.apps.wearableai.ui.SocialToolsUi"
+        tools:layout="@layout/social_tools_fragment"
+        android:label="Social Tools" >
+        <action
+            android:id="@+id/action_nav_social_tools_to_nav_main_ui"
+            app:destination="@id/nav_main_ui" />
+        <action
+            android:id="@+id/action_nav_social_tools_to_nav_face_rec"
+            app:destination="@id/nav_face_rec" />
+        <action
+            android:id="@+id/action_nav_social_tools_to_nav_autociter"
+            app:destination="@id/nav_autociter" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_all_transcripts"
+        android:name="com.google.mediapipe.apps.wearableai.ui.AllTranscriptsUi"
+        tools:layout="@layout/all_transcripts_fragment"
+        android:label="All Transcripts" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_all_transcripts"
+            app:destination="@id/nav_all_transcripts" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_mxt_cache"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MxtCacheUi"
+        tools:layout="@layout/mxt_cache_fragment"
+        android:label="MXT Cache" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_mxt_cache"
+            app:destination="@id/nav_mxt_cache" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_mxt_tag_bins"
+        android:name="com.google.mediapipe.apps.wearableai.ui.MxtTagBinsUi"
+        tools:layout="@layout/mxt_tag_bins_fragment"
+        android:label="MXT Tag Bins" >
+        <action
+            android:id="@+id/action_nav_memory_tools_to_nav_mxt_tag_bins"
+            app:destination="@id/nav_mxt_tag_bins" />
+        <action
+            android:id="@+id/action_nav_mxt_tag_bins_to_nav_phrase_context"
+            app:destination="@id/nav_phrase_context" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_phrase_context"
+        android:name="com.google.mediapipe.apps.wearableai.ui.PhraseContextUi"
+        tools:layout="@layout/phrase_context_fragment"
+        android:label="Phrase Context" >
+        <action
+            android:id="@+id/action_nav_all_transcripts_to_nav_phrase_context"
+            app:destination="@id/nav_phrase_context" />
+        <action
+            android:id="@+id/action_nav_mxt_cache_to_nav_phrase_context"
+            app:destination="@id/nav_phrase_context" />
+        <action
+            android:id="@+id/action_nav_phrase_context_to_nav_mxt_tag_bins"
+            app:destination="@id/nav_mxt_tag_bins" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_face_rec"
+        android:name="com.google.mediapipe.apps.wearableai.ui.FaceRecUi"
+        tools:layout="@layout/face_rec_fragment"
+        android:label="Facial Recognition" >
+    </fragment>
+    <fragment
+        android:id="@+id/nav_autociter"
+        android:name="com.google.mediapipe.apps.wearableai.ui.AutociterUi"
+        tools:layout="@layout/autociter_fragment"
+        android:label="Autociter Wearable Referencer" >
+    </fragment>
+
+
+</navigation>

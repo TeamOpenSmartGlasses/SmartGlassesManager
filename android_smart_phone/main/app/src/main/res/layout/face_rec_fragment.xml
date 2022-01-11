@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <TextView
+        android:layout_width="377dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="16dp"
+        android:paddingTop="7dp"
+        android:text="Facial Recognition Tagging"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/face_image_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <Button
+        android:id="@+id/dont_know_face"
+        android:layout_width="88dp"
+        android:layout_height="69dp"
+        android:layout_marginEnd="48dp"
+        android:layout_marginBottom="104dp"
+        android:text="Don't Know"
+        app:backgroundTint="@color/blue"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/do_know_face" />
+
+    <Button
+        android:id="@+id/bad_image_face"
+        android:layout_width="89dp"
+        android:layout_height="71dp"
+        android:layout_marginBottom="104dp"
+        android:text="Bad Image"
+        app:backgroundTint="@color/red"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/dont_know_face"
+        app:layout_constraintHorizontal_bias="0.43"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/do_know_face"
+        android:layout_width="86dp"
+        android:layout_height="66dp"
+        android:layout_marginEnd="28dp"
+        app:backgroundTint="@color/green"
+        android:layout_marginBottom="108dp"
+        android:text="Do Know"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageView
+        android:id="@+id/face_image_view"
+        android:layout_width="386dp"
+        android:layout_height="356dp"
+        android:layout_marginBottom="144dp"
+        android:src="@drawable/outline_groups_24"
+        app:layout_constraintBottom_toTopOf="@+id/dont_know_face"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.48"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

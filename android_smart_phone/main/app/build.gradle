@@ -1,0 +1,162 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    compileSdk 31
+
+    aaptOptions {
+        noCompress "tflite"
+    }
+
+    packagingOptions {
+        exclude 'META-INF/proguard/androidx-annotations.pro'
+    }
+
+    defaultConfig {
+        applicationId "com.wearableintelligencesystem.androidsmartphone"
+        minSdk 28
+        targetSdk 31
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
+        }
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    //implementation 'androidx.appcompat:appcompat:1.4.0'
+    //implementation 'com.google.android.material:material:1.4.0'
+    //implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+    implementation "androidx.concurrent:concurrent-futures:1.0.0-alpha03"
+    implementation "androidx.lifecycle:lifecycle-common:2.2.0"
+    implementation "androidx.annotation:annotation:1.1.0"
+    implementation "androidx.appcompat:appcompat:1.1.0"
+    implementation "androidx.camera:camera-core:1.0.0-beta10"
+    implementation "androidx.camera:camera-camera2:1.0.0-beta10"
+    implementation "androidx.camera:camera-lifecycle:1.0.0-beta10"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.0"
+    implementation "androidx.core:core:1.1.0-rc03"
+    "androidx.legacy:legacy-support-v4:1.0.0"
+    //    maven.artifact(
+    //            group = "androidx.legacy"
+    //            artifact = "legacy-support-v4"
+    //            version = "1.0.0"
+    //            exclusions = [
+    //                    maven.exclusion(
+    //                            group = "androidx.lifecycle"
+    //                            artifact = "lifecycle-viewmodel"
+    //                    )
+    //            ]
+    //    )
+    implementation "androidx.recyclerview:recyclerview:1.1.0-beta02"
+    implementation "androidx.test.espresso:espresso-core:3.1.1"
+    implementation "com.github.bumptech.glide:glide:4.11.0"
+    implementation "com.google.android.material:material:1.6.0-alpha01"
+    implementation "com.google.code.findbugs:jsr305:3.0.2"
+    implementation "com.google.flogger:flogger-system-backend:0.3.1"
+    implementation "com.google.flogger:flogger:0.3.1"
+    //"com.google.guava:guava:27.0.1-android"
+    implementation "com.google.guava:listenablefuture:1.0"
+    implementation "junit:junit:4.12"
+    implementation "org.hamcrest:hamcrest-library:1.3"
+    
+    implementation "org.java-websocket:Java-WebSocket:1.5.2"
+    implementation "io.reactivex.rxjava3:rxandroid:3.0.0"
+    implementation "io.reactivex.rxjava3:rxjava:3.0.0"
+    implementation "com.google.android.gms:play-services-tasks:17.0.0"
+    implementation "com.google.android.gms:play-services-location:17.0.0"
+    implementation "com.google.code.gson:gson:2.8.6"
+    
+    //ROOM
+    // Room components
+    implementation "androidx.room:room-runtime:$rootProject.roomVersion"
+    annotationProcessor "androidx.room:room-compiler:$rootProject.roomVersion"
+    androidTestImplementation "androidx.room:room-testing:$rootProject.roomVersion"
+
+    // Lifecycle components
+    implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.archLifecycleVersion"
+    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$rootProject.archLifecycleVersion"
+//    implementation "androidx.sqlite:sqlite:2.0.1"
+//    implementation "androidx.lifecycle:lifecycle-extensions:" + LIFECYCLE_VERSION
+//    implementation "androidx.lifecycle:lifecycle-livedata-core:" + LIFECYCLE_VERSION
+//    implementation "androidx.lifecycle:lifecycle-livedata-ktx:" + LIFECYCLE_VERSION
+//    implementation "androidx.lifecycle:lifecycle-viewmodel:2.2.0"
+//    implementation "androidx.lifecycle:lifecycle-service:" + LIFECYCLE_VERSION
+//
+//    implementation "androidx.room:room-runtime:" + ROOM_VERSION
+//    implementation "androidx.room:room-common:" + ROOM_VERSION
+//
+//    // Annotation processors.
+//    implementation "androidx.lifecycle:lifecycle-compiler:" + LIFECYCLE_VERSION
+//    implementation "androidx.room:room-compiler:" + ROOM_VERSION
+    implementation "com.google.guava:guava:28.1-android"
+
+    //VOSK ASR
+//    implementation "net.java.dev.jna:jna:5.8.0"
+    implementation 'net.java.dev.jna:jna:5.8.0@aar'
+    implementation "com.alphacephei:vosk-android:0.3.34@aar"
+    implementation "com.alphacephei:vosk-model-en:0.3.34"
+
+    //navigation
+    implementation "androidx.navigation:navigation-fragment:2.0.0"
+    implementation "androidx.navigation:navigation-ui:2.0.0"
+    implementation "androidx.navigation:navigation-runtime:2.0.0"
+    implementation "androidx.fragment:fragment:1.2.0"
+    //"androidx.activity:activity-ktx:1.3.1"
+
+    //fuzzy string matching
+    implementation "info.debatty:java-string-similarity:2.0.0"
+
+    //java.util.time backport
+    implementation "org.threeten:threetenbp:1.5.2"
+
+    //face rec lib
+    implementation 'androidx.core:core-ktx:1.6.0'
+    implementation "org.jetbrains.kotlin:kotlin-reflect:1.5.0-M1"
+
+    ////MLKit Face Detection
+    implementation 'com.google.mlkit:face-detection:16.1.2'
+
+    ////TensorFlow Lite dependencies
+    implementation 'org.tensorflow:tensorflow-lite:2.4.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.4.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
+
+    ////Kotlin Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.1'
+
+    ////DocumentFile and ExitInterface
+    implementation "androidx.documentfile:documentfile:1.0.1"
+    implementation "androidx.exifinterface:exifinterface:1.3.3"
+
+    //CSVs
+    implementation "com.opencsv:opencsv:4.6"
+
+    //http(s) lib
+    implementation "com.android.volley:volley:1.2.1"
+}
