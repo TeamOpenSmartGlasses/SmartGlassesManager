@@ -9,6 +9,7 @@ import android.media.AudioRecord;
 import android.util.Base64;
 import android.util.Log;
 
+import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.AudioChunkCallback;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothMic;
 import com.example.wearableintelligencesystemandroidsmartglasses.R;

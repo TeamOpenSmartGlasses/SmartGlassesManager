@@ -19,6 +19,24 @@ bazel build -c opt --config=android_arm64 --java_runtime_version=1.8 --noincreme
 bazel build -c opt --config=android_arm64 --java_runtime_version=1.8 --noincremental_dexing --verbose_failures --fetch=false mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai:wearableai;
 ```
 
+## Architecture
+
+The system uses JSON IPC between the ASP and ASG.
+
+#### Files
+`MainActivity.java` - in charge of the UI, launching the background service
+`WearableAiAspService.java` - where everything happens. This launches connections, moves data around, and stays alive in the background.
+`ASGRepresentative.java` - a system that communicates with the ASG
+`GLBOXRepresentative.java` - a system that communicates with the GLBOX
+
+#### Comms/Events/Data
+
+Data and function calls are passed around the application on an _event bus_. Right now, we are using RXJAVA as the event bus, with our own custom parsing, and all event keys can be found in `/commes/MessageTypes.java`.
+
+Instead of calling functions directly, which requires passing many objects around and becomes too complex with a big system like this, we only pass around the "dataObservable" rxjava object, which handles sending data and triggering messages anywhere in the app. These events are multicast, so multiple different systems can respond to the same message.
+
+* Soon, we'll move RXJAVA to Android EventBus
+
 ### Autociter - temporary note
 For right now, the number we send references to is hardcoded in nlp/WearableReferencerAutocite.java. Change the line that says "PUT NUMBER HERE" to contain the phone number you wish to send to. This will soon be changed to be user-supplied value in the ASP ui.
 

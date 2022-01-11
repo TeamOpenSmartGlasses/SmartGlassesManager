@@ -2,11 +2,14 @@ package com.wearableintelligencesystem.androidsmartglasses;
 
 import android.content.Context;
 
+import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
+import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartglasses.comms.WebSocketManager;
 
 import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Base64;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -612,6 +615,22 @@ public class ASPClientSocket {
             uiUpdate.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.UI_UPDATE_ACTION);
             uiUpdate.put(MessageTypes.PHONE_CONNECTION_STATUS, connected);
             dataObservable.onNext(uiUpdate);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendImage(byte [] image){
+        Log.d(TAG, "sendImage called");
+        long currTime = System.currentTimeMillis();
+        //build the object and send through web socket
+        String encodedImage = Base64.encodeToString(image, Base64.DEFAULT);
+        try{
+            JSONObject data = new JSONObject();
+            data.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.POV_IMAGE);
+            data.put(MessageTypes.JPG_BYTES_BASE64, encodedImage);
+            data.put(MessageTypes.TIMESTAMP, currTime);
+            dataObservable.onNext(data);
         } catch (JSONException e){
             e.printStackTrace();
         }

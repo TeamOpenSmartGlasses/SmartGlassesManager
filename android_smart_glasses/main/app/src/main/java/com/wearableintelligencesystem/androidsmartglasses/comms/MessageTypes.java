@@ -1,10 +1,13 @@
-package com.wearableintelligencesystem.androidsmartglasses;
+package com.wearableintelligencesystem.androidsmartglasses.comms;
 
 public class MessageTypes {
     //top level
     public static final String MESSAGE_TYPE_LOCAL = "MESSAGE_TYPE_LOCAL";
-    public static final String MESSAGE_TYPE_ASG = "MESSAGE_TYPE_ASG";
-    public static final String SEND_TO_ASG = "SEND_TO_ASG";
+    public static final String TIMESTAMP = "TIMESTAMP";
+
+    //DATA TYPES
+    public static final String POV_IMAGE = "POV_IMAGE";
+    public static final String JPG_BYTES_BASE64 = "JPG_BYTES_BASE64";
 
     //specific message types (after MESSAGE_TYPE_*)
     //TRANSCRIPTS
@@ -12,7 +15,6 @@ public class MessageTypes {
     public static final String INTERMEDIATE_TRANSCRIPT = "INTERMEDIATE_TRANSCRIPT";
     public static final String TRANSCRIPT_TEXT = "TRANSCRIPT_TEXT";
     public static final String TRANSCRIPT_ID = "TRANSCRIPT_ID";
-    public static final String TIMESTAMP = "TIMESTAMP";
 
     //VOICE COMMANDS
     public static final String VOICE_COMMAND_RESPONSE = "VOICE_COMMAND_RESPONSE";

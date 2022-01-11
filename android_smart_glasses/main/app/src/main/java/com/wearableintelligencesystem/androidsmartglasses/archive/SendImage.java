@@ -1,7 +1,9 @@
-package com.wearableintelligencesystem.androidsmartglasses;
+package com.wearableintelligencesystem.androidsmartglasses.archive;
 
 import android.os.AsyncTask;
 import android.util.Base64;
+
+import com.wearableintelligencesystem.androidsmartglasses.ASPClientSocket;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;

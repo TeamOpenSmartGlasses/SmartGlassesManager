@@ -16,8 +16,6 @@ import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -41,6 +39,8 @@ import com.androidhiddencamera.config.CameraFacing;
 import com.androidhiddencamera.config.CameraFocus;
 import com.androidhiddencamera.config.CameraImageFormat;
 import com.androidhiddencamera.config.CameraResolution;
+import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
+import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartglasses.comms.WifiStatusCallback;
 import com.wearableintelligencesystem.androidsmartglasses.comms.WifiUtils;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothScanner;
@@ -478,9 +478,9 @@ public class WearableAiService extends HiddenCameraService {
     }
 
     private void uploadImage(byte[] image_data) {
-        //upload the image using async task
-//        new SendImage().execute(data);
+        //upload the jpg image
         asp_client_socket.sendBytes(img_id, image_data, "image");
+        //asp_client_socket.sendImage(image_data); //this send on the websocket. The issue is that the large images make our transcript sending slow and choppy, so for now it happens on its own socket
     }
 
     private void savePicture(byte[] data) {

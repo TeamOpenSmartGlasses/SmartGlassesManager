@@ -54,6 +54,8 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.squareup.picasso.Picasso;
+import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
+import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 
 import org.json.JSONArray;
 import org.json.JSONException;
