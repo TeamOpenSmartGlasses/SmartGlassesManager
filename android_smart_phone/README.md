@@ -1,10 +1,19 @@
-main/ is the main system, which is a (stickied) fork of the Google MediaPipe library and Android example program. The holistic android app and holisitic graph have been extended to include a number of new neural networks and processes. Because Bazel is complex and there's no benefit to changing things yet, we develop our main app in the Android examples folder, mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai  
+main/ is the main Android application. Open and run this in Android Studio
 
-REPEAT, if you want to edit the application, go here: `mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai`
+mediapipe/ is the mobile/edge AIML system, which is a (stickied) fork of the Google MediaPipe library and Android example program. The holistic android app and holisitic graph have been extended to include a number of new neural networks and processes. 
+
+If you want to edit the application, go here: `main/`
+If you want to edit mediapipe library, go here: `mediapipe/`
 
 You can either use the officially released APK (on Github or <emexwearables.com>) or build your own locally after following the instructions in the main README.md and then the instruction below:
 
 ## Install and build
+
+### Main Application
+
+Open, build, and run the app in `main/` from Android Studio, just like any other Android app.
+
+### Mediapipe AAR
 
 1. Follow these instructions to setup Bazel and MediaPipe: https://google.github.io/mediapipe/getting_started/android.html (including the external link on this page on how to install MediaPipe)
     - don't forget to follow these instructions on that same page: https://google.github.io/mediapipe/getting_started/install.html
