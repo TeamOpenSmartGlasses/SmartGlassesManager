@@ -1,145 +1,106 @@
 # Wearable Intelligence System
 
-The Wearable Intelligence System is a personal [intelligence amplification](https://en.wikipedia.org/wiki/Intelligence_amplification) tool and [humanistically intelligent](https://en.wikipedia.org/wiki/Humanistic_intelligence) system. The system runs on a pair of AR/smart glasses and presents the user with intelligent audio and visual information.
+The Wearable Intelligence System (WIS) is the homepage for your smart glasses. The WIS makes using smart glasses valuable, easy, useful, and fun. It does so with a host of built-in killer apps, voice controls, always available HUD information, an app launcher, and more. There's a number of powerful and fashionable smart glasses being released, and the WIS gives you an interface and apps to make those glasses useful. The WIS is like your phone homescreen or your computer desktop combined with a smart assistant.
 
-Users benefit from a suite of tools that can be used in the real world while developers benefit from a system that provides a smart glasses app backend. 
+## What It Can Do Now
 
-This project and codebase is currently in stage alpha, is not stable, and is subject to change. Right now, the system is most valuable to super users, developers, and individuals in the XR and wearables industry. 
+We're working hard to add use cases to the system. Here's a list of what it can already do:
 
-## What is this?
+### Users
 
-The Wearable Intelligence System is:
+- Search - Search the web with voice, see immediate results on your HUD.
+- Ask Questions - Ask an intelligent voice assistant any question, see answers on your HUD.
+- Remember More - Memory tools to expand your memory with information recording and recall.
+- Live Translation - Translate live foreign language speech into your native language, and silently read the output on the screen.
+- Egocentric/POV Recording - Record your egocentric camera, audio, location, transcripts, all with easy voice commands.
+- Visual Search - Define anything that you see. Find images with similiar content as your point-of-view (POV) camera image.
+- Live Captions - Improve understanding and retention in conversations, meetings, lectures, etc. with live closed captions overlaid on your vision at all times.
+- Autociter / Wearable Referencer - Auto-associative voice search through a personal database, send relevant links to conversation partners over SMS.
+- Social Tools - Improve emotional intelligence with affective computing running on your point-of-view, giving live insights into the non-verbal communication around you.
+- Name Memorizer - Never forget a name again with HUD notifications when you see a familiar face
 
-1. **Smart Glasses Apps - User Tool**  
+### Developers
 
-A fully functional, wearable, intelligence amplification system featuring a number of intelligence tools:
-
-- conversational intelligence enhancement
-    - improve understanding and retention in conversations, meetings, lectures, etc. with live closed captions overlaid on your vision at all times
-    - live translation - over 100 languages supported
-    - live wikipedia search
-- social/emotional intelligence amplification system
-    - improve emotional intelligence with affective computing running on your point-of-view, giving live insights into non-verbal communication
-- point-of-view (POV) reverse image search (visual search)
-    - define anything that you see
-- memory expansion tools
-    - remember every name, idea, and conversation
-- voice control with command and natural language interface
-
-2. **Software Framework - Developer Tool**  
-
-A software framework for developing smart glasses based intelligence systems on the the coming wave of consumer ready Android smart glasses. 
-
-There are three pieces of hardware involved, each with it's own standalone app. All hardware connects to the same WiFi network and connect to each other when the apps (at the top level of this repo, with the folders named after which hardware device they are for) are run. The system already handles a number of backend smart glasses system functionalities:  
-- Android smart glasses connect to and communicate with any external Android device (normally a smart phone with a powerful SOC) to send sensory data, run compute on the external Android device, receive results back from the external Android device, and render those results on the AR display
-- Android Smart Glasses connect to and communicate with any GNU/Linux computer, receive commands from the GNU/Linux computer, and render those results on the glasses' AR display
-- Android smart phone (or any Android device) receives sensory data from the smart glasses, runs compute-heavy machine-learning inference (neural networks) and signal processing using a [MediaPipe Perception Pipeline](https://arxiv.org/abs/1906.08172), and pushes results back to the glasses
-- GNU/Linux computer can run the voice commmand system, which runs live live Speech-To-Text, processes the data for commands, runs those commands, and send a stream of raw transcriptions and voice command query results the glasses.
-- System setup that adding new functions/tools is as simple as writing a new program that can run in Linux - use the prebuilt, simple voice command interface to run arbitrary code based on an arbitrary command name
+The WIS makes is a software framework that makes it easy to build smart glasses applications. Checkout the [Documentation](#documentation) for more information.
  
-## Technical Description
+## How To Use 
 
-This system provides the foundation for a wearable computing suite consisting of connected Android Smart Glasses (ASG), Android Smart Phone (ASP) and a GNU/Linux box (GLBOX).
+You will need two pieces of hardware to run the system:  
 
-The ASG acts as wearable sensors (camera, microphone, etc.) and wearable display (waveguides, birdbath, etc.). The ASP is running a server which the ASG connects to and streams POV camera video over Wifi. The ASP also is running a MediaPipe machine learning pipeline on incoming sensory data. The GLBOX also connects to the ASG using a TCP socket and it handles transcription, voice command, and programmatic control of the ASG from within a Linux development environment.
+- ASP - Android Smart Phone
+- ASG - Android Smart Glasses (Supported: Vuzix Blade)
 
-# How To Use
+#### Initial One Time Setup
 
-The system *currently* requires three pieces of hardware:
+Here's the setup you have to do the very first time you want to setup the system:  
 
-- ASP - Android Smart Phone (Tested: OnePlus 7T)
-- ASG - Android Smart Glasses (Tested: Vuzix Blade, Epson Moverio)
-- GLBOX - GNU/Linux Single-Board-Computer/Laptop (Tested: Lenovo Legion Y540 w/ Ubuntu 20) 
+1. On your Android smart phone, download the "Wearable Intelligence System" app:
+    - (RECCOMENDED) Play Store: <TODO>
+    - F-droid: <TODO>
+    - [Github latest release](https://github.com/emexlabs/WearableIntelligenceSystem/releases)
+2. On your smart glasses, download the "Wearable Intelligence System" app:
+    - (RECCOMENDED) Vuzix Store: <TODO>
+    - F-froid: <TODO>
+    - [Github latest release](https://github.com/emexlabs/WearableIntelligenceSystem/releases)
+3. 
+    * Launch the "Wearable Intelligence System" app on your smart phone
+    * Accept permissions.
+    * Tap "Start Wifi Hotspot", turn on (configure password if necessary) your wifi hotspot, then go "Back" to return
+4. Connect smart glasses WiFi to the smart phone WiFi hotspot
+5. Enable mobile data (or wifi sharing) on Android smart phone
+6. Start "Wearable Intelligence System" application on smart glasses
+7. 
+    * The phone connection icon will be green if the glasses are connected to your phone. If you speak, you'll see a live transcript on the smart glasses screen.
+    * On the Android smart phone, got to "Memory Tools" -> "Memory Stream" and you will see live transcripts
+8. Setup complete.
 
-## Install / Setup
+#### Subsequent Launch
+    
+Here's how to launch the system after you've already done the initial setup above:  
 
-#### **Please see the "Subcomponents" section for more details on how to complete each step.**
-
-1. Clone this repo:
-```
-git clone git@github.com:emexlabs/WearableIntelligenceSystem.git #clone main repo
-git submodule update --init --recursive #clone submodules
-```
-2. Turn on the WiFi hotspot on the ASP.
-3. Connect the GLBOX and ASG to the ASP WiFi hotspot.
-4. Start the life_live_captions Python server on the GLBOX.
-5. Start the Mobile Compute app on the ASP.
-6. Start the smart glasses app on the ASG.
-
-## System Components  
-
-### GNU/Linux Box
-
-1. Follow *Setup* in gnu_linux_box/glbox_main_app/README.md
-2. Activate virtualenv and launch app
-
-```
-cd gnu_linux_box
-source venv/bin/activate #activate virtualenv
-python3 main.py
-```
-
-The GLBOX (GNU/Linux Box (a computer running a GNU/Linux distribution operation system)) is part of the the Wearable Intelligence System that handles transcription, running commands, and saving memories.
-
-Live Linux programmatic control of Android smart glasses running the Wearable Intelligence System app.
-
-Run this on any laptop or single-board-computer running GNU/Linux.
-
-### Android Smart Glasses
-
-1. Open android_smart_glasses/smart_glasses_app Android app in Android studio.
-2. Plug in Android Smart Glasses and build + flash to device using Android Studio.
-
-The latest system is developed on a Vuzix Blade 1.5.
-
-Running on another pair of Android AR/MR glasses could work without issue or porting could happen in 48 hours if the hardware is supplied.
-
-### Android Smart Phone
-
-1. Follow commands here to setup MediaPipe: <https://google.github.io/mediapipe/getting_started/install.html#installing-on-debian-and-ubuntu>
-2. 
-Run the following commands to build and run the app for the ASP:
-```
-cd android_smart_phone/mediapipe
-./build_single_android.sh mediapipe/examples/android/src/java/com/google/mediapipe/apps/wearableai
-```
-3. Run the android_smart_phone/mobile_compute_app on any modern-ish Android smart phone (a good CPU/GPU is reccomended for MediaPipe graph) that can make a WiFi hotspot.
+1. Launch "WIS" app on smart phone
+2. Enable mobile hotspot on smart phone with the "Start WiFi Hotspot" button
+3. Connect Android smart glasses to Android smart phone WiFi hotspot.
+4. Launch "WIS" app on smart glasses.
+5. Verify system is running by the "Smart Glasses Conection Indicator" icon turning green.
 
 ## Voice Commands
 
-All voice commands must be preceded by a `wakeword`. A `wakeword` is any word you choose to "wake up" the system and start listening to commands, commands will only be run if they follow a wakeword. Set your own wakeword by adding it to wakewords.txt, or just use an existing `wakeword` from wakewords.txt.  Choose a `wakeword` that the Speech-To-Text system can reliably recognize.
+All voice commands must be preceded by a `wakeword`. A `wakeword` is any word you choose to "wake up" the system and start listening to commands.
+    
+#### Wakewords
+- hey computer
+- licklider
+    
+#### Voice Commands
 
-`ask Wolfram <query>` - ask Wolfram Alpha a natural language <query>  
+- `save speech <note>` - save any voice note to your cache of notes. This can be used to save ideas, thoughts, notes, reminders, etc.
+- `save speech tag <tagname> <note>` - save any voice note to your cache of notes and to a specific tag bin named <tag>
+- `quick query <query>` - ask a question to an intelligence assistant
+- `search for <query` - search the web for anything, see the intelligently chosen top result
+- `switch modes translate <language>` - live translate the given language into english
+- `switch modes live life captions` - display live closed captions
+- `switch modes blank mode` - blank the screen
+- `switch modes visual search` - use a POV image to search the web for anything that you see around you
+    
+### Modes
  
-`add wake word <wakeword>` - add a new <wake word> to wakewords.txt  
+#### Live Life Captions
  
-`save speech` - save the transcribed speech to a file. This can be used to save ideas, thoughts, notes, reminders, etc.  
+Closed captions of everything you and those around you say. Live view of commands and commmand output. Nouns in transcripts are highlighted. Soon to be extended to give definition, summary, encylopedia, and NLP functionalities.
  
-`switch mode <arg>` - switch the current mode of the smart glasses app.  
-Currently available modes:  
-- live life captions
-- blank screen
-- social mode
+#### Social Mode
  
- ## Modes
+A social-emotional intelligence tool to be used in social situations. Live metrics about the social environment (eye-contact, facial emotion, high-level psychological metrics (e.g. stress, confidence, etc.)) overlaid on the users vision. This is experimental and not recommended for real world use.
  
- ### Live Life Captions
+#### Blank Mode
  
- Closed captions of everything you and those around you say. Live view of commands and commmand output. Nouns in transcripts are highlighted. Soon to be extended to give definition, summary, encylopedia, and NLP functionalities.
- 
- ### Social Mode
- 
- A social-emotional intelligence tool to be used in social situations. Live metrics about the social environment (eye-contact, facial emotion, high-level psychological metrics (e.g. stress, confidence, etc.)) overlaid on the users vision. Soon to extended with facial recognition (tie in to memory stream "Personal Person Database"), amalgamation (combine social information about everyone in the room), more metrics (drowsiness, believability (both ways), interest, etc.).
- 
- ### Blank Mode
- 
- Blanks out the screen, sleep mode.
+Blanks the screen, sleep mode.
 
-## Demo
-
-1. Install `scrcpy`: https://github.com/Genymobile/scrcpy
-2. Run `scrcpy`
-
+## Documentation
+    
+The docs are hosted on this repo's Wiki, [here are the docs](https://github.com/emexlabs/WearableIntelligenceSystem/wiki).
+    
 ## Abbreviations
 
 ASP - Android Smart Phone  
