@@ -2,6 +2,8 @@
 
 The Wearable Intelligence System (WIS) is the homepage for your smart glasses. The WIS makes using smart glasses valuable, easy, useful, and fun. It does so with a host of built-in killer apps, voice controls, always available HUD information, an app launcher, and more. There's a number of powerful and fashionable smart glasses being released, and the WIS gives you an interface and apps to make those glasses useful. The WIS is like your phone homescreen or your computer desktop combined with a smart assistant.
 
+[![Wearable Intelligence System Demo - Part 1](res/early_demo_thumbnail.png)](http://www.youtube.com/watch?v=O2a6ng9jICE "Wearable Intelligence System Demo - Smart Glasses Apps - Part 1")
+
 ## What It Can Do Now
 
 We're working hard to add use cases to the system. Here's a list of what it can already do:
