@@ -320,10 +320,6 @@ public class WearableAiAspService extends LifecycleService {
         dataObservable.onComplete();
         audioObservable.onComplete();
 
-        //kill mediapipe
-        //mediaPipeSystem.destroy();
-
-
         //kill vosk
         speechRecVosk.destroy();
 
@@ -332,6 +328,7 @@ public class WearableAiAspService extends LifecycleService {
 
         //call parent destroy
         super.onDestroy();
+        Log.d(TAG, "WearableAiAspService destroy complete");
     }
 
     //allow ui to control Autociter/wearable referencer

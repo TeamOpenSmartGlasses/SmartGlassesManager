@@ -468,7 +468,7 @@ public class AudioSystem {
     public void destroy(){
         shouldDie = true;
         dataSubscriber.dispose();
-        //killSocket();
+        killSocket();
     }
 
     private void handleDataStream(JSONObject data){
