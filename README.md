@@ -1,6 +1,6 @@
 # Wearable Intelligence System
 
-The Wearable Intelligence System (WIS) is the homepage for your smart glasses. The WIS makes using smart glasses valuable, easy, useful, and fun. It does so with a host of built-in killer apps, voice controls, always available HUD information, an app launcher, and more. There's a number of powerful and fashionable smart glasses being released, and the WIS gives you an interface and apps to make those glasses useful. The WIS is like your phone homescreen or your computer desktop combined with a smart assistant.
+The Wearable Intelligence System (WIS) is the homepage for your smart glasses. The WIS makes aims to make using smart glasses valuable, easy, useful, and fun. It does so with a host of built-in apps, voice controls, always available HUD information, an app launcher, and more. There's a number of powerful and fashionable smart glasses being released, and the WIS gives you an interface and apps to make those glasses useful. The WIS is like your phone homescreen or your computer desktop combined with a smart assistant.
 
 [![Wearable Intelligence System Demo - Part 1](res/early_demo_thumbnail.png)](http://www.youtube.com/watch?v=O2a6ng9jICE "Wearable Intelligence System Demo - Smart Glasses Apps - Part 1")
 
@@ -10,16 +10,22 @@ We're working hard to add use cases to the system. Here's a list of what it can 
 
 ### Users
 
+#### Fully functional: 
+
 - Search - Search the web with voice, see immediate results on your HUD.
 - Ask Questions - Ask an intelligent voice assistant any question, see answers on your HUD.
 - Remember More - Memory tools to expand your memory with information recording and recall.
-- Live Translation - Translate live foreign language speech into your native language, and silently read the output on the screen.
-- Egocentric/POV Recording - Record your egocentric camera, audio, location, transcripts, all with easy voice commands.
 - Visual Search - Define anything that you see. Find images with similiar content as your point-of-view (POV) camera image.
 - Live Captions - Improve understanding and retention in conversations, meetings, lectures, etc. with live closed captions overlaid on your vision at all times.
 - Autociter / Wearable Referencer - Auto-associative voice search through a personal database, send relevant links to conversation partners over SMS.
-- Social Tools - Improve emotional intelligence with affective computing running on your point-of-view, giving live insights into the non-verbal communication around you.
 - Name Memorizer - Never forget a name again with HUD notifications when you see a familiar face
+
+#### In Progress: 
+
+- Live Translation - Translate live foreign language speech into your native language, and silently read the output on the screen.
+- Social Tools - Improve emotional intelligence with affective computing running on your point-of-view, giving live insights into the non-verbal communication around you.
+- Egocentric/POV Recording - Record your egocentric camera, audio, location, transcripts, all with easy voice commands.
+- Much more
 
 ### Developers
 
