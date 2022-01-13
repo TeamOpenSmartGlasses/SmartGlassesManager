@@ -7,7 +7,6 @@ azure_key.txt
 *.jpg
 *mp3
 *mp4
-*.png
 # data/
 
 # models

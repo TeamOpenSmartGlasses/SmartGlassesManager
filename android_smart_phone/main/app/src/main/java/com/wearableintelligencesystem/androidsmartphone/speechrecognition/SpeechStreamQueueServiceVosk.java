@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.wearableintelligencesystem.androidsmartphone.speechrecvosk;
+package com.wearableintelligencesystem.androidsmartphone.speechrecognition;
 
 import org.vosk.android.RecognitionListener;
 
@@ -23,11 +23,7 @@ import android.os.Looper;
 
 import org.vosk.Recognizer;
 
-import java.io.IOException;
 import java.lang.InterruptedException;
-import java.io.InputStream;
-
-import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
 

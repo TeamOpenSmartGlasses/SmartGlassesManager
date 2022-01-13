@@ -1,5 +1,6 @@
 package com.wearableintelligencesystem.androidsmartglasses;
 
+import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -65,6 +66,8 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
     WearableAiService mService;
     boolean mBound = false;
+
+    boolean currentlyScrolling = false;
 
     public static String TAG = "WearableAiDisplay_MainActivity";
 
@@ -152,10 +155,12 @@ public class MainActivity extends Activity {
     float batteryLevel;
     boolean batteryCharging = false;
 
+    private Handler uiHandler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate running");
+
         //help us find potential issues in dev
         if (BuildConfig.DEBUG){
             StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
@@ -167,40 +172,34 @@ public class MainActivity extends Activity {
 
         super.onCreate(savedInstanceState);
 
+        //setup ui handler
+        uiHandler = new Handler();
+
         //setup main view
         switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
-
-        //setup the HUD ui
-        setupHud();
 
         //keep the screen on throughout
         //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         //create the WearableAI service if it isn't already running
-        startService(new Intent(this, WearableAiService.class));
-        bindWearableAiService();
-        Log.d(TAG, "onCreate complete");
+        startWearableAiService();
     }
 
     private void setupHud(){
-
         //setup clock
         if (! clockRunning) {
             clockRunning = true;
-            Handler handler = new Handler();
-            handler.post(new Runnable() {
+            uiHandler.post(new Runnable() {
                 public void run() {
                     // Default time format for current locale, with respect (on API 22+) to user's 12/24-hour
                     // settings. I couldn't find any simple way to respect it back to API 14.
-                    Log.d(TAG, "Setting time...");
                     //String prettyTime = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date()) + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
                     String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
                     mClockTextView = (TextView) findViewById(R.id.clock_text_view);
                     if (mClockTextView != null) {
                         mClockTextView.setText(prettyTime);
                     }
-                    Log.d(TAG, "Time set.");
-                    handler.postDelayed(this, 1000);
+                    uiHandler.postDelayed(this, 1000);
                 }
             });
         } else{
@@ -210,24 +209,19 @@ public class MainActivity extends Activity {
             if (mClockTextView != null) {
                 mClockTextView.setText(prettyTime);
             }
-            Log.d(TAG, "Time set.");
         }
 
-        Log.d(TAG, "setupHud running");
         //setup wifi status
         updateWifiHud();
-//
+
         //setup phone connect status
         updatePhoneHud();
 
         //setup battery connect status
         updateBatteryHud();
-
-        Log.d(TAG, "setupHud complete");
     }
 
     private void updateWifiHud(){
-        Log.d(TAG, "updateWifiHud start...");
         mWifiStatusImageView = (ImageView) findViewById(R.id.wifi_image_view);
 
         if (mWifiStatusImageView == null){
@@ -241,11 +235,9 @@ public class MainActivity extends Activity {
         } else {
             mWifiStatusImageView.setImageDrawable(wifiOffDrawable);
         }
-        Log.d(TAG, "updateWifiHud complete.");
     }
 
     private void updatePhoneHud(){
-        Log.d(TAG, "updatePhoneHud start...");
         mPhoneStatusImageView = (ImageView) findViewById(R.id.phone_status_image_view);
         if (mPhoneStatusImageView == null){
             return;
@@ -257,11 +249,9 @@ public class MainActivity extends Activity {
         } else {
             mPhoneStatusImageView.setImageDrawable(phoneOffDrawable);
         }
-        Log.d(TAG, "updatePhoneHud complete.");
     }
 
     private void updateBatteryHud(){
-        Log.d(TAG, "updateBatteryHud start.");
         //set the icon
         mBatteryStatusImageView = (ImageView) findViewById(R.id.battery_status_image_view);
         if (mBatteryStatusImageView == null){
@@ -289,12 +279,9 @@ public class MainActivity extends Activity {
         //set the text
         mBatteryStatusTextView = (TextView) findViewById(R.id.battery_percentage_text_view);
         mBatteryStatusTextView.setText((int)batteryLevel + "%");
-
-        Log.d(TAG, "updateBatteryHud complete.");
     }
 
     private void switchMode(String mode) {
-        Log.d(TAG, "SWITCH MODE RUNNING WITH NEW MODE: " + mode);
         curr_mode = mode;
         switch (mode) {
             case MessageTypes.MODE_BLANK:
@@ -327,7 +314,6 @@ public class MainActivity extends Activity {
         }
 
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
-        Log.d(TAG, "SWITCH MODE COMPLETE");
     }
 
     private void showWearableFaceRecognizer(){
@@ -354,7 +340,7 @@ public class MainActivity extends Activity {
 //            Bitmap curr_cam_bmp = BitmapFactory.decodeByteArray(curr_cam_image, 0, curr_cam_image.length);
 //            viewfinder.setImageBitmap(curr_cam_bmp);
 //        } else {
-//            Log.d(TAG, "Mboudn not true yo");
+//            Log.d(TAG, "Mbound not true");
 //        }
 
         updateViewFindFrame();
@@ -395,13 +381,12 @@ public class MainActivity extends Activity {
             Bitmap curr_cam_bmp = BitmapFactory.decodeByteArray(curr_cam_image, 0, curr_cam_image.length);
             viewfinder.setImageBitmap(curr_cam_bmp);
         } else {
-            Log.d(TAG, "Mboudn not true yo");
+            Log.d(TAG, "Mbound not true");
         }
 
         //update the current preview frame in
         int frame_delay = 50; //milliseconds
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
+        uiHandler.postDelayed(new Runnable() {
             public void run() {
                 if (curr_mode.equals(MessageTypes.MODE_VISUAL_SEARCH)) {
                     updateViewFindFrame();
@@ -461,7 +446,6 @@ public class MainActivity extends Activity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 scrollToBottom(translateText);
-
             }
 
             @Override
@@ -515,9 +499,16 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void teardownHud() {
+        uiHandler.removeCallbacksAndMessages(null);
+        clockRunning = false;
+    }
+
     @Override
     public void onPause() {
         super.onPause();
+
+        teardownHud();
 
         unbindWearableAiService();
 
@@ -525,86 +516,6 @@ public class MainActivity extends Activity {
         unregisterReceiver(mComputeUpdateReceiver);
     }
 
-    private Camera.Size getBestPreviewSize(int width, int height,
-                                           Camera.Parameters parameters) {
-        Camera.Size result = null;
-
-        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
-            if (size.width <= width && size.height <= height) {
-                if (result == null) {
-                    result = size;
-                } else {
-                    int resultArea = result.width * result.height;
-                    int newArea = size.width * size.height;
-
-                    if (newArea > resultArea) {
-                        result = size;
-                    }
-                }
-            }
-        }
-
-        return (result);
-    }
-
-    //
-//    private void initPreview(int width, int height) {
-//        if (camera != null && previewHolder.getSurface() != null) {
-//            try {
-//                camera.setPreviewDisplay(previewHolder);
-//            } catch (Throwable t) {
-//                Log.e("PreviewDemo",
-//                        "Exception in setPreviewDisplay()", t);
-//                Toast
-//                        .makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG)
-//                        .show();
-//            }
-//
-//            if (!cameraConfigured) {
-//                Camera.Parameters parameters = camera.getParameters();
-//                parameters.setRecordingHint(true);
-//                Camera.Size size = getBestPreviewSize(width, height,
-//                        parameters);
-//
-//                if (size != null) {
-//                    parameters.setPreviewSize(size.width, size.height);
-//                    camera.setParameters(parameters);
-//                    cameraConfigured = true;
-//                }
-//            }
-//        }
-//    }
-//
-//    private void startPreview() {
-//        if (cameraConfigured && camera != null) {
-//            camera.startPreview();
-//            inPreview = true;
-//        }
-//    }
-//
-//    private void takeAndSendPicture() {
-//        System.out.println("TAKE AND SEND PICTURE CALLED");
-//        camera.takePicture(null, null, null, new PhotoHandler(getApplicationContext()));
-//        startPreview();
-//    }
-//
-//    SurfaceHolder.Callback surfaceCallback = new SurfaceHolder.Callback() {
-//        public void surfaceCreated(SurfaceHolder holder) {
-//            // no-op -- wait until surfaceChanged()
-//        }
-//
-//        public void surfaceChanged(SurfaceHolder holder,
-//                                   int format, int width,
-//                                   int height) {
-//            initPreview(width, height);
-//            startPreview();
-//        }
-//
-//        public void surfaceDestroyed(SurfaceHolder holder) {
-//            // no-op
-//        }
-//    };
-//
     public void setGuiMessage(String message, TextView tv, String postfix) {
         //see if the message is generic or one of the metrics to be displayed
         messageTextView.setText("");
@@ -618,7 +529,6 @@ public class MainActivity extends Activity {
     }
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
-        Log.d(TAG, "makeComputeUpdateIntentFilter running");
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
         intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
@@ -635,18 +545,14 @@ public class MainActivity extends Activity {
         intentFilter.addAction(ACTION_UI_UPDATE);
         intentFilter.addAction(ASPClientSocket.ACTION_UI_DATA);
 
-        Log.d(TAG, "makeComputeUpdateIntentFilter retruning");
         return intentFilter;
     }
 
     private final BroadcastReceiver mComputeUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "GOT BROADCAST");
             final String action = intent.getAction();
-            Log.d(TAG, action);
             if (ASPClientSocket.ACTION_UI_DATA.equals(action)) {
-                Log.d(TAG, "found something search engine");
                 try {
                     JSONObject data = new JSONObject(intent.getStringExtra(ASPClientSocket.RAW_MESSAGE_JSON_STRING));
                     String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
@@ -714,7 +620,6 @@ public class MainActivity extends Activity {
                 }
             } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)) {
                 if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)) {
-                    Log.d(TAG, "got final transcript");
                     try {
                         JSONObject transcript_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT));
 //                        JSONObject nlp = transcript_object.getJSONObject("nlp");
@@ -761,7 +666,6 @@ public class MainActivity extends Activity {
                         System.out.println(e);
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
-                    Log.d(TAG, "got final transcript");
                     //only update this transcript if it's been n milliseconds since the last intermediate update
                     if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
                         lastIntermediateMillis = System.currentTimeMillis();
@@ -772,7 +676,6 @@ public class MainActivity extends Activity {
                     }
                 } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
                     String command_response_text = intent.getStringExtra(GlboxClientSocket.COMMAND_RESPONSE);
-                    Log.d(TAG, command_response_text);
                     //change newlines to <br/>
                     command_response_text = command_response_text.replaceAll("\n", "<br/>");
                     textHolder.add(Html.fromHtml("<p><font color='#00CC00'>" + command_response_text.trim() + "</font></p>"));
@@ -822,7 +725,6 @@ public class MainActivity extends Activity {
                     Log.d(TAG, e.toString());
                 }
             } else if (ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST.equals(action)) {
-                Log.d(TAG, "MainActivity got affective mem transcript list");
                 try {
                     JSONObject affective_mem = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST));
                     textListHolder.clear();
@@ -833,7 +735,6 @@ public class MainActivity extends Activity {
                         }
                         String transcript = affective_mem.getString(Integer.toString(i));
                         textListHolder.add(transcript);
-                        Log.d(TAG, "MainActivity Affective mem #" + i + " is " + transcript);
                         i++;
                     }
                     switchMode(MessageTypes.MODE_TEXT_LIST);
@@ -841,7 +742,6 @@ public class MainActivity extends Activity {
                     e.printStackTrace();
                 }
             } else if (ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY.equals(action)) {
-                Log.d(TAG, "MainActivity got affective mem transcript list");
                 try {
                     JSONObject affective_query_result = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_SEARCH_QUERY_RESULT));
                     textBlockHolder = "";
@@ -876,13 +776,11 @@ public class MainActivity extends Activity {
                 textBlockHolder = str_data;
                 switchMode(MessageTypes.MODE_TEXT_BLOCK);
             }
-            Log.d(TAG, "Done BROADCAST");
         }
     };
 
 
     private Spanned getCurrentTranscriptScrollText() {
-        Log.d(TAG, "getCurrentTranscriptScorllText running");
         Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
         //limit textHolder to our maximum size
         while ((textHolder.size() - textHolderSizeLimit) > 0){
@@ -896,7 +794,6 @@ public class MainActivity extends Activity {
                 current_transcript_scroll = (Spanned) TextUtils.concat(current_transcript_scroll, textHolder.get(i));
             }
         }
-        Log.d(TAG, "getCurrentTranscriptScorllText returning");
         return current_transcript_scroll;
     }
 
@@ -919,8 +816,6 @@ public class MainActivity extends Activity {
 
     //stuff for the charts
     private void setChartData() {
-        Log.d(TAG, "setChartData running");
-
         float max = 100;
         ArrayList<PieEntry> values = new ArrayList<>();
 
@@ -954,7 +849,6 @@ public class MainActivity extends Activity {
         //chart.animateY(1400, Easing.EaseInOutQuad);
 
         chart.invalidate();
-        Log.d(TAG, "setChartData complete");
     }
 
     private void moveOffScreen() {
@@ -1019,25 +913,26 @@ public class MainActivity extends Activity {
     }
 
     private void scrollToBottom(TextView tv) {
-        tv.post(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "scrollToBottom runnable running");
-                int lc = tv.getLineCount();
-                if (lc == 0){
-                    return;
+        if (!currentlyScrolling) {
+            tv.post(new Runnable() {
+                @Override
+                public void run() {
+                    currentlyScrolling = true;
+                    int lc = tv.getLineCount();
+                    if (lc == 0) {
+                        return;
+                    }
+                    tv.scrollTo(0, tv.getBottom());
+                    int scrollAmount = tv.getLayout().getLineTop(lc) - tv.getHeight();
+                    // if there is no need to scroll, scrollAmount will be <=0
+                    if (scrollAmount > 0)
+                        tv.scrollTo(0, scrollAmount);
+                    else
+                        tv.scrollTo(0, 0);
+                    currentlyScrolling = false;
                 }
-                tv.scrollTo(0, tv.getBottom());
-                int scrollAmount = tv.getLayout().getLineTop(lc) - tv.getHeight();
-                // if there is no need to scroll, scrollAmount will be <=0
-                if (scrollAmount > 0)
-                    tv.scrollTo(0, scrollAmount);
-                else
-                    tv.scrollTo(0, 0);
-                Log.d(TAG, "scrollToBottom runnable complete");
-            }
-        });
-
+            });
+        }
     }
 
     /** Defines callbacks for service binding, passed to bindService() */
@@ -1047,7 +942,6 @@ public class MainActivity extends Activity {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            Log.d(TAG, "onServiceConnected running");
             WearableAiService.LocalBinder binder = (WearableAiService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
@@ -1066,7 +960,6 @@ public class MainActivity extends Activity {
 
 
     public void captureVisualSearchImage(){
-        Log.d(TAG, "sending visual search image");
 
         Toast.makeText(MainActivity.this, "Capturing image...", Toast.LENGTH_SHORT).show();
 
@@ -1075,11 +968,9 @@ public class MainActivity extends Activity {
             //mService.sendGlBoxCurrImage();
             mService.sendVisualSearch();
         }
-        Log.d(TAG, "visual search image has been sent");
     }
 
     private void selectVisualSearchResult(){
-        Log.d(TAG, "select visual search result called");
         int pos = gridviewImages.getSelectedItemPosition();
         String name = visualSearchNames.get(pos);
         Toast.makeText(MainActivity.this, name, Toast.LENGTH_LONG).show();
@@ -1142,21 +1033,16 @@ public class MainActivity extends Activity {
 
     public void bindWearableAiService(){
         // Bind to that service
-        Log.d(TAG, "Binding to WAI service.");
         Intent intent = new Intent(this, WearableAiService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
-        Log.d(TAG, "Bound to WAI service.");
     }
 
     public void unbindWearableAiService() {
         // Bind to that service
-        Log.d(TAG, "Unbinding to WAI service.");
         unbindService(connection);
-        Log.d(TAG, "Unbound to WAI service.");
     }
 
     public void showVisualSearchResults(JSONArray data){
-        Log.d(TAG, "received visual search image results");
         thumbnailImages = new ArrayList<String>();
         visualSearchNames = new ArrayList<String>();
         try {
@@ -1196,7 +1082,6 @@ public class MainActivity extends Activity {
     }
 
     private void showSearchEngineResults(JSONObject data) {
-        Log.d(TAG, "showSearchEngineResults");
         try {
             //parse out the response object - one result for now
             JSONObject search_engine_result = new JSONObject(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
@@ -1236,5 +1121,44 @@ public class MainActivity extends Activity {
             Log.d(TAG, e.toString());
         }
     }
+
+    //start, stop, handle the service
+    public void stopWearableAiService() {
+        Log.d(TAG, "Stopping WearableAI service");
+        unbindWearableAiService();
+
+        if (!isMyServiceRunning(WearableAiService.class)) return;
+        Intent stopIntent = new Intent(this, WearableAiService.class);
+        stopIntent.setAction(WearableAiService.ACTION_STOP_FOREGROUND_SERVICE);
+        startService(stopIntent);
+    }
+
+    public void sendWearableAiServiceMessage(String message) {
+        if (!isMyServiceRunning(WearableAiService.class)) return;
+        Intent messageIntent = new Intent(this, WearableAiService.class);
+        messageIntent.setAction(message);
+        Log.d(TAG, "Sending WearableAi Service this message: " + message);
+        startService(messageIntent);
+    }
+
+    public void startWearableAiService() {
+        Log.d(TAG, "Starting wearableAiService");
+        if (isMyServiceRunning(WearableAiService.class)) return;
+        Intent startIntent = new Intent(this, WearableAiService.class);
+        startIntent.setAction(WearableAiService.ACTION_START_FOREGROUND_SERVICE);
+        startService(startIntent);
+    }
+
+    //check if service is running
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
 

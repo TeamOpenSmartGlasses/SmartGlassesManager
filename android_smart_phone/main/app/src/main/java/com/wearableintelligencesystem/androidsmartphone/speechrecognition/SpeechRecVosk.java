@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartphone.speechrecvosk;
+package com.wearableintelligencesystem.androidsmartphone.speechrecognition;
 
 //Vosk ASR
 import org.vosk.LibVosk;
@@ -6,39 +6,24 @@ import org.vosk.LogLevel;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 import org.vosk.android.RecognitionListener;
-import org.vosk.android.SpeechService;
-import org.vosk.android.SpeechStreamService;
 import org.vosk.android.StorageService;
 
 //vosk needs
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import android.Manifest;
 
 //android
 import android.util.Base64;
 import android.content.Context;
 import android.util.Log;
-import android.content.Context;
 import android.os.Handler;
-import java.io.IOException;
+
 import java.lang.InterruptedException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.Arrays;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import org.json.JSONObject;
-import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;
-import com.wearableintelligencesystem.androidsmartphone.speechrecvosk.SpeechStreamQueueServiceVosk;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
 //queue

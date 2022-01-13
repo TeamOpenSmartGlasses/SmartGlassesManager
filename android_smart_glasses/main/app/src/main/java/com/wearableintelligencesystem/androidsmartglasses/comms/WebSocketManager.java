@@ -1,6 +1,7 @@
 package com.wearableintelligencesystem.androidsmartglasses.comms;
 
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
 
@@ -13,6 +14,8 @@ import org.json.JSONObject;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 public class WebSocketManager implements Runnable{
+    private boolean killme = false;
+
     private String TAG = "WearableAI_WebSocket_Reconnector";
     public AsgWebSocketClient ws;
     private URI serverURI;
@@ -23,6 +26,7 @@ public class WebSocketManager implements Runnable{
     String mySourceName;
 
     private static Handler handler;
+    private static HandlerThread mHandlerThread;
     private static int delay;
     private static boolean firstRun = true;
 
@@ -50,7 +54,11 @@ public class WebSocketManager implements Runnable{
     }
 
     public WebSocketManager(String ip, String port){
-        handler = new Handler(Looper.getMainLooper());
+        //handler = new Handler();
+        //handler = new Handler(Looper.getMainLooper());
+        mHandlerThread = new HandlerThread("WebSocketHandler");
+        mHandlerThread.start();
+        handler = new Handler(mHandlerThread.getLooper());
         delay = 3000; // 1000 milliseconds == 1 second
 
         if (port == null){
@@ -141,7 +149,9 @@ public class WebSocketManager implements Runnable{
                     Log.d(TAG, "WARNING: Old ws did not properly close");
                 }
                 Log.d(TAG, "onClose Stopped web socket");
-                handler.postDelayed(restarter, delay);
+                if (!killme) { //only restart if we aren't supposed to die yet
+                    handler.postDelayed(restarter, delay);
+                }
             }
         }, 100);
     }
@@ -149,5 +159,16 @@ public class WebSocketManager implements Runnable{
     //this is because we need to delay this running, but there is a namespace overlap with run()
     protected void runny(){
         run();
+    }
+
+    public void destroy(){
+        killme = true;
+
+        //stop our heartbeat and connect loops
+        handler.removeCallbacksAndMessages(null);
+        mHandlerThread.quit();
+
+        //close the websocket
+        boolean closed = ws.stop();
     }
 }

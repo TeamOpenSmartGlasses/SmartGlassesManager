@@ -15,7 +15,7 @@ android {
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        applicationId "com.example.wearableintelligencesystemandroidsmartglasses"
+        applicationId "com.wearableintelligencesystem.androidsmartglasses"
         minSdkVersion 22
         targetSdkVersion 22
         versionCode 1

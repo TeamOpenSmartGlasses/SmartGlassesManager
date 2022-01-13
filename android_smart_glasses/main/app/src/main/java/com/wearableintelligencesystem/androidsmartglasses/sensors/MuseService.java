@@ -215,7 +215,7 @@ public class MuseService extends Service {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
                 //run on handler so we don't block this callback
-                final Handler handler = new Handler(Looper.getMainLooper());
+                final Handler handler = new Handler(Looper.myLooper());
                 handler.post(new Runnable() {
                     @Override
                     public void run() {

@@ -2,6 +2,10 @@ package com.wearableintelligencesystem.androidsmartglasses;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +30,7 @@ import android.renderscript.ScriptIntrinsicYuvToRGB;
 import android.renderscript.Type;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 
 import android.util.Base64;
 import android.util.Log;
@@ -78,6 +83,11 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
     //-locally running the camera in the background (Android Hidden camera: https://github.com/kevalpatel2106/android-hidden-camera)
     //-whatever else we need in the background
 public class WearableAiService extends HiddenCameraService {
+    public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
+    public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
+
+    public static boolean killme = false;
+
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
 
@@ -87,13 +97,11 @@ public class WearableAiService extends HiddenCameraService {
     float batteryPercentage;
     boolean batteryIsCharging;
 
-//    private boolean audioSocketStarted = false;
-
     //image stream handling
     private int img_count = 0;
     private long last_sent_time = 0l;
     private long lastImageTime = 0l;
-    private int fps_to_send = 3; //speed we send HD frames from wearable to mobile compute unit
+    private float fps_to_send = 0.5f; //speed we send HD frames from wearable to mobile compute unit
 
     //ASP socket
     ASPClientSocket asp_client_socket;
@@ -139,6 +147,8 @@ public class WearableAiService extends HiddenCameraService {
 
     @Override
     public void onCreate() {
+        super.onCreate();
+
         //set the error handler for rxjava
         RxJavaPlugins.setErrorHandler(throwable -> {
             throwable.printStackTrace();
@@ -194,51 +204,11 @@ public class WearableAiService extends HiddenCameraService {
             }
         };
         this.registerReceiver(new WifiUtils.WifiReceiver(wifiConnectCallback), wifiFilter);
-
-//        //unlock the screen every n seconds
-//        HandlerThread thread = new HandlerThread("AdvReceiver");
-//        thread.start();
-//        Handler handler = new Handler(thread.getLooper());
-//        handler.postDelayed(new
-//            Runnable() {
-//                public void run () {
-//                    Log.d(TAG, "WAKEING UP THE SCREEN");
-//                    wakeupScreen();
-//                    handler.postDelayed(this, 10000);
-//                }
-//            }, 5000);
-    }
-
-    private void setupObservervables() {
-        //set up the multicasting observables we use to send data between all the subsystems of the service
     }
 
     class ReceiveAdvThread extends Thread {
         public void run() {
             receiveUdpBroadcast();
-//            try {
-//                //Keep a socket open to listen to all the UDP trafic that is destined for this port
-//                socket = new DatagramSocket(PORT_NUM, InetAddress.getByName("0.0.0.0"));
-//                socket.setBroadcast(true);
-//
-//                //first get the ASP IP from its UDP broadcast, then we can start the ASP
-//                while (true){
-//                    HandlerThread thread = new HandlerThread("AdvReceiver");
-//                    thread.start();
-//                    Handler receiveAdvHandler = new Handler(thread.getLooper());
-//                    receiveAdvHandler.postDelayed(new
-//                    Runnable() {
-//                        public void run () {
-////                            receiveUdpBroadcast();
-////                            receiveAdvHandler.postDelayed(this, 100);
-//                        }
-//                    }, 5);
-//                }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            Log.d(TAG, "Exception: " + e);
-//        }
-
         }
     }
 
@@ -258,7 +228,7 @@ public class WearableAiService extends HiddenCameraService {
             socket = new DatagramSocket(PORT_NUM, InetAddress.getByName("0.0.0.0"));
             socket.setBroadcast(true);
 
-            while (true) {
+            while (!killme) {
                 //Receive a packet
                 byte[] recvBuf = new byte[64];
                 DatagramPacket packet = new DatagramPacket(recvBuf, recvBuf.length);
@@ -266,16 +236,18 @@ public class WearableAiService extends HiddenCameraService {
 
                 //Packet received
                 String data = new String(packet.getData()).trim();
-//                Log.d(TAG, "Got adv string: " + data + "; of size: " + data.getBytes("UTF-8").length);
                 if (data.equals(asp_adv_key)) {
-//                    Log.d(TAG, "got key, starting up sockets");
                     asp_address = packet.getAddress().getHostAddress();
-//                    Log.d(TAG, "new address: " + asp_address);
                     asp_client_socket.setIp(asp_address);
-                    //sendAudioServiceNewIp(asp_address);
                     asp_comms_starter();
                 }
-                SystemClock.sleep(500); //this is how we delay the loop from running too fast, there is probably a better way, but setting up a hanlder failed with no error, so this works for now
+                int hundos = 5; //how many hundredths of a second to wait, we split it up so we don't get stuck when the app is closed/killed
+                for (int i = 0; i < hundos; i++){
+                    SystemClock.sleep(100); //this is how we delay the loop from running too fast, there is probably a better way, but setting up a hanlder failed with no error, so this works for now
+                    if (killme){
+                        break;
+                    }
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -284,29 +256,15 @@ public class WearableAiService extends HiddenCameraService {
     }
 
     public void asp_comms_starter() {
-//        Log.d(TAG, "start asp_comms_starter");
-        //start the audio system which will send audio to the asp
-        //start the audio service
-//        Log.d(TAG, "asp_comms_starter audio");
-//        if (!audioSocketStarted) {
-//            audioSocketStarted = true;
-//            //StartAudioService(asp_address);
-//        }
-
-//        Log.d(TAG, "asp_comms_starter web socket");
         //start the web socket to communicate with ASP, to replace TCP socket below
         if (!asp_client_socket.getWebSocketStarted()) {
             asp_client_socket.startWebSocket();
         }
 
-//        Log.d(TAG, "asp_comms_starter tcp socket");
         //start comms to ASP
         if (!asp_client_socket.getSocketStarted()) {
             asp_client_socket.startSocket();
         }
-
-
-
     }
 
 
@@ -316,7 +274,17 @@ public class WearableAiService extends HiddenCameraService {
 
     @Override
     public void onDestroy() {
-        System.out.println("HIDDEN CAMERA SERVICE DESTROYED");
+        killme = true;
+        dataSubscriber.dispose();
+        asp_client_socket.destroy();
+
+        try {
+            adv_thread.join();
+        } catch(InterruptedException e){
+            e.printStackTrace();
+        }
+
+        super.onDestroy();
     }
 
     public class LocalBinder extends Binder {
@@ -331,8 +299,41 @@ public class WearableAiService extends HiddenCameraService {
         return binder;
     }
 
+    //service stuff
+    private Notification updateNotification() {
+        Context context = getApplicationContext();
+
+        PendingIntent action = PendingIntent.getActivity(context,
+                0, new Intent(context, MainActivity.class),
+                PendingIntent.FLAG_CANCEL_CURRENT); // Flag indicating that if the described PendingIntent already exists, the current one should be canceled before generating a new one.
+
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        Notification notification = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.elon)
+                .setContentTitle("Wearable Intelligence System")
+                .setContentText("Running...")
+                .setContentIntent(action)
+                .setOngoing(true).build();
+
+        return notification;
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null){
+            String action = intent.getAction();
+            switch (action) {
+                case ACTION_START_FOREGROUND_SERVICE:
+                    // start the service in the foreground
+                    startForeground(1234, updateNotification());
+                    break;
+                case ACTION_STOP_FOREGROUND_SERVICE:
+                    stopForeground(true);
+                    stopSelf();
+                    break;
+            }
+        }
 
         return START_NOT_STICKY;
     }
@@ -354,22 +355,6 @@ public class WearableAiService extends HiddenCameraService {
                 //startup a task that will take and send a picture every 10 seconds
                 final int init_camera_delay = 2000; // 1000 milliseconds
                 final int delay = 200; //5Hz
-
-//                handler.postDelayed(new
-//                    Runnable() {
-//                        public void run () {
-//                            handler.postDelayed(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    if (!camera_lock) {
-//                                        takeAndSendPicture();
-//                                    }
-//                                    handler.postDelayed(this, delay);
-//                                }
-//                            }, delay);
-//                        }
-//                    }, init_camera_delay);
-
             } else {
 
                 //Open settings to grant permission for "Draw other apps".
@@ -421,8 +406,6 @@ public class WearableAiService extends HiddenCameraService {
         } else {
             uploadImage(img);
         }
-
-        //stopSelf();
     }
 
     @Override
@@ -463,7 +446,6 @@ public class WearableAiService extends HiddenCameraService {
         glbox_client_socket.setIp(glbox_address);
         glbox_client_socket.startSocket();
     }
-
 
     public void onPictureTaken(byte[] data, Camera camera) {
         System.out.println("ONE PICTURE TAKEN");
@@ -531,11 +513,7 @@ public class WearableAiService extends HiddenCameraService {
         long curr_time = System.currentTimeMillis();
         float now_frame_rate = 1000f * (1f / (float)(curr_time - last_sent_time));
         float currFrameRate = 1000f * (1f / (float)(curr_time - lastImageTime));
-//        Log.d(TAG, "lastImageTime: " + (long)lastImageTime);
-//        Log.d(TAG, "period: " + (curr_time - lastImageTime));
-//        Log.d(TAG, "currTime: " + curr_time);
-//        Log.d(TAG, "FPS real: " + currFrameRate);
-//        Log.d(TAG, "FPS save: " + now_frame_rate);
+
         lastImageTime = curr_time;
         if (now_frame_rate <= fps_to_send) {
             Camera.Parameters parameters = camera.getParameters();
@@ -604,45 +582,6 @@ public class WearableAiService extends HiddenCameraService {
         glbox_client_socket.sendBytes(img_id, curr_cam_image, "image");
     }
 
-//    //Audio recording service
-//    public void StartAudioService(String address_to_send) {
-//        Log.i(TAG, "Starting the Audio Service");
-//
-////        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
-////        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
-////        ContextCompat.startForegroundService(this, serviceIntent);
-//        Intent audioService = new Intent(this, AudioService.class);
-//        audioService.setAction(AudioService.ACTION_START_COMMS);
-//        audioService.putExtra("address_to_send", address_to_send);
-//        startService(audioService);
-//        // Bind to that service
-//        Intent intent = new Intent(this, AudioService.class);
-//        bindService(intent, audio_service_connection, Context.BIND_AUTO_CREATE);
-//        Log.i(TAG, "Sent start AudioService");
-//    }
-
-    public void StopAudioService() {
-        Log.i(TAG, "Stopping the foreground-thread");
-
-        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
-        this.getApplicationContext().stopService(serviceIntent);
-    }
-
-    public void updateAudioServiceIp(String ip) {
-        Log.i(TAG, "Stopping the foreground-thread");
-
-        Intent serviceIntent = new Intent(this.getApplicationContext(), AudioService.class);
-        this.getApplicationContext().stopService(serviceIntent);
-    }
-
-       public void sendAudioServiceNewIp(String message) {
-        if (!isMyServiceRunning(AudioService.class)) return;
-        Intent mIntent = new Intent(this, AudioService.class);
-        mIntent.setAction(AudioService.ACTION_NEW_IP);
-        mIntent.putExtra("address_to_send", message);
-        this.startService(mIntent);
-   }
-
     //check if service is running
     private boolean isMyServiceRunning(Class<?> serviceClass) {
         ActivityManager manager = (ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
@@ -653,24 +592,6 @@ public class WearableAiService extends HiddenCameraService {
         }
         return false;
     }
-
-//    /** Defines callbacks for service binding, passed to bindService() */
-//    private ServiceConnection audio_service_connection = new ServiceConnection() {
-//
-//        @Override
-//        public void onServiceConnected(ComponentName className,
-//                                       IBinder service) {
-//            // We've bound to LocalService, cast the IBinder and get LocalService instance
-//            AudioService.LocalBinder binder = (AudioService.LocalBinder) service;
-////            mService = binder.getService();
-////            mBound = true;
-//        }
-//
-//        @Override
-//        public void onServiceDisconnected(ComponentName arg0) {
-////            mBound = false;
-//        }
-//    };
 
     private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
         @Override

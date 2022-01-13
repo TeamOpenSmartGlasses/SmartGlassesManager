@@ -37,7 +37,7 @@
         </service>
         <service android:name="com.wearableintelligencesystem.androidsmartglasses.sensors.MuseService" android:enabled="true"/>
 
-        <service android:name="com.wearableintelligencesystem.androidsmartglasses.AudioService" android:enabled="true" android:exported="true"></service>
+        <service android:name="com.wearableintelligencesystem.androidsmartglasses.archive.AudioService" android:enabled="true" android:exported="true"></service>
 
         <!-- Receive Wi-Fi connection state changes -->
 <!--        <receiver android:name=".comms.WifiUtils$WifiReceiver">-->

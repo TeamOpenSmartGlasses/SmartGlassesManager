@@ -101,6 +101,10 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 class ASGRepresentative {
     private static final String TAG = "WearableAi_ASGRepresentative";
 
+    private static boolean killme = false;
+
+    private static Handler heart_beat_handler;
+
     //receive/send data stream
     PublishSubject<JSONObject> dataObservable;
     Disposable dataSub;
@@ -234,10 +238,14 @@ class ASGRepresentative {
     }
 
     public void startAsgConnection(){
+        killme = false;
+
         startAsgWebSocketConnection();
+
         audioSystem = new AudioSystem(context, dataObservable);
 
         //start first socketThread
+        Log.d(TAG, "running start socket");
         startSocket();
     }
 
@@ -254,21 +262,39 @@ class ASGRepresentative {
     }
 
     public void destroy(){
-        //kill this socket
-        shouldDie = true;
-        killSocket();
+        Log.d(TAG, "ASG rep destroying");
+        killme = true;
 
         //kill AudioSystem
         audioSystem.destroy();
 
         //kill asgWebSocket
         asgWebSocket.destroy();
+
+        //stop sockets
+        heart_beat_handler.removeCallbacksAndMessages(null);
+
+        //kill this socket
+        try {
+            SocketThread.join();
+            SendThread.join();
+            ReceiveThread.join();
+        } catch (InterruptedException e){
+            e.printStackTrace();
+            Log.d(TAG, "Error waiting for threads to joing");
+        }
+
+        killSocket();
+        Log.d(TAG, "ASG rep destroy complete");
+
     }
 
     //SOCKET STUFF
     public void startSocket(){
         //start first socketThread
+        Log.d(TAG, "socket val in startSocket: " + socket);
         if (socket == null) {
+            Log.d(TAG, "starting new SocketThread" + socket);
             mConnectState = 1;
             SocketThread = new Thread(new SocketThread());
             SocketThread.start();
@@ -277,7 +303,7 @@ class ASGRepresentative {
             //start a new handler thread to send heartbeats
             HandlerThread thread = new HandlerThread("HeartBeater");
             thread.start();
-            Handler heart_beat_handler = new Handler(thread.getLooper());
+            heart_beat_handler = new Handler(thread.getLooper());
             final int hb_delay = 3000;
             final int min_hb_delay = 1000;
             final int max_hb_delay = 2000;
@@ -291,6 +317,8 @@ class ASGRepresentative {
                 }
             }, hb_delay);
 
+        } else {
+            Log.d(TAG, "socket wasn't null, so not starting");
         }
 
     }
@@ -299,11 +327,17 @@ class ASGRepresentative {
         @Override
         public void run() {
             try {
+                if (killme){
+                    return;
+                }
                 Log.d(TAG, "Starting new socket, waiting for connection...");
                 serverSocket = new ServerSocket(SERVER_PORT);
                 //serverSocket.setSoTimeout(2000);
                 try {
                     socket = serverSocket.accept();
+                    if (killme){
+                        return;
+                    }
                     socket.setSoTimeout(10000);
                     Log.d(TAG, "Got socket connection.");
                     //output = new PrintWriter(socket.getOutputStream(), true);
@@ -350,7 +384,7 @@ class ASGRepresentative {
         //check if we are still connected.
         //if not , reconnect,
         //if we are connected, send a heart beat to make sure we are still connected
-        if (mConnectState == 0 && !shouldDie) {
+        if (mConnectState == 0 && !killme) {
             restartSocket();
         } else if (mConnectState == 2){
             //make sure we don't have a ton of outbound heart beats unresponded to
@@ -373,6 +407,9 @@ class ASGRepresentative {
         public void run() {
             //System.out.println("Receive Started, mconnect: " + mConnectState);
             while (true) {
+                if (killme){
+                    return;
+                }
                 if (mConnectState != 2){
                     break;
                 }
@@ -479,20 +516,25 @@ class ASGRepresentative {
 
     public void killSocket(){
         try {
+            Log.d(TAG, "Closing socket, input, serverSocket, etc.");
             if (serverSocket != null && (!serverSocket.isClosed())) {
-                Log.d(TAG, "Closing socket, input, serverSocket, etc.");
                 serverSocket.close();
+                serverSocket = null;
             }
             if (socket != null){
                 socket.close();
+                socket = null;
             }
             if (output != null){
                 output.close();
+                output = null;
             }
             if (input != null){
                 input.close();
+                input = null;
             }
         } catch (IOException e) {
+            Log.d(TAG, "killSocket failed");
             e.printStackTrace();
         }
     }
@@ -548,6 +590,9 @@ class ASGRepresentative {
         public void run() {
             queue.clear();
             while (true){
+                if (killme){
+                    return;
+                }
                 if (mConnectState != 2){
                     break;
                 }
