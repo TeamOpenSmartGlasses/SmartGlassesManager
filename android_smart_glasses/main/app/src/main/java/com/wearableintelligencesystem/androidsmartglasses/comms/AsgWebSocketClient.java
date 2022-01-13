@@ -110,14 +110,16 @@ public class AsgWebSocketClient extends WebSocketClient {
         Log.d(TAG, "Stopping Web socket");
         connected = 0;
         if (! isClosed()) {
-            try {
-                closeBlocking();
-                Log.d(TAG, "Successfully closed");
-            } catch (InterruptedException e) {
-                Log.d(TAG, "Failed to close");
-                e.printStackTrace();
-                return false;
-            }
+            close();
+            getConnection().closeConnection(1000, "closing");
+//            try {
+//                closeBlocking();
+//                Log.d(TAG, "Successfully closed");
+//            } catch (InterruptedException e) {
+//                Log.d(TAG, "Failed to close");
+//                e.printStackTrace();
+//                return false;
+//            }
         }
         return true;
     }

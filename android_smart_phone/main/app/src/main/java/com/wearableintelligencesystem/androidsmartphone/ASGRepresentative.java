@@ -275,14 +275,14 @@ class ASGRepresentative {
         heart_beat_handler.removeCallbacksAndMessages(null);
 
         //kill this socket
-        try {
-            SocketThread.join();
-            SendThread.join();
-            ReceiveThread.join();
-        } catch (InterruptedException e){
-            e.printStackTrace();
-            Log.d(TAG, "Error waiting for threads to joing");
-        }
+//        try {
+//            SocketThread.join();
+//            SendThread.join();
+//            ReceiveThread.join();
+//        } catch (InterruptedException e){
+//            e.printStackTrace();
+//            Log.d(TAG, "Error waiting for threads to joing");
+//        }
 
         killSocket();
         Log.d(TAG, "ASG rep destroy complete");

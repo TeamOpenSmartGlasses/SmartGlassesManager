@@ -74,7 +74,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
    public void stopWearableAiService() {
-        Log.d(TAG, "Stopping WearableAI service");
+//       Log.d(TAG, "Kill all the children of service");
+//       unbindWearableAiAspService();
+
+       Log.d(TAG, "Stopping WearableAI service");
         unbindWearableAiAspService();
 
         if (!isMyServiceRunning(WearableAiAspService.class)) return;

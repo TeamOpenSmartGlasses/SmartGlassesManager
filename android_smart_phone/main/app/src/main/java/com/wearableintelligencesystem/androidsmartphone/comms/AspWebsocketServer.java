@@ -152,7 +152,7 @@ public class AspWebsocketServer extends WebSocketServer {
         dataSub.dispose();
 
         try{
-            stop(1000);
+            stop(400);
         } catch (InterruptedException e){
             e.printStackTrace();
         }

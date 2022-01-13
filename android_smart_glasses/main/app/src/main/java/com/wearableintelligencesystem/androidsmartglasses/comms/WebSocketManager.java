@@ -59,7 +59,7 @@ public class WebSocketManager implements Runnable{
         mHandlerThread = new HandlerThread("WebSocketHandler");
         mHandlerThread.start();
         handler = new Handler(mHandlerThread.getLooper());
-        delay = 3000; // 1000 milliseconds == 1 second
+        delay = 1000; // 1000 milliseconds == 1 second
 
         if (port == null){
             port = "8887";
@@ -117,7 +117,7 @@ public class WebSocketManager implements Runnable{
                     ws.setObservable(dataObservable);
                     ws.setSourceName(mySourceName);
                     ws.setReuseAddr(true);
-                    connected = ws.connectBlocking(5000, TimeUnit.MILLISECONDS); //add this so we don't get stuck trying to connect if the ip address updated
+                    connected = ws.connectBlocking(2000, TimeUnit.MILLISECONDS); //add this so we don't get stuck trying to connect if the ip address updated
                     Log.d(TAG, "Web socket connected: " + connected);
                 } catch (Exception e) {
                     connected = false;
