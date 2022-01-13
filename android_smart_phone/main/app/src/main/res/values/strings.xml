@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WIS</string>
+    <string name="app_name">Wearable Intelligence System ASP</string>
     <string name="key">TEMPORARYKEY_CHANGETHISKEY</string>
     <string name="no_camera_access" translatable="false">Please grant camera permissions.</string>
     <string name="medium_text">text</string>

@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartglasses;
+package com.wearableintelligencesystem.androidsmartglasses.archive;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;

@@ -9,6 +9,7 @@ import com.wearableintelligencesystem.androidsmartglasses.comms.WebSocketManager
 import android.content.Intent;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 
@@ -32,6 +33,10 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 //singleton clientsocket class for connecting o ASP
 public class ASPClientSocket {
+    public static boolean killme = false;
+
+    private static Handler handler;
+
     public static String TAG = "WearableAiAsg_AspClientSocket";
     //data observable we can send data through
     private static PublishSubject<JSONObject> dataObservable;
@@ -160,7 +165,7 @@ public class ASPClientSocket {
             //start a new handler thread to send heartbeats
             HandlerThread thread = new HandlerThread("HeartBeater");
             thread.start();
-            Handler handler = new Handler(thread.getLooper());
+            handler = new Handler(thread.getLooper());
             final int delay = 1000;
             final int min_delay = 3000;
             final int max_delay = 4000;
@@ -170,6 +175,7 @@ public class ASPClientSocket {
                     heartBeat();
                     //random delay for heart beat so as to disallow synchronized failure between client and server
                     int random_delay = rand.nextInt((max_delay - min_delay) + 1) + min_delay;
+                    Log.d(TAG, "Run next heart beat in n seconds, n = " + random_delay);
                     handler.postDelayed(this, random_delay);
                 }
             }, delay);
@@ -177,7 +183,7 @@ public class ASPClientSocket {
     }
 
     private void heartBeat(){
-        //check if we are still connected.
+        //check if we are still connected
         //if not , reconnect,
         //we don't need to actively send heart beats from the client, as it's assumed that we are ALWAYS streaming data. Later, if we have periods of time where no data is sent, we will want to send a heart beat perhaps. but the client doesn't really need to, we just need to check if we are still connected
         if (mConnectState == 0) {
@@ -303,6 +309,9 @@ public class ASPClientSocket {
     static class SocketThread implements Runnable {
         public void run() {
             try {
+                if (killme){
+                    return;
+                }
                 System.out.println("TRYING TO CONNECT AspClient Socket on IP: " + SERVER_IP + " and port: " + SERVER_PORT);
                 socket = new Socket();
                 socket.setSoTimeout(5000);
@@ -369,6 +378,9 @@ public class ASPClientSocket {
         @Override
         public void run() {
             while (true) {
+                if (killme){
+                    return;
+                }
                 if (mConnectState != 2){
                     System.out.println("MCONNECTED IS FALSE IN REEIVE THREAD, BREAKING");
                     break;
@@ -475,6 +487,9 @@ public class ASPClientSocket {
             data_queue.clear();
             type_queue.clear();
             while (true) {
+                if (killme){
+                    return;
+                }
                 if (packets_in_buf > 5) { //if 5 packets in buffer (NOT QUEUE, BUF NETWORK BUFFER), restart socket
                     break;
                 }
@@ -632,6 +647,21 @@ public class ASPClientSocket {
             data.put(MessageTypes.TIMESTAMP, currTime);
             dataObservable.onNext(data);
         } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void destroy(){
+        killme = true;
+
+        aspWebSocketManager.destroy();
+        handler.removeCallbacksAndMessages(null);
+
+        try {
+            SendThread.join();
+            ReceiveThread.join();
+            SocketThread.join();
+        } catch (InterruptedException e){
             e.printStackTrace();
         }
     }

@@ -35,7 +35,7 @@ import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRe
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 import com.wearableintelligencesystem.androidsmartphone.facialrecognition.FaceRecApi;
 import com.wearableintelligencesystem.androidsmartphone.nlp.WearableReferencerAutocite;
-import com.wearableintelligencesystem.androidsmartphone.speechrecvosk.SpeechRecVosk;
+import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
 import com.wearableintelligencesystem.androidsmartphone.utils.NetworkUtils;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
 
@@ -116,6 +116,7 @@ public class WearableAiAspService extends LifecycleService {
 
   @Override
   public void onCreate() {
+      super.onCreate();
    
     //setup room database interfaces
     mPhraseRepository = new PhraseRepository(getApplication());
@@ -259,6 +260,7 @@ public class WearableAiAspService extends LifecycleService {
                     startForeground(1234, updateNotification());
                     break;
                 case ACTION_STOP_FOREGROUND_SERVICE:
+                    stopForeground(true);
                     stopSelf();
                     break;
             }
@@ -311,6 +313,9 @@ public class WearableAiAspService extends LifecycleService {
         //stop advertising broadcasting IP
         adv_handler.removeCallbacksAndMessages(null);
 
+        //kill asg connection
+        asgRep.destroy();
+
         //kill data transmitters
         dataObservable.onComplete();
         audioObservable.onComplete();
@@ -318,12 +323,15 @@ public class WearableAiAspService extends LifecycleService {
         //kill mediapipe
         //mediaPipeSystem.destroy();
 
+
         //kill vosk
         speechRecVosk.destroy();
 
         //close room database(s)
         WearableAiRoomDatabase.destroy();
-        stopForeground(true);
+
+        //call parent destroy
+        super.onDestroy();
     }
 
     //allow ui to control Autociter/wearable referencer

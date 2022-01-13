@@ -19,6 +19,7 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 public class AspWebsocketServer extends WebSocketServer {
     //data observable we can send data through
     private static PublishSubject<JSONObject> dataObservable;
+    private static Disposable dataSub;
 
     private static int connected = 0;
 
@@ -106,7 +107,7 @@ public class AspWebsocketServer extends WebSocketServer {
     //receive observable to send and receive data
     public void setObservable(PublishSubject<JSONObject> observable){
         dataObservable = observable;
-        Disposable dataSub = dataObservable.subscribe(i -> handleDataStream(i));
+        dataSub = dataObservable.subscribe(i -> handleDataStream(i));
     }
 
     //this receives data from the data observable. For now, this class decides what to send and what not to send to the ASG
@@ -146,13 +147,16 @@ public class AspWebsocketServer extends WebSocketServer {
 
     //need to call this so if we get "Force Stop"ped, we will clean up sockets so we can connect on restart
     public void destroy(){
+        Log.d(TAG, "destroying");
         connected = 0;
-        //dataObservable.unsubscribe();
+        dataSub.dispose();
+
         try{
-            stop(3);
+            stop(1000);
         } catch (InterruptedException e){
             e.printStackTrace();
         }
+        Log.d(TAG, "destroy complete");
     }
 
 
