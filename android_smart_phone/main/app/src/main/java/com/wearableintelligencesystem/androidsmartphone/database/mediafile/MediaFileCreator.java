@@ -24,7 +24,6 @@ public class MediaFileCreator {
 
         MediaFileEntity mediaFile = new MediaFileEntity(localPath, mediaType, startTimestamp, endTimestamp);
         long id = repo.insert(mediaFile);  // This insert blocks until database write has completed
-        Log.d(TAG, "Saved mediaFile to database");
         return id;
     }
 }

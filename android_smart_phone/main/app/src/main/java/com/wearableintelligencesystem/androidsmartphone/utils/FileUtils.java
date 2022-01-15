@@ -49,7 +49,6 @@ public class FileUtils {
 
 
     private static long savePictureToDatabase(String localPath, long timestamp, MediaFileRepository mMediaFileRepository){
-        Log.d(TAG, "SAVING IMAGE : " + localPath);
         long imageId = MediaFileCreator.create(localPath, "image", timestamp, timestamp, mMediaFileRepository);
         return imageId;
     }
@@ -83,7 +82,6 @@ public class FileUtils {
        String state = Environment.getExternalStorageState();
        if (Environment.MEDIA_MOUNTED.equals(state)) {
         // if storage is mounted return true
-          Log.v(TAG, "Yes, can write to external storage.");
           return true;
        }
        return false;

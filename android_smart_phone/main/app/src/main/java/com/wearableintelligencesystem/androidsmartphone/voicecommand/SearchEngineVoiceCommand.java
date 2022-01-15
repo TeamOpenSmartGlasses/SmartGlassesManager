@@ -23,8 +23,8 @@ class SearchEngineVoiceCommand extends VoiceCommand {
     SearchEngineVoiceCommand(Context context){
         super(context);
         this.commandName = "search engine";
-        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"wikipedia", "search engine", "google", "search for", "search web for", "show web results for"}));
-        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"search web for", "show web results for"}));
+        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"search for"}));
+        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"search for"}));
     }
 
     @Override

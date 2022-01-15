@@ -46,4 +46,22 @@ public class PersonViewModel extends AndroidViewModel {
 
     }
 
+    public List<PersonEntity> getAllPersonsSnapshotTimePeriod(long startTime, long endTime) {
+        try{
+            return mRepository.getAllPersonsSnapshotTimePeriod(startTime, endTime);
+        } catch (ExecutionException | InterruptedException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String getPersonsName(long id) {
+        try{
+            return mRepository.getPersonsName(id);
+        } catch (ExecutionException | InterruptedException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

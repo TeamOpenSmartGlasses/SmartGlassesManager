@@ -26,8 +26,6 @@ import java.util.List;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseViewModel;
 
-import com.wearableintelligencesystem.androidsmartphone.ui.ItemClickListener;
-
 import com.wearableintelligencesystem.androidsmartphone.R;
 
 /**
@@ -35,7 +33,7 @@ import com.wearableintelligencesystem.androidsmartphone.R;
  * Use the {@link StreamFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AllTranscriptsUi extends Fragment implements ItemClickListener {
+public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhrase {
     public String TAG = "WearableAi_AllTransriptsUi";
 
     public static final int NEW_PHRASE_ACTIVITY_REQUEST_CODE = 1;

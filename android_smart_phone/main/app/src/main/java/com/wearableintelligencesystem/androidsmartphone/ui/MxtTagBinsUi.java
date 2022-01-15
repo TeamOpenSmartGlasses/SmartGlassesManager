@@ -16,21 +16,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import java.util.ArrayList;
-import android.widget.EditText;
 
-import android.text.TextUtils;
-
-import java.util.Arrays;
 import java.util.List;
-import java.lang.Long;
 
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandViewModel;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseViewModel;
 
@@ -39,23 +31,19 @@ import androidx.lifecycle.LiveData;
 import android.widget.AdapterView;
 import android.widget.TextView;
 
-import com.wearableintelligencesystem.androidsmartphone.ui.ItemClickListener;
-
 import com.wearableintelligencesystem.androidsmartphone.R;
 
 //menu imports:
-import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.TextView;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link StreamFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MxtTagBinsUi extends Fragment implements ItemClickListener {
+public class MxtTagBinsUi extends Fragment implements ItemClickListenerPhrase {
     public String TAG = "WearableAi_MxtTagBinsUi";
 
     private final String CURRENT_TAG_KEY = "CURRENT_TAG_KEY";

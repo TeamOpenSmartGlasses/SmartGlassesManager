@@ -110,6 +110,9 @@ public abstract class PersonDao {
     @Query("SELECT * FROM PersonTable WHERE ID = :id AND argKey= 'event' AND argValue = 'seen' ORDER BY timestamp DESC LIMIT 1") //the last time we saw this person
     abstract PersonEntity getPersonLastSeen(long id);
 
+    @Query("SELECT * from PersonTable WHERE argKey= 'event' AND argValue = 'seen' AND (timestamp > :startTime) AND (timestamp < :endTime) ORDER BY timestamp DESC")
+    abstract List<PersonEntity> getAllPersonsSnapshotTimePeriod(long startTime, long endTime);
+
     @Query("SELECT * FROM PersonTable WHERE argKey = 'new_face_name' AND argValue = 'unknown' ORDER BY timestamp DESC")
     abstract List<PersonEntity> getUnknownPersonsSnapshot();
 

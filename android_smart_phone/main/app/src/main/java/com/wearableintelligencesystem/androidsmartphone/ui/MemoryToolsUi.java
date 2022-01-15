@@ -64,6 +64,13 @@ public class MemoryToolsUi extends Fragment {
             }
         });
 
+        final Button memoryTimelineButton = view.findViewById(R.id.memory_timeline_button);
+        memoryTimelineButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.d(TAG, "clicked mxt_tag_bins button");
+                navController.navigate(R.id.nav_memory_timeline);
+            }
+        });
 
     }
 

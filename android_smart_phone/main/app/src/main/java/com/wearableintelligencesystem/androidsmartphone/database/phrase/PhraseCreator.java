@@ -19,7 +19,7 @@ import java.util.Locale;
 import android.util.Log;
 
 public class PhraseCreator {
-    public static final String LOG_TAG = PhraseCreator.class.getName();
+    public static final String TAG = "WearableAi_PhraseCreator";
 
     public static long create(String words, String medium, Context context, PhraseRepository repo) {
         /*
@@ -56,6 +56,7 @@ public class PhraseCreator {
                 repo.update(id, location, address);
             }
             else{
+                Log.d(TAG, "LOCATION IS NULL");
             }
         });
         return id;
