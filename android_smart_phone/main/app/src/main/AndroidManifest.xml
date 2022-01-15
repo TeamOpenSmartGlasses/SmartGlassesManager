@@ -3,26 +3,30 @@
     package="com.wearableintelligencesystem.androidsmartphone">
 
   <uses-sdk
-      android:minSdkVersion="21"
-      android:targetSdkVersion="27" />
+      android:minSdkVersion="28"
+      android:targetSdkVersion="30" />
 
-  <!-- For using the camera -->
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" />
-    <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
+<!--    STORAGE-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<!--    NETWORK-->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+<!--    MISC-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.SEND_SMS"/>
+<!--    LOCATION-->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
   <application
       android:allowBackup="true"
       android:icon="@mipmap/ic_launcher"
       android:label="Wearable Intelligence System ASP"
       android:roundIcon="@mipmap/ic_launcher_round"
+      android:usesCleartextTraffic="true"
       android:supportsRtl="true"
       android:theme="@style/AppTheme"
       >

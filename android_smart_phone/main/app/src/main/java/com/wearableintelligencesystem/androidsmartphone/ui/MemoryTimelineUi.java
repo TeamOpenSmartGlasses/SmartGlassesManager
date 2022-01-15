@@ -1,7 +1,5 @@
 package com.wearableintelligencesystem.androidsmartphone.ui;
 
-// some code taken from https://github.com/stairs1/memory-expansion-tools/blob/master/AndroidMXT/app/src/main/java/com/memoryexpansiontools/mxt/StreamFragment.java
-
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
@@ -16,42 +14,54 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.sql.Ref;
+import java.util.ArrayList;
+import java.util.List;
+
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
-import java.util.List;
-
+import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileViewModel;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandViewModel;
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseViewModel;
+
+import androidx.lifecycle.LiveData;
 
 import com.wearableintelligencesystem.androidsmartphone.R;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link StreamFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class MxtCacheUi extends Fragment implements ItemClickListenerPhrase {
-    public String TAG = "WearableAi_MxtCacheUi";
+//menu imports:
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+
+public class MemoryTimelineUi extends Fragment implements ItemClickListenerReference {
+    public String TAG = "WearableAi_MemoryTimelineUI";
+
+    private LiveData<List<Reference>> tagBinReferences;
+    private Observer<List<Reference>> tagBinReferencesObserver;
+    private ReferenceListAdapter referenceListAdapter;
+    private ArrayAdapter<String> tagMenuAdapter;
+    private AutoCompleteTextView tagMenu;
 
     private VoiceCommandViewModel mVoiceCommandViewModel;
-    private PhraseViewModel mPhraseViewModel;
-    
+
+    private String currentTag;
+
     private NavController navController;
 
-    @Override
-    public void onClick(View view, Phrase phrase){
-        Log.d(TAG, "Click on transcript");
+    private MediaFileViewModel mMediaFileViewModel;
 
-        //open a fragment which shows in-depth, contextual view of that transcript
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("phrase", phrase);
-        navController.navigate(R.id.nav_phrase_context, bundle);
+    @Override
+    public void onClick(View view, Reference reference){
+        Log.d(TAG, "Click on memory");
+
+//        //open a fragment which shows in-depth, contextual view of that transcript
+//        Bundle bundle = new Bundle();
+//        bundle.putSerializable("reference", reference);
+//        navController.navigate(R.id.action_nav_mxt_tag_bins_to_nav_reference_context, bundle);
     }
 
 
-    public MxtCacheUi() {
+    public MemoryTimelineUi() {
         // Required empty public constructor
     }
 
@@ -61,32 +71,43 @@ public class MxtCacheUi extends Fragment implements ItemClickListenerPhrase {
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        Log.d(TAG, "MemoryTimelineUI onCreateView");
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.mxt_cache_fragment, container, false);
+        return inflater.inflate(R.layout.memory_timeline_fragment, container, false);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
+        super.onViewCreated(view, savedInstanceState);
+
+        Log.d(TAG, "MXT TAG BINS onViewCreated");
+
         //create NavController
-        navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
+        navController = Navigation.findNavController(getView());
+
+        //get view models
+        mMediaFileViewModel = new ViewModelProvider(this).get(MediaFileViewModel.class);
 
         //setup list of phrases
-        RecyclerView recyclerView = view.findViewById(R.id.phrase_wall);
+        RecyclerView recyclerView = view.findViewById(R.id.reference_wall);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setReverseLayout(true);
-        final PhraseListAdapter adapter = new PhraseListAdapter(getContext());
+        final ReferenceListAdapter adapter = new ReferenceListAdapter(getContext(), mMediaFileViewModel);
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() -1);
 
-
         // Get a new or existing ViewModel from the ViewModelProvider.
         mVoiceCommandViewModel = new ViewModelProvider(this).get(VoiceCommandViewModel.class);
-        mPhraseViewModel = new ViewModelProvider(this).get(PhraseViewModel.class);
 
         //here we need to get all of the MXT commands, and then pull in each phrase associated with each command
         mVoiceCommandViewModel.getMxtCache().observe(getActivity(), new Observer<List<Phrase>>() {
@@ -99,24 +120,18 @@ public class MxtCacheUi extends Fragment implements ItemClickListenerPhrase {
 //                List<Long> phraseIds = new ArrayList<Long>();
 //                voiceCommands.forEach( (voiceCommand) -> phraseIds.add(voiceCommand.getTranscriptId()) );
 //                Log.d(TAG, Arrays.toString(phraseIds.toArray()));
-//                List<Phrase> phrases = mPhraseViewModel.getPhrases(phraseIds);
-                adapter.setPhrases(phrases);
+//                List<Reference> phrases = mReferenceViewModel.getReferences(phraseIds);
+                List<Reference> references = new ArrayList<Reference>();
+                for (Phrase p : phrases){
+                    Reference new_ref = new Reference();
+                    new_ref.setTimestamp(p.getTimestamp());
+                    new_ref.setSummary(p.getPhrase());
+                    new_ref.setTitle("Voice Note");
+                    references.add(new_ref);
+                }
+                adapter.setReferences(references);
             }
         });
 
-//        EditText editText = view.findViewById(R.id.add_voiceCommand_text);
-//        Button submitButton = view.findViewById(R.id.submit_button);
-//        submitButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                String words = editText.getText().toString();
-//                if(!words.isEmpty()) {
-//                    editText.setText("");
-//                    mVoiceCommandViewModel.addVoiceCommand(words, getString(R.string.medium_text));
-//                }
-//            }
-//        });
-
     }
 }
-

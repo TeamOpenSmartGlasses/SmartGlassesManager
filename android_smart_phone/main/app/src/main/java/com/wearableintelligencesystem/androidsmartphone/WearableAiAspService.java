@@ -284,7 +284,6 @@ public class WearableAiAspService extends LifecycleService {
 
     private void sendImageToFaceRec(JSONObject data){
         try{
-            Log.d(TAG, data.toString());
             String jpgImageString = data.getString(MessageTypes.JPG_BYTES_BASE64);
             byte [] jpgImage = Base64.decode(jpgImageString, Base64.DEFAULT);
             long imageTime = data.getLong(MessageTypes.TIMESTAMP);
@@ -302,7 +301,6 @@ public class WearableAiAspService extends LifecycleService {
     }
 
     private void saveFacialEmotion(String faceEmotion){
-        Log.d(TAG, "SAVING FACIAL EMOTION: " + faceEmotion);
         FacialEmotionCreator.create(faceEmotion, "pov_camera_ASG", getApplicationContext(), mFacialEmotionRepository);
     }
 

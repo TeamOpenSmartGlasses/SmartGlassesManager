@@ -249,7 +249,6 @@ class ASGRepresentative {
         startSocket();
     }
 
-
     public void startAsgWebSocketConnection(){
         Log.d(TAG, "Starting WebSocket Server");
         //String address = "localhost:8887";

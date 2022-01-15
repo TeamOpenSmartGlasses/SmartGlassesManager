@@ -16,10 +16,9 @@ import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.R;
 
 public class PhraseListAdapter extends RecyclerView.Adapter<PhraseListAdapter.PhraseViewHolder> {
-    private ItemClickListener clickListener;
+    private ItemClickListenerPhrase clickListener;
     private final LayoutInflater mInflater;
     private List<Phrase> mPhrases; // Cached copy of phrases
-
 
     class PhraseViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         private final TextView phraseItemView;
@@ -38,7 +37,7 @@ public class PhraseListAdapter extends RecyclerView.Adapter<PhraseListAdapter.Ph
         }
     }
 
-    public void setClickListener(ItemClickListener itemClickListener) {
+    public void setClickListener(ItemClickListenerPhrase itemClickListener) {
         this.clickListener = itemClickListener;
     }
 
@@ -46,7 +45,7 @@ public class PhraseListAdapter extends RecyclerView.Adapter<PhraseListAdapter.Ph
 
     @Override
     public PhraseViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = mInflater.inflate(R.layout.recyclerview_item, parent, false);
+        View itemView = mInflater.inflate(R.layout.phrase_recyclerview_item, parent, false);
         PhraseViewHolder holder = new PhraseViewHolder(itemView);
         return holder;
     }
@@ -56,7 +55,8 @@ public class PhraseListAdapter extends RecyclerView.Adapter<PhraseListAdapter.Ph
         if (mPhrases != null) {
             Phrase current = mPhrases.get(position);
 //            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("L-d hh:mma").withZone(ZoneId.systemDefault());
-            SimpleDateFormat formatski = new SimpleDateFormat("L-d hh:mma");
+            //SimpleDateFormat formatski = new SimpleDateFormat("L-d hh:mma");
+            SimpleDateFormat formatski = new SimpleDateFormat("EEE LLL d, yy, H:mm");
             holder.phraseItemView.setText(formatski.format(current.getTimestamp()) + " - " + current.getPhrase());
         } else {
             // Covers the case of data not being ready yet.

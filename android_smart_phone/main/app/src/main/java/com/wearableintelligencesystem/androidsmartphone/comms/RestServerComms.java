@@ -28,6 +28,7 @@ public class RestServerComms {
     public static final String NATURAL_LANGUAGE_QUERY_SEND_ENDPOINT = "/natural_language_query";
     public static final String VISUAL_SEARCH_QUERY_SEND_ENDPOINT = "/visual_search_search";
     public static final String SEARCH_ENGINE_QUERY_SEND_ENDPOINT = "/search_engine_search";
+    public static final String MAP_IMAGE_QUERY_SEND_ENDPOINT = "/get_static_map";
 
     public static RestServerComms getInstance(Context c){
         if (restServerComms == null){
@@ -41,6 +42,7 @@ public class RestServerComms {
         mContext = context;
         mRequestQueue = Volley.newRequestQueue(mContext);
         serverUrl = "https://wis.emexwearables.com/api";
+//        serverUrl = "http://192.168.1.188:5000";
     }
 
     //handles requesting data, sending data

@@ -53,6 +53,20 @@ public class PersonRepository {
         return future.get();
     }
 
+    public List<PersonEntity> getAllPersonsSnapshotTimePeriod(long startTime, long endTime) throws ExecutionException, InterruptedException {
+
+        Callable<List<PersonEntity>> callable = new Callable<List<PersonEntity>>() {
+            @Override
+            public List<PersonEntity> call() throws Exception {
+                return mPersonDao.getAllPersonsSnapshotTimePeriod(startTime, endTime);
+            }
+        };
+
+        Future<List<PersonEntity>> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        return future.get();
+    }
+
     public List<PersonEntity> getAllKnownPersonsNamesSnapshot() throws ExecutionException, InterruptedException {
 
         Callable<List<PersonEntity>> callable = new Callable<List<PersonEntity>>() {

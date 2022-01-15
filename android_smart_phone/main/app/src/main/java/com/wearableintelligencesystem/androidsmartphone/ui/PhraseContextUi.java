@@ -2,22 +2,20 @@ package com.wearableintelligencesystem.androidsmartphone.ui;
 
 // some code taken from https://github.com/stairs1/memory-expansion-tools/blob/master/AndroidMXT/app/src/main/java/com/memoryexpansiontools/mxt/StreamFragment.java
 
+import android.location.Location;
 import android.os.Bundle;
 
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+
 import java.util.ArrayList;
-import android.widget.EditText;
+
 import android.os.Handler;
 
 import android.widget.LinearLayout;
@@ -26,9 +24,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import java.io.File;
 
 //bitmap utils
+import com.wearableintelligencesystem.androidsmartphone.comms.RestServerComms;
+import com.wearableintelligencesystem.androidsmartphone.comms.VolleyCallback;
+import com.wearableintelligencesystem.androidsmartphone.database.person.PersonEntity;
+import com.wearableintelligencesystem.androidsmartphone.database.person.PersonViewModel;
 import com.wearableintelligencesystem.androidsmartphone.utils.BitmapJavaUtils;
 
 //date/time
@@ -41,33 +42,23 @@ import java.time.format.DateTimeFormatter;
 import java.time.Instant;
 import java.time.ZoneId;
 
-import java.util.Arrays;
 import java.util.List;
 import java.lang.Long;
 
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseViewModel;
 
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandViewModel;
 
 import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileEntity;
 import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileViewModel;
 
-import androidx.lifecycle.LiveData;
-
-import android.widget.AdapterView;
-
-import com.wearableintelligencesystem.androidsmartphone.ui.ItemClickListener;
-
 import com.wearableintelligencesystem.androidsmartphone.R;
 
 //menu imports:
-import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.TextView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 //shows the context that a phrase took place, including images, maps, time, surrounding transcripts, etc.
 //also shows points in time before the given phrase and after the given phrase
@@ -78,12 +69,17 @@ public class PhraseContextUi extends Fragment {
     private VoiceCommandViewModel mVoiceCommandViewModel;
     private MediaFileViewModel mMediaFileViewModel;
     private PhraseViewModel mPhraseViewModel;
+    private PersonViewModel mPersonViewModel;
 
     private Phrase mainPhrase;
     private MediaFileEntity mainImage;
 
     private final int memInterval = 3000; //the amount of time between each memory we show, in milliseconds
     private final int numMemories = 10; //the number of memories we show before and after the main memory
+    private final int personIntervalSeconds = 60 * 15; //number seconds before and after phrase to show people you saw
+
+    private ImageView mapImageView;
+    private TextView personListTextView;
 
     public PhraseContextUi() {
         // Required empty public constructor
@@ -111,10 +107,36 @@ public class PhraseContextUi extends Fragment {
         mVoiceCommandViewModel = new ViewModelProvider(this).get(VoiceCommandViewModel.class);
         mMediaFileViewModel = new ViewModelProvider(this).get(MediaFileViewModel.class);
         mPhraseViewModel = new ViewModelProvider(this).get(PhraseViewModel.class);
+        mPersonViewModel = new ViewModelProvider(this).get(PersonViewModel.class);
 
         //populate the image gallery with images
         LinearLayout imageGallery = view.findViewById(R.id.image_gallery);
         LayoutInflater localInflater = LayoutInflater.from(getActivity());
+
+        //get the map image view
+        mapImageView = (ImageView) view.findViewById(R.id.map_image_view);
+
+        //set image view to location
+        Location currentLocation = mainPhrase.getLocation();
+        if (currentLocation != null) {
+            Log.d(TAG, "GOT CURRET LOCATION");
+            double longitude = currentLocation.getLongitude();
+            double latitude = currentLocation.getLatitude();
+            updateMapImage(latitude, longitude);
+        } else {
+            Log.d(TAG, "CURRENT LOCATION FOR PHRASE IS NULL");
+        }
+
+        //get the person list text view
+        personListTextView = (TextView) view.findViewById(R.id.people_list);
+        //get all people that were seen at that time
+        long phraseTime = mainPhrase.getTimestamp();
+        long startTime = phraseTime - (personIntervalSeconds * 1000);
+        long endTime = phraseTime + (personIntervalSeconds * 1000);
+        List<PersonEntity> peopleSeen = mPersonViewModel.getAllPersonsSnapshotTimePeriod(startTime, endTime);
+        if (peopleSeen != null){
+            updatePeopleSeen(peopleSeen);
+        }
 
         for (int i = (-1 * numMemories); i < numMemories; i++){ //number should be odd so there is a center image, even number on both sides
             //get image
@@ -158,12 +180,71 @@ public class PhraseContextUi extends Fragment {
         }, 10);
     }
 
+    public void updateMapImage(double latitude, double longitude){
+        try {
+            JSONObject params = new JSONObject();
+            params.put("center", Double.toString(latitude) + "," + Double.toString(longitude));
+            params.put("locations", Double.toString(latitude) + "," + Double.toString(longitude));
+            sendMapImageQuery(params);
+        } catch(JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMapImageQuery(JSONObject params){
+        Log.d(TAG, "Running sendMapImageQuery");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("params", params);
+            RestServerComms.getInstance(getActivity()).restRequest(RestServerComms.MAP_IMAGE_QUERY_SEND_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                public void onSuccess(JSONObject result){
+                    Log.d(TAG, "GOT map image REST RESULT:");
+                    Log.d(TAG, result.toString());
+                    //display in ui
+                    try{
+                        String image_b64 = result.getString("image_b64");
+                        byte [] imgBytes = Base64.decode(image_b64, Base64.DEFAULT);
+                        Bitmap imgBitmap = BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
+                        mapImageView.setImageBitmap(imgBitmap);
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                public void onFailure(){
+                    Log.d(TAG, "Failed to get map view");
+                }
+
+            });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 
     public String getPrettyDate(long timestamp){
         LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm:ssa");
         String prettyTime = date.format(formatter);
         return prettyTime;
+    }
+
+    private void updatePeopleSeen(List<PersonEntity> peopleSeen){
+        String displayString = "";
+        List<Long> personIdsSeen = new ArrayList<Long>();
+        for (PersonEntity pe : peopleSeen){
+            Log.d(TAG, "PERSON:");
+            Log.d(TAG, "---argVal: " + pe.getArgValue());
+            Log.d(TAG, "---argKey: " + pe.getArgKey());
+            Log.d(TAG, "---personId: " + pe.getPersonId());
+            long personId = pe.getPersonId();
+            if (! personIdsSeen.contains(personId)){
+                String displayName = mPersonViewModel.getPersonsName(personId);
+                displayString = displayString + "- " + displayName + "\n";
+                personIdsSeen.add(personId);
+            }
+        }
+        personListTextView.setText(displayString);
     }
 
 }

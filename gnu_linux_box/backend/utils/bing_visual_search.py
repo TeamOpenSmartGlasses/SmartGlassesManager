@@ -16,7 +16,7 @@ def bing_visual_search(img_bytes):
     BASE_URI = "https://api.bing.microsoft.com/v7.0/images/visualsearch"
 
     #set azure API key
-    with open('./utils/azure_key.txt') as f:
+    with open('./keys/azure_key.txt') as f:
         SUBSCRIPTION_KEY = f.readline().strip()
 
     HEADERS = {'Ocp-Apim-Subscription-Key': SUBSCRIPTION_KEY}

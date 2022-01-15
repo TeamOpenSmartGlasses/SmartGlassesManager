@@ -3,7 +3,19 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/rounded_corners_bg.xml" value="0.21614583333333334" />
+        <entry key="app/src/main/res/drawable/rounded_shadow_bg.xml" value="0.21614583333333334" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.203125" />
+        <entry key="app/src/main/res/layout/image_item.xml" value="0.2015625" />
+        <entry key="app/src/main/res/layout/memory_timeline_fragment.xml" value="0.2046875" />
+        <entry key="app/src/main/res/layout/memory_tools_fragment.xml" value="0.21875" />
+        <entry key="app/src/main/res/layout/menu_item_exposed_dropdown.xml" value="0.2015625" />
+        <entry key="app/src/main/res/layout/mxt_cache_fragment.xml" value="0.2185761957730812" />
         <entry key="app/src/main/res/layout/mxt_tag_bins_fragment.xml" value="0.24375" />
+        <entry key="app/src/main/res/layout/phrase_context_fragment.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/recyclerview_item.xml" value="0.2046875" />
+        <entry key="app/src/main/res/layout/reference_card_recyclerview_item.xml" value="0.2484375" />
+        <entry key="app/src/main/res/layout/social_tools_fragment.xml" value="0.21875" />
       </map>
     </option>
   </component>

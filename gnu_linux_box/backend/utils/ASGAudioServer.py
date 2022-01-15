@@ -4,7 +4,7 @@ import threading
 import time
 import queue
 from utils.encryption.AESpy import AESpy
-from key import aes_key
+from .keys.key import aes_key
 
 STREAMING_LIMIT = 300000 #YOU HAVE TO CHANGE THIS IN main.py AS WELL NO TIME TO SETUP SHARED CONFIG FILES (YAML) #also, no more than 300 seconds or GCP will error - cayden
 

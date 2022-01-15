@@ -20,9 +20,14 @@ class Tools:
         self.summary_limit = 35 #word limit on summary
         self.check_wiki_limit = 5 #don't use wiki unless it's in the top n results
 
-        #setup wolfram
-        self.wolfram_api_key_file = "./utils/wolfram_api_key.txt"
-        self.wolfram_api_key = self.get_wolfram_key(self.wolfram_api_key_file)
+        #setup wolfram key
+        #Wolfram API key - this loads from a plain text file containing only one string - your APP id key
+        self.wolfram_api_key_file = "wolfram_api_key.txt"
+        self.wolfram_api_key = self.get_key(self.wolfram_api_key_file)
+
+        #setup map quest key
+        self.map_quest_api_key_file = "map_quest_key.txt"
+        self.map_quest_api_key = self.get_key(self.map_quest_api_key_file)
 
     def run_ner(self, text):
         #run nlp
@@ -139,10 +144,9 @@ class Tools:
 
         return ent
 
-    def get_wolfram_key(self, key_file):
-        #Wolfram API key - this loads from a plain text file containing only one string - your APP id key
+    def get_key(self, key_file):
         wolfram_api_key = None
-        with open(key_file) as f:
+        with open("./keys/" + key_file) as f:
             wolfram_api_key = [line.strip() for line in f][0]
         return wolfram_api_key
 
@@ -196,5 +200,16 @@ class Tools:
 
         return best_link
 
+    def get_map(self, params):
+        map_url = "https://open.mapquestapi.com/staticmap/v5/map?"
+        for param_key in params.keys():
+            param_value = params[param_key]
+            map_url = map_url + param_key + "=" + param_value + "&"
 
+        map_url = map_url + "key=" + self.map_quest_api_key
+        print("sending map_url:")
+        print(map_url)
 
+        response = requests.get(map_url)
+        img_bytes = response.content
+        return img_bytes
