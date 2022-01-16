@@ -13,6 +13,10 @@ import java.util.concurrent.Executors;
 
 import com.wearableintelligencesystem.androidsmartphone.database.Converters;
 
+import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCache;
+import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheDao;
+import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheTimes;
+import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheTimesDao;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseDao;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 
@@ -28,7 +32,7 @@ import com.wearableintelligencesystem.androidsmartphone.database.mediafile.Media
 import com.wearableintelligencesystem.androidsmartphone.database.person.PersonDao;
 import com.wearableintelligencesystem.androidsmartphone.database.person.PersonEntity;
 
-@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class, PersonEntity.class}, version = 1, exportSchema = false)
+@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class, PersonEntity.class, MemoryCache.class, MemoryCacheTimes.class}, version = 1, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class WearableAiRoomDatabase extends RoomDatabase {
     private static final String TAG = "WearableAi_WearableAiRoomDatabase";
@@ -42,6 +46,8 @@ public abstract class WearableAiRoomDatabase extends RoomDatabase {
     public abstract VoiceCommandDao voiceCommandDao();
     public abstract MediaFileDao mediaFileDao();
     public abstract PersonDao personDao();
+    public abstract MemoryCacheDao memoryCacheDao();
+    public abstract MemoryCacheTimesDao memoryCacheTimesDao();
 
     public static WearableAiRoomDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {

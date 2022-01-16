@@ -11,14 +11,14 @@ import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.Vo
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
 
-class MxtVoiceCommand extends VoiceCommand {
+class VoiceNoteVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_MxtVoiceCommand";
 
-    MxtVoiceCommand(Context context){
+    VoiceNoteVoiceCommand(Context context){
         super(context);
         this.commandName = "save speech";
-        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));
-        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"save speech", "remember speech"}));
+        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"save speech"}));
+        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
     }
 
     @Override

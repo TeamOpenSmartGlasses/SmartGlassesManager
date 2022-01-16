@@ -23,8 +23,8 @@ class NaturalLanguageQueryVoiceCommand extends VoiceCommand {
     NaturalLanguageQueryVoiceCommand(Context context){
         super(context);
         this.commandName = "natural language query";
-        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"quick question", "voice query"}));
-        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {"quick question", "voice query"}));
+        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"question"}));
+        this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
     }
 
     @Override

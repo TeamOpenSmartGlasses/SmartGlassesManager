@@ -29,6 +29,7 @@ import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.F
 import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotionCreator;
 import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotionRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileRepository;
+import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.person.PersonRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
@@ -107,6 +108,7 @@ public class WearableAiAspService extends LifecycleService {
     private FacialEmotionRepository mFacialEmotionRepository = null;
     private List<FacialEmotion> mAllFacialEmotionsSnapshot;
     private VoiceCommandRepository mVoiceCommandRepository = null;
+    private MemoryCacheRepository mMemoryCacheRepository = null;
     private MediaFileRepository mMediaFileRepository = null;
     private PersonRepository mPersonRepository = null;
 
@@ -122,6 +124,7 @@ public class WearableAiAspService extends LifecycleService {
     mPhraseRepository = new PhraseRepository(getApplication());
     mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
     mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
+    mMemoryCacheRepository = new MemoryCacheRepository(getApplication());
     mMediaFileRepository = new MediaFileRepository(getApplication());
     mPersonRepository = new PersonRepository(getApplication());
 
@@ -156,7 +159,7 @@ public class WearableAiAspService extends LifecycleService {
     speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
 
     //start voice command server to parse transcript for voice command
-    voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
+    voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
 
     //setup mediapipe
 //    mediaPipeSystem = new MediaPipeSystem(this);

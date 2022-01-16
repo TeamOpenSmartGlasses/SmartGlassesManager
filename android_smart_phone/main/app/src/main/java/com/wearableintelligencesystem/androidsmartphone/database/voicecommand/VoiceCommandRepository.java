@@ -83,10 +83,29 @@ public class VoiceCommandRepository {
         return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster);
     }
 
+    public List<Phrase> getVoiceCommandPhrasesSnapshot(String commandName, boolean isMaster) {
+
+        Callable<List<Phrase>> callable = new Callable<List<Phrase>>() {
+            @Override
+            public List<Phrase> call() throws Exception {
+                return mVoiceCommandDao.getVoiceCommandPhrasesSnapshot(commandName, isMaster);
+            }
+        };
+
+        Future<List<Phrase>> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e){
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     public LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster, String argKey, String argValue) {
         return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster, argKey, argValue);
     }
-
 
     public VoiceCommandEntity getLatestCommand(String command) throws ExecutionException, InterruptedException {
 

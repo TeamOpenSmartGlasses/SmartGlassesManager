@@ -1,10 +1,19 @@
 package com.wearableintelligencesystem.androidsmartphone.ui;
 
 public class Reference {
-    private String summary = "This is the reference that I like.";
-    private String title = "Reference Man";
-    private long timestamp = 1642197491863l;
+    private String summary;
+    private String title;
+    private long startTimestamp;
+    private long stopTimestamp;
     private long imagePath;
+
+    public long getStopTimestamp() {
+        return stopTimestamp;
+    }
+
+    public void setStopTimestamp(long stopTimestamp) {
+        this.stopTimestamp = stopTimestamp;
+    }
 
     public long getImagePath() {
         return imagePath;
@@ -22,8 +31,8 @@ public class Reference {
         this.title = title;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setStartTimestamp(long startTimestamp) {
+        this.startTimestamp = startTimestamp;
     }
     public String getSummary() {
         return summary;
@@ -33,7 +42,7 @@ public class Reference {
         return title;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getStartTimestamp() {
+        return startTimestamp;
     }
 }

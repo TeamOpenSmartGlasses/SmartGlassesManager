@@ -2,7 +2,6 @@ package com.wearableintelligencesystem.androidsmartphone.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,12 +74,12 @@ public class ReferenceListAdapter extends RecyclerView.Adapter<ReferenceListAdap
             Reference current = mReferences.get(position);
 //            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("L-d hh:mma").withZone(ZoneId.systemDefault());
             SimpleDateFormat formatski = new SimpleDateFormat("EEE LLL d, yy, H:mm");
-            holder.referenceDate.setText(formatski.format(current.getTimestamp()));
+            holder.referenceDate.setText(formatski.format(current.getStartTimestamp()));
             holder.referenceTitle.setText(current.getTitle());
             holder.referenceSummary.setText(current.getSummary());
 
             //set the image
-            MediaFileEntity currentImage = mMediaFileViewModel.getClosestMediaFileSnapshot("image", current.getTimestamp());
+            MediaFileEntity currentImage = mMediaFileViewModel.getClosestMediaFileSnapshot("image", current.getStartTimestamp());
             //set the image of the image view
             String imagePath = currentImage.getLocalPath();
             Bitmap imageBitmap = BitmapJavaUtils.loadImageFromStorage(imagePath);

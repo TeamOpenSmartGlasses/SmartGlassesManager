@@ -239,9 +239,11 @@ public class PhraseContextUi extends Fragment {
             Log.d(TAG, "---personId: " + pe.getPersonId());
             long personId = pe.getPersonId();
             if (! personIdsSeen.contains(personId)){
-                String displayName = mPersonViewModel.getPersonsName(personId);
-                displayString = displayString + "- " + displayName + "\n";
-                personIdsSeen.add(personId);
+                    String displayName = mPersonViewModel.getPersonsName(personId);
+                if (! displayName.equals("deleted")) {
+                    displayString = displayString + "- " + displayName + "\n";
+                    personIdsSeen.add(personId);
+                }
             }
         }
         personListTextView.setText(displayString);

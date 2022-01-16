@@ -75,18 +75,8 @@ public class PhraseRepository {
         });
     }
 
-    public List<Phrase> getPhraseRange(long startTime, long endTime) throws ExecutionException, InterruptedException {
-
-        Callable<List<Phrase>> callable = new Callable<List<Phrase>>() {
-            @Override
-            public List<Phrase> call() throws Exception {
-                return mPhraseDao.getPhraseRange(startTime, endTime);
-            }
-        };
-
-        Future<List<Phrase>> future = Executors.newSingleThreadExecutor().submit(callable);
-
-        return future.get();
+    public LiveData<List<Phrase>> getPhraseRange(long startTime, long endTime) {
+        return mPhraseDao.getPhraseRange(startTime, endTime);
     }
 
     public List<Phrase> getPhrases(List<Long> ids) throws ExecutionException, InterruptedException {

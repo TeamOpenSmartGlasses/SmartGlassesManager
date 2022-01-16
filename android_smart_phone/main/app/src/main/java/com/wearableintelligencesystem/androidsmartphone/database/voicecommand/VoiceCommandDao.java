@@ -50,6 +50,11 @@ public interface VoiceCommandDao {
     LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster);
 
     @Query("SELECT * FROM PhraseTable WHERE id IN (" +
+            "SELECT transcriptId from VoiceCommandTable WHERE commandName=:commandName AND isMaster=:isMaster" +
+            ") ORDER BY timestamp DESC")
+    List<Phrase> getVoiceCommandPhrasesSnapshot(String commandName, boolean isMaster);
+
+    @Query("SELECT * FROM PhraseTable WHERE id IN (" +
         "SELECT transcriptId from VoiceCommandTable WHERE commandName=:commandName AND isMaster=:isMaster AND argKey=:argKey AND argValue=:argValue" +
     ") ORDER BY timestamp DESC")
     LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster, String argKey, String argValue);

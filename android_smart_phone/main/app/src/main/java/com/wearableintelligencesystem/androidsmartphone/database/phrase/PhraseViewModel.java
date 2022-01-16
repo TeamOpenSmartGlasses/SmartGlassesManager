@@ -23,6 +23,10 @@ public class PhraseViewModel extends AndroidViewModel {
     }
 
     public LiveData<List<Phrase>> getAllPhrases() {return mAllPhrases;}
+    public LiveData<List<Phrase>> getPhraseRange(long startTime, long stopTime) {
+        return mRepository.getPhraseRange(startTime, stopTime);
+    }
+
     public LiveData<Phrase> getPhrase(int id) {return mRepository.getPhrase(id);}
     //public List<Phrase> getPhrases(List<Long> ids) {return mRepository.getPhrases(ids);}
 
