@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import androidx.navigation.NavController;
@@ -44,7 +46,7 @@ public class MemoryTimelineUi extends Fragment implements ItemClickListenerRefer
     private ArrayAdapter<String> tagMenuAdapter;
     private AutoCompleteTextView tagMenu;
 
-    private int maxDistanceBackDays = 144; //how many days in time we go backwards
+    private int maxDistanceBackDays = 7; //how many days in time we go backwards
     private int maxDistanceBackMilliseconds = maxDistanceBackDays * 86400 * 1000; //how many days in time we go backwards
 
     private VoiceCommandViewModel mVoiceCommandViewModel;
@@ -133,17 +135,35 @@ public class MemoryTimelineUi extends Fragment implements ItemClickListenerRefer
         }
 
         //here we need to get all of the people sightings, then pull in each phrase associated with each command
-//        List<PersonEntity> peopleSeen = mPersonViewModel.getAllPersonsSnapshotTimePeriod(System.currentTimeMillis() - maxDistanceBackMilliseconds, System.currentTimeMillis()); //back in time this far
-//        if (peopleSeen != null){
-//            for (PersonEntity pe : peopleSeen) {
-//                String peopleSeenDisplayString = getPeopleSeenString(peopleSeen);
-//                Reference new_ref = new Reference();
-//                new_ref.setTimestamp(pe.getTimestamp());
-//                new_ref.setSummary(peopleSeenDisplayString);
-//                new_ref.setTitle("Conversation");
-//                references.add(new_ref);
-//            }
-//        }
+        List<PersonEntity> peopleSeen = mPersonViewModel.getAllPersonsSnapshotTimePeriod(System.currentTimeMillis() - maxDistanceBackMilliseconds, System.currentTimeMillis()); //back in time this far
+        //List<PersonEntity> peopleSeen = mPersonViewModel.getAllPersonsSnapshot();
+        Log.d(TAG, "peopleSEen is: " + peopleSeen.toString());
+        if (peopleSeen != null){
+            long last_seen = 0;
+            for (PersonEntity pe : peopleSeen) {
+                if (Math.abs(last_seen - pe.getTimestamp()) < (5 * 60 * 1000)){
+                    continue;
+                }
+                Reference new_ref = new Reference();
+                new_ref.setStartTimestamp(pe.getTimestamp());
+                new_ref.setTitle("Conversation");
+                references.add(new_ref);
+                last_seen = pe.getTimestamp();
+            }
+        }
+
+        //sort references by timestamp
+        Collections.sort(references, new Comparator<Reference>(){
+            public int compare(Reference obj1, Reference obj2) {
+                // ## Ascending order
+                return Long.compare(obj2.getStartTimestamp(), obj1.getStartTimestamp()); // To compare string values
+                // return Integer.valueOf(obj1.empId).compareTo(Integer.valueOf(obj2.empId)); // To compare integer values
+
+                // ## Descending order
+                // return obj2.firstName.compareToIgnoreCase(obj1.firstName); // To compare string values
+                // return Integer.valueOf(obj2.empId).compareTo(Integer.valueOf(obj1.empId)); // To compare integer values
+            }
+        });
 
         //send this data to be displayed
         adapter.setReferences(references);
