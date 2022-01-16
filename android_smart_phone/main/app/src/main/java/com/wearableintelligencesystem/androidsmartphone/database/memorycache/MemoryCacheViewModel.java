@@ -8,6 +8,8 @@ import android.app.Application;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
+import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
+
 import java.util.List;
 
 public class MemoryCacheViewModel extends AndroidViewModel {
@@ -33,5 +35,10 @@ public class MemoryCacheViewModel extends AndroidViewModel {
 
     public List<MemoryCache> getAllCachesSnapshot() {
         return mRepository.getAllCachesSnapshot();
+    }
+
+
+    public void setCacheName(long id, String name) {
+        mRepository.updateCacheName(id, name);
     }
 }

@@ -48,6 +48,8 @@ import com.wearableintelligencesystem.androidsmartphone.R;
 public class FaceRecUi extends Fragment {
     private  final String TAG = "WearableAi_FaceRecUiFragment";
 
+    private final String fragmentLabel = "People Naming";
+
     private NavController navController;
     private PersonRepository mPersonRepository;
     private MediaFileRepository mMediaFileRepository;
@@ -79,6 +81,9 @@ public class FaceRecUi extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
 
         //get the image view
         faceImageView = view.findViewById(R.id.face_image_view);

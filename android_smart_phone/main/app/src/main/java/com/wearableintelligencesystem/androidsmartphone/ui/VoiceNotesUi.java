@@ -35,6 +35,8 @@ import com.wearableintelligencesystem.androidsmartphone.R;
 public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
     public String TAG = "WearableAi_MxtCacheUi";
 
+    public final String fragmentLabel = "Voice Notes";
+
     private VoiceCommandViewModel mVoiceCommandViewModel;
     private PhraseViewModel mPhraseViewModel;
     
@@ -70,6 +72,9 @@ public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
+
         //create NavController
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
 

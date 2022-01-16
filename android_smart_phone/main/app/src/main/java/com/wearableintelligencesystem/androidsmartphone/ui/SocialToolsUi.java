@@ -21,6 +21,8 @@ import com.wearableintelligencesystem.androidsmartphone.R;
 public class SocialToolsUi extends Fragment {
     private  final String TAG = "WearableAi_SocialToolsUi";
 
+    private final String fragmentLabel = "Social Tools";
+
     private NavController navController;
 
     public SocialToolsUi() {
@@ -37,6 +39,9 @@ public class SocialToolsUi extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
 
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
 
