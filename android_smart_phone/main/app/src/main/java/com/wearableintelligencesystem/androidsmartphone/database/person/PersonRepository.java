@@ -39,7 +39,7 @@ public class PersonRepository {
         return mAllPersons;
     }
 
-    public List<PersonEntity> getAllPersonsSnapshot() throws ExecutionException, InterruptedException {
+    public List<PersonEntity> getAllPersonsSnapshot(){
 
         Callable<List<PersonEntity>> callable = new Callable<List<PersonEntity>>() {
             @Override
@@ -50,7 +50,12 @@ public class PersonRepository {
 
         Future<List<PersonEntity>> future = Executors.newSingleThreadExecutor().submit(callable);
 
-        return future.get();
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public List<PersonEntity> getAllPersonsSnapshotTimePeriod(long startTime, long endTime) throws ExecutionException, InterruptedException {

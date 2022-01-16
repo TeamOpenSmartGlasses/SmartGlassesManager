@@ -30,7 +30,6 @@ import com.wearableintelligencesystem.androidsmartphone.R;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link StreamFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
 public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhrase {
@@ -41,6 +40,9 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
     public static final int SETTINGS_ACTIVITY_REQUEST_CODE = 2;
     public static final int LOGIN_ACTIVITY_REQUEST_CODE = 3;
     public static final int CACHE_ACTIVITY_REQUEST_CODE = 4; //I don't know what these are for yet but this looks cool
+
+    private long startTime;
+    private long stopTime;
 
     private PhraseViewModel mPhraseViewModel;
     
@@ -75,6 +77,22 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
+        //get the phrase we passed in the bundle to create this fragment
+        boolean startTimeFlag = false;
+        boolean stopTimeFlag = false;
+        if (getArguments() != null) {
+            startTimeFlag = getArguments().containsKey("startTime");
+            stopTimeFlag = getArguments().containsKey("stopTime");
+        }
+        if (startTimeFlag){
+            startTime = getArguments().getLong("startTime");
+        }
+        if (stopTimeFlag){
+            stopTime = getArguments().getLong("stopTime");
+        } else if (startTimeFlag){ //if there is a start and no stop, make the stop time now
+            stopTime = System.currentTimeMillis();
+        }
+
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
 
         RecyclerView recyclerView = view.findViewById(R.id.phrase_wall);
@@ -90,26 +108,36 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
         // Get a new or existing ViewModel from the ViewModelProvider.
         mPhraseViewModel = new ViewModelProvider(this).get(PhraseViewModel.class);
 
-        mPhraseViewModel.getAllPhrases().observe(this, new Observer<List<Phrase>>() {
-            @Override
-            public void onChanged(@Nullable final List<Phrase> phrases) {
-                // Update the cached copy of the words in the adapter.
-                adapter.setPhrases(phrases);
-            }
-        });
-
-        EditText editText = view.findViewById(R.id.add_phrase_text);
-        Button submitButton = view.findViewById(R.id.submit_button);
-        submitButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String words = editText.getText().toString();
-                if(!words.isEmpty()) {
-                    editText.setText("");
-                    mPhraseViewModel.addPhrase(words, getString(R.string.medium_text));
+        if (startTimeFlag) {
+            mPhraseViewModel.getPhraseRange(startTime, stopTime).observe(this, new Observer<List<Phrase>>() {
+                @Override
+                public void onChanged(@Nullable final List<Phrase> phrases) {
+                    // Update the cached copy of the words in the adapter.
+                    adapter.setPhrases(phrases);
                 }
-            }
-        });
+            });
+        } else {
+            mPhraseViewModel.getAllPhrases().observe(this, new Observer<List<Phrase>>() {
+                @Override
+                public void onChanged(@Nullable final List<Phrase> phrases) {
+                    // Update the cached copy of the words in the adapter.
+                    adapter.setPhrases(phrases);
+                }
+            });
+        }
+
+//        EditText editText = view.findViewById(R.id.add_phrase_text);
+//        Button submitButton = view.findViewById(R.id.submit_button);
+//        submitButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                String words = editText.getText().toString();
+//                if(!words.isEmpty()) {
+//                    editText.setText("");
+//                    mPhraseViewModel.addPhrase(words, getString(R.string.medium_text));
+//                }
+//            }
+//        });
 
     }
 }

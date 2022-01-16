@@ -72,6 +72,15 @@ public class MemoryToolsUi extends Fragment {
             }
         });
 
+        final Button memoryCachesButton = view.findViewById(R.id.memory_cache_button);
+        memoryCachesButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.d(TAG, "clicked memory_caches button");
+                navController.navigate(R.id.nav_memory_caches);
+            }
+        });
+
+
     }
 
 

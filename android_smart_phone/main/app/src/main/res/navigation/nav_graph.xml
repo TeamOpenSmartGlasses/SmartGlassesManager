@@ -58,7 +58,7 @@
     </fragment>
     <fragment
         android:id="@+id/nav_mxt_cache"
-        android:name="com.wearableintelligencesystem.androidsmartphone.ui.MxtCacheUi"
+        android:name="com.wearableintelligencesystem.androidsmartphone.ui.VoiceNotesUi"
         tools:layout="@layout/mxt_cache_fragment"
         android:label="MXT Cache" >
         <action
@@ -82,6 +82,12 @@
         android:name="com.wearableintelligencesystem.androidsmartphone.ui.MemoryTimelineUi"
         tools:layout="@layout/memory_timeline_fragment"
         android:label="Memory Timeline" >
+    </fragment>
+    <fragment
+        android:id="@+id/nav_memory_caches"
+        android:name="com.wearableintelligencesystem.androidsmartphone.ui.MemoryCachesUi"
+        tools:layout="@layout/memory_cache_fragment"
+        android:label="Memory Caches" >
     </fragment>
     <fragment
         android:id="@+id/nav_phrase_context"

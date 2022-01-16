@@ -22,25 +22,13 @@ package com.wearableintelligencesystem.androidsmartphone.voicecommand;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
-import java.util.concurrent.ExecutionException;
-import java.lang.InterruptedException;
-import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
-
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseDao;
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseViewModel;
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
-
-import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotionRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotionDao;
-import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotionViewModel;
-import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotionCreator;
-import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotion;
-
+import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 
 import java.util.ArrayList;
+
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 import android.content.Context;
 
@@ -61,6 +49,9 @@ public class VoiceCommandServer {
     public PublishSubject<JSONObject> dataObservable;
     private Disposable dataSubscriber;
 
+    private Handler vcHandler;
+    private HandlerThread mHandlerThread;
+
     //nlp
     private NlpUtils nlpUtils;
 
@@ -73,28 +64,37 @@ public class VoiceCommandServer {
 
     //voice command fuzzy search threshold
     private final double wakeWordThreshold = 0.90;
-    private final double commandThreshold = 0.90;
+    private final double commandThreshold = 0.78;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
+    public MemoryCacheRepository mMemoryCacheRepository;
 
-    public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, Context context){
+    public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, MemoryCacheRepository memoryCacheRepository, Context context){
         //setup nlp
         nlpUtils = NlpUtils.getInstance(context);
 
         mVoiceCommandRepository = voiceCommandRepository;
+        mMemoryCacheRepository = memoryCacheRepository;
 
         mContext = context;
+
+        //setup handler for voice commands
+        mHandlerThread = new HandlerThread("VoiceCommandHandler");
+        mHandlerThread.start();
+        vcHandler = new Handler(mHandlerThread.getLooper());
 
         dataObservable = observable;
         dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
 
         //get all voice commands
         voiceCommands = new ArrayList<VoiceCommand>();
-        voiceCommands.add(new MxtVoiceCommand(context));
+        voiceCommands.add(new VoiceNoteVoiceCommand(context));
         voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
         voiceCommands.add(new SearchEngineVoiceCommand(context));
         voiceCommands.add(new SwitchModesVoiceCommand(context));
+        voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
+        voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
     }
@@ -107,11 +107,20 @@ public class VoiceCommandServer {
         try {
             String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)){
-                parseTranscript(data);
+                handleNewTranscript(data);
             }
         } catch (JSONException e){
             e.printStackTrace();
         }
+    }
+
+    private void handleNewTranscript(JSONObject data){
+        //run on new thread so we don't slow anything down
+        vcHandler.post(new Runnable() {
+            public void run() {
+                parseTranscript(data);
+            }
+        });
     }
 
     private void parseTranscript(JSONObject data){

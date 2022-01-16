@@ -32,7 +32,7 @@ import com.wearableintelligencesystem.androidsmartphone.R;
  * Use the {@link StreamFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MxtCacheUi extends Fragment implements ItemClickListenerPhrase {
+public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
     public String TAG = "WearableAi_MxtCacheUi";
 
     private VoiceCommandViewModel mVoiceCommandViewModel;
@@ -51,7 +51,7 @@ public class MxtCacheUi extends Fragment implements ItemClickListenerPhrase {
     }
 
 
-    public MxtCacheUi() {
+    public VoiceNotesUi() {
         // Required empty public constructor
     }
 
@@ -89,7 +89,7 @@ public class MxtCacheUi extends Fragment implements ItemClickListenerPhrase {
         mPhraseViewModel = new ViewModelProvider(this).get(PhraseViewModel.class);
 
         //here we need to get all of the MXT commands, and then pull in each phrase associated with each command
-        mVoiceCommandViewModel.getMxtCache().observe(getActivity(), new Observer<List<Phrase>>() {
+        mVoiceCommandViewModel.getVoiceNotes().observe(getActivity(), new Observer<List<Phrase>>() {
             @Override
             public void onChanged(@Nullable final List<Phrase> phrases) {
                 //get all phrases associated with latest mxt commands, then

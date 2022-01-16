@@ -1,0 +1,6 @@
+mkdir $newentityname
+cp phrases/* $newentityname
+cd $newentityname
+rename 's/Phrase/$newentityname/g' *
+sed -i "s/com.wearableintelligencesystem.androidsmartphone.database.phrase/com.wearableintelligencesystem.androidsmartphone.database.$newentityname/g" *
+sed -i "s/Phrase/$newentityname/g" *
