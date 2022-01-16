@@ -30,13 +30,23 @@ import java.lang.reflect.Method;
 public class NetworkUtils {
     public static final String TAG = "WearableAi_NetworkUtils";
 
-    public static void sendBroadcast(String messageStr, DatagramSocket adv_socket, int port){
+    public static void sendBroadcast(String messageStr, DatagramSocket adv_socket, int port, Context context){
         try {
             byte[] sendData = messageStr.getBytes();
-            InetAddress my_ip = getIpAddress();
+            InetAddress my_ip;
+            if (isHotspotOn(context)){
+                String my_ip_hs = getHotspotIpAddress();
+                my_ip = InetAddress.getByName(my_ip_hs);
+            } else {
+                my_ip = getIpAddress();
+            }
+
             InetAddress bca_ip = getBroadcastAddress(my_ip);
+            Log.d(TAG, "IP: " + my_ip);
+            Log.d(TAG, "BCA: " + bca_ip);
             if (bca_ip == null){
                 //this probably means we aren't connect to or hosting WiFi
+                Log.d(TAG, "Broadcast address is null");
                 return;
             }
 
@@ -44,6 +54,7 @@ public class NetworkUtils {
             adv_socket.send(sendPacket);
         } catch (IOException e){
             Log.d(TAG, "FAILED TO SEND BROADCAST");
+            e.printStackTrace();
             return ;
         }
     }
@@ -127,6 +138,32 @@ public class NetworkUtils {
       return myAddr;
     }
 
+    public static String getHotspotIpAddress() {
+            String ip = "";
+            try {
+                Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface
+                        .getNetworkInterfaces();
+                while (enumNetworkInterfaces.hasMoreElements()) {
+                    NetworkInterface networkInterface = enumNetworkInterfaces
+                            .nextElement();
+                    Enumeration<InetAddress> enumInetAddress = networkInterface
+                            .getInetAddresses();
+                    while (enumInetAddress.hasMoreElements()) {
+                        InetAddress inetAddress = enumInetAddress.nextElement();
+
+                        if (inetAddress.isSiteLocalAddress()) {
+                            ip = inetAddress.getHostAddress();
+                        }
+                    }
+                }
+            } catch (SocketException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                return null;
+            }
+            return ip;
+    }
+
     public static InetAddress getBroadcastAddress(InetAddress inetAddr) {
 
         NetworkInterface temp;
@@ -157,7 +194,7 @@ public class NetworkUtils {
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
             int ipInt = wifiInfo.getIpAddress();
             return InetAddress.getByAddress(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(ipInt).array()).getHostAddress();
-        }
+    }
 
 
 

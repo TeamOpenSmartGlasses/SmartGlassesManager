@@ -204,7 +204,7 @@ public class WearableAiAspService extends LifecycleService {
     class SendAdvThread extends Thread {
         public void run() {
             //send broadcast so ASG knows our address
-            NetworkUtils.sendBroadcast(adv_key, adv_socket, PORT_NUM);
+            NetworkUtils.sendBroadcast(adv_key, adv_socket, PORT_NUM, getApplicationContext());
         }
     }
 
