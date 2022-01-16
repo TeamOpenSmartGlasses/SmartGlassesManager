@@ -46,6 +46,8 @@ import android.widget.AdapterView.OnItemClickListener;
 public class MxtTagBinsUi extends Fragment implements ItemClickListenerPhrase {
     public String TAG = "WearableAi_MxtTagBinsUi";
 
+    private final String fragmentLabel = "Tag Bins";
+
     private final String CURRENT_TAG_KEY = "CURRENT_TAG_KEY";
 
     private LiveData<List<Phrase>> tagBinPhrases;
@@ -128,6 +130,9 @@ public class MxtTagBinsUi extends Fragment implements ItemClickListenerPhrase {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
+
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
 
         Log.d(TAG, "MXT TAG BINS onViewCreated");
 

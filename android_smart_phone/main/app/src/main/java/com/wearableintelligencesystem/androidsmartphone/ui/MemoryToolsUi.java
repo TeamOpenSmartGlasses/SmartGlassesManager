@@ -5,6 +5,9 @@ import android.widget.Button;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,10 +19,13 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 //import res
+import com.wearableintelligencesystem.androidsmartphone.MainActivity;
 import com.wearableintelligencesystem.androidsmartphone.R;
 
 public class MemoryToolsUi extends Fragment {
     private  final String TAG = "WearableAi_MemoryToolsUi";
+
+    private final String fragmentLabel = "Memory Tools";
 
     private NavController navController;
 
@@ -38,6 +44,10 @@ public class MemoryToolsUi extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
+
+        //get the nav controller
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
 
         final Button allTranscriptButton = view.findViewById(R.id.all_transcripts);

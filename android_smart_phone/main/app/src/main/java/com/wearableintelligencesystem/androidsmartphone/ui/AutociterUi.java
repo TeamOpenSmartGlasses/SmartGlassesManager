@@ -29,6 +29,8 @@ import com.wearableintelligencesystem.androidsmartphone.R;
 public class AutociterUi extends Fragment {
     private  final String TAG = "WearableAi_AutociterUi";
 
+    private final String fragmentLabel = "Autociter";
+
     private boolean isActive = false;
 
     private NavController navController;
@@ -55,6 +57,9 @@ public class AutociterUi extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
 
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
 

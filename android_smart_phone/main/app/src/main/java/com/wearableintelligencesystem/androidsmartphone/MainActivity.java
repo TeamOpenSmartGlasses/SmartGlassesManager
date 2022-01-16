@@ -13,10 +13,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
@@ -47,6 +49,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //setup action bar
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(myToolbar);
 
         //set main view
         setContentView(R.layout.activity_main);
@@ -298,4 +304,5 @@ public class MainActivity extends AppCompatActivity {
             mBound = false;
         }
     };
+
 }

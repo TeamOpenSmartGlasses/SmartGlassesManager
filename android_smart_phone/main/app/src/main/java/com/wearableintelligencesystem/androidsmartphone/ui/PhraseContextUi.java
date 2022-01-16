@@ -66,6 +66,8 @@ import org.json.JSONObject;
 public class PhraseContextUi extends Fragment {
     public String TAG = "WearableAi_PhraseContextUi";
 
+    private final String fragmentLabel = "Egocentric Context";
+
     private VoiceCommandViewModel mVoiceCommandViewModel;
     private MediaFileViewModel mMediaFileViewModel;
     private PhraseViewModel mPhraseViewModel;
@@ -100,6 +102,9 @@ public class PhraseContextUi extends Fragment {
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
+        //setup titlebar
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
+
         //get the phrase we passed in the bundle to create this fragment
         mainPhrase = (Phrase) getArguments().getSerializable("phrase");
 

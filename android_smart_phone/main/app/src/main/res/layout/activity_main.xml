@@ -6,6 +6,22 @@
     android:id="@+id/mainlayout"
     android:layout_height="match_parent">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbarlayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        android:fitsSystemWindows="true"
+        app:liftOnScroll="true">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/main_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:titleTextColor="@android:color/white"
+            />
+    </com.google.android.material.appbar.AppBarLayout>
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
@@ -14,7 +30,7 @@
         android:layout_weight="1"
         app:defaultNavHost="true"
 
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appbarlayout"
         app:layout_constraintBottom_toTopOf="@id/bottom_nav_main_menu_nav"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

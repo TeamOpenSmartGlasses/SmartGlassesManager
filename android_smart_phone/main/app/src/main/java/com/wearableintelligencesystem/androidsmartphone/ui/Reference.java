@@ -6,6 +6,15 @@ public class Reference {
     private long startTimestamp;
     private long stopTimestamp;
     private long imagePath;
+    private long id;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
 
     public long getStopTimestamp() {
         return stopTimestamp;

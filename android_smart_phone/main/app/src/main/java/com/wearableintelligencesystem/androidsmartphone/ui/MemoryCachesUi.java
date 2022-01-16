@@ -29,6 +29,8 @@ import java.util.List;
 public class MemoryCachesUi extends Fragment implements ItemClickListenerReference {
     public String TAG = "WearableAi_MemoryCachesUI";
 
+    private final String fragmentLabel = "Memory Caches";
+
     private LiveData<List<Reference>> tagBinReferences;
     private Observer<List<Reference>> tagBinReferencesObserver;
     private ReferenceListAdapter referenceListAdapter;
@@ -57,6 +59,9 @@ public class MemoryCachesUi extends Fragment implements ItemClickListenerReferen
         Bundle bundle = new Bundle();
         bundle.putLong("startTime", reference.getStartTimestamp());
         bundle.putLong("stopTime", reference.getStopTimestamp());
+        bundle.putString("type", "cache");
+        bundle.putLong("cacheId", reference.getId());
+        bundle.putString("title", "Memory Cache");
         navController.navigate(R.id.nav_all_transcripts, bundle);
     }
 
@@ -87,6 +92,9 @@ public class MemoryCachesUi extends Fragment implements ItemClickListenerReferen
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
+
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
 
         Log.d(TAG, "MXT CACHES onViewCreated");
 
@@ -119,6 +127,7 @@ public class MemoryCachesUi extends Fragment implements ItemClickListenerReferen
                 new_ref.setStopTimestamp(System.currentTimeMillis()); //still active, so set untl now
             }
             new_ref.setSummary("");
+            new_ref.setId(c.getId());
             String cacheName = c.getCacheName();
             if (cacheName != null) {
                 new_ref.setTitle(cacheName);

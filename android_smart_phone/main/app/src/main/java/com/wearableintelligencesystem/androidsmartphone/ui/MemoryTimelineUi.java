@@ -36,6 +36,8 @@ import android.widget.AutoCompleteTextView;
 public class MemoryTimelineUi extends Fragment implements ItemClickListenerReference {
     public String TAG = "WearableAi_MemoryTimelineUI";
 
+    private final String fragmentLabel = "Memory Timeline";
+
     private LiveData<List<Reference>> tagBinReferences;
     private Observer<List<Reference>> tagBinReferencesObserver;
     private ReferenceListAdapter referenceListAdapter;
@@ -93,6 +95,9 @@ public class MemoryTimelineUi extends Fragment implements ItemClickListenerRefer
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
+
+        //setup the title
+        UiUtils.setupTitle(getActivity(), fragmentLabel);
 
         Log.d(TAG, "MXT TAG BINS onViewCreated");
 
