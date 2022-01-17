@@ -42,8 +42,6 @@ public class NetworkUtils {
             }
 
             InetAddress bca_ip = getBroadcastAddress(my_ip);
-            Log.d(TAG, "IP: " + my_ip);
-            Log.d(TAG, "BCA: " + bca_ip);
             if (bca_ip == null){
                 //this probably means we aren't connect to or hosting WiFi
                 Log.d(TAG, "Broadcast address is null");
@@ -89,10 +87,8 @@ public class NetworkUtils {
                     if ((Boolean) method.invoke(wifi)) {
 //                        isInetConnOn = true;
 //                        iNetMode = 2;
-                        Log.d(TAG, "WifiTether ON");
                         return true;
                     } else {
-                        Log.d(TAG, "WifiTether OFF");
                         return false;
                     }
                 } catch (IllegalArgumentException e) {

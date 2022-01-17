@@ -79,6 +79,25 @@ public class PhraseRepository {
         return mPhraseDao.getPhraseRange(startTime, endTime);
     }
 
+    public List<Phrase> getPhraseRangeSnapshot(long startTime, long endTime) {
+
+        Callable<List<Phrase>> callable = new Callable<List<Phrase>>() {
+            @Override
+            public List<Phrase> call() throws Exception {
+                return mPhraseDao.getPhraseRangeSnapshot(startTime, endTime);
+            }
+        };
+
+        Future<List<Phrase>> future = Executors.newSingleThreadExecutor().submit(callable);
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public List<Phrase> getPhrases(List<Long> ids) throws ExecutionException, InterruptedException {
 
         Callable<List<Phrase>> callable = new Callable<List<Phrase>>() {

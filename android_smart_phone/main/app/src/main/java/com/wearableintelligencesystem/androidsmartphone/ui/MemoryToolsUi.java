@@ -90,6 +90,14 @@ public class MemoryToolsUi extends Fragment {
             }
         });
 
+        final Button exportDataButton = view.findViewById(R.id.export_data_button);
+        exportDataButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.d(TAG, "clicked export_data_button");
+                navController.navigate(R.id.nav_export_data);
+            }
+        });
+
 
     }
 

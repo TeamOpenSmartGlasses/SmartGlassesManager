@@ -35,6 +35,9 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            applicationIdSuffix ".debug" //so we can have both release and debug on the same phone
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
