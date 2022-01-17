@@ -42,6 +42,16 @@
 
           <service android:name=".WearableAiAspService" />
 
+      <provider
+          android:name="androidx.core.content.FileProvider"
+          android:authorities="${applicationId}.provider"
+          android:exported="false"
+          android:grantUriPermissions="true">
+          <meta-data
+              android:name="android.support.FILE_PROVIDER_PATHS"
+              android:resource="@xml/file_provider" />
+      </provider>
+
 <!--      <meta-data android:name="cameraFacingFront" android:value="${cameraFacingFront}"/>-->
 <!--      <meta-data android:name="binaryGraphName" android:value="${binaryGraphName}"/>-->
 <!--      <meta-data android:name="inputVideoStreamName" android:value="${inputVideoStreamName}"/>-->

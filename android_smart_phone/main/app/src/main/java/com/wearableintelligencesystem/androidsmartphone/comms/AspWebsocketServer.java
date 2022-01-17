@@ -50,7 +50,9 @@ public class AspWebsocketServer extends WebSocketServer {
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote) {
         Log.d(TAG, "onClose called");
+        Log.d(TAG, "WebSocketServer currently has this many conns: " + clients.size());
         for (WebSocket connToCheck : clients.values()){ // there was a race condition where the ASG would recconnect before the socket was marked as closed, so the ASP thought their was no connection (connected = 1), but there actually was a connection, so now we check to see if any of the sockets in the clients hashmap is still open
+            Log.d(TAG, "Checking conn with remoteSocketAddress: " + connToCheck.getRemoteSocketAddress());
             if (connToCheck.isOpen()){ //exit, because we have a live connection to the ASG
                 Log.d(TAG, "onClose found open connection, so not setting connected=1");
                 return;

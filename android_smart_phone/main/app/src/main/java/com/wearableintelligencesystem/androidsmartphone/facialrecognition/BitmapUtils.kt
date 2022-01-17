@@ -34,11 +34,24 @@ class BitmapUtils {
         fun cropRectFromBitmap(source: Bitmap, rect: Rect ): Bitmap {
             var width = rect.width()
             var height = rect.height()
+            //handle the case that the face Rect goes out of bounds of the input bitmap
+            //don't go off right
             if ( (rect.left + width) > source.width ){
                 width = source.width - rect.left
             }
+            //don't go off bottom
             if ( (rect.top + height ) > source.height ){
                 height = source.height - rect.top
+            }
+            //don't go off left
+            if ( rect.left < 0 ) {
+                width = source.width + rect.left
+                rect.left = 0
+            }
+            //don't go off top
+            if ( rect.top < 0 ) {
+                height = source.height + rect.top
+                rect.top = 0
             }
             val croppedBitmap = Bitmap.createBitmap( source , rect.left , rect.top , width , height )
             // Uncomment the below line if you want to save the input image.

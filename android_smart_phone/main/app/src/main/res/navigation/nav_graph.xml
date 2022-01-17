@@ -84,6 +84,12 @@
         android:label="Memory Timeline" >
     </fragment>
     <fragment
+        android:id="@+id/nav_export_data"
+        android:name="com.wearableintelligencesystem.androidsmartphone.ui.ExportDataUi"
+        tools:layout="@layout/export_data_fragment"
+        android:label="Export Data" >
+    </fragment>
+    <fragment
         android:id="@+id/nav_memory_caches"
         android:name="com.wearableintelligencesystem.androidsmartphone.ui.MemoryCachesUi"
         tools:layout="@layout/memory_cache_fragment"
