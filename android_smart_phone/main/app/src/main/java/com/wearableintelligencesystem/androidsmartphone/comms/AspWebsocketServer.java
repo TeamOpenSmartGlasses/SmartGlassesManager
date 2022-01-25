@@ -3,6 +3,7 @@ package com.wearableintelligencesystem.androidsmartphone.comms;
 import java.net.InetSocketAddress;
 
 import org.java_websocket.WebSocket;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import java.util.Map;
@@ -43,6 +44,7 @@ public class AspWebsocketServer extends WebSocketServer {
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         connected = 2;
         String uniqueID = UUID.randomUUID().toString();
+        Log.d(TAG, "Got new connection at address: " + conn.getRemoteSocketAddress());
         clients.put(uniqueID, conn);
         asgConn = conn;
     }
@@ -59,6 +61,7 @@ public class AspWebsocketServer extends WebSocketServer {
             }
         }
         Log.d(TAG, "onClose set connected=1");
+        clients.clear();
         connected = 1;
     }
 
@@ -99,7 +102,12 @@ public class AspWebsocketServer extends WebSocketServer {
     public void sendJson(JSONObject data){
         if (connected == 2){
             Log.d(TAG, "SENDING JSON FROM ASP WS");
-            asgConn.send(data.toString());
+            try {
+                asgConn.send(data.toString());
+            } catch (WebsocketNotConnectedException e){
+                e.printStackTrace();
+                Log.d(TAG, "Not connected, close should be running now.");
+            }
         } else {
             Log.d(TAG, "CANNOT SEND JSON, NOT CONNECTED");
         }

@@ -3,8 +3,8 @@ package com.wearableintelligencesystem.androidsmartphone.ui;
 public class Reference {
     private String summary;
     private String title;
-    private long startTimestamp;
-    private long stopTimestamp;
+    private Long startTimestamp;
+    private Long stopTimestamp;
     private long imagePath;
     private long id;
 
@@ -16,11 +16,11 @@ public class Reference {
         this.id = id;
     }
 
-    public long getStopTimestamp() {
+    public Long getStopTimestamp() {
         return stopTimestamp;
     }
 
-    public void setStopTimestamp(long stopTimestamp) {
+    public void setStopTimestamp(Long stopTimestamp) {
         this.stopTimestamp = stopTimestamp;
     }
 
@@ -40,7 +40,7 @@ public class Reference {
         this.title = title;
     }
 
-    public void setStartTimestamp(long startTimestamp) {
+    public void setStartTimestamp(Long startTimestamp) {
         this.startTimestamp = startTimestamp;
     }
     public String getSummary() {
@@ -51,7 +51,7 @@ public class Reference {
         return title;
     }
 
-    public long getStartTimestamp() {
+    public Long getStartTimestamp() {
         return startTimestamp;
     }
 }
