@@ -10,6 +10,7 @@ import android.content.ServiceConnection;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
@@ -185,6 +187,21 @@ public class MainActivity extends Activity {
         startWearableAiService();
     }
 
+    private void turnOffScreen(){
+        screenBrightnessControl(0);
+    }
+
+    private void turnOnScreen(){
+        screenBrightnessControl(-1);
+    }
+
+    private void screenBrightnessControl(float brightness){
+        //turn screen brightness to 0;
+        WindowManager.LayoutParams params = getWindow().getAttributes();
+        params.screenBrightness = brightness;
+        getWindow().setAttributes(params);
+    }
+
     private void setupHud(){
         //setup clock
         if (! clockRunning) {
@@ -268,11 +285,10 @@ public class MainActivity extends Activity {
                 mBatteryStatusImageView.setImageDrawable(batteryFullDrawable);
             }
         } else {
-            mBatteryStatusImageView.setImageDrawable(batteryLowDrawable);
             if (batteryCharging) {
                 mBatteryStatusImageView.setImageDrawable(batteryLowChargingDrawable);
             } else {
-                mBatteryStatusImageView.setImageDrawable(batteryFullDrawable);
+                mBatteryStatusImageView.setImageDrawable(batteryLowDrawable);
             }
         }
 
@@ -283,6 +299,9 @@ public class MainActivity extends Activity {
 
     private void switchMode(String mode) {
         curr_mode = mode;
+        if (mode != MessageTypes.MODE_BLANK){
+            turnOnScreen();
+        }
         switch (mode) {
             case MessageTypes.MODE_BLANK:
                 blankUi();
@@ -477,7 +496,8 @@ public class MainActivity extends Activity {
 
 
     private void blankUi() {
-        setContentView(R.layout.blank_screen);
+//        setContentView(R.layout.blank_screen);
+        turnOffScreen();
     }
 
     @Override

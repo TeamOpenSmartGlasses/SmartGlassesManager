@@ -204,6 +204,9 @@ public class WearableAiService extends HiddenCameraService {
             }
         };
         this.registerReceiver(new WifiUtils.WifiReceiver(wifiConnectCallback), wifiFilter);
+
+        //test wake up screen
+        wakeupScreen();
     }
 
     class ReceiveAdvThread extends Thread {
@@ -645,14 +648,22 @@ public class WearableAiService extends HiddenCameraService {
             @Override
             protected Exception doInBackground(Void... params) {
                 try {
+                    Log.d(TAG, "WAITING TO TURN ON SCREEN");
+                    try {
+                        Thread.sleep(10000); // turn on duration
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "TURNING ON SCREEN");
                     PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
                     PowerManager.WakeLock fullWakeLock = powerManager.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), "WIS:Loneworker-FULL WAKE LOCK");
                     fullWakeLock.acquire(); // turn on
                     try {
-                        Thread.sleep(1000); // turn on duration
+                        Thread.sleep(5000); // turn on duration
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+                    Log.d(TAG, "RELEASING SCREEN");
                     fullWakeLock.release();
                 } catch (Exception e) {
                     return e;
