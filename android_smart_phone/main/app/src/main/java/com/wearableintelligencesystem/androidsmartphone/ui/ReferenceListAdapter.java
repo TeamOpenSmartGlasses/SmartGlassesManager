@@ -29,14 +29,16 @@ public class ReferenceListAdapter extends RecyclerView.Adapter<ReferenceListAdap
 
     class ReferenceViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
         private final TextView referenceTitle;
-        private final TextView referenceDate;
+        private final TextView referenceStartDate;
+        private final TextView referenceStopDate;
         private final TextView referenceSummary;
         private final ImageView referenceImage;
 
         private ReferenceViewHolder(View itemView) {
             super(itemView);
             referenceTitle = itemView.findViewById(R.id.title_text_view);
-            referenceDate = itemView.findViewById(R.id.data_text_view);
+            referenceStartDate = itemView.findViewById(R.id.start_date_text_view);
+            referenceStopDate = itemView.findViewById(R.id.stop_date_text_view);
             referenceSummary = itemView.findViewById(R.id.summary_text_view);
             referenceImage = itemView.findViewById(R.id.image_image_view);
 
@@ -74,12 +76,28 @@ public class ReferenceListAdapter extends RecyclerView.Adapter<ReferenceListAdap
             Reference current = mReferences.get(position);
 //            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("L-d hh:mma").withZone(ZoneId.systemDefault());
             SimpleDateFormat formatski = new SimpleDateFormat("EEE LLL d, yy, H:mm");
-            holder.referenceDate.setText(formatski.format(current.getStartTimestamp()));
+            if (current.getStopTimestamp() != null) {
+                holder.referenceStartDate.setText("Start: " + formatski.format(current.getStartTimestamp()));
+                holder.referenceStopDate.setText("Stop: " + formatski.format(current.getStopTimestamp()));
+            } else {
+                holder.referenceStartDate.setText(formatski.format(current.getStartTimestamp()));
+                holder.referenceStopDate.setVisibility(View.GONE);
+            }
             holder.referenceTitle.setText(current.getTitle());
-            holder.referenceSummary.setText(current.getSummary());
+            if (current.getSummary() != "" && current.getSummary() != null) {
+                holder.referenceSummary.setText(current.getSummary());
+            } else {
+                holder.referenceSummary.setVisibility(View.GONE); //make the summary disapear if there isn't one
+            }
 
             //set the image
-            MediaFileEntity currentImage = mMediaFileViewModel.getClosestMediaFileSnapshot("image", current.getStartTimestamp());
+            MediaFileEntity currentImage;
+            if (current.getStopTimestamp() != null){
+                long imageTime = (current.getStartTimestamp() + current.getStopTimestamp()) / 2;
+                currentImage = mMediaFileViewModel.getClosestMediaFileSnapshot("image", imageTime);
+            } else{
+                currentImage = mMediaFileViewModel.getClosestMediaFileSnapshot("image", current.getStartTimestamp());
+            }
             //set the image of the image view
             String imagePath = currentImage.getLocalPath();
             Bitmap imageBitmap = BitmapJavaUtils.loadImageFromStorage(imagePath);

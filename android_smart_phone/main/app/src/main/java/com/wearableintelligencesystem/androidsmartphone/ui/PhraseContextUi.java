@@ -245,7 +245,7 @@ public class PhraseContextUi extends Fragment {
             long personId = pe.getPersonId();
             if (! personIdsSeen.contains(personId)){
                     String displayName = mPersonViewModel.getPersonsName(personId);
-                if (! displayName.equals("deleted")) {
+                if ((!displayName.equals("deleted")) && (!displayName.equals("unknown")) && (!displayName.equals("confirmed_unknown"))) {
                     displayString = displayString + "- " + displayName + "\n";
                     personIdsSeen.add(personId);
                 }

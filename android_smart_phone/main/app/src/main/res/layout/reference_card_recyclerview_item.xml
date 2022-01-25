@@ -22,6 +22,7 @@
         android:orientation="vertical">
 
         <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
@@ -33,13 +34,19 @@
                 tools:text="Title Here" />
 
             <TextView
-                android:id="@+id/data_text_view"
+                android:id="@+id/start_date_text_view"
                 style="@style/reference_date"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:textAlignment="viewEnd"
                 android:textStyle="bold"
-                tools:text="Jan 20, 1999" />
+                tools:text="Start: Jan 20, 1999" />
+            <TextView
+                android:id="@+id/stop_date_text_view"
+                style="@style/reference_date"
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:textStyle="bold"
+                tools:text="End: Jan 20, 1999" />
         </LinearLayout>
         <TextView
             android:id="@+id/summary_text_view"
