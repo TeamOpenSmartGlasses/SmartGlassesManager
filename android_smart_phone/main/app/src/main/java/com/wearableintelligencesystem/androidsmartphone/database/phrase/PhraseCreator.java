@@ -21,17 +21,22 @@ import android.util.Log;
 public class PhraseCreator {
     public static final String TAG = "WearableAi_PhraseCreator";
 
-    public static long create(String words, String medium, Context context, PhraseRepository repo) {
+    public static Phrase init(String medium, Context context, PhraseRepository repo) {
+        long time = System.currentTimeMillis();
+        Phrase phrase = new Phrase("", time, medium); //init empty phrase
+        long id = repo.insert(phrase);  // This insert blocks until database write has completed
+        phrase.setId(id);
+        return phrase;
+    }
+
+    public static long create(Phrase phrase, String words, Context context, PhraseRepository repo) {
         /*
         Location may return right away or in a minute, null or not
         Because of this, insert each phrase without location synchronously, and after getting id back
             get location and update the phrase with location results whenever they arrive.
          */
 
-        long time = System.currentTimeMillis();
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-        Phrase phrase = new Phrase(words, time, medium);
-        long id = repo.insert(phrase);  // This insert blocks until database write has completed
 
         // Using getLastLocation is not always totally accurate. Good to update this at some point.
         FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
@@ -53,12 +58,13 @@ public class PhraseCreator {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                repo.update(id, location, address);
+                Log.d(TAG, "updating phrase with Id: " + phrase.getId() + " and words: " + words);
+                repo.update(phrase.getId(), words, location, address);
             }
             else{
                 Log.d(TAG, "LOCATION IS NULL");
             }
         });
-        return id;
+        return phrase.getId();
     }
 }

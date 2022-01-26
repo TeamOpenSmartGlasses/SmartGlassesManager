@@ -993,12 +993,15 @@ public class MainActivity extends Activity {
                     return super.onKeyUp(keyCode, event);
                 }
             case KeyEvent.KEYCODE_DEL:
-                if (!curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
-                    switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
-                    return true;
-                } else {
-                    return super.onKeyUp(keyCode, event);
-                }
+                Log.d(TAG, "keycode DEL entered");
+                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+                return super.onKeyUp(keyCode, event);
+//                if (!curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
+//                    switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+//                    return true;
+//                } else {
+//                    return super.onKeyUp(keyCode, event);
+//                }
             default:
                 return super.onKeyUp(keyCode, event);
         }

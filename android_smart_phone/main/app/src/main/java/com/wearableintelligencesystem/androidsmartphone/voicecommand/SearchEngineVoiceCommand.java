@@ -35,7 +35,7 @@ class SearchEngineVoiceCommand extends VoiceCommand {
         String commandSpoken = this.commandList.get(command);
 
         //save master command
-        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, preArgs, postArgs,"asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
 
         //send user update
         String displayString = "Searching for: " + postArgs;
@@ -45,7 +45,7 @@ class SearchEngineVoiceCommand extends VoiceCommand {
         //ask system to do natural language query and send to ASG on result
         JSONObject data = new JSONObject();
         try{
-            data.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
+            data.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_QUERY);
             data.put(MessageTypes.TEXT_QUERY, postArgs);
             vcServer.dataObservable.onNext(data);
         } catch (JSONException e){

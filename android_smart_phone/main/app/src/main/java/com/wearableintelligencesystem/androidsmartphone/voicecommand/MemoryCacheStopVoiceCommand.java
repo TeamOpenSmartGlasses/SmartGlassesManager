@@ -27,7 +27,7 @@ class MemoryCacheStopVoiceCommand extends VoiceCommand {
         String commandSpoken = this.commandList.get(command);
 
         //save master command
-        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, preArgs, postArgs,"asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
 
         //stop the memory cache
         //find the active cache

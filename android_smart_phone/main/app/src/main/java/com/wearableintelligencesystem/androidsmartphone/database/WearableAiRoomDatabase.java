@@ -32,7 +32,7 @@ import com.wearableintelligencesystem.androidsmartphone.database.mediafile.Media
 import com.wearableintelligencesystem.androidsmartphone.database.person.PersonDao;
 import com.wearableintelligencesystem.androidsmartphone.database.person.PersonEntity;
 
-@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class, PersonEntity.class, MemoryCache.class, MemoryCacheTimes.class}, version = 1, exportSchema = false)
+@Database(entities = {FacialEmotion.class, Phrase.class, VoiceCommandEntity.class, MediaFileEntity.class, PersonEntity.class, MemoryCache.class, MemoryCacheTimes.class}, version = 2, exportSchema = false)
 @TypeConverters({Converters.class})
 public abstract class WearableAiRoomDatabase extends RoomDatabase {
     private static final String TAG = "WearableAi_WearableAiRoomDatabase";

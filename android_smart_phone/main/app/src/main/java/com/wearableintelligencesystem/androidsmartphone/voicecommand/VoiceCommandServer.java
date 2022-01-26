@@ -42,7 +42,9 @@ import java.util.Arrays;
 //nlp
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 
-//parse interpret
+//parse, interpret, run commands
+//low pass filter on speech to text so user can say voice command slowly
+//send updates when wake words, commands, arguments are seen to ASG, so user knows that what they are trying to say has been recognized, and they can see suggestions for next commands, arguments, etc.
 public class VoiceCommandServer {
     private  final String TAG = "WearableAi_VoiceCommand";
     //one stream to receive transcripts, data, etc.
@@ -58,13 +60,31 @@ public class VoiceCommandServer {
     //voice command stuff
     private ArrayList<VoiceCommand> voiceCommands;
     private ArrayList<String> wakeWords;
+    private ArrayList<String> endWords;
+
+    //timing of voice command system
+    private long voiceCommandPauseTime = 8000; //milliseconds //amount of time user must pause speaking before we consider the command to be finished
+    private long lastParseTime = 0; //milliseconds //since last time we parse a command (executing or not)
+    private long lastTranscriptTime = 0; //milliseconds since we last received a transcript
+    private int partialTranscriptBufferIdx = 0; //this is set true when an end word is found, so we don't keep trying to process incoming INTERMEDIATE_TRANSCRIPTs if we have already processing the current buffer - we need to wait for the next transcript
+    private boolean newTranscriptSinceRun = false; //has a new transcript come in since we last parsed a voice command?
+    private boolean currentlyParsing = false; //are we currently parsing? if so, don't try to parse again at the same time
+
+    //the current voice buffer that we are processing, with metadata about the lastest phrase/transcript which makes up that voice buffer
+    private String lowPassTranscriptString = "";
+    long lowPassTranscriptTime = 0l;
+    long lowPassTranscriptId = 0l;
+
+    boolean startNewVoiceCliBuffer = true;
+    boolean useNextTranscriptMetaData = true;
 
     //private ArrayList<String> voiceCommands;
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.90;
+    private final double wakeWordThreshold = 0.78;
     private final double commandThreshold = 0.78;
+    private final double endWordThreshold = 0.90;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -97,6 +117,38 @@ public class VoiceCommandServer {
         voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
+        endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));
+
+        startSittingCommandHitter();
+    }
+
+    private void startSittingCommandHitter(){
+        //every n milliseconds, check if there is a command that has been input via voice command (voice CLI) that is ready to be run
+        lastTranscriptTime = System.currentTimeMillis();
+        vcHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "Running hitter");
+                long currTime = System.currentTimeMillis();
+
+                if (newTranscriptSinceRun && (((currTime - lastParseTime) > voiceCommandPauseTime)) && ((currTime - lastTranscriptTime) > voiceCommandPauseTime)){
+                    Log.d(TAG, "hitter executing");
+                    Log.d(TAG, "4 running parsing");
+                    parseTranscript(lowPassTranscriptString, true, lowPassTranscriptId);
+                    restartTranscriptBuffer(0, true);
+                }
+
+                long waitTime;
+                if (!newTranscriptSinceRun) {
+                    waitTime = voiceCommandPauseTime + 10;
+                } else {
+                    waitTime = ((voiceCommandPauseTime + lastTranscriptTime) - currTime) + 10; //plus 10 milliseconds for potential OS jitter (I don't know if it's actually needed)
+                }
+
+                vcHandler.postDelayed(this, waitTime);
+            }
+        }, voiceCommandPauseTime + 10);
+
     }
     
     public void setObservable(PublishSubject observable){
@@ -106,33 +158,135 @@ public class VoiceCommandServer {
     private void handleDataStream(JSONObject data){
         try {
             String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)){
-                handleNewTranscript(data);
+            if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+                throwHandleNewTranscript(data);
+            } else if (dataType.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)){
+                throwHandleNewTranscript(data);
             }
         } catch (JSONException e){
             e.printStackTrace();
         }
     }
 
-    private void handleNewTranscript(JSONObject data){
+    private void throwHandleNewTranscript(JSONObject data){
         //run on new thread so we don't slow anything down
         vcHandler.post(new Runnable() {
             public void run() {
-                parseTranscript(data);
+                handleNewTranscript(data);
             }
         });
     }
 
-    private void parseTranscript(JSONObject data){
+    //handles timing of transcripts so users have plenty of time to speak to enter commands
+    private void handleNewTranscript(JSONObject data){
+        long currTime = System.currentTimeMillis();
+
+        //set last transcript heard time
+        lastTranscriptTime = currTime;
+
+        //parse incoming data object
         String transcript = "";
-        long transcriptTime = 0l;
-        long transcriptId = 0l;
         try{
+            //get basic data about transcript
             transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT).toLowerCase();
-            transcriptTime = data.getLong(MessageTypes.TIMESTAMP);
-            transcriptId = data.getLong(MessageTypes.TRANSCRIPT_ID);
+            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+
+            //if the current partial transcript idx is greater than the current transcript, ignore this transcript
+            if ((partialTranscriptBufferIdx + 1) > transcript.length()){
+                //if it's the final one, reset our idx to 0, because we no longer have a buffer
+                if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+                    partialTranscriptBufferIdx = 0;
+                }
+                lowPassTranscriptString = "";
+                return;
+            }
+
+            Log.d(TAG, "setting to tru when: " + transcript);
+            Log.d(TAG, "partiaLIdx: " + partialTranscriptBufferIdx);
+            Log.d(TAG, "trans.len: " + transcript.length());
+
+            //if there is new transcript to consider AND we have been instructed to start a new voice cli buffer, start a new voice cli buffer, starting from the given partialidx
+            if (startNewVoiceCliBuffer){
+                lowPassTranscriptString = "";
+                startNewVoiceCliBuffer = false;
+            }
+
+            newTranscriptSinceRun = true;
+
+            //get current passed in transcript starting from the start point
+            String partialTranscript = transcript.substring(partialTranscriptBufferIdx);
+            Log.d(TAG, "partial trans: " + partialTranscript);
+
+            //the transcript to parse is the voice buffer plus the latest added in partial transcript
+            String transcriptToParse = lowPassTranscriptString + " " + partialTranscript;
+
+            //should we update the buffer's timestamp and ID at the next transcript?
+            if (useNextTranscriptMetaData){
+                lowPassTranscriptTime = data.getLong(MessageTypes.TIMESTAMP);
+                lowPassTranscriptId = data.getLong(MessageTypes.TRANSCRIPT_ID);
+                useNextTranscriptMetaData = false;
+            }
+
+            //if a FINAL_TRANSCRIPT is getting passed in,
+            if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+                lowPassTranscriptString = transcriptToParse;
+
+                //if we are grabbing a partial transcript, but now we've received the final transcript, we can stop parsing the current transcript as a partial transcript on the next incoming transcript
+                partialTranscriptBufferIdx = 0;
+            }
+
+            //parse transcript - but don't run
+            Log.d(TAG, "2 running parsing");
+            if ((System.currentTimeMillis() - lastParseTime) > 300) {
+                Log.d(TAG, "IT HAPPEN HERE");
+                parseTranscript(transcriptToParse, false, lowPassTranscriptId);
+            }
         } catch (JSONException e){
             e.printStackTrace();
+            return;
+        }
+    }
+
+    private void restartTranscriptBuffer(int partialIdx, Boolean useNext){
+//        lowPassTranscriptString = "";
+        partialTranscriptBufferIdx = partialIdx;
+        startNewVoiceCliBuffer = true;
+        if (useNext != null) {
+            useNextTranscriptMetaData = useNext;
+        }
+    }
+
+    private void parseTranscript(String transcript, boolean run, long transcriptId) {
+        Log.d(TAG, "1 running parsing");
+        if (currentlyParsing) {
+            return;
+        }
+        currentlyParsing = true;
+
+        Log.d(TAG, "parseTranscript running with transcript: " + transcript);
+        Log.d(TAG, "parseTranscript running with run: " + run);
+        long currTime = System.currentTimeMillis();
+        lastParseTime = currTime;
+
+        //if we find an "end command" voice command, execute now
+        //loop through all global endwords to see if any match
+        for (int i = 0; i < endWords.size(); i++) {
+            String currEndWord = endWords.get(i);
+            int endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
+            if (endWordLocation != -1) { //if the substring "end word" is in the larger string "transcript"
+                Log.d(TAG, "Detected end word");
+                String transcriptSansEndWord = transcript.substring(0, endWordLocation);
+                transcript = transcriptSansEndWord;
+                run = true;
+                int partialIdx = partialTranscriptBufferIdx + endWordLocation + currEndWord.length();
+                restartTranscriptBuffer(partialIdx, null);
+                break;
+            }
+        }
+
+        if (run){
+            Log.d(TAG, "prasing with run == true");
+            newTranscriptSinceRun = false;
         }
 
         //loop through all voice commands to see if any of their wake words match
@@ -145,7 +299,10 @@ public class VoiceCommandServer {
                     //we found a command, now get its arguments and run it
                     String preArgs = transcript.substring(0, wakeWordLocation);
                     String postArgs = transcript.substring(wakeWordLocation + currWakeWord.length());
-                    voiceCommands.get(i).runCommand(this, preArgs, currWakeWord, j, postArgs, transcriptTime, transcriptId);
+                    if (run) {
+                        voiceCommands.get(i).runCommand(this, preArgs, currWakeWord, j, postArgs, currTime, transcriptId);
+                    }
+                    currentlyParsing = false;
                     return;
                 }
             }
@@ -159,21 +316,27 @@ public class VoiceCommandServer {
                 //we found a command, now get its arguments and run it
                 String preArgs = transcript.substring(0, wakeWordLocation);
                 String rest = transcript.substring(wakeWordLocation);
-                parseCommand(preArgs, currWakeWord, rest, transcriptTime, transcriptId);
+                parseCommand(preArgs, currWakeWord, rest, currTime, transcriptId, run);
+                currentlyParsing = false;
                 return;
             }
 
         }
+        currentlyParsing = false;
     }
 
-    private void parseCommand(String preArgs, String wakeWord, String rest, long transcriptTime, long transcriptId){
+    private void parseCommand(String preArgs, String wakeWord, String rest, long commandTime, long transcriptId, boolean run){
         for (int i = 0; i < voiceCommands.size(); i++){
             for (int j = 0; j < voiceCommands.get(i).getCommands().size(); j++){
                 String currCommand = voiceCommands.get(i).getCommands().get(j);
                 int commandLocation = nlpUtils.findNearMatches(rest, currCommand, commandThreshold);
                 if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     String postArgs = rest.substring(commandLocation + currCommand.length());
-                    voiceCommands.get(i).runCommand(this, preArgs, wakeWord, j, postArgs, transcriptTime, transcriptId);
+                    if (run) {
+                        Log.d(TAG, "running command with args preArgs: " + preArgs + " postArgs: " + postArgs);
+                        voiceCommands.get(i).runCommand(this, preArgs, wakeWord, j, postArgs, commandTime, transcriptId);
+                    }
+                    currentlyParsing = false;
                     return;
                 }
             }
@@ -243,9 +406,3 @@ public class VoiceCommandServer {
     }
 
 }
-
-
-
-
-
-

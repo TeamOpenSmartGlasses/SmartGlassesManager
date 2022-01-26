@@ -51,6 +51,7 @@ public class MessageTypes {
     public final static String VISUAL_SEARCH_QUERY = "VISUAL_SEARCH_QUERY"; //this is the glbox facing term
     public final static String VISUAL_SEARCH_DATA = "VISUAL_SEARCH_DATA"; //this is the payload
     //search engine
+    public final static String SEARCH_ENGINE_QUERY = "SEARCH_ENGINE_QUERY";
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
     public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
     public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";

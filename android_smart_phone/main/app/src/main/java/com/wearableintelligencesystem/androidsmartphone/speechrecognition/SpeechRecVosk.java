@@ -22,6 +22,7 @@ import java.io.InputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
@@ -39,6 +40,10 @@ public class SpeechRecVosk implements RecognitionListener {
     public String TAG = "WearableAi_SpeechRecVosk";
 
     private Context mContext;
+
+    //the current phrase we are receiving
+    private Phrase currPhrase;
+    private boolean newPhrase = true;
 
     private Model model;
     //private SpeechService speechService;
@@ -204,26 +209,31 @@ public class SpeechRecVosk implements RecognitionListener {
             }
 
             //don't save transcripts that always appear incorrect
-            String [] badHitWords = {"huh", "her", "hit", "cut", "this", "if", "but", "by", "hi", "ha", "a", "the", "det", "it", "you"};
+            String [] badHitWords = {"huh", "her", "hit", "cut", "this", "if", "but", "by", "hi", "ha", "a", "the", "det", "it", "you", "he"};
             for (int i = 0; i < badHitWords.length; i++){
                 if (transcript.equals(badHitWords[i])){
                     return;
                 }
             }
 
+            if (newPhrase){
+                currPhrase = PhraseCreator.init("transcript_ASG", mContext, mPhraseRepository);
+                newPhrase = false;
+            }
+
+            //update the current phrase
+            PhraseCreator.create(currPhrase, transcript, mContext, mPhraseRepository);
+
             //save transcript if final
-            long transcriptId = 0l;
             if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
-                transcriptId = PhraseCreator.create(transcript, "transcript_ASG", mContext, mPhraseRepository);
+                newPhrase = true;
             }
 
             //send to other services
             JSONObject transcriptObj = new JSONObject();
             transcriptObj.put(MessageTypes.MESSAGE_TYPE_LOCAL, transcriptType);
             transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
-            if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
-                transcriptObj.put(MessageTypes.TRANSCRIPT_ID, transcriptId);
-            }
+            transcriptObj.put(MessageTypes.TRANSCRIPT_ID, currPhrase.getId());
             transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             dataObservable.onNext(transcriptObj);
         } catch (JSONException e){

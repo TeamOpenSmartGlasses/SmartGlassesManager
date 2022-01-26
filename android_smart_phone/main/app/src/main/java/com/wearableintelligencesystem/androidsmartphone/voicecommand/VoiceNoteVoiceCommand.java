@@ -29,7 +29,12 @@ class VoiceNoteVoiceCommand extends VoiceCommand {
         String commandSpoken = this.commandList.get(command);
 
         //save master command
-        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, true, null, null, commandTime, preArgs, postArgs, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+
+        //save raw data - eventually this should be its own table
+//        String spokenText = preArgs + " " + wakeWord + " " + commandSpoken + " " + postArgs;
+//        Log.d(TAG, "Saving voice command with spoken text == " + spokenText);
+//        VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "spoken_text", spokenText, commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
 
         //find tags and return a list of the tags that were found
         ArrayList<String> foundTags = this.parseKeyValueArgs(postArgs, "tag");
@@ -40,7 +45,7 @@ class VoiceNoteVoiceCommand extends VoiceCommand {
             for (int i = 0; i < foundTags.size(); i++){
                 //save tag command
                 Log.d(TAG, "Saving tag: " + foundTags.get(i));
-                VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, "asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
+                VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, preArgs, postArgs,"asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
 
                 //add to display string
                 displayString = displayString + foundTags.get(i) + ", ";

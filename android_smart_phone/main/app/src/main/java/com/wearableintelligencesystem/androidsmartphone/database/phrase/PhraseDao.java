@@ -22,8 +22,8 @@ public interface PhraseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(Phrase phrase);
 
-    @Query("UPDATE PhraseTable SET location = :location, address = :address WHERE id = :id")
-    void update(long id, Location location, String address);
+    @Query("UPDATE PhraseTable SET phrase = :words, location = :location, address = :address WHERE id = :id")
+    void update(long id, String words, Location location, String address);
 
     @Query("DELETE FROM PhraseTable")
     void deleteAll();
@@ -35,8 +35,11 @@ public interface PhraseDao {
     List<Phrase> getAllPhrasesSnapshot();
 
     @Query("SELECT * FROM PhraseTable WHERE ID = :id")
-    LiveData<Phrase> get_by_id(int id);
-    
+    LiveData<Phrase> get_by_id(long id);
+
+    @Query("SELECT * FROM PhraseTable WHERE ID = :id")
+    Phrase getByIdSnapshot(long id);
+
     @Query("SELECT * from PhraseTable WHERE timestamp BETWEEN :startTime AND :endTime ORDER BY timestamp DESC")
     LiveData<List<Phrase>> getPhraseRange(long startTime, long endTime);
 
