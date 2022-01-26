@@ -35,6 +35,9 @@ public interface VoiceCommandDao {
     @Query("SELECT * from VoiceCommandTable WHERE timestamp BETWEEN :startTime AND :endTime ORDER BY timestamp DESC")
     List<VoiceCommandEntity> getVoiceCommandRange(Date startTime, Date endTime);
 
+//    @Query("SELECT * from VoiceCommandTable WHERE isMaster = :isMaster AND argKey = :argKey ORDER BY timestamp DESC")
+//    List<VoiceCommandEntity> getVoiceCommands(boolean isMaster, String argKey);
+
     @Query("SELECT * from VoiceCommandTable WHERE commandName=:command ORDER BY timestamp DESC LIMIT 1")
     VoiceCommandEntity getLatestCommand(String command);
 
@@ -43,6 +46,9 @@ public interface VoiceCommandDao {
 
     @Query("SELECT * from VoiceCommandTable WHERE commandName=:commandName AND isMaster=:isMaster ORDER BY timestamp DESC")
     LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster);
+
+    @Query("SELECT * from VoiceCommandTable WHERE commandName=:commandName AND isMaster=:isMaster AND argKey = :argKey AND argValue = :argValue ORDER BY timestamp DESC")
+    LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster, String argKey, String argValue);
 
     @Query("SELECT * FROM PhraseTable WHERE id IN (" +
         "SELECT transcriptId from VoiceCommandTable WHERE commandName=:commandName AND isMaster=:isMaster" +

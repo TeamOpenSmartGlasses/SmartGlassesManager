@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
+import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommand;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class VoiceCommandViewModel extends AndroidViewModel {
     public LiveData<VoiceCommandEntity> getVoiceCommand(int id) {return mRepository.getVoiceCommand(id);}
 
     //mxt
-    public LiveData<List<Phrase>> getVoiceNotes() {return mRepository.getVoiceCommandPhrases("save speech", true);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
+    public LiveData<List<VoiceCommandEntity>> getVoiceNotes() {return mRepository.getVoiceCommands("save speech", true);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
 
 
     //mxt cache snapshot
@@ -36,7 +37,7 @@ public class VoiceCommandViewModel extends AndroidViewModel {
 
 
 
-    public LiveData<List<Phrase>> getTagBin(String tag) {return mRepository.getVoiceCommandPhrases("save speech", false, "tag", tag);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
+    public LiveData<List<VoiceCommandEntity>> getTagBin(String tag) {return mRepository.getVoiceCommands("save speech", false, "tag", tag);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
 
 
 //    public void addVoiceCommand(String word, String medium) {

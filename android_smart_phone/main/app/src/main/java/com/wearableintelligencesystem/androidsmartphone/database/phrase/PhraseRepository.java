@@ -69,9 +69,9 @@ public class PhraseRepository {
         return rowId;
     }
 
-    public void update(long id, Location location, String address) {
+    public void update(long id, String words, Location location, String address) {
         WearableAiRoomDatabase.databaseWriteExecutor.execute(() -> {
-            mPhraseDao.update(id, location, address);
+            mPhraseDao.update(id, words, location, address);
         });
     }
 
@@ -114,8 +114,12 @@ public class PhraseRepository {
 
 
 
-    public LiveData<Phrase> getPhrase(int id) {
+    public LiveData<Phrase> getPhrase(long id) {
         return mPhraseDao.get_by_id(id);
+    }
+
+    public Phrase getPhraseSnapshot(long id) {
+        return mPhraseDao.getByIdSnapshot(id);
     }
 
     public Phrase getByNearestTimestamp(long timestamp) throws ExecutionException, InterruptedException {

@@ -19,7 +19,7 @@ public class Phrase implements Serializable {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    private int id = 0;
+    private long id = 0;
 
     @NonNull
     @ColumnInfo(name = "phrase")
@@ -62,6 +62,6 @@ public class Phrase implements Serializable {
     public void setLocation(Location location){this.location = location;}
     public String getAddress(){return this.address;}
     public void setAddress(String address){this.address = address;}
-    public int getId(){return this.id;}
-    public void setId(int id){this.id = id;}
+    public long getId(){return this.id;}
+    public void setId(long id){this.id = id;}
 }

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.os.Handler;
 
+import android.speech.tts.Voice;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +24,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
+import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandViewModel;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseViewModel;
 
@@ -43,16 +45,16 @@ import android.widget.AdapterView.OnItemClickListener;
  * Use the {@link StreamFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MxtTagBinsUi extends Fragment implements ItemClickListenerPhrase {
+public class MxtTagBinsUi extends Fragment implements ItemClickListenerVoiceCommandEntity {
     public String TAG = "WearableAi_MxtTagBinsUi";
 
     private final String fragmentLabel = "Tag Bins";
 
     private final String CURRENT_TAG_KEY = "CURRENT_TAG_KEY";
 
-    private LiveData<List<Phrase>> tagBinPhrases;
-    private Observer<List<Phrase>> tagBinPhrasesObserver;
-    private PhraseListAdapter phraseListAdapter;
+    private LiveData<List<VoiceCommandEntity>> tagBinPhrases;
+    private Observer<List<VoiceCommandEntity>> tagBinPhrasesObserver;
+    private VoiceCommandEntityListAdapter voiceEntityListAdapter;
     private ArrayAdapter<String> tagMenuAdapter;
     private AutoCompleteTextView tagMenu;
 
@@ -64,15 +66,21 @@ public class MxtTagBinsUi extends Fragment implements ItemClickListenerPhrase {
     private NavController navController;
 
     @Override
-    public void onClick(View view, Phrase phrase){
+    public void onClick(View view, VoiceCommandEntity vc){
         Log.d(TAG, "Click on transcript");
 
-        //open a fragment which shows in-depth, contextual view of that transcript
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("phrase", phrase);
-        navController.navigate(R.id.action_nav_mxt_tag_bins_to_nav_phrase_context, bundle);
-    }
+        Handler handler = new Handler();
 
+        mPhraseViewModel.getPhrase(vc.getTranscriptId()).observe(this, new Observer<Phrase>() {
+            @Override
+            public void onChanged(@Nullable final Phrase phrase) {
+                //open a fragment which shows in-depth, contextual view of that transcript
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("phrase", phrase);
+                navController.navigate(R.id.nav_phrase_context, bundle);
+            }
+        });
+    }
 
     public MxtTagBinsUi() {
         // Required empty public constructor
@@ -151,9 +159,9 @@ public class MxtTagBinsUi extends Fragment implements ItemClickListenerPhrase {
         RecyclerView recyclerView = view.findViewById(R.id.phrase_wall);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setReverseLayout(true);
-        phraseListAdapter = new PhraseListAdapter(getContext());
-        phraseListAdapter.setClickListener(this);
-        recyclerView.setAdapter(phraseListAdapter);
+        voiceEntityListAdapter = new VoiceCommandEntityListAdapter(getContext());
+        voiceEntityListAdapter.setClickListener(this);
+        recyclerView.setAdapter(voiceEntityListAdapter);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() -1);
 
@@ -215,10 +223,10 @@ public class MxtTagBinsUi extends Fragment implements ItemClickListenerPhrase {
 
         //here we need to get all of the MXT commands, and then pull in each phrase associated with each command
         tagBinPhrases = mVoiceCommandViewModel.getTagBin(newTag);
-        tagBinPhrasesObserver = new Observer<List<Phrase>>() {
+        tagBinPhrasesObserver = new Observer<List<VoiceCommandEntity>>() {
             @Override
-            public void onChanged(@Nullable final List<Phrase> phrases) {
-                phraseListAdapter.setPhrases(phrases);
+            public void onChanged(@Nullable final List<VoiceCommandEntity> commands) {
+                voiceEntityListAdapter.setVoiceCommandEntitys(commands);
             }
         };
         tagBinPhrases.observe(getActivity(), tagBinPhrasesObserver);

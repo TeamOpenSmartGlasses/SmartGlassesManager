@@ -75,9 +75,9 @@ public class VoiceCommandRepository {
         return mVoiceCommandDao.get_by_id(id);
     }
 
-    public LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster) {
-        return mVoiceCommandDao.getVoiceCommands(commandName, isMaster);
-    }
+//    public LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster) {
+//        return mVoiceCommandDao.getVoiceCommands(commandName, isMaster);
+//    }
 
     public LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster) {
         return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster);
@@ -105,6 +105,14 @@ public class VoiceCommandRepository {
 
     public LiveData<List<Phrase>> getVoiceCommandPhrases(String commandName, boolean isMaster, String argKey, String argValue) {
         return mVoiceCommandDao.getVoiceCommandPhrases(commandName, isMaster, argKey, argValue);
+    }
+
+    public LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster) {
+        return mVoiceCommandDao.getVoiceCommands(commandName, isMaster);
+    }
+
+    public LiveData<List<VoiceCommandEntity>> getVoiceCommands(String commandName, boolean isMaster, String argKey, String argValue) {
+        return mVoiceCommandDao.getVoiceCommands(commandName, isMaster, argKey, argValue);
     }
 
     public VoiceCommandEntity getLatestCommand(String command) throws ExecutionException, InterruptedException {

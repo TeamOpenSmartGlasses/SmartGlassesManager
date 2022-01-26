@@ -46,7 +46,7 @@ class GLBOXRepresentative {
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (type.equals(MessageTypes.NATURAL_LANGUAGE_QUERY)){
                 sendNaturalLanguageQuery(data);
-            } else if (type.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
+            } else if (type.equals(MessageTypes.SEARCH_ENGINE_QUERY)){
                 sendSearchEngineQuery(data);
             } else if (type.equals(MessageTypes.VISUAL_SEARCH_QUERY)){
                 sendVisualSearchQuery(data);

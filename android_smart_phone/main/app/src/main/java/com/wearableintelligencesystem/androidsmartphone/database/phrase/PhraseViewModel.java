@@ -27,10 +27,11 @@ public class PhraseViewModel extends AndroidViewModel {
         return mRepository.getPhraseRange(startTime, stopTime);
     }
 
-    public LiveData<Phrase> getPhrase(int id) {return mRepository.getPhrase(id);}
+    public LiveData<Phrase> getPhrase(long id) {return mRepository.getPhrase(id);}
+    public Phrase getPhraseSnapshot(long id) {return mRepository.getPhraseSnapshot(id);}
     //public List<Phrase> getPhrases(List<Long> ids) {return mRepository.getPhrases(ids);}
 
-    public void addPhrase(String word, String medium) {
-        PhraseCreator.create(word, medium, getApplication().getApplicationContext(), mRepository);
-    }
+//    public void addPhrase(String word, String medium) {
+//        PhraseCreator.create(word, medium, getApplication().getApplicationContext(), mRepository);
+//    }
 }

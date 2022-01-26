@@ -6,11 +6,13 @@ import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,17 +24,19 @@ import androidx.navigation.Navigation;
 import java.util.List;
 
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
+import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandViewModel;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseViewModel;
 
 import com.wearableintelligencesystem.androidsmartphone.R;
+import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommand;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link StreamFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
+public class VoiceNotesUi extends Fragment implements ItemClickListenerVoiceCommandEntity {
     public String TAG = "WearableAi_MxtCacheUi";
 
     public final String fragmentLabel = "Voice Notes";
@@ -43,13 +47,20 @@ public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
     private NavController navController;
 
     @Override
-    public void onClick(View view, Phrase phrase){
+    public void onClick(View view, VoiceCommandEntity vc){
         Log.d(TAG, "Click on transcript");
 
-        //open a fragment which shows in-depth, contextual view of that transcript
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("phrase", phrase);
-        navController.navigate(R.id.nav_phrase_context, bundle);
+        Handler handler = new Handler();
+
+        mPhraseViewModel.getPhrase(vc.getTranscriptId()).observe(this, new Observer<Phrase>() {
+            @Override
+            public void onChanged(@Nullable final Phrase phrase) {
+                //open a fragment which shows in-depth, contextual view of that transcript
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("phrase", phrase);
+                navController.navigate(R.id.nav_phrase_context, bundle);
+            }
+        });
     }
 
 
@@ -82,7 +93,7 @@ public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
         RecyclerView recyclerView = view.findViewById(R.id.phrase_wall);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setReverseLayout(true);
-        final PhraseListAdapter adapter = new PhraseListAdapter(getContext());
+        final VoiceCommandEntityListAdapter adapter = new VoiceCommandEntityListAdapter(getContext());
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(linearLayoutManager);
@@ -94,9 +105,9 @@ public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
         mPhraseViewModel = new ViewModelProvider(this).get(PhraseViewModel.class);
 
         //here we need to get all of the MXT commands, and then pull in each phrase associated with each command
-        mVoiceCommandViewModel.getVoiceNotes().observe(getActivity(), new Observer<List<Phrase>>() {
+        mVoiceCommandViewModel.getVoiceNotes().observe(getActivity(), new Observer<List<VoiceCommandEntity>>() {
             @Override
-            public void onChanged(@Nullable final List<Phrase> phrases) {
+            public void onChanged(@Nullable final List<VoiceCommandEntity> commands) {
                 //get all phrases associated with latest mxt commands, then
                 // Update the cached copy of the words in the adapter.
 //                Log.d(TAG, "mxt cache");
@@ -105,7 +116,7 @@ public class VoiceNotesUi extends Fragment implements ItemClickListenerPhrase {
 //                voiceCommands.forEach( (voiceCommand) -> phraseIds.add(voiceCommand.getTranscriptId()) );
 //                Log.d(TAG, Arrays.toString(phraseIds.toArray()));
 //                List<Phrase> phrases = mPhraseViewModel.getPhrases(phraseIds);
-                adapter.setPhrases(phrases);
+                adapter.setVoiceCommandEntitys(commands);
             }
         });
 

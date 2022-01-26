@@ -100,8 +100,10 @@ public class WearableAiService extends HiddenCameraService {
     //image stream handling
     private int img_count = 0;
     private long last_sent_time = 0l;
+    private long last_proc_time = 0l;
     private long lastImageTime = 0l;
     private float fps_to_send = 0.5f; //speed we send HD frames from wearable to mobile compute unit
+    private float fps_to_proc= 3f; //speed we process HD frames from wearable to mobile compute unit
 
     //ASP socket
     ASPClientSocket asp_client_socket;
@@ -513,10 +515,11 @@ public class WearableAiService extends HiddenCameraService {
         long curr_time = System.currentTimeMillis();
         float now_frame_rate = 1000f * (1f / (float)(curr_time - last_sent_time));
         float currFrameRate = 1000f * (1f / (float)(curr_time - lastImageTime));
+        float now_proc_rate = 1000f * (1f / (float)(curr_time - last_proc_time));
 
         lastImageTime = curr_time;
+        Camera.Parameters parameters = camera.getParameters();
         if (now_frame_rate <= fps_to_send) {
-            Camera.Parameters parameters = camera.getParameters();
             int width = parameters.getPreviewSize().width;
             int height = parameters.getPreviewSize().height;
 
@@ -538,6 +541,22 @@ public class WearableAiService extends HiddenCameraService {
             //Log.d(TAG, "saving image");
             //savePicture(jpg);
             last_sent_time = curr_time;
+        }
+
+        if (now_frame_rate <= fps_to_proc) {
+            last_proc_time = curr_time;
+            int width = parameters.getPreviewSize().width;
+            int height = parameters.getPreviewSize().height;
+
+            YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            yuv.compressToJpeg(new Rect(0, 0, width, height), 75, out);
+
+            byte[] bytes = out.toByteArray();
+            //this will slow down frame rate - need to make asynchronous in future
+            curr_cam_image = new byte[bytes.length];
+            System.arraycopy(bytes, 0, curr_cam_image, 0, bytes.length);
         }
         img_count++;
     }
