@@ -82,8 +82,8 @@ public class VoiceCommandServer {
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.78;
-    private final double commandThreshold = 0.78;
+    private final double wakeWordThreshold = 0.85;
+    private final double commandThreshold = 0.85;
     private final double endWordThreshold = 0.90;
 
     //database to save voice commmands to
@@ -115,6 +115,7 @@ public class VoiceCommandServer {
         voiceCommands.add(new SwitchModesVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
+        voiceCommands.add(new SelectVoiceCommand(context));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));
@@ -298,7 +299,7 @@ public class VoiceCommandServer {
                 if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     //we found a command, now get its arguments and run it
                     String preArgs = transcript.substring(0, wakeWordLocation);
-                    String postArgs = transcript.substring(wakeWordLocation + currWakeWord.length());
+                    String postArgs = transcript.substring(transcript.substring(wakeWordLocation).indexOf(" ") + 1); //start at the wake word location, and parse until the after the next space
                     if (run) {
                         voiceCommands.get(i).runCommand(this, preArgs, currWakeWord, j, postArgs, currTime, transcriptId);
                     }

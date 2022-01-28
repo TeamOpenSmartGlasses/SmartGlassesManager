@@ -40,6 +40,12 @@ public class MessageTypes {
     public static final String AUTOCITER_START = "AUTOCITER_START";
     public static final String AUTOCITER_STOP = "AUTOCITER_STOP";
     public static final String AUTOCITER_PHONE_NUMBER = "AUTOCITER_PHONE_NUMBER";
+    public static final String AUTOCITER_POTENTIAL_REFERENCES = "AUTOCITER_POTENTIAL_REFERENCES";
+    public static final String AUTOCITER_REFERENCE_DATA = "AUTOCITER_REFERENCE_DATA";
+
+    //request user UI to display a list of possible choices to dipslay
+    public static final String REFERENCE_SELECT_REQUEST = "REFERENCE_SELECT_REQUEST";
+    public static final String REFERENCES = "REFERENCES";
 
     //command responses to show
     //Natural language
@@ -57,6 +63,10 @@ public class MessageTypes {
     public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
+    //select command
+    public final static String ACTION_SELECT_COMMAND = "ACTION_SELECT_COMMAND";
+    public final static String SELECTION = "SELECTION";
+
 
     //control the current mode of the ASG
     public final static String ACTION_SWITCH_MODES = "ACTION_SWITCH_MODES";
@@ -64,6 +74,7 @@ public class MessageTypes {
     public final static String MODE_VISUAL_SEARCH = "MODE_VISUAL_SEARCH";
     public final static String MODE_LIVE_LIFE_CAPTIONS = "MODE_LIVE_LIFE_CAPTIONS";
     public final static String MODE_SOCIAL_MODE = "MODE_SOCIAL_MODE";
+    public final static String MODE_CONVERSATION_MODE = "MODE_CONVERSATION_MODE";
     public final static String MODE_REFERENCE_GRID = "MODE_REFERENCE_GRID";
     public final static String MODE_WEARABLE_FACE_RECOGNIZER = "MODE_WEARABLE_FACE_RECOGNIZER";
     public final static String MODE_LANGUAGE_TRANSLATE = "MODE_LANGUAGE_TRANSLATE";
