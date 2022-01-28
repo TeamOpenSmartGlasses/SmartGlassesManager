@@ -523,9 +523,10 @@ public class ASPClientSocket {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
 
             //the first bit does a bunch of if statement. The new, better way of doing things is our syncing of data across ASP and ASG with MessageTypes shared class. Now, we just pass a JSON string through to the UI if it's a MessageType that it needs to see, and let the UI deal with how to parse/handle it
-            String [] uiMessages = new String[] {MessageTypes.NATURAL_LANGUAGE_QUERY, MessageTypes.SEARCH_ENGINE_RESULT, MessageTypes.VISUAL_SEARCH_RESULT, MessageTypes.TRANSLATION_RESULT, MessageTypes.ACTION_SWITCH_MODES};
+            String [] uiMessages = new String[] {MessageTypes.NATURAL_LANGUAGE_QUERY, MessageTypes.SEARCH_ENGINE_RESULT, MessageTypes.VISUAL_SEARCH_RESULT, MessageTypes.TRANSLATION_RESULT, MessageTypes.ACTION_SWITCH_MODES, MessageTypes.REFERENCE_SELECT_REQUEST};
             for (String uiMessage : uiMessages){
                if (typeOf.equals(uiMessage)){
+                   Log.d(TAG, "THIS SHIT IS IN ASP: " + typeOf.toString());
                    final Intent intent = new Intent();
                    intent.setAction(ACTION_UI_DATA);
                    intent.putExtra(RAW_MESSAGE_JSON_STRING, data.toString());

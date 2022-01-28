@@ -74,7 +74,6 @@ public class MainActivity extends Activity {
     public long lastFaceUpdateTime = 0;
     public long faceUpdateInterval = 5000; //milliseconds
 
-
     public final static String ACTION_UI_UPDATE = "com.example.wearableaidisplaymoverio.UI_UPDATE";
     public final static String PHONE_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.PHONE_CONN_STATUS_UPDATE";
     public final static String WIFI_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.WIFI_CONN_STATUS_UPDATE";
@@ -128,6 +127,9 @@ public class MainActivity extends Activity {
     //text list ui
     private String textBlockHolder = "";
     TextView textBlockView;
+
+    //convo mode ui
+    TextView convoModeContentTextView;
 
     //metrics
     float eye_contact_30 = 0;
@@ -311,6 +313,9 @@ public class MainActivity extends Activity {
             case MessageTypes.MODE_LIVE_LIFE_CAPTIONS:
                 setupLlcUi();
                 break;
+            case MessageTypes.MODE_CONVERSATION_MODE:
+                setupConvoMode();
+                break;
         }
 
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
@@ -424,6 +429,19 @@ public class MainActivity extends Activity {
         });
         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
         scrollToBottom(liveLifeCaptionsText);
+
+        if (mBound){
+            mService.requestUiUpdate();
+        }
+    }
+
+    private void setupConvoMode() {
+        //live life captions mode gui setup
+        setContentView(R.layout.convo_mode_fragment);
+
+        setupHud();
+
+        convoModeContentTextView = (TextView) findViewById(R.id.references_text_view);
 
         if (mBound){
             mService.requestUiUpdate();
@@ -553,6 +571,7 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (ASPClientSocket.ACTION_UI_DATA.equals(action)) {
+                Log.d(TAG, "THIS SHIT: " + action.toString());
                 try {
                     JSONObject data = new JSONObject(intent.getStringExtra(ASPClientSocket.RAW_MESSAGE_JSON_STRING));
                     String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
@@ -567,6 +586,11 @@ public class MainActivity extends Activity {
                         String modeName = data.getString(MessageTypes.NEW_MODE);
                         //switch to that mode
                         switchMode(modeName);
+                    } else if (typeOf.equals(MessageTypes.REFERENCE_SELECT_REQUEST)){
+                        //parse out the name of the mode
+                        JSONArray refsArr = new JSONArray(data.getString(MessageTypes.REFERENCES));
+                        Log.d(TAG, "We got references: " + refsArr.toString());
+                        showPotentialReferences(refsArr);
                     }
             } catch(JSONException e){
                     e.printStackTrace();
@@ -1161,6 +1185,24 @@ public class MainActivity extends Activity {
             }
         }
         return false;
+    }
+
+    private void showPotentialReferences(JSONArray refs){
+        if (curr_mode.equals(MessageTypes.MODE_CONVERSATION_MODE)){
+            String refString = "";
+
+            try {
+                for (int i = 0; i < refs.length(); i++) {
+                    JSONObject ref = (JSONObject) refs.get(i);
+                    refString = refString + ref.getString("selector_char") + " - " + ref.getString("title") + '\n';
+                }
+            } catch (JSONException e){
+                e.printStackTrace();
+                return;
+            }
+            convoModeContentTextView.setText(refString);
+        }
+
     }
 
 }

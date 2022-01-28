@@ -21,6 +21,17 @@ public class MessageTypes {
     public static final String COMMAND_RESULT = "COMMAND_RESULT";
     public static final String COMMAND_RESPONSE_DISPLAY_STRING = "COMMAND_RESPONSE_DISPLAY_STRING";
 
+    //AUTOCITER/WEARABLE-REFERENCER
+    public static final String AUTOCITER_START = "AUTOCITER_START";
+    public static final String AUTOCITER_STOP = "AUTOCITER_STOP";
+    public static final String AUTOCITER_PHONE_NUMBER = "AUTOCITER_PHONE_NUMBER";
+    public static final String AUTOCITER_POTENTIAL_REFERENCES = "AUTOCITER_POTENTIAL_REFERENCES";
+    public static final String AUTOCITER_REFERENCE_DATA = "AUTOCITER_REFERENCE_DATA";
+
+    //request user UI to display a list of possible choices to dipslay
+    public static final String REFERENCE_SELECT_REQUEST = "REFERENCE_SELECT_REQUEST";
+    public static final String REFERENCES = "REFERENCES";
+
     //FACE/PERSON SIGHTING
     public static final String FACE_SIGHTING_EVENT = "FACE_SIGHTING_EVENT";
     public static final String FACE_NAME = "FACE_NAME";
@@ -63,6 +74,7 @@ public class MessageTypes {
     public final static String NEW_MODE = "NEW_MODE";
     public final static String MODE_VISUAL_SEARCH = "MODE_VISUAL_SEARCH";
     public final static String MODE_LIVE_LIFE_CAPTIONS = "MODE_LIVE_LIFE_CAPTIONS";
+    public final static String MODE_CONVERSATION_MODE = "MODE_CONVERSATION_MODE";
     public final static String MODE_SOCIAL_MODE = "MODE_SOCIAL_MODE";
     public final static String MODE_REFERENCE_GRID = "MODE_REFERENCE_GRID";
     public final static String MODE_WEARABLE_FACE_RECOGNIZER = "MODE_WEARABLE_FACE_RECOGNIZER";
