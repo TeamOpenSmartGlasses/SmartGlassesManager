@@ -120,6 +120,10 @@ public abstract class VoiceCommand {
         return hits;
     }
 
+    protected String getFirstArg(String toParse){
+        String firstArg = toParse.trim().split("\\s+")[0];
+        return firstArg;
+    }
 
 //    public void sendResults(JSONObject results){
 //        try{

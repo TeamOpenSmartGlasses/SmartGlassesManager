@@ -62,6 +62,9 @@ public class MessageTypes {
     public final static String TRANSLATE_TEXT_DATA = "TRANSLATE_TEXT_DATA";
     public final static String TRANSLATE_TEXT_RESULT = "TRANSLATE_TEXT_RESULT";
     public final static String TRANSLATE_TEXT_RESULT_DATA = "TRANSLATION_RESULT_DATA";
+    public final static String START_FOREIGN_LANGUAGE_ASR = "START_FOREIGN_LANGUAGE_ASR";
+    public final static String STOP_FOREIGN_LANGUAGE_ASR = "STOP_FOREIGN_LANGUAGE_ASR";
+    public final static String START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME = "START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME";
 
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
