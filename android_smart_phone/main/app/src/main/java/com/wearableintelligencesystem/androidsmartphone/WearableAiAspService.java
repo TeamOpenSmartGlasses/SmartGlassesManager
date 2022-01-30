@@ -70,6 +70,7 @@ public class WearableAiAspService extends LifecycleService {
 
     //speech recognition
     private SpeechRecVosk speechRecVosk;
+    private SpeechRecVosk speechRecVoskForeignLanguage;
 
     //UI
     TextView tvIP, tvPort;
@@ -156,7 +157,8 @@ public class WearableAiAspService extends LifecycleService {
     asgRep.startAsgConnection();
 
     //start vosk
-    speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
+    speechRecVosk = new SpeechRecVosk(SpeechRecVosk.LANGUAGE_ENGLISH, true, this, audioObservable, dataObservable, mPhraseRepository);
+    speechRecVoskForeignLanguage = new SpeechRecVosk(SpeechRecVosk.LANGUAGE_FRENCH, false, this, audioObservable, dataObservable, mPhraseRepository);
 
     //start voice command server to parse transcript for voice command
     voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
@@ -315,6 +317,8 @@ public class WearableAiAspService extends LifecycleService {
         adv_handler.removeCallbacksAndMessages(null);
 
         //kill asg connection
+        asgRep.destroy();
+
         asgRep.destroy();
 
         //kill data transmitters

@@ -42,6 +42,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         modesList.add(Pair.create("live life captions", MessageTypes.MODE_LIVE_LIFE_CAPTIONS));
         modesList.add(Pair.create("social mode", MessageTypes.MODE_SOCIAL_MODE));
         modesList.add(Pair.create("visual search", MessageTypes.MODE_VISUAL_SEARCH));
+        modesList.add(Pair.create("speech translate", MessageTypes.MODE_LANGUAGE_TRANSLATE));
     }
 
     @Override

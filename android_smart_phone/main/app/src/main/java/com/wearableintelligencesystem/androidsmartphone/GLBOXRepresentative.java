@@ -50,8 +50,10 @@ class GLBOXRepresentative {
                 sendSearchEngineQuery(data);
             } else if (type.equals(MessageTypes.VISUAL_SEARCH_QUERY)){
                 sendVisualSearchQuery(data);
+            } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT_FOREIGN)){
+                sendTranslateRequest(data);
             }
-        } catch (JSONException e){
+    } catch (JSONException e){
             e.printStackTrace();
         }
 
@@ -134,6 +136,33 @@ class GLBOXRepresentative {
                     asgRep.sendCommandResponse("Search failed, please try again.");
                 }
 
+            });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendTranslateRequest(JSONObject data){
+        Log.d(TAG, "Running sendSearchEngineQuery");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("query", data.get(MessageTypes.TRANSCRIPT_TEXT));
+            restMessage.put("source_language", "fr");
+            restMessage.put("target_language", "en");
+            restServerComms.restRequest(RestServerComms.TRANSLATE_TEXT_QUERY_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                public void onSuccess(JSONObject result){
+                    Log.d(TAG, "GOT translate TEXT RESULT:");
+                    Log.d(TAG, result.toString());
+                    try{
+                        asgRep.sendTranslateResults(result.getString("response"));
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                public void onFailure() {
+                }
             });
         } catch (JSONException e){
             e.printStackTrace();

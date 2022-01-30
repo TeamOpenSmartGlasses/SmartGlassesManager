@@ -13,6 +13,8 @@ public class MessageTypes {
     //TRANSCRIPTS
     public static final String FINAL_TRANSCRIPT = "FINAL_TRANSCRIPT";
     public static final String INTERMEDIATE_TRANSCRIPT = "INTERMEDIATE_TRANSCRIPT";
+    public static final String FINAL_TRANSCRIPT_FOREIGN = "FINAL_TRANSCRIPT_FOREIGN";
+    public static final String INTERMEDIATE_TRANSCRIPT_FOREIGN = "INTERMEDIATE_TRANSCRIPT_FOREIGN";
     public static final String TRANSCRIPT_TEXT = "TRANSCRIPT_TEXT";
     public static final String TRANSCRIPT_ID = "TRANSCRIPT_ID";
     public static final String TIMESTAMP = "TIMESTAMP";
@@ -54,7 +56,13 @@ public class MessageTypes {
     public final static String SEARCH_ENGINE_QUERY = "SEARCH_ENGINE_QUERY";
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
     public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
-    public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";
+
+    //translation
+    public final static String TRANSLATE_TEXT_QUERY = "TRANSLATE_TEXT_QUERY";
+    public final static String TRANSLATE_TEXT_DATA = "TRANSLATE_TEXT_DATA";
+    public final static String TRANSLATE_TEXT_RESULT = "TRANSLATE_TEXT_RESULT";
+    public final static String TRANSLATE_TEXT_RESULT_DATA = "TRANSLATION_RESULT_DATA";
+
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
 

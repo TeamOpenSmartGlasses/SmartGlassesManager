@@ -15,6 +15,7 @@ import android.util.Base64;
 import android.content.Context;
 import android.util.Log;
 import android.os.Handler;
+import android.util.Pair;
 
 import java.lang.InterruptedException;
 import java.io.InputStream;
@@ -38,6 +39,11 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 public class SpeechRecVosk implements RecognitionListener {
     public String TAG = "WearableAi_SpeechRecVosk";
+
+    public static final String LANGUAGE_ENGLISH = "model-en-us";
+    public static final String LANGUAGE_FRENCH = "model-fr-small";
+    private String languageModelPath = LANGUAGE_ENGLISH;
+    private boolean isBaseLanguage = true;
 
     private Context mContext;
 
@@ -64,8 +70,10 @@ public class SpeechRecVosk implements RecognitionListener {
     PublishSubject<byte []> audioObservable;
     Disposable audioSub;
 
-    public SpeechRecVosk(Context context, PublishSubject<byte []> audioObservable, PublishSubject<JSONObject> dataObservable, PhraseRepository mPhraseRepository){
+    public SpeechRecVosk(String languageModelPath, boolean isBaseLanguage, Context context, PublishSubject<byte []> audioObservable, PublishSubject<JSONObject> dataObservable, PhraseRepository mPhraseRepository){
         mContext = context;
+        this.languageModelPath = languageModelPath;
+        this.isBaseLanguage = isBaseLanguage;
 
         //to save trancript
         this.mPhraseRepository = mPhraseRepository;
@@ -101,11 +109,11 @@ public class SpeechRecVosk implements RecognitionListener {
 
     private void initModel() {
         Log.d(TAG, "Initing ASR model...");
-        StorageService.unpack(mContext, "model-en-us", "model",
+        StorageService.unpack(mContext, languageModelPath, "model",
                 (model) -> {
                     this.model = model;
                 },
-                (exception) -> setErrorState("Failed to unpack the model" + exception.getMessage()));
+                (exception) -> setErrorState("Failed to unpack the model: " + exception.getMessage()));
         Log.d(TAG, "ASR Model loaded.");
     }
 
@@ -195,10 +203,27 @@ public class SpeechRecVosk implements RecognitionListener {
             //https://github.com/alphacep/vosk-android-demo/issues/81
             JSONObject voskResponse = new JSONObject(hypothesis);
             String transcript;
+
+            //to send to other services
+            JSONObject transcriptObj = new JSONObject();
+            //different message types depending on whether or not this is the base language or a foreign language
+
+
             if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
                 transcript = voskResponse.getString("text");
+                //set event bus type
+                if (isBaseLanguage) {
+                    transcriptObj.put(MessageTypes.MESSAGE_TYPE_LOCAL, transcriptType);
+                } else {
+                    transcriptObj.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.FINAL_TRANSCRIPT_FOREIGN);
+                }
             } else if (transcriptType.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
                 transcript = voskResponse.getString("partial");
+                if (isBaseLanguage) {
+                    transcriptObj.put(MessageTypes.MESSAGE_TYPE_LOCAL, transcriptType);
+                } else {
+                    transcriptObj.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.INTERMEDIATE_TRANSCRIPT_FOREIGN);
+                }
             } else {
                 return;
             }
@@ -216,25 +241,24 @@ public class SpeechRecVosk implements RecognitionListener {
                 }
             }
 
-            if (newPhrase){
-                currPhrase = PhraseCreator.init("transcript_ASG", mContext, mPhraseRepository);
-                newPhrase = false;
+            if (isBaseLanguage) {
+                if (newPhrase) {
+                    currPhrase = PhraseCreator.init("transcript_ASG", mContext, mPhraseRepository);
+                    newPhrase = false;
+                }
+
+                //update the current phrase
+                PhraseCreator.create(currPhrase, transcript, mContext, mPhraseRepository);
+
+                //save transcript if final
+                if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+                    newPhrase = true;
+                }
+
+                transcriptObj.put(MessageTypes.TRANSCRIPT_ID, currPhrase.getId());
+                transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             }
-
-            //update the current phrase
-            PhraseCreator.create(currPhrase, transcript, mContext, mPhraseRepository);
-
-            //save transcript if final
-            if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
-                newPhrase = true;
-            }
-
-            //send to other services
-            JSONObject transcriptObj = new JSONObject();
-            transcriptObj.put(MessageTypes.MESSAGE_TYPE_LOCAL, transcriptType);
             transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
-            transcriptObj.put(MessageTypes.TRANSCRIPT_ID, currPhrase.getId());
-            transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             dataObservable.onNext(transcriptObj);
         } catch (JSONException e){
             e.printStackTrace();

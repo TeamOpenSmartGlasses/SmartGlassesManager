@@ -148,6 +148,9 @@ public class AspWebsocketServer extends WebSocketServer {
             } else if (type.equals(MessageTypes.VISUAL_SEARCH_RESULT)){
                 Log.d(TAG, "AspWebsocketServer got VISUAL_SEARCH_RESULT, sending to ASG");
                 sendJson(data);
+            } else if (type.equals(MessageTypes.TRANSLATE_TEXT_RESULT)) {
+                Log.d(TAG, "AspWebsocketServer got TRANSLATE_TEXT_RESULT, sending to ASG");
+                sendJson(data);
             }
         } catch (JSONException e){
             e.printStackTrace();
