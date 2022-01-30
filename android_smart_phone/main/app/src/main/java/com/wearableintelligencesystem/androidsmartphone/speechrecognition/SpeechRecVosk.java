@@ -40,9 +40,8 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 public class SpeechRecVosk implements RecognitionListener {
     public String TAG = "WearableAi_SpeechRecVosk";
 
-    public static final String LANGUAGE_ENGLISH = "model-en-us";
-    public static final String LANGUAGE_FRENCH = "model-fr-small";
-    private String languageModelPath = LANGUAGE_ENGLISH;
+    private String languageModelPath;
+
     private boolean isBaseLanguage = true;
 
     private Context mContext;
