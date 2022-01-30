@@ -7,6 +7,10 @@ import requests
 import json
 import urllib
 import base64
+import os
+import sys
+import threading
+from google.cloud import translate
 
 #function structured into their classes and/or modules
 from utils.bing_visual_search import bing_visual_search
@@ -19,6 +23,11 @@ class Tools:
         self.og_limit = 3 #only open up this many pages to check for open graph, or it will take too long
         self.summary_limit = 35 #word limit on summary
         self.check_wiki_limit = 5 #don't use wiki unless it's in the top n results
+
+        #setup gcp translate client
+        self.gcp_api_key_file = "gcp_creds.json"
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=os.path.join("keys", self.gcp_api_key_file)
+        self.gcp_translate_client = translate.TranslationServiceClient()
 
         #setup wolfram key
         #Wolfram API key - this loads from a plain text file containing only one string - your APP id key
@@ -213,3 +222,31 @@ class Tools:
         response = requests.get(map_url)
         img_bytes = response.content
         return img_bytes
+
+    def translate_text_simple(self, text, project_id="wearableai", source_language="fr", target_language="en"):
+        """Translating Text.
+
+        text : single string - text to be translated
+
+        """
+        location = "global"
+
+        parent = f"projects/{project_id}/locations/{location}"
+
+        print("Translate text is : {}".format(text))
+        print("Translate source_language is : {}".format(source_language))
+        # Detail on supported types can be found here:
+        # https://cloud.google.com/translate/docs/languages
+        # https://cloud.google.com/translate/docs/supported-formats
+        response = self.gcp_translate_client.translate_text(
+            request={
+                "parent": parent,
+                "contents": [text],
+                "mime_type": "text/plain",  # mime types: text/plain, text/html
+                "source_language_code": source_language,
+                "target_language_code": target_language,
+            }
+        )
+
+        # return the translation for each input text provided
+        return response.translations[0].translated_text

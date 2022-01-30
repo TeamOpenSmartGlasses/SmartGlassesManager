@@ -43,6 +43,13 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    sourceSets {
+        main {
+            assets.srcDirs += "$buildDir/generated/assets"
+        }
+    }
+
 }
 
 dependencies {
@@ -122,7 +129,7 @@ dependencies {
 //    implementation "net.java.dev.jna:jna:5.8.0"
     implementation 'net.java.dev.jna:jna:5.8.0@aar'
     implementation "com.alphacephei:vosk-android:0.3.34@aar"
-    implementation "com.alphacephei:vosk-model-en:0.3.34"
+//    implementation "com.alphacephei:vosk-model-en:0.3.34"
 
     //navigation
     implementation "androidx.navigation:navigation-fragment:2.0.0"
@@ -163,3 +170,27 @@ dependencies {
     //http(s) lib
     implementation "com.android.volley:volley:1.2.1"
 }
+
+//VOSK ASR prep maodels - need one for each language
+tasks.register('genUUID_en') {
+    def uuid = UUID.randomUUID().toString()
+    def odir = file("$buildDir/generated/assets/model-en-us")
+    def ofile = file("$odir/uuid")
+    doLast {
+        mkdir odir
+        ofile.text = uuid
+    }
+}
+tasks.register('genUUID_fr') {
+    def uuid = UUID.randomUUID().toString()
+    def odir = file("$buildDir/generated/assets/model-fr-small")
+    def ofile = file("$odir/uuid")
+    doLast {
+        mkdir odir
+        ofile.text = uuid
+    }
+}
+
+preBuild.dependsOn(genUUID_en)
+preBuild.dependsOn(genUUID_fr)
+

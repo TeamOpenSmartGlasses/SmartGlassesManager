@@ -82,8 +82,8 @@ public class VoiceCommandServer {
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.78;
-    private final double commandThreshold = 0.78;
+    private final double wakeWordThreshold = 0.85;
+    private final double commandThreshold = 0.85;
     private final double endWordThreshold = 0.90;
 
     //database to save voice commmands to
