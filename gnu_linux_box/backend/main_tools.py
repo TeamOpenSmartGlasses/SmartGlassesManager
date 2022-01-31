@@ -223,7 +223,7 @@ class Tools:
         img_bytes = response.content
         return img_bytes
 
-    def translate_text_simple(self, text, project_id="wearableai", source_language="fr", target_language="en"):
+    def translate_text_simple(self, text, project_id="tidy-bliss-339819", source_language="fr", target_language="en"):
         """Translating Text.
 
         text : single string - text to be translated
@@ -250,3 +250,9 @@ class Tools:
 
         # return the translation for each input text provided
         return response.translations[0].translated_text
+
+    def translate_reference(self, text, project_id="tidy-bliss-339819", source_language="en", target_language="fr"):
+        translated_text = self.translate_text_simple(text, source_language=source_language, target_language=target_language)
+        return self.search_engine(translated_text)
+
+
