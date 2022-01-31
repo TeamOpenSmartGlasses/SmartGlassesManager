@@ -69,6 +69,11 @@ public class MessageTypes {
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
 
+    //translate
+    public static final String REFERENCE_TRANSLATE_SEARCH_QUERY = "REFERENCE_TRANSLATE_SEARCH_QUERY";
+    public static final String REFERENCE_TRANSLATE_DATA = "REFERENCE_TRANSLATE_DATA";
+    public static final String REFERENCE_TRANSLATE_RESULT = "REFERENCE_TRANSLATE_RESULT";
+    public static final String REFERENCE_TRANSLATE_RESULT_DATA = "REFERENCE_TRANSLATE_RESULT_DATA";
     //control the current mode of the ASG
     public final static String ACTION_SWITCH_MODES = "ACTION_SWITCH_MODES";
     public final static String NEW_MODE = "NEW_MODE";

@@ -113,6 +113,7 @@ public class VoiceCommandServer {
         voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
         voiceCommands.add(new SearchEngineVoiceCommand(context));
         voiceCommands.add(new SwitchModesVoiceCommand(context));
+        voiceCommands.add(new ReferenceTranslateVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
 
