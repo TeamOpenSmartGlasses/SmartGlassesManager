@@ -35,6 +35,7 @@ class ReferenceTranslateVoiceCommand extends VoiceCommand {
 
         //send user update
         String displayString = "Translating: " + postArgs;
+
         //sendResult(vcServer, true, this.commandName, displayString);
         sendMessage(vcServer, displayString);
 
