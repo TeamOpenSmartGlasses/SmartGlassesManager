@@ -28,6 +28,7 @@ class Tools:
         self.gcp_api_key_file = "gcp_creds.json"
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=os.path.join("keys", self.gcp_api_key_file)
         self.gcp_translate_client = translate.TranslationServiceClient()
+        self.gcp_project_id = json.load(open(os.path.join("keys", self.gcp_api_key_file)))["project_id"]
 
         #setup wolfram key
         #Wolfram API key - this loads from a plain text file containing only one string - your APP id key
@@ -38,15 +39,22 @@ class Tools:
         self.map_quest_api_key_file = "map_quest_key.txt"
         self.map_quest_api_key = self.get_key(self.map_quest_api_key_file)
 
+        #duckduckgo languages
+        self.ddg_langs = {
+                "en" : "wt-wt",
+                 "fr" : "fr-fr"
+                     }
+
     def run_ner(self, text):
         #run nlp
         doc = self.spacey_nlp(text)
         return doc
 
-    def search_duckduckgo(self, entity_name):
+    def search_duckduckgo(self, entity_name, language='en'):
         #duckduckgosearch for entities
         #don't run this more than once every two seconds, or there will be an error
-        results = ddg(entity_name, region='wt-wt', safesearch='Moderate', time='y', max_results=8)
+        region = self.ddg_langs[language]
+        results = ddg(entity_name, region=region, safesearch='Moderate', time='y', max_results=8)
         return results
 
     def check_links_for(self, search_results, tag):
@@ -83,14 +91,16 @@ class Tools:
 
         return entity_list
 
-    def get_best_link_info(self, search_results):
+    def get_best_link_info(self, search_results, language="en"):
         #takes in a list of link, returns one with the best info - most easy to parse
 
         #first, check for wikipedia
         link = self.check_links_for(search_results[:self.check_wiki_limit], "wikipedia")
         if link is not None:
             currTime = time.time()
-            wiki_res = self.wikipedia_search(link)
+            #parse query from url (hilarious)
+            query = link["href"].split("/")[-1].replace("_", " ")
+            wiki_res = self.wikipedia_search(query, language=language)
             print("Wikipedia time was: {}".format(time.time() - currTime))
             if wiki_res is not None and wiki_res["image"] is not None: #wikipedia api, for some pages, doesn't return image. If not, first try looking for opengraph page
                 return wiki_res
@@ -122,24 +132,26 @@ class Tools:
         #all has failed, return the first result
         return search_results[0]
 
-    def wikipedia_search(self, ent):
+    def wikipedia_search(self, query, language="en"):
         #TODO limit this to one search
-        #parse query from url (hilarious)
-        query = ent["href"].split("/")[-1].replace("_", " ")
         print("Wikipedia query: " + query)
+
+        #set language of wikipedia search
+        wikipedia.set_lang(language)
 
         #make wikipedia search request (will fail if ambiguous)
         try:
-            wiki_res = wikipedia.page(query, auto_suggest=False)
-        except wikipedia.exceptions.DisambiguationError as e:
+            wiki_search = wikipedia.search(query)
+            wiki_page_name = wiki_search[0]
+            wiki_res = wikipedia.page(wiki_page_name, auto_suggest=False)
+        except Exception as e:
             return None
-
 
         #get first paragraph of summary
         summary_start = wiki_res.summary.split("\n")[0]
 
         #get MAIN image url
-        WIKI_REQUEST = 'http://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles='
+        WIKI_REQUEST = 'http://{}.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles='.format(language)
         response  = requests.get(WIKI_REQUEST+wiki_res.title)
         json_data = json.loads(response.text)
         try:
@@ -148,10 +160,13 @@ class Tools:
             img_url = None
         
         #pack result
-        ent["image"] = img_url
-        ent["summary"] = summary_start
+        res = dict()
+        res = dict()
+        res["title"] = wiki_res.title
+        res["image"] = img_url
+        res["summary"] = summary_start
 
-        return ent
+        return res
 
     def get_key(self, key_file):
         wolfram_api_key = None
@@ -192,15 +207,16 @@ class Tools:
         result = bing_visual_search(img_bytes)
         return result
 
-    def search_engine(self, query):
+    def search_engine(self, query, language="en"):
         currTime = time.time()
-        links = self.search_duckduckgo(query)
+        links = self.search_duckduckgo(query, language=language)
+        print(links)
 
         if links is None:
             return None
 
         #get the best link and its first image
-        best_link = self.get_best_link_info(links)
+        best_link = self.get_best_link_info(links, language=language)
         if best_link is None:
             return None
 
@@ -216,14 +232,12 @@ class Tools:
             map_url = map_url + param_key + "=" + param_value + "&"
 
         map_url = map_url + "key=" + self.map_quest_api_key
-        print("sending map_url:")
-        print(map_url)
 
         response = requests.get(map_url)
         img_bytes = response.content
         return img_bytes
 
-    def translate_text_simple(self, text, project_id="tidy-bliss-339819", source_language="fr", target_language="en"):
+    def translate_text_simple(self, text, source_language="fr", target_language="en"):
         """Translating Text.
 
         text : single string - text to be translated
@@ -231,10 +245,8 @@ class Tools:
         """
         location = "global"
 
-        parent = f"projects/{project_id}/locations/{location}"
+        parent = f"projects/{self.gcp_project_id}/locations/{location}"
 
-        print("Translate text is : {}".format(text))
-        print("Translate source_language is : {}".format(source_language))
         # Detail on supported types can be found here:
         # https://cloud.google.com/translate/docs/languages
         # https://cloud.google.com/translate/docs/supported-formats
@@ -251,8 +263,12 @@ class Tools:
         # return the translation for each input text provided
         return response.translations[0].translated_text
 
-    def translate_reference(self, text, project_id="tidy-bliss-339819", source_language="en", target_language="fr"):
+    def translate_reference(self, text, source_language="en", target_language="fr"):
         translated_text = self.translate_text_simple(text, source_language=source_language, target_language=target_language)
-        return self.search_engine(translated_text)
+        print("Translated text is: {}".format(translated_text))
+        res = self.wikipedia_search(translated_text, language=target_language)
+        if res is not None:
+            res["summary"] = " ".join(res["summary"].split(" ")[:self.summary_limit]) + "..."
+        return res
 
 

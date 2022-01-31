@@ -38,10 +38,11 @@ api.add_resource(VisualSearchApi, "/visual_search_search", resource_class_args=[
 api.add_resource(MapStaticImageApi, "/get_static_map", resource_class_args=[tools])
 api.add_resource(TranslateTextSimpleApi, "/translate_text_simple_query", resource_class_args=[tools])
 api.add_resource(TranslateReferenceApi, "/translate_reference_query", resource_class_args=[tools])
+
 # for dev server
 def start():
     app.debug = True
-    app.run(debug=True, host='0.0.0.0', port = 5001)
+    app.run(debug=True, host='0.0.0.0', port = 5000)
     #app.run(debug=True)
 
 if __name__ == "__main__":

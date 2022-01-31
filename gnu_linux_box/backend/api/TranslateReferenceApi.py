@@ -36,13 +36,9 @@ class TranslateReferenceApi(Resource):
         query = args["query"]
         source_language = args["source_language"]
         target_language = args["target_language"]
-        print("Incoming text to translate is: {}".format(query))
 
         #run translation
         translated_reference_response = self.tools.translate_reference(query, source_language=source_language, target_language=target_language)
-        print(translated_reference_response)
-
-        #search translation response
 
         #build payload
         if translated_reference_response is not None:
