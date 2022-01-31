@@ -46,7 +46,7 @@ class GLBOXRepresentative {
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (type.equals(MessageTypes.NATURAL_LANGUAGE_QUERY)) {
                 sendNaturalLanguageQuery(data);
-            } else if (type.equals(MessageTypes.SEARCH_ENGINE_RESULT)) {
+            } else if (type.equals(MessageTypes.SEARCH_ENGINE_QUERY)) {
                 sendSearchEngineQuery(data);
             } else if (type.equals(MessageTypes.VISUAL_SEARCH_QUERY)) {
                 sendVisualSearchQuery(data);
@@ -145,7 +145,7 @@ class GLBOXRepresentative {
         }
     }
     private void sendTranslateRequest(JSONObject data){
-        Log.d(TAG, "Running sendSearchEngineQuery");
+        Log.d(TAG, "Running sendTranslateRequest");
         try{
             JSONObject restMessage = new JSONObject();
             restMessage.put("query", data.get(MessageTypes.TRANSCRIPT_TEXT));
@@ -171,7 +171,7 @@ class GLBOXRepresentative {
         }
     }
     private void sendReferenceTranslateQuery(JSONObject data){
-        Log.d(TAG, "Running sendSearchEngineQuery");
+        Log.d(TAG, "Running sendReferenceTranslateQuery");
         try{
             JSONObject restMessage = new JSONObject();
             restMessage.put("query", data.get(MessageTypes.REFERENCE_TRANSLATE_DATA));
@@ -193,7 +193,6 @@ class GLBOXRepresentative {
                 public void onFailure(){
                     asgRep.sendCommandResponse("Reference translate failed, please try again.");
                 }
-
             });
         } catch (JSONException e){
             e.printStackTrace();
