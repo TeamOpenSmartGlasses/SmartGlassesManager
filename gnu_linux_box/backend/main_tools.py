@@ -269,6 +269,7 @@ class Tools:
         res = self.wikipedia_search(translated_text, language=target_language)
         if res is not None:
             res["summary"] = " ".join(res["summary"].split(" ")[:self.summary_limit]) + "..."
+            res["language"] = target_language
         return res
 
 

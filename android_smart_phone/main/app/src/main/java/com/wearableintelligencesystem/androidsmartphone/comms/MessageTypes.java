@@ -74,6 +74,12 @@ public class MessageTypes {
     public static final String REFERENCE_TRANSLATE_DATA = "REFERENCE_TRANSLATE_DATA";
     public static final String REFERENCE_TRANSLATE_RESULT = "REFERENCE_TRANSLATE_RESULT";
     public static final String REFERENCE_TRANSLATE_RESULT_DATA = "REFERENCE_TRANSLATE_RESULT_DATA";
+
+    //text to speech
+    public static final String TEXT_TO_SPEECH_SPEAK = "TEXT_TO_SPEECH_SPEAK";
+    public static final String TEXT_TO_SPEECH_SPEAK_DATA = "TEXT_TO_SPEECH_SPEAK_DATA";
+    public static final String TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE = "TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE";
+
     //control the current mode of the ASG
     public final static String ACTION_SWITCH_MODES = "ACTION_SWITCH_MODES";
     public final static String NEW_MODE = "NEW_MODE";
@@ -86,6 +92,8 @@ public class MessageTypes {
     public final static String MODE_TEXT_LIST = "MODE_TEXT_LIST";
     public final static String MODE_TEXT_BLOCK = "MODE_TEXT_BLOCK";
     public final static String MODE_BLANK = "MODE_BLANK";
+
+
 
 }
 

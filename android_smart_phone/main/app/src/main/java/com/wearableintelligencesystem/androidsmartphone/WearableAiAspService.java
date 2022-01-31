@@ -39,6 +39,7 @@ import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.nlp.WearableReferencerAutocite;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
+import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
 import com.wearableintelligencesystem.androidsmartphone.utils.NetworkUtils;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
 
@@ -51,6 +52,7 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
@@ -72,7 +74,7 @@ public class WearableAiAspService extends LifecycleService {
 
     NlpUtils nlpUtils;
 
-    List<NaturalLanguage> supportedLanguages = new ArrayList<NaturalLanguage>();
+    public static List<NaturalLanguage> supportedLanguages = new ArrayList<NaturalLanguage>();
 
 
     //mediapipe system
@@ -84,6 +86,9 @@ public class WearableAiAspService extends LifecycleService {
     //speech recognition
     private SpeechRecVosk speechRecVosk;
     private SpeechRecVosk speechRecVoskForeignLanguage;
+
+    //Text to Speech
+    private TextToSpeechSystem textToSpeechSystem;
 
     //UI
     TextView tvIP, tvPort;
@@ -173,11 +178,14 @@ public class WearableAiAspService extends LifecycleService {
     asgRep.startAsgConnection();
 
     //setup languages
-    supportedLanguages.add(new NaturalLanguage("english", "en", "model-en-us")); //english
-    supportedLanguages.add(new NaturalLanguage("french", "fr", "model-fr-small")); //french
+    supportedLanguages.add(new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
+    supportedLanguages.add(new NaturalLanguage("french", "fr", "model-fr-small", Locale.FRENCH)); //french
 
     //start vosk
     speechRecVosk = new SpeechRecVosk(getLanguageFromName(baseLanguage).getModelLocation(), true, this, audioObservable, dataObservable, mPhraseRepository);
+
+    //start text to speech
+    textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, getLanguageFromName(baseLanguage).getLocale());
 
     //start voice command server to parse transcript for voice command
     voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
@@ -352,6 +360,8 @@ public class WearableAiAspService extends LifecycleService {
         dataObservable.onComplete();
         audioObservable.onComplete();
 
+        //kill textToSpeech
+        textToSpeechSystem.destroy();
         //kill vosk
         speechRecVosk.destroy();
         if (speechRecVoskForeignLanguage != null) {
@@ -407,5 +417,15 @@ public class WearableAiAspService extends LifecycleService {
           }
       }
       return null;
+    }
+
+    //takes in a natural language code for a language and gives back the NaturalLanguage
+    public static NaturalLanguage getLanguageFromCode(String codeName){
+        for (NaturalLanguage nl : supportedLanguages){
+            if (nl.getCode().equals(codeName)){
+                return nl;
+            }
+        }
+        return null;
     }
 }
