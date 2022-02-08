@@ -18,7 +18,6 @@ import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
 
-
 class SwitchModesVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_SwitchModesVoiceCommand";
 
@@ -43,6 +42,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         modesList.add(Pair.create("social mode", MessageTypes.MODE_SOCIAL_MODE));
         modesList.add(Pair.create("visual search", MessageTypes.MODE_VISUAL_SEARCH));
         modesList.add(Pair.create("conversation", MessageTypes.MODE_CONVERSATION_MODE));
+        modesList.add(Pair.create("blank", MessageTypes.MODE_BLANK));
     }
 
     @Override
