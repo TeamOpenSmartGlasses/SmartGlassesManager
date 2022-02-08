@@ -514,7 +514,6 @@ public class MainActivity extends Activity {
 
 
     private void blankUi() {
-//        setContentView(R.layout.blank_screen);
         turnOffScreen();
     }
 
@@ -822,7 +821,6 @@ public class MainActivity extends Activity {
             }
         }
     };
-
 
     private Spanned getCurrentTranscriptScrollText() {
         Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
