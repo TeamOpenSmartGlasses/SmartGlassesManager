@@ -14,4 +14,5 @@
     <color name="green_icon">#FF66BB6A</color>
     <color name="red_icon">#FFE53935</color>
     <color name="yellow_icon">#FFFFEB3B</color>
+    <color name="gray">#FFAAAAAA</color>
 </resources>
