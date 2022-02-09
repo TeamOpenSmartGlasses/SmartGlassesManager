@@ -22,7 +22,7 @@ class Tools:
         self.spacey_nlp = spacy.load("en_core_web_sm") # if not found, download with python -m spacy download en_core_web_sm
         self.og_limit = 3 #only open up this many pages to check for open graph, or it will take too long
         self.summary_limit = 35 #word limit on summary
-        self.check_wiki_limit = 5 #don't use wiki unless it's in the top n results
+        self.check_wiki_limit = 15 #don't use wiki unless it's in the top n results
 
         #setup gcp translate client
         self.gcp_api_key_file = "gcp_creds.json"
@@ -92,22 +92,56 @@ class Tools:
         return entity_list
 
     def get_best_link_info(self, search_results, language="en"):
+        #check if our response has all necesarry info, and should be sent
+        reference_contents = ["title", "body", "image"]
+        def is_response_full(response):
+            print("CHECKING RESPONES:")
+            print(response)
+            for rc in reference_contents:
+                if rc not in response.keys():
+                    return False
+                elif response[rc] is None:
+                    return False
+            return True
+
+        def add_to_response(response, key, value):
+            if value is None:
+                return
+            if (key not in response.keys()) or (response[key] is None):
+                response["image"] = value
+
+
         #takes in a list of link, returns one with the best info - most easy to parse
 
+        #response being built:
+        response = dict()
+
         #first, check for wikipedia
-        link = self.check_links_for(search_results[:self.check_wiki_limit], "wikipedia")
-        if link is not None:
+        wiki_link = self.check_links_for(search_results[:self.check_wiki_limit], "wikipedia")
+        if wiki_link is not None:
             currTime = time.time()
             #parse query from url (hilarious)
-            query = link["href"].split("/")[-1].replace("_", " ")
-            wiki_res = self.wikipedia_search(query, language=language)
-            print("Wikipedia time was: {}".format(time.time() - currTime))
-            if wiki_res is not None and wiki_res["image"] is not None: #wikipedia api, for some pages, doesn't return image. If not, first try looking for opengraph page
-                return wiki_res
+            print("WIKI TITLE")
+            print(wiki_link["href"])
+            #response["title"] = wiki_link["href"].split("/")[-1].replace("_", " ")
+            response["title"] = wiki_link["title"].replace(" - Wikipedia", "")
+            #wiki_res = self.get_wikipedia_data_from_page_title(response["title"])
+            response["body"] = wiki_link["body"]
+            #response["image"] = wiki_res["image"]
 
+            #get image
+            response["image"] = self.get_wikipedia_image_link_from_page_title(wiki_link["href"].split("/")[-1].replace("_", " "), language=language)
+            
+            if is_response_full(response): #wikipedia api, for some pages, doesn't return image. If not, first try looking for opengraph page
+                return response
+
+        print("response after wiki:")
+        print(response)
         #then, check for OG compatible
         counter = 0
         for site in search_results:
+            print("CHECKING: ")
+            print(site)
             if "youtube" in site["href"].lower(): # youtube doesn't give good info, but is often high in search results, so ignore it
                 continue
             try:
@@ -116,32 +150,45 @@ class Tools:
                 counter += 1
                 if page.is_valid():
                     print("Found OG for: {}".format(site["href"]))
+
+                    #get image
+                    print(page)
                     image_url = page.get('image', None)
-                    if not image_url.startswith('http'):
+                    if (image_url is not None) and (not image_url.startswith('http')):
                         image_url = urljoin(page['_url'], page['image'])
-                    summary = page.get('description', None)
-                    site["image"] = image_url
-                    site["summary"] = summary
-                    return site
+
+                    add_to_response(response, "image", image_url)
+
+                    #response["body"] = page.get('description', None)
+                    add_to_response(response, "body", page.get('body', None))
+                    print("PRECHECK RESPONES")
+                    print(response)
+                    if is_response_full(response): #wikipedia api, for some pages, doesn't return image. If not, first try looking for opengraph page
+                        return response
                 if counter > self.og_limit:
                     break
                 print("OPgraph time was: {}".format(time.time() - currTime))
             except Exception as e:
+                print("ERROR")
+                print(e)
                 continue
 
-        #all has failed, return the first result
-        return search_results[0]
+        if "title" in response.keys():
+            return response
+        else:
+            #all has failed, return the first result
+            return search_results[0]
 
-    def wikipedia_search(self, query, language="en"):
+    def get_wikipedia_data_from_page_title(self, title, language="en"):
         #TODO limit this to one search
-        print("Wikipedia query: " + query)
+        print("Wikipedia query: " + title)
 
         #set language of wikipedia search
         wikipedia.set_lang(language)
 
         #make wikipedia search request (will fail if ambiguous)
         try:
-            wiki_search = wikipedia.search(query)
+            wiki_search = wikipedia.search(title)
             wiki_page_name = wiki_search[0]
             wiki_res = wikipedia.page(wiki_page_name, auto_suggest=False)
         except Exception as e:
@@ -151,22 +198,45 @@ class Tools:
         summary_start = wiki_res.summary.split("\n")[0]
 
         #get MAIN image url
-        WIKI_REQUEST = 'http://{}.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles='.format(language)
-        response  = requests.get(WIKI_REQUEST+wiki_res.title)
-        json_data = json.loads(response.text)
-        try:
-            img_url = list(json_data['query']['pages'].values())[0]['original']['source']
-        except Exception as e:
-            img_url = None
+        img_url = self.get_wikipedia_image_link_from_page_title(wiki_res.title, language=language)
         
         #pack result
         res = dict()
         res = dict()
         res["title"] = wiki_res.title
         res["image"] = img_url
-        res["summary"] = summary_start
+        res["body"] = summary_start
 
         return res
+
+    def get_wikipedia_image_link_from_page_title(self, page_title, language="en"):
+        #do search on wikipedia to get proper title
+        #get_wikipedia_image_link_from_page_title(raw_page_title, language=language)
+
+        #get MAIN image url
+        WIKI_REQUEST = 'http://{}.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&piprop=original&titles={}'.format(language, page_title)
+        response  = requests.get(WIKI_REQUEST)
+        json_data = json.loads(response.text)
+        try:
+            img_url = list(json_data['query']['pages'].values())[0]['original']['source']
+            max_size = 480
+            print(img_url)
+            image_wikipedia_name = img_url.split("/")[-1]
+            img_url = img_url.replace("/commons/", "/commons/thumb/")
+            img_url = img_url.replace(f"/{language}/", f"/{language}/thumb/")
+            img_url = img_url + f"/{max_size}px-{image_wikipedia_name}"
+            if img_url[-3:] == "svg":
+                img_url = img_url + ".png"
+            elif img_url[-3:] == "ogv":
+                img_url = None
+#            img_url = f"https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/{image_wikipedia_name}/{max_size}px-{image_wikipedia_name}"
+#            print("IMAGE WIKI NAME")
+#            print(image_wikipedia_name)
+        except Exception as e:
+            print(e)
+            img_url = None
+        print("got wiki image url: {}".format(img_url))
+        return img_url
 
     def get_key(self, key_file):
         wolfram_api_key = None
@@ -210,6 +280,7 @@ class Tools:
     def search_engine(self, query, language="en"):
         currTime = time.time()
         links = self.search_duckduckgo(query, language=language)
+        print("DDG links:")
         print(links)
 
         if links is None:
@@ -217,11 +288,13 @@ class Tools:
 
         #get the best link and its first image
         best_link = self.get_best_link_info(links, language=language)
+        print("BEST DDG LINK:")
+        print(best_link)
         if best_link is None:
             return None
 
         #limit summary
-        best_link["summary"] = " ".join(best_link["summary"].split(" ")[:self.summary_limit]) + "..."
+        best_link["body"] = " ".join(best_link["body"].split(" ")[:self.summary_limit]) + "..."
 
         return best_link
 
@@ -266,10 +339,8 @@ class Tools:
     def translate_reference(self, text, source_language="en", target_language="fr"):
         translated_text = self.translate_text_simple(text, source_language=source_language, target_language=target_language)
         print("Translated text is: {}".format(translated_text))
-        res = self.wikipedia_search(translated_text, language=target_language)
+        res = self.get_wikipedia_data_from_page_title(translated_text, language=target_language)
         if res is not None:
-            res["summary"] = " ".join(res["summary"].split(" ")[:self.summary_limit]) + "..."
+            res["body"] = " ".join(res["body"].split(" ")[:self.summary_limit]) + "..."
             res["language"] = target_language
         return res
-
-
