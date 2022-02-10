@@ -34,6 +34,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -55,6 +56,8 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.OkHttpDownloader;
 import com.squareup.picasso.Picasso;
 import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
@@ -157,6 +160,7 @@ public class MainActivity extends Activity {
     boolean batteryCharging = false;
 
     private Handler uiHandler;
+    private Handler navHandler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -175,6 +179,9 @@ public class MainActivity extends Activity {
 
         //setup ui handler
         uiHandler = new Handler();
+
+        //setup nav handler
+        navHandler = new Handler();
 
         //setup main view
         switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
@@ -953,7 +960,8 @@ public class MainActivity extends Activity {
                     return super.onKeyUp(keyCode, event);
                 }
             case KeyEvent.KEYCODE_DEL:
-                Log.d(TAG, "keycode DEL entered");
+                Log.d(TAG, "keycode DEL entered - this means go back home");
+                navHandler.removeCallbacksAndMessages(null);
                 switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
                 return super.onKeyUp(keyCode, event);
 //                if (!curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
@@ -1046,6 +1054,8 @@ public class MainActivity extends Activity {
 
     private void showSearchEngineResults(JSONObject data) {
         try {
+            navHandler.removeCallbacksAndMessages(null);
+            String lastMode = curr_mode;
             //parse out the response object - one result for now
             JSONObject search_engine_result = new JSONObject(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
             //JSONArray search_engine_results = new JSONArray(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
@@ -1059,8 +1069,7 @@ public class MainActivity extends Activity {
 
             //get content
             String title = search_engine_result.getString("title");
-            String summary = search_engine_result.getString("summary");
-            String img_url = search_engine_result.getString("image");
+            String summary = search_engine_result.getString("body");
 
             //set the text
             referenceCardResultTitle.setText(title);
@@ -1069,14 +1078,33 @@ public class MainActivity extends Activity {
             referenceCardResultSummary.setSelected(true);
 
             //pull image from web and display in imageview
-            Picasso.with(this).load(img_url).into(referenceCardResultImage);
+            if (search_engine_result.has("image")) {
+                String img_url = search_engine_result.getString("image");
+                Picasso.Builder builder = new Picasso.Builder(this);
+                builder.downloader(new OkHttpDownloader(this));
+                builder.build()
+                        .load(img_url.trim())
+                        .into(referenceCardResultImage, new Callback() {
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d(TAG, "Picasso Image load success");
+                            }
+
+                            @Override
+                            public void onError() {
+                                Log.e("Picasso", "Image load failed");
+                            }
+                        });
+                //Picasso.with(this).load(img_url).into(referenceCardResultImage);
+                Log.d(TAG, "Just sent referee image: " + img_url);
+            }
 
             //for now, show for n seconds and then return to llc
             int search_show_time = 12000; //milliseconds
-            Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
+            navHandler.postDelayed(new Runnable() {
                 public void run() {
-                    setupLlcUi();
+                    switchMode(lastMode);
                 }
             }, search_show_time);
 
