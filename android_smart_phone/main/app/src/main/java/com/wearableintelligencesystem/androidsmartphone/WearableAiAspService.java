@@ -90,6 +90,7 @@ public class WearableAiAspService extends LifecycleService {
     //Text to Speech
     private TextToSpeechSystem textToSpeechSystem;
 
+
     //UI
     TextView tvIP, tvPort;
     TextView tvMessages;
@@ -180,6 +181,10 @@ public class WearableAiAspService extends LifecycleService {
     //setup languages
     supportedLanguages.add(new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
     supportedLanguages.add(new NaturalLanguage("french", "fr", "model-fr-small", Locale.FRENCH)); //french
+
+    //supportedLanguages.add(new NaturalLanguage("chinese", "zh", "model-cn-small", Locale.CHINESE)); //chinese
+    //supportedLanguages.add(new NaturalLanguage("italian", "it", "model-it-small", Locale.ITALIAN)); //italian
+    //supportedLanguages.add(new NaturalLanguage("japanese", "ja", "model-jp-small", Locale.JAPANESE)); //japanese
 
     //start vosk
     speechRecVosk = new SpeechRecVosk(getLanguageFromName(baseLanguage).getModelLocation(), true, this, audioObservable, dataObservable, mPhraseRepository);

@@ -176,7 +176,7 @@ class GLBOXRepresentative {
             JSONObject restMessage = new JSONObject();
             restMessage.put("query", data.get(MessageTypes.REFERENCE_TRANSLATE_DATA));
             restMessage.put("source_language", "en");
-            restMessage.put("target_language", "fr");
+            restMessage.put("target_language", data.get(MessageTypes.REFERENCE_TRANSLATE_TARGET_LANGUAGE_CODE));
             restServerComms.restRequest(RestServerComms.REFERENCE_TRANSLATE_ENDPOINT, restMessage, new VolleyCallback(){
                 @Override
                 public void onSuccess(JSONObject result){
