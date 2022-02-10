@@ -35,17 +35,24 @@ import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 import com.wearableintelligencesystem.androidsmartphone.facialrecognition.FaceRecApi;
+import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.nlp.WearableReferencerAutocite;
+import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
+import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
 import com.wearableintelligencesystem.androidsmartphone.utils.NetworkUtils;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
 
+import org.apache.commons.lang3.tuple.MutableTriple;
+import org.apache.commons.lang3.tuple.Triple;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
@@ -55,10 +62,20 @@ public class WearableAiAspService extends LifecycleService {
     // Service Binder given to clients
     private final IBinder binder = new LocalBinder();
 
+    private static final String TAG = "WearableAi_ASP_Service";
+
     private static final String TAG_FOREGROUND_SERVICE = "FOREGROUND_SERVICE";
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
     public static final String ACTION_RUN_AFFECTIVE_MEM = "ACTION_RUN_AFFECTIVE_MEM";
+
+    //our base language
+    String baseLanguage = "english";
+
+    NlpUtils nlpUtils;
+
+    public static List<NaturalLanguage> supportedLanguages = new ArrayList<NaturalLanguage>();
+
 
     //mediapipe system
 //    private MediaPipeSystem mediaPipeSystem;
@@ -66,10 +83,13 @@ public class WearableAiAspService extends LifecycleService {
     //handler for adv
     private Handler adv_handler;
 
-    private static final String TAG = "WearableAi_ASP_Service";
-
     //speech recognition
     private SpeechRecVosk speechRecVosk;
+    private SpeechRecVosk speechRecVoskForeignLanguage;
+
+    //Text to Speech
+    private TextToSpeechSystem textToSpeechSystem;
+
 
     //UI
     TextView tvIP, tvPort;
@@ -119,7 +139,10 @@ public class WearableAiAspService extends LifecycleService {
   @Override
   public void onCreate() {
       super.onCreate();
-   
+
+      //setup NLP utils
+      nlpUtils = NlpUtils.getInstance(this);
+
     //setup room database interfaces
     mPhraseRepository = new PhraseRepository(getApplication());
     mFacialEmotionRepository = new FacialEmotionRepository(getApplication());
@@ -155,8 +178,19 @@ public class WearableAiAspService extends LifecycleService {
     //start connection to ASG
     asgRep.startAsgConnection();
 
+    //setup languages
+    supportedLanguages.add(new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
+    supportedLanguages.add(new NaturalLanguage("french", "fr", "model-fr-small", Locale.FRENCH)); //french
+
+    //supportedLanguages.add(new NaturalLanguage("chinese", "zh", "model-cn-small", Locale.CHINESE)); //chinese
+    //supportedLanguages.add(new NaturalLanguage("italian", "it", "model-it-small", Locale.ITALIAN)); //italian
+    //supportedLanguages.add(new NaturalLanguage("japanese", "ja", "model-jp-small", Locale.JAPANESE)); //japanese
+
     //start vosk
-    speechRecVosk = new SpeechRecVosk(this, audioObservable, dataObservable, mPhraseRepository);
+    speechRecVosk = new SpeechRecVosk(getLanguageFromName(baseLanguage).getModelLocation(), true, this, audioObservable, dataObservable, mPhraseRepository);
+
+    //start text to speech
+    textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, getLanguageFromName(baseLanguage).getLocale());
 
     //start voice command server to parse transcript for voice command
     voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
@@ -279,7 +313,15 @@ public class WearableAiAspService extends LifecycleService {
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (type.equals(MessageTypes.POV_IMAGE)){
                 sendImageToFaceRec(data);
-            } 
+            }  else if (type.equals((MessageTypes.START_FOREIGN_LANGUAGE_ASR))){
+                String languageName = data.getString(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME);
+                speechRecVoskForeignLanguage = new SpeechRecVosk(getLanguageFromName(languageName).getModelLocation(), false, this, audioObservable, dataObservable, mPhraseRepository);
+            }  else if (type.equals((MessageTypes.STOP_FOREIGN_LANGUAGE_ASR))){
+                if (speechRecVoskForeignLanguage != null) {
+                    speechRecVoskForeignLanguage.destroy();
+                    speechRecVoskForeignLanguage = null;
+                }
+            }
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -317,14 +359,21 @@ public class WearableAiAspService extends LifecycleService {
         //kill asg connection
         asgRep.destroy();
 
+        asgRep.destroy();
+
         //kill data transmitters
         dataObservable.onComplete();
         audioObservable.onComplete();
 
+        //kill textToSpeech
+        textToSpeechSystem.destroy();
         //kill vosk
         speechRecVosk.destroy();
+        if (speechRecVoskForeignLanguage != null) {
+            speechRecVoskForeignLanguage.destroy();
+        }
 
-        //close room database(s)
+            //close room database(s)
         WearableAiRoomDatabase.destroy();
 
         //call parent destroy
@@ -364,4 +413,24 @@ public class WearableAiAspService extends LifecycleService {
     }
     //^^^^^^allow ui to control Autociter/wearable referencer
 
+    //takes in a natural language name for a language and gives back the code
+    public NaturalLanguage getLanguageFromName(String languageName){
+      for (NaturalLanguage nl : supportedLanguages){
+          int modeMatchChar = nlpUtils.findNearMatches(languageName, nl.getNaturalLanguageName(), 0.8);
+          if (modeMatchChar != -1){
+              return nl;
+          }
+      }
+      return null;
+    }
+
+    //takes in a natural language code for a language and gives back the NaturalLanguage
+    public static NaturalLanguage getLanguageFromCode(String codeName){
+        for (NaturalLanguage nl : supportedLanguages){
+            if (nl.getCode().equals(codeName)){
+                return nl;
+            }
+        }
+        return null;
+    }
 }

@@ -36,10 +36,12 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -56,6 +58,8 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.OkHttpDownloader;
 import com.squareup.picasso.Picasso;
 import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
@@ -160,6 +164,7 @@ public class MainActivity extends Activity {
     boolean batteryCharging = false;
 
     private Handler uiHandler;
+    private Handler navHandler;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -178,6 +183,9 @@ public class MainActivity extends Activity {
 
         //setup ui handler
         uiHandler = new Handler();
+
+        //setup nav handler
+        navHandler = new Handler();
 
         //setup main view
         switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
@@ -610,6 +618,9 @@ public class MainActivity extends Activity {
                         JSONArray refsArr = new JSONArray(data.getString(MessageTypes.REFERENCES));
                         Log.d(TAG, "We got references: " + refsArr.toString());
                         showPotentialReferences(refsArr);
+                    } else if (typeOf.equals((MessageTypes.TRANSLATE_TEXT_RESULT))){
+                        String translatedTextString = data.getString(MessageTypes.TRANSLATE_TEXT_RESULT_DATA);
+                        updateTranslatedText(translatedTextString);
                     }
             } catch(JSONException e){
                     e.printStackTrace();
@@ -728,45 +739,6 @@ public class MainActivity extends Activity {
                 }
             } else if (GlboxClientSocket.COMMAND_SWITCH_MODE.equals(action)) {
                 switchMode(intent.getStringExtra(GlboxClientSocket.COMMAND_ARG));
-            } else if (GlboxClientSocket.ACTION_WIKIPEDIA_RESULT.equals(action)) {
-                try {
-                    //change the view to the wikipeida results page
-                    setContentView(R.layout.reference_card);
-                    referenceCardResultTitle = (TextView) findViewById(R.id.reference_card_result_title);
-                    referenceCardResultSummary = (TextView) findViewById(R.id.reference_card_result_summary);
-                    referenceCardResultImage = (ImageView) findViewById(R.id.reference_card_result_image);
-
-                    //get content
-                    JSONObject reference_card_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.WIKIPEDIA_RESULT));
-                    String title = reference_card_object.getString("title");
-                    String summary = reference_card_object.getString("summary");
-                    String img_path = reference_card_object.getString("image_path");
-
-                    //set the text
-                    referenceCardResultTitle.setText(title);
-                    referenceCardResultSummary.setText(summary);
-                    referenceCardResultSummary.setMovementMethod(new ScrollingMovementMethod());
-                    referenceCardResultSummary.setSelected(true);
-
-                    //open the image and display
-                    File imgFile = new File(img_path);
-                    if (imgFile.exists()) {
-                        Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                        referenceCardResultImage.setImageBitmap(myBitmap);
-                    }
-
-                    //for now, show for n seconds and then return to llc
-                    int wiki_show_time = 8000; //milliseconds
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        public void run() {
-                            setupLlcUi();
-                        }
-                    }, wiki_show_time);
-
-                } catch (JSONException e) {
-                    Log.d(TAG, e.toString());
-                }
             } else if (ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST.equals(action)) {
                 try {
                     JSONObject affective_mem = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST));
@@ -802,8 +774,6 @@ public class MainActivity extends Activity {
                 if (curr_mode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)) {
                     translateText.setText(getCurrentTranslateScrollText());
                 }
-            } else if (GlboxClientSocket.ACTION_VISUAL_SEARCH_RESULT.equals(action)) {
-
             } else if (MessageTypes.FACE_SIGHTING_EVENT.equals(action)) {
                 String currName = intent.getStringExtra(MessageTypes.FACE_NAME);
                 faceNames.clear();
@@ -999,8 +969,6 @@ public class MainActivity extends Activity {
         }
     };
 
-
-
     public void captureVisualSearchImage(){
 
         Toast.makeText(MainActivity.this, "Capturing image...", Toast.LENGTH_SHORT).show();
@@ -1035,7 +1003,8 @@ public class MainActivity extends Activity {
                     return super.onKeyUp(keyCode, event);
                 }
             case KeyEvent.KEYCODE_DEL:
-                Log.d(TAG, "keycode DEL entered");
+                Log.d(TAG, "keycode DEL entered - this means go back home");
+                navHandler.removeCallbacksAndMessages(null);
                 switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
                 return super.onKeyUp(keyCode, event);
 //                if (!curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
@@ -1128,6 +1097,8 @@ public class MainActivity extends Activity {
 
     private void showSearchEngineResults(JSONObject data) {
         try {
+            navHandler.removeCallbacksAndMessages(null);
+            String lastMode = curr_mode;
             //parse out the response object - one result for now
             JSONObject search_engine_result = new JSONObject(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
             //JSONArray search_engine_results = new JSONArray(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
@@ -1141,8 +1112,7 @@ public class MainActivity extends Activity {
 
             //get content
             String title = search_engine_result.getString("title");
-            String summary = search_engine_result.getString("summary");
-            String img_url = search_engine_result.getString("image");
+            String summary = search_engine_result.getString("body");
 
             //set the text
             referenceCardResultTitle.setText(title);
@@ -1151,14 +1121,33 @@ public class MainActivity extends Activity {
             referenceCardResultSummary.setSelected(true);
 
             //pull image from web and display in imageview
-            Picasso.with(this).load(img_url).into(referenceCardResultImage);
+            if (search_engine_result.has("image")) {
+                String img_url = search_engine_result.getString("image");
+                Picasso.Builder builder = new Picasso.Builder(this);
+                builder.downloader(new OkHttpDownloader(this));
+                builder.build()
+                        .load(img_url.trim())
+                        .into(referenceCardResultImage, new Callback() {
+
+                            @Override
+                            public void onSuccess() {
+                                Log.d(TAG, "Picasso Image load success");
+                            }
+
+                            @Override
+                            public void onError() {
+                                Log.e("Picasso", "Image load failed");
+                            }
+                        });
+                //Picasso.with(this).load(img_url).into(referenceCardResultImage);
+                Log.d(TAG, "Just sent referee image: " + img_url);
+            }
 
             //for now, show for n seconds and then return to llc
             int search_show_time = 12000; //milliseconds
-            Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
+            navHandler.postDelayed(new Runnable() {
                 public void run() {
-                    setupLlcUi();
+                    switchMode(lastMode);
                 }
             }, search_show_time);
 
@@ -1205,8 +1194,8 @@ public class MainActivity extends Activity {
         return false;
     }
 
-    private void showPotentialReferences(JSONArray refs){
-        if (curr_mode.equals(MessageTypes.MODE_CONVERSATION_MODE)){
+    private void showPotentialReferences(JSONArray refs) {
+        if (curr_mode.equals(MessageTypes.MODE_CONVERSATION_MODE)) {
             String refString = "";
 
             try {
@@ -1214,13 +1203,20 @@ public class MainActivity extends Activity {
                     JSONObject ref = (JSONObject) refs.get(i);
                     refString = refString + ref.getString("selector_char") + " - " + ref.getString("title") + '\n';
                 }
-            } catch (JSONException e){
+            } catch (JSONException e) {
                 e.printStackTrace();
                 return;
             }
             convoModeContentTextView.setText(refString);
         }
+    }
 
+    private void updateTranslatedText(String translationResultString){
+        translateTextHolder.add(Html.fromHtml("<p>" + translationResultString + "</p>"));
+
+        if (curr_mode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)) {
+            translateText.setText(getCurrentTranslateScrollText());
+        }
     }
 
 }

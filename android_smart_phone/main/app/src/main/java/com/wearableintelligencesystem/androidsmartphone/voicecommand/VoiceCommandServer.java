@@ -82,9 +82,9 @@ public class VoiceCommandServer {
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.85;
-    private final double commandThreshold = 0.85;
-    private final double endWordThreshold = 0.90;
+    private final double wakeWordThreshold = 0.83;
+    private final double commandThreshold = 0.83;
+    private final double endWordThreshold = 0.85;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -113,6 +113,7 @@ public class VoiceCommandServer {
         voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
         voiceCommands.add(new SearchEngineVoiceCommand(context));
         voiceCommands.add(new SwitchModesVoiceCommand(context));
+        voiceCommands.add(new ReferenceTranslateVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
         voiceCommands.add(new SelectVoiceCommand(context));

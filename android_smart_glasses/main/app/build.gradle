@@ -66,5 +66,5 @@ dependencies {
 
     implementation "androidx.constraintlayout:constraintlayout:2.1.2"
 
-
+    implementation 'com.squareup.okhttp:okhttp:2.5.0'
 }

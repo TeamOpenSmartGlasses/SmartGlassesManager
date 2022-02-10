@@ -13,6 +13,8 @@ public class MessageTypes {
     //TRANSCRIPTS
     public static final String FINAL_TRANSCRIPT = "FINAL_TRANSCRIPT";
     public static final String INTERMEDIATE_TRANSCRIPT = "INTERMEDIATE_TRANSCRIPT";
+    public static final String FINAL_TRANSCRIPT_FOREIGN = "FINAL_TRANSCRIPT_FOREIGN";
+    public static final String INTERMEDIATE_TRANSCRIPT_FOREIGN = "INTERMEDIATE_TRANSCRIPT_FOREIGN";
     public static final String TRANSCRIPT_TEXT = "TRANSCRIPT_TEXT";
     public static final String TRANSCRIPT_ID = "TRANSCRIPT_ID";
     public static final String TIMESTAMP = "TIMESTAMP";
@@ -60,13 +62,34 @@ public class MessageTypes {
     public final static String SEARCH_ENGINE_QUERY = "SEARCH_ENGINE_QUERY";
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
     public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
-    public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";
+
+    //translation
+    public final static String TRANSLATE_TEXT_QUERY = "TRANSLATE_TEXT_QUERY";
+    public final static String TRANSLATE_TEXT_DATA = "TRANSLATE_TEXT_DATA";
+    public final static String TRANSLATE_TEXT_RESULT = "TRANSLATE_TEXT_RESULT";
+    public final static String TRANSLATE_TEXT_RESULT_DATA = "TRANSLATION_RESULT_DATA";
+    public final static String START_FOREIGN_LANGUAGE_ASR = "START_FOREIGN_LANGUAGE_ASR";
+    public final static String STOP_FOREIGN_LANGUAGE_ASR = "STOP_FOREIGN_LANGUAGE_ASR";
+    public final static String START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME = "START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME";
+
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
     //select command
     public final static String ACTION_SELECT_COMMAND = "ACTION_SELECT_COMMAND";
     public final static String SELECTION = "SELECTION";
 
+
+    //translate
+    public static final String REFERENCE_TRANSLATE_SEARCH_QUERY = "REFERENCE_TRANSLATE_SEARCH_QUERY";
+    public static final String REFERENCE_TRANSLATE_DATA = "REFERENCE_TRANSLATE_DATA";
+    public static final String REFERENCE_TRANSLATE_TARGET_LANGUAGE_CODE = "REFERENCE_TRANSLATE_TARGET_LANGUAGE_CODE";
+    public static final String REFERENCE_TRANSLATE_RESULT = "REFERENCE_TRANSLATE_RESULT";
+    public static final String REFERENCE_TRANSLATE_RESULT_DATA = "REFERENCE_TRANSLATE_RESULT_DATA";
+
+    //text to speech
+    public static final String TEXT_TO_SPEECH_SPEAK = "TEXT_TO_SPEECH_SPEAK";
+    public static final String TEXT_TO_SPEECH_SPEAK_DATA = "TEXT_TO_SPEECH_SPEAK_DATA";
+    public static final String TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE = "TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE";
 
     //control the current mode of the ASG
     public final static String ACTION_SWITCH_MODES = "ACTION_SWITCH_MODES";
@@ -81,6 +104,8 @@ public class MessageTypes {
     public final static String MODE_TEXT_LIST = "MODE_TEXT_LIST";
     public final static String MODE_TEXT_BLOCK = "MODE_TEXT_BLOCK";
     public final static String MODE_BLANK = "MODE_BLANK";
+
+
 
 }
 
