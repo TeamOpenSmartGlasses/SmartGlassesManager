@@ -3,6 +3,7 @@ package com.wearableintelligencesystem.androidsmartphone.comms;
 import android.content.Context;
 import android.util.Log;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -23,12 +24,15 @@ public class RestServerComms {
     public RequestQueue mRequestQueue;
     private Context mContext;
     private String serverUrl;
+    private int requestTimeoutPeriod = 10000;
 
     //endpoints
     public static final String NATURAL_LANGUAGE_QUERY_SEND_ENDPOINT = "/natural_language_query";
     public static final String VISUAL_SEARCH_QUERY_SEND_ENDPOINT = "/visual_search_search";
     public static final String SEARCH_ENGINE_QUERY_SEND_ENDPOINT = "/search_engine_search";
     public static final String MAP_IMAGE_QUERY_SEND_ENDPOINT = "/get_static_map";
+    public static final String TRANSLATE_TEXT_QUERY_ENDPOINT = "/translate_text_simple_query";
+    public static final String REFERENCE_TRANSLATE_ENDPOINT = "/translate_reference_query";
 
     public static RestServerComms getInstance(Context c){
         if (restServerComms == null){
@@ -42,7 +46,7 @@ public class RestServerComms {
         mContext = context;
         mRequestQueue = Volley.newRequestQueue(mContext);
         serverUrl = "https://wis.emexwearables.com/api";
-//        serverUrl = "http://192.168.1.188:5000";
+        //serverUrl = "http://192.168.174.188:5000";
     }
 
     //handles requesting data, sending data
@@ -88,6 +92,11 @@ public class RestServerComms {
 //                }
             }
         });
+
+        request.setRetryPolicy(new DefaultRetryPolicy(
+                requestTimeoutPeriod,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
        mRequestQueue.add(request);
     }

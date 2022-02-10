@@ -125,7 +125,6 @@ public abstract class VoiceCommand {
         return firstArg;
     }
 
-
 //    public void sendResults(JSONObject results){
 //        try{
 //            //send the command result to web socket, to send to asg

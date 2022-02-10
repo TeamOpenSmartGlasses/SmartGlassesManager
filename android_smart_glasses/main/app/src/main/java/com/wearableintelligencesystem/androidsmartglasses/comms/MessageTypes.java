@@ -55,17 +55,40 @@ public class MessageTypes {
     public static final String UI_UPDATE_ACTION = "UI_UPDATE_ACTION";
     public static final String PHONE_CONNECTION_STATUS = "PHONE_CONNECTION_STATUS";
 
+//    //command responses to show
+//    public final static String NATURAL_LANGUAGE_QUERY = "NATURAL_LANGUAGE_QUERY";
+//    public final static String TEXT_RESPONSE = "NATURAL_LANGUAGE_QUERY";
+//    public final static String TEXT_QUERY = "TEXT_QUERY";
+//    public final static String VISUAL_SEARCH_RESULT = "VISUAL_SEARCH_RESULT";
+//    public final static String VISUAL_SEARCH_QUERY = "VISUAL_SEARCH_QUERY";
+//    public final static String VISUAL_SEARCH_IMAGE= "VISUAL_SEARCH_IMAGE";
+//    public final static String VISUAL_SEARCH_DATA = "VISUAL_SEARCH_DATA";
+//    public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
+//    public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
+//    public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";
+//    public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
+//    public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
+
     //command responses to show
+    //Natural language
     public final static String NATURAL_LANGUAGE_QUERY = "NATURAL_LANGUAGE_QUERY";
-    public final static String TEXT_RESPONSE = "NATURAL_LANGUAGE_QUERY";
     public final static String TEXT_QUERY = "TEXT_QUERY";
-    public final static String VISUAL_SEARCH_RESULT = "VISUAL_SEARCH_RESULT";
-    public final static String VISUAL_SEARCH_QUERY = "VISUAL_SEARCH_QUERY";
+    //visual search
+    public final static String VISUAL_SEARCH_RESULT = "VISUAL_SEARCH_RESULT"; //this is the ASG facing term
     public final static String VISUAL_SEARCH_IMAGE= "VISUAL_SEARCH_IMAGE";
-    public final static String VISUAL_SEARCH_DATA = "VISUAL_SEARCH_DATA";
+    public final static String VISUAL_SEARCH_QUERY = "VISUAL_SEARCH_QUERY"; //this is the glbox facing term
+    public final static String VISUAL_SEARCH_DATA = "VISUAL_SEARCH_DATA"; //this is the payload
+    //search engine
+    public final static String SEARCH_ENGINE_QUERY = "SEARCH_ENGINE_QUERY";
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
     public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
-    public final static String TRANSLATION_RESULT = "TRANSLATION_RESULT";
+
+    //translation
+    public final static String TRANSLATE_TEXT_QUERY = "TRANSLATE_TEXT_QUERY";
+    public final static String TRANSLATE_TEXT_DATA = "TRANSLATE_TEXT_DATA";
+    public final static String TRANSLATE_TEXT_RESULT = "TRANSLATE_TEXT_RESULT";
+    public final static String TRANSLATE_TEXT_RESULT_DATA = "TRANSLATION_RESULT_DATA";
+
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
 

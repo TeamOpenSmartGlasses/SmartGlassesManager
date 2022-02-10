@@ -87,6 +87,7 @@ import java.util.Enumeration;
 //custom, our code
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
+import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
 import com.wearableintelligencesystem.androidsmartphone.utils.FileUtils;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.AspWebsocketServer;
@@ -95,6 +96,7 @@ import com.wearableintelligencesystem.androidsmartphone.comms.AudioSystem;
 import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileRepository;
 
 //rxjava
+import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -233,6 +235,51 @@ class ASGRepresentative {
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
         } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+    public void sendTranslateResults(String translatedText){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.TRANSLATE_TEXT_RESULT);
+            commandResponseObject.put(MessageTypes.TRANSLATE_TEXT_RESULT_DATA, translatedText);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void sendReferenceTranslateResults(JSONObject results){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
+            commandResponseObject.put(MessageTypes.SEARCH_ENGINE_RESULT_DATA, results.toString());
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+
+            //speak translated text title
+            speakTextToSpeechResults(results.getString("title"), results.getString("language"));
+            //speak translated text summary
+            speakTextToSpeechResults(results.getString("summary"), results.getString("language"));
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void speakTextToSpeechResults(String text, String languageCode){
+        try{
+            JSONObject textToBeSpokenObject = new JSONObject();
+            textToBeSpokenObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.TEXT_TO_SPEECH_SPEAK);
+            textToBeSpokenObject.put(MessageTypes.TEXT_TO_SPEECH_SPEAK_DATA, text);
+            textToBeSpokenObject.put(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE, languageCode);
+            dataObservable.onNext(textToBeSpokenObject);
+        }
+        catch (JSONException e){
             e.printStackTrace();
         }
     }

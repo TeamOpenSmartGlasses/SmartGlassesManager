@@ -4,8 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
     android:orientation="vertical"
     android:background="@color/hud_bg"
     android:gravity="top">
@@ -14,10 +12,11 @@
 
     <TextView
         android:id="@+id/translatetextview"
-        android:layout_width="384dp"
-        android:layout_height="705dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:text=""
-        android:textSize="22dp"
+        android:textSize="18dp"
+        android:layout_marginBottom="-42dp"
         android:scrollbars = "vertical"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"

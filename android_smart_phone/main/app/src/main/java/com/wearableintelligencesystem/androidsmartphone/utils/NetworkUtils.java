@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.lang.reflect.Method;
 
+// see https://stackoverflow.com/questions/14080573/getting-wifi-broadcast-address-in-android-wifi-hotspot for much of this code
 public class NetworkUtils {
     public static final String TAG = "WearableAi_NetworkUtils";
 
@@ -44,8 +45,13 @@ public class NetworkUtils {
             InetAddress bca_ip = getBroadcastAddress(my_ip);
             if (bca_ip == null){
                 //this probably means we aren't connect to or hosting WiFi
-                Log.d(TAG, "Broadcast address is null");
-                return;
+                //but, some phones, even when wifi tether is on, need this, so let's try:
+                my_ip = getIpAddress();
+                bca_ip = getBroadcastAddress(my_ip);
+                if (bca_ip == null){
+                    Log.d(TAG, "Broadcast address is null");
+                    return;
+                }
             }
 
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, bca_ip, port);

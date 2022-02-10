@@ -42,16 +42,21 @@ class GLBOXRepresentative {
     //receive audio and send to vosk
     public void handleDataStream(JSONObject data){
         //first check if it's a type we should handle
-        try{
+        try {
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (type.equals(MessageTypes.NATURAL_LANGUAGE_QUERY)){
+            if (type.equals(MessageTypes.NATURAL_LANGUAGE_QUERY)) {
                 sendNaturalLanguageQuery(data);
-            } else if (type.equals(MessageTypes.SEARCH_ENGINE_QUERY)){
+            } else if (type.equals(MessageTypes.SEARCH_ENGINE_QUERY)) {
                 sendSearchEngineQuery(data);
-            } else if (type.equals(MessageTypes.VISUAL_SEARCH_QUERY)){
+            } else if (type.equals(MessageTypes.VISUAL_SEARCH_QUERY)) {
                 sendVisualSearchQuery(data);
+            } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT_FOREIGN)) {
+                sendTranslateRequest(data);
+            } else if (type.equals(MessageTypes.REFERENCE_TRANSLATE_SEARCH_QUERY)) {
+                sendReferenceTranslateQuery(data);
             }
-        } catch (JSONException e){
+        }
+            catch (JSONException e){
             e.printStackTrace();
         }
 
@@ -139,5 +144,60 @@ class GLBOXRepresentative {
             e.printStackTrace();
         }
     }
+    private void sendTranslateRequest(JSONObject data){
+        Log.d(TAG, "Running sendTranslateRequest");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("query", data.get(MessageTypes.TRANSCRIPT_TEXT));
+            restMessage.put("source_language", "fr");
+            restMessage.put("target_language", "en");
+            restServerComms.restRequest(RestServerComms.TRANSLATE_TEXT_QUERY_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                public void onSuccess(JSONObject result){
+                    Log.d(TAG, "GOT translate TEXT RESULT:");
+                    Log.d(TAG, result.toString());
+                    try{
+                        asgRep.sendTranslateResults(result.getString("response"));
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                public void onFailure() {
+                }
+            });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+    private void sendReferenceTranslateQuery(JSONObject data){
+        Log.d(TAG, "Running sendReferenceTranslateQuery");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("query", data.get(MessageTypes.REFERENCE_TRANSLATE_DATA));
+            restMessage.put("source_language", "en");
+            restMessage.put("target_language", data.get(MessageTypes.REFERENCE_TRANSLATE_TARGET_LANGUAGE_CODE));
+            restServerComms.restRequest(RestServerComms.REFERENCE_TRANSLATE_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                public void onSuccess(JSONObject result){
+                    Log.d(TAG, "GOT reference Translate REST RESULT:");
+                    Log.d(TAG, result.toString());
+                    asgRep.sendCommandResponse("Reference translate success, displaying results.");
+                    try{
+                        asgRep.sendReferenceTranslateResults(result.getJSONObject("response"));
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                public void onFailure(){
+                    asgRep.sendCommandResponse("Reference translate failed, please try again.");
+                }
+            });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
 
 }

@@ -5,6 +5,7 @@ duckduckgo_search
 opengraph_py3
 spacy
 wikipedia
-Pillow-9.0.0
+Pillow >= 9.0.0
 gunicorn
 gevent
+google-cloud-translate

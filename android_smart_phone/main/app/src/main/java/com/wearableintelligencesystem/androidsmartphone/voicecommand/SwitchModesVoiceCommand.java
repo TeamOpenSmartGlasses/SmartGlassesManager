@@ -43,6 +43,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         modesList.add(Pair.create("visual search", MessageTypes.MODE_VISUAL_SEARCH));
         modesList.add(Pair.create("conversation", MessageTypes.MODE_CONVERSATION_MODE));
         modesList.add(Pair.create("blank", MessageTypes.MODE_BLANK));
+        modesList.add(Pair.create("speech translate", MessageTypes.MODE_LANGUAGE_TRANSLATE));
     }
 
     @Override
@@ -77,6 +78,32 @@ class SwitchModesVoiceCommand extends VoiceCommand {
             String displayString = "No valid mode detected.";
             sendMessage(vcServer, displayString);
             return false;
+        }
+
+        //special actions ASP takes based on the mode we are entering
+        try {
+            JSONObject translateMessage = new JSONObject();
+            if (newMode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)){
+                //get the language we want to translate from into base language
+                String naturalLanguageLanguage = this.getFirstArg(postArgs.trim().substring(naturalLanguageMode.length()));
+                if (naturalLanguageLanguage.equals("") || naturalLanguageLanguage == null){
+                    String displayString = "Please provide a target language";
+                    sendMessage(vcServer, displayString);
+                    return false;
+                }
+                Log.d(TAG, "____________*****************______________");
+                Log.d(TAG, postArgs);
+                Log.d(TAG, naturalLanguageMode);
+                Log.d(TAG, naturalLanguageLanguage);
+                translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_FOREIGN_LANGUAGE_ASR);
+                translateMessage.put(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME, naturalLanguageLanguage);
+                vcServer.dataObservable.onNext(translateMessage);
+            } else {
+                translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_FOREIGN_LANGUAGE_ASR);
+                vcServer.dataObservable.onNext(translateMessage);
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
         }
 
         //send user update

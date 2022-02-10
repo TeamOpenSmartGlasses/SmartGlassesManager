@@ -43,8 +43,6 @@ class SearchEngineApi(Resource):
             resp = dict()
             resp["success"] = True
             resp["response"] = query_response
-            print("SER is")
-            print(query_response)
         else:
             return self.send_fail()
 
