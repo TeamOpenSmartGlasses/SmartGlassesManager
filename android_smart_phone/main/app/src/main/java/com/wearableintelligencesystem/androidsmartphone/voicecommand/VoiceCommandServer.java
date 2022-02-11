@@ -84,7 +84,7 @@ public class VoiceCommandServer {
     //voice command fuzzy search threshold
     private final double wakeWordThreshold = 0.83;
     private final double commandThreshold = 0.83;
-    private final double endWordThreshold = 0.85;
+    private final double endWordThreshold = 0.90;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -109,13 +109,13 @@ public class VoiceCommandServer {
 
         //get all voice commands
         voiceCommands = new ArrayList<VoiceCommand>();
+        voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
+        voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
         voiceCommands.add(new VoiceNoteVoiceCommand(context));
         voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
         voiceCommands.add(new SearchEngineVoiceCommand(context));
         voiceCommands.add(new SwitchModesVoiceCommand(context));
         voiceCommands.add(new ReferenceTranslateVoiceCommand(context));
-        voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
-        voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
         voiceCommands.add(new SelectVoiceCommand(context));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
@@ -221,6 +221,7 @@ public class VoiceCommandServer {
 
             //the transcript to parse is the voice buffer plus the latest added in partial transcript
             String transcriptToParse = lowPassTranscriptString + " " + partialTranscript;
+            Log.d(TAG, "to parse trans: " + transcriptToParse);
 
             //should we update the buffer's timestamp and ID at the next transcript?
             if (useNextTranscriptMetaData){
