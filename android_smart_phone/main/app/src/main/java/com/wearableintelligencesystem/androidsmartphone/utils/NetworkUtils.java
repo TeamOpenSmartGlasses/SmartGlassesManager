@@ -12,7 +12,10 @@ import android.content.Context;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import android.net.wifi.WifiInfo;
+import android.util.Pair;
+
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -142,6 +145,9 @@ public class NetworkUtils {
 
     public static String getHotspotIpAddress() {
             String ip = "";
+            List<Pair<String, String>> ipAddys = new ArrayList<Pair<String, String>>();
+            String [] hotspots = new String [] {"swlan", "ap", "wlan1", "wlan"};
+
             try {
                 Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface
                         .getNetworkInterfaces();
@@ -152,9 +158,9 @@ public class NetworkUtils {
                             .getInetAddresses();
                     while (enumInetAddress.hasMoreElements()) {
                         InetAddress inetAddress = enumInetAddress.nextElement();
-
-                        if (inetAddress.isSiteLocalAddress()) {
+                        if (inetAddress.isSiteLocalAddress()){
                             ip = inetAddress.getHostAddress();
+                            ipAddys.add(new Pair(ip, networkInterface.getName()));
                         }
                     }
                 }
@@ -162,6 +168,15 @@ public class NetworkUtils {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
                 return null;
+            }
+
+            //go through all the ip addresses and choose the one most likely to be the hotspot
+            for (int i = 0; i < hotspots.length; i++) {
+                for (int j = 0; j < ipAddys.size(); j++) {
+                    if (ipAddys.get(j).second.contains(hotspots[i])){
+                       return ipAddys.get(j).first;
+                    }
+                }
             }
             return ip;
     }
