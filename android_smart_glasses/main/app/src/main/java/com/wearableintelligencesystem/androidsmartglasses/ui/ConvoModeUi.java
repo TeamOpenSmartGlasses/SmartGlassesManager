@@ -9,6 +9,9 @@ import android.os.Bundle;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,7 +85,7 @@ public class ConvoModeUi extends ASGFragment {
         return intentFilter;
     }
 
-        private void showPotentialReferences(JSONArray refs) {
+    private void showPotentialReferences(JSONArray refs) {
             String refString = "";
 
             try {
@@ -96,5 +99,6 @@ public class ConvoModeUi extends ASGFragment {
             }
             convoModeContentTextView.setText(refString);
     }
+
 }
 
