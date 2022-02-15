@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--<ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--    xmlns:tools="http://schemas.android.com/tools"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="match_parent"-->
+<!--    android:paddingLeft="16dp"-->
+<!--    android:paddingRight="16dp"-->
+<!--    android:orientation="vertical"-->
+<!--    android:background="@color/hud_bg"-->
+<!--    android:gravity="top">-->
+<androidx.constraintlayout.widget.ConstraintLayout
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:background="@color/hud_bg"
+    >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="23dp"
+        android:background="@color/white_transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/clock_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="18dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="12:12:12 PM" />
+
+        <TextView
+            android:id="@+id/battery_percentage_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="25%"
+            android:textAlignment="viewEnd"
+            android:textColor="@color/white"
+            android:textSize="18dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/battery_status_image_view"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/battery_status_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:gravity="center"
+            android:maxHeight="26dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="1dp"
+            app:layout_constraintEnd_toStartOf="@id/phone_status_image_view"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/phone_status_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:gravity="center"
+            android:maxHeight="26dp"
+            android:paddingLeft="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="1dp"
+            app:layout_constraintEnd_toStartOf="@id/wifi_image_view"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/wifi_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:gravity="center"
+            android:maxHeight="26dp"
+            android:paddingLeft="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:layout_width="match_parent"
+        app:navGraph="@navigation/nav_graph"
+        app:defaultNavHost="true"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_voice_hud"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/bottom_voice_hud"
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:background="@color/white_transparent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_graph"
+            >
+
+            <TextView
+                android:id="@+id/mode_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:textSize="14dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:text="Mode: " />
+        <TextView
+            android:id="@+id/mode_hud"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/red_text"
+            android:textSize="14dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/mode_label"
+            app:layout_constraintTop_toTopOf="parent"
+            android:text="LLC" />
+
+            <ImageView
+                android:id="@+id/voice_prompt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:gravity="center"
+                android:maxHeight="22dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="1dp"
+                app:layout_constraintEnd_toStartOf="@+id/voice_cli_prompt_hud"
+                app:srcCompat="@drawable/audio_recording_icon_small"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/voice_cli_prompt_hud"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="hey computer"
+            android:textAlignment="viewEnd"
+            android:textColor="@color/green_icon"
+            android:textSize="14dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

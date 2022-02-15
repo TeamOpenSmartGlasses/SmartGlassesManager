@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
         //setup the nav bar
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        Log.d(TAG, getSupportFragmentManager().getFragments().toString());
         navController = navHostFragment.getNavController();
         setupBottomNavBar();
         bottomNavigation.setSelectedItemId(R.id.settings_page);

@@ -46,18 +46,19 @@ public class PhraseCreator {
                 String address = null;
                 phrase.setLocation(location);
 
-                List<Address> addresses = null;
-                try {
-                    addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                    if(addresses.size() > 0){
-                        address = addresses.get(0).getAddressLine(0);
-                        phrase.setAddress(address);
-                    }
-                    else {
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                //geocoder failing without GMS
+//                List<Address> addresses = null;
+//                try {
+//                    addresses = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+//                    if(addresses.size() > 0){
+//                        address = addresses.get(0).getAddressLine(0);
+//                        phrase.setAddress(address);
+//                    }
+//                    else {
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 Log.d(TAG, "updating phrase with Id: " + phrase.getId() + " and words: " + words);
                 repo.update(phrase.getId(), words, location, address);
             }

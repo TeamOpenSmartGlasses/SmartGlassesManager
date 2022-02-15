@@ -528,9 +528,15 @@ public class ASPClientSocket {
                if (typeOf.equals(uiMessage)){
                    Log.d(TAG, "THIS SHIT IS IN ASP: " + typeOf.toString());
                    final Intent intent = new Intent();
-                   intent.setAction(ACTION_UI_DATA);
+                   intent.setAction(ASPClientSocket.ACTION_UI_DATA);
                    intent.putExtra(RAW_MESSAGE_JSON_STRING, data.toString());
                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+
+                   //new method
+                   final Intent nintent = new Intent();
+                   nintent.setAction(typeOf);
+                   nintent.putExtra(RAW_MESSAGE_JSON_STRING, data.toString());
+                   mContext.sendBroadcast(nintent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                }
             }
 

@@ -206,9 +206,6 @@ public class WearableAiService extends HiddenCameraService {
             }
         };
         this.registerReceiver(new WifiUtils.WifiReceiver(wifiConnectCallback), wifiFilter);
-
-        //test wake up screen
-        wakeupScreen();
     }
 
     class ReceiveAdvThread extends Thread {

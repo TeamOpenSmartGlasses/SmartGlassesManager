@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_live_life_captions">
+
+    <fragment
+        android:id="@+id/nav_convo_mode"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.ConvoModeUi"
+        tools:layout="@layout/convo_mode_fragment"
+        android:label="Convo Mode" >
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/nav_live_life_captions"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.LiveLifeCaptionsUi"
+        tools:layout="@layout/live_life_caption_text"
+        android:label="Live Life Captions" >
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_reference"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.ReferenceUi"
+        tools:layout="@layout/reference_card"
+        android:label="Reference" >
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/nav_language_translate"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.LanguageTranslateUi"
+        tools:layout="@layout/translate_mode_view"
+        android:label="Language Translate" >
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_visual_search"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.VisualSearchUi"
+        tools:layout="@layout/viewfinder"
+        android:label="Visual Search Ui" >
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_image_grid"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.SelectableImageGridUi"
+        tools:layout="@layout/image_gridview"
+        android:label="Image Gridview" >
+    </fragment>
+
+</navigation>

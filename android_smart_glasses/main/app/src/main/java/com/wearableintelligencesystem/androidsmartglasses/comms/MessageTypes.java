@@ -83,6 +83,10 @@ public class MessageTypes {
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
     public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
 
+    //I/O
+    public final static String SG_TOUCHPAD_EVENT = "SG_TOUCHPAD_EVENT";
+    public final static String SG_TOUCHPAD_KEYCODE = "SG_TOUCHPAD_KEYCODE";
+
     //translation
     public final static String TRANSLATE_TEXT_QUERY = "TRANSLATE_TEXT_QUERY";
     public final static String TRANSLATE_TEXT_DATA = "TRANSLATE_TEXT_DATA";
@@ -105,6 +109,7 @@ public class MessageTypes {
     public final static String MODE_TEXT_LIST = "MODE_TEXT_LIST";
     public final static String MODE_TEXT_BLOCK = "MODE_TEXT_BLOCK";
     public final static String MODE_BLANK = "MODE_BLANK";
+    public final static String MODE_SEARCH_ENGINE_RESULT = "MODE_SEARCH_ENGINE_RESULT";
 
 }
 

@@ -1,12 +1,19 @@
 package com.wearableintelligencesystem.androidsmartglasses.ui;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,16 +22,28 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.ASPClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.MainActivity;
+import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
+import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 
-public class ConvoModeUi extends Fragment {
-    private  final String TAG = "WearableAi_ConvoModeUIFragment";
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-    private final String fragmentLabel = "ConvoMode";
+public class ConvoModeUi extends ASGFragment {
+    private final String TAG = "WearableAi_ConvoModeUIFragment";
 
-    private NavController navController;
+    //convo mode ui
+    TextView convoModeContentTextView;
 
     public ConvoModeUi() {
+        fragmentLabel = "ConvoMode";
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -37,9 +56,45 @@ public class ConvoModeUi extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        super.onViewCreated(view, savedInstanceState);
 
-        //navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
+        convoModeContentTextView = (TextView) getActivity().findViewById(R.id.references_text_view);
     }
 
+    @Override
+    protected void onBroadcastReceive(Context context, Intent intent){
+        try {
+            JSONObject data = new JSONObject(intent.getStringExtra(ASPClientSocket.RAW_MESSAGE_JSON_STRING));
+            //parse out the name of the mode
+            JSONArray refsArr = new JSONArray(data.getString(MessageTypes.REFERENCES));
+            Log.d(TAG, "We got references: " + refsArr.toString());
+            showPotentialReferences(refsArr);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public IntentFilter makeComputeUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(MessageTypes.REFERENCE_SELECT_REQUEST);
+
+        return intentFilter;
+    }
+
+        private void showPotentialReferences(JSONArray refs) {
+            String refString = "";
+
+            try {
+                for (int i = 0; i < refs.length(); i++) {
+                    JSONObject ref = (JSONObject) refs.get(i);
+                    refString = refString + ref.getString("selector_char") + " - " + ref.getString("title") + '\n';
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return;
+            }
+            convoModeContentTextView.setText(refString);
+    }
 }
 
