@@ -84,7 +84,7 @@ public class WebSocketManager implements Runnable{
                         Log.d(TAG, "not even gonna tryna send eart beat");
                     }
                 }
-                handler.postDelayed(this, delay); //run again in delay milliseconds
+                handler.postDelayed(this, 3000); //run again in delay milliseconds
             }
         }, delay);
     }

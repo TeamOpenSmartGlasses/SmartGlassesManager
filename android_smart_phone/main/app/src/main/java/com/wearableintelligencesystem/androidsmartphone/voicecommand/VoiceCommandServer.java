@@ -83,7 +83,7 @@ public class VoiceCommandServer {
 
     //voice command fuzzy search threshold
     private final double wakeWordThreshold = 0.83;
-    private final double commandThreshold = 0.83;
+    private final double commandThreshold = 0.88;
     private final double endWordThreshold = 0.90;
 
     //database to save voice commmands to

@@ -150,6 +150,7 @@ public class AspWebsocketServer extends WebSocketServer {
                 sendJson(data);
             } else if (type.equals(MessageTypes.REFERENCE_SELECT_REQUEST)){
                 Log.d(TAG, "AspWebsocketServer got REFERENCE_SELECT_REQUEST, sending to ASG");
+                sendJson(data);
             } else if (type.equals(MessageTypes.TRANSLATE_TEXT_RESULT)) {
                 Log.d(TAG, "AspWebsocketServer got TRANSLATE_TEXT_RESULT, sending to ASG");
                 sendJson(data);
