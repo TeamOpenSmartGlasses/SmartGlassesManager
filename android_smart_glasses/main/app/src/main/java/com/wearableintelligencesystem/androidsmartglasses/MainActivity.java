@@ -82,6 +82,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static String TAG = "WearableAiDisplay_MainActivity";
 
+    public long commandResolveTime = 2000;
+
     public long lastFaceUpdateTime = 0;
     public long faceUpdateInterval = 5000; //milliseconds
 
@@ -496,6 +498,9 @@ public class MainActivity extends AppCompatActivity {
                         String modeName = data.getString(MessageTypes.NEW_MODE);
                         //switch to that mode
                         switchMode(modeName);
+                    } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_STREAM_EVENT)) {
+                        Log.d(TAG, "GOT VOICE COMMAND STREAM EVENT");
+                        showVoiceCommandInterface(data);
                     }
                 } catch(JSONException e){
                         e.printStackTrace();
@@ -835,6 +840,55 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    private void showVoiceCommandInterface(JSONObject data){
+        try{
+            String voiceInputType = data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE);
+            //if it was a wake word
+            if (voiceInputType.equals(MessageTypes.WAKE_WORD_EVENT_TYPE)){
+                JSONArray commandList = new JSONArray();
+                commandList.put("command 1");
+                commandList.put("command 2");
+                commandList.put("command 3");
+                showPostWakeWordInterface(commandList);
+            } else if (voiceInputType.equals(MessageTypes.COMMAND_EVENT_TYPE)){ //if it was a wake word
+                String argumentExpect = data.getString(MessageTypes.VOICE_ARG_EXPECT_TYPE);
+                if (argumentExpect.equals(MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE)) {
+                    showPostCommandInterface();
+                }
+            } else if (voiceInputType.equals(MessageTypes.RESOLVE_EVENT_TYPE)){
+                showCommandResolve(true, "YEAH!");
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void showPostWakeWordInterface(JSONArray commandOptions){
+        //show the reference
+        Bundle args = new Bundle();
+        args.putString("command_list", commandOptions.toString());
+        navController.navigate(R.id.nav_wake_word_post, args);
+    }
+
+    private void showPostCommandInterface(){
+        navController.navigate(R.id.nav_command_post);
+    }
+
+    private void showCommandResolve(boolean success, String message){
+        //show the reference
+        Bundle args = new Bundle();
+        args.putBoolean("success", success);
+        args.putString("message", message);
+        navController.navigate(R.id.nav_command_resolve, args);
+
+        uiHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                switchMode(curr_mode);
+            }
+        }, commandResolveTime);
     }
 }
 
