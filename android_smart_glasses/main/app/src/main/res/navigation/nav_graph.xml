@@ -49,4 +49,27 @@
         android:label="Image Gridview" >
     </fragment>
 
+    <fragment
+        android:id="@+id/nav_command_post"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.CommandPostUi"
+        tools:layout="@layout/command_post_fragment"
+        android:label="Command Recieved" >
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_wake_word_post"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.WakeWordPostUi"
+        tools:layout="@layout/wake_word_post_fragment"
+        android:label="Wake Word Recieved" >
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/nav_command_resolve"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.CommandResolveUi"
+        tools:layout="@layout/command_resolve_fragment"
+        android:label="Command Resolve" >
+    </fragment>
+
+
 </navigation>

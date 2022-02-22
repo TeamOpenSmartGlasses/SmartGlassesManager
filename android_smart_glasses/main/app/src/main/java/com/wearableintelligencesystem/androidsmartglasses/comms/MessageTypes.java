@@ -20,6 +20,16 @@ public class MessageTypes {
     public static final String VOICE_COMMAND_RESPONSE = "VOICE_COMMAND_RESPONSE";
     public static final String COMMAND_RESULT = "COMMAND_RESULT";
     public static final String COMMAND_RESPONSE_DISPLAY_STRING = "COMMAND_RESPONSE_DISPLAY_STRING";
+    //voice command event
+    public static final String VOICE_COMMAND_STREAM_EVENT = "VOICE_COMMAND_STREAM_EVENT";
+    public static final String VOICE_COMMAND_STREAM_EVENT_TYPE = "VOICE_COMMAND_STREAM_EVENT_TYPE";
+    public static final String WAKE_WORD_EVENT_TYPE = "WAKE_WORD_EVENT_TYPE";
+    public static final String COMMAND_EVENT_TYPE = "COMMAND_EVENT_TYPE";
+    public static final String RESOLVE_EVENT_TYPE = "RESOLVE_EVENT_TYPE";
+    public static final String COMMAND_ARGS_EVENT_TYPE = "COMMAND_ARGS_EVENT_TYPE";
+    public static final String INPUT_VOICE_STRING = "INPUT_VOICE_STRING";
+    public static final String VOICE_ARG_EXPECT_TYPE = "VOICE_ARG_EXPECT_TYPE";
+    public static final String VOICE_ARG_EXPECT_NATURAL_LANGUAGE = "VOICE_ARG_EXPECT_NATURAL_LANGUAGE";
 
     //AUTOCITER/WEARABLE-REFERENCER
     public static final String AUTOCITER_START = "AUTOCITER_START";
