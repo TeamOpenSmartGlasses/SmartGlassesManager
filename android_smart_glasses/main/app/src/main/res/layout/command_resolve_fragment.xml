@@ -24,10 +24,22 @@
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="@color/hud_text"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:textAlignment="center"
         app:layout_constraintTop_toBottomOf="@id/command_success_icon" />
+    <TextView
+        android:id="@+id/success_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="Command Resolve Description Loremasdasdasdaskdjaksjdkajsdkjasdkjasdaljksdlajsdflaskdlaksd ipsum"
+        android:textSize="14sp"
+        android:textColor="@color/hud_text"
+        android:layout_marginTop="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@id/success_message" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
