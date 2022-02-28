@@ -7,53 +7,32 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 
-import android.app.Activity;
-import android.hardware.Camera;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.StrictMode;
-import android.text.Editable;
-import android.text.Html;
-import android.text.Spanned;
-import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import java.io.File;
-import java.lang.ref.Reference;
-import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.wearableintelligencesystemandroidsmartglasses.BuildConfig;
@@ -66,8 +45,6 @@ import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
-import com.wearableintelligencesystem.androidsmartglasses.ui.ASGFragment;
-import com.wearableintelligencesystem.androidsmartglasses.ui.ReferenceUi;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -212,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
                     // Default time format for current locale, with respect (on API 22+) to user's 12/24-hour
                     // settings. I couldn't find any simple way to respect it back to API 14.
                     //String prettyTime = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date()) + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
-                    String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
+                    String prettyTime = new SimpleDateFormat("h:mm a").format(new Date());
                     mClockTextView = (TextView) findViewById(R.id.clock_text_view);
                     if (mClockTextView != null) {
                         mClockTextView.setText(prettyTime);
@@ -222,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
             });
         } else{
             //do just one update so user doesn't have to wait
-            String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
+            String prettyTime = new SimpleDateFormat("h:mm a").format(new Date());
             mClockTextView = (TextView) findViewById(R.id.clock_text_view);
             if (mClockTextView != null) {
                 mClockTextView.setText(prettyTime);
@@ -246,8 +223,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         //wifiConnected = WifiUtils.checkWifiOnAndConnected(this); //check wifi status - don't need now that we have listener in service
-        Drawable wifiOnDrawable = this.getDrawable(R.drawable.wifi_on_green);
-        Drawable wifiOffDrawable = this.getDrawable(R.drawable.wifi_off_red);
+        Drawable wifiOnDrawable = this.getDrawable(R.drawable.ic_wifi_on);
+        Drawable wifiOffDrawable = this.getDrawable(R.drawable.ic_wifi_off);
         if (wifiConnected) {
             mWifiStatusImageView.setImageDrawable(wifiOnDrawable);
         } else {
@@ -260,8 +237,8 @@ public class MainActivity extends AppCompatActivity {
         if (mPhoneStatusImageView == null){
             return;
         }
-        Drawable phoneOnDrawable = this.getDrawable(R.drawable.phone_connected_green);
-        Drawable phoneOffDrawable = this.getDrawable(R.drawable.phone_disconnected_red);
+        Drawable phoneOnDrawable = this.getDrawable(R.drawable.ic_phone_connected);
+        Drawable phoneOffDrawable = this.getDrawable(R.drawable.ic_phone_disconnected);
         if (phoneConnected) {
             mPhoneStatusImageView.setImageDrawable(phoneOnDrawable);
         } else {
@@ -275,10 +252,10 @@ public class MainActivity extends AppCompatActivity {
         if (mBatteryStatusImageView == null){
             return;
         }
-        Drawable batteryFullDrawable = this.getDrawable(R.drawable.full_battery_green);
-        Drawable batteryFullChargingDrawable = this.getDrawable(R.drawable.full_battery_charging_green);
-        Drawable batteryLowDrawable = this.getDrawable(R.drawable.low_battery_red);
-        Drawable batteryLowChargingDrawable = this.getDrawable(R.drawable.low_battery_charging_red);
+        Drawable batteryFullDrawable = this.getDrawable(R.drawable.ic_full_battery);
+        Drawable batteryFullChargingDrawable = this.getDrawable(R.drawable.ic_full_battery_charging);
+        Drawable batteryLowDrawable = this.getDrawable(R.drawable.ic_low_battery);
+        Drawable batteryLowChargingDrawable = this.getDrawable(R.drawable.ic_low_battery_charging);
         if (batteryFull) {
             if (batteryCharging) {
                 mBatteryStatusImageView.setImageDrawable(batteryFullChargingDrawable);
@@ -845,17 +822,16 @@ public class MainActivity extends AppCompatActivity {
     private void showVoiceCommandInterface(JSONObject data){
         try{
             String voiceInputType = data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE);
+
             //if it was a wake word
             if (voiceInputType.equals(MessageTypes.WAKE_WORD_EVENT_TYPE)){
-                JSONArray commandList = new JSONArray();
-                commandList.put("command 1");
-                commandList.put("command 2");
-                commandList.put("command 3");
-                showPostWakeWordInterface(commandList);
+                JSONArray commandList = new JSONArray(data.getString(MessageTypes.VOICE_COMMAND_LIST));
+                showPostWakeWordInterface(data.getString(MessageTypes.INPUT_WAKE_WORD), commandList);
             } else if (voiceInputType.equals(MessageTypes.COMMAND_EVENT_TYPE)){ //if it was a wake word
                 String argumentExpect = data.getString(MessageTypes.VOICE_ARG_EXPECT_TYPE);
                 if (argumentExpect.equals(MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE)) {
-                    showPostCommandInterface();
+
+                    showPostCommandInterface(data.getString(MessageTypes.INPUT_WAKE_WORD), data.getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
                 }
             } else if (voiceInputType.equals(MessageTypes.RESOLVE_EVENT_TYPE)){
                 showCommandResolve(true, "YEAH!");
@@ -865,15 +841,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showPostWakeWordInterface(JSONArray commandOptions){
+    private void showPostWakeWordInterface(String wakeWord, JSONArray commandOptions){
         //show the reference
         Bundle args = new Bundle();
-        args.putString("command_list", commandOptions.toString());
+        args.putString(MessageTypes.VOICE_COMMAND_LIST, commandOptions.toString());
+        args.putString(MessageTypes.INPUT_WAKE_WORD, wakeWord);
         navController.navigate(R.id.nav_wake_word_post, args);
     }
 
-    private void showPostCommandInterface(){
-        navController.navigate(R.id.nav_command_post);
+    private void showPostCommandInterface(String wakeWord, String selectedCommand){
+        Bundle args = new Bundle();
+        args.putString(MessageTypes.INPUT_WAKE_WORD, wakeWord);
+        args.putString(MessageTypes.INPUT_VOICE_COMMAND_NAME, selectedCommand);
+        navController.navigate(R.id.nav_command_post, args);
     }
 
     private void showCommandResolve(boolean success, String message){

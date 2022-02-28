@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -42,9 +43,16 @@ public class CommandResolveUi extends ASGFragment {
         boolean success = getArguments().getBoolean("success", false);
         String message = getArguments().getString("message", null);
         TextView successTextView = view.findViewById(R.id.success_message);
-        successTextView.setText("Success: " + success);
-        Log.d(TAG, "Success: " + success);
-        Log.d(TAG, message);
+        ImageView successImageView = view.findViewById(R.id.command_success_icon);
+
+        if(success){
+            successImageView.setImageResource(R.drawable.ic_command_success);
+            successTextView.setText("Success");
+        }
+        else{
+            successImageView.setImageResource(R.drawable.ic_command_failed);
+            successTextView.setText("Failed");
+        }
 
 //        try {
 //            JSONArray data = new JSONArray(getArguments().getString("images", null));

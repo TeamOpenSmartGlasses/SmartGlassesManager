@@ -24,11 +24,13 @@ import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 public class CommandPostUi extends ASGFragment {
     private final String TAG = "WearableAi_CommandPostUi";
 
     private TextView commandArgsTextView;
+    private TextView previousCommandString;
 
     public CommandPostUi() {
         fragmentLabel = "Command Received";
@@ -50,8 +52,9 @@ public class CommandPostUi extends ASGFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         super.onViewCreated(view, savedInstanceState);
-
+        previousCommandString = view.findViewById(R.id.main_title);
         commandArgsTextView = view.findViewById(R.id.command_args);
+        previousCommandString.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD) + " " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
     }
 
     @Override
@@ -76,6 +79,7 @@ public class CommandPostUi extends ASGFragment {
                     if (data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE).equals(MessageTypes.COMMAND_ARGS_EVENT_TYPE)) {
                         String args = data.getString(MessageTypes.INPUT_VOICE_STRING);
                         commandArgsTextView.setText(args);
+
                     }
                 }
             } catch (JSONException e){
