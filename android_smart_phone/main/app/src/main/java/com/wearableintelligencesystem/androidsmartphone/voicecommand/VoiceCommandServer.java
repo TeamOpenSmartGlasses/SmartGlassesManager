@@ -34,6 +34,8 @@ import android.content.Context;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 
@@ -406,12 +408,19 @@ public class VoiceCommandServer {
         this.wakeWordGiven = wakeWord;
         this.wakeWordEndIdx = wakeWordEndIdx;
 
+        //generate commandlist for all commands
+        JSONArray commandList = new JSONArray();
+        voiceCommands.forEach(voiceCommand -> {
+            commandList.put(voiceCommand.commandName);
+        });
+
         //tell ASG that we have found this wake word and to display the following command options
         try {
             JSONObject wakeWordFoundEvent = new JSONObject();
             wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
             wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.WAKE_WORD_EVENT_TYPE);
-            wakeWordFoundEvent.put(MessageTypes.INPUT_VOICE_STRING, wakeWord);
+            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_LIST,commandList.toString());
+            wakeWordFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, wakeWord);
             dataObservable.onNext(wakeWordFoundEvent);
         } catch (JSONException e){
             e.printStackTrace();
@@ -434,7 +443,8 @@ public class VoiceCommandServer {
             JSONObject commandFoundEvent = new JSONObject();
             commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
             commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_EVENT_TYPE);
-            commandFoundEvent.put(MessageTypes.INPUT_VOICE_STRING, command);
+            commandFoundEvent.put(MessageTypes.INPUT_VOICE_COMMAND_NAME, command);
+            commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, this.wakeWordGiven);
             commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
             dataObservable.onNext(commandFoundEvent);
         } catch (JSONException e){

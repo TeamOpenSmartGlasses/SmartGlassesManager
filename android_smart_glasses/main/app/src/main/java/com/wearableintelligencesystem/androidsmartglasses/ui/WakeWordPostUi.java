@@ -5,22 +5,19 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.wearableintelligencesystemandroidsmartglasses.R;
-import com.wearableintelligencesystem.androidsmartglasses.ImageAdapter;
+import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
+import com.wearableintelligencesystem.androidsmartglasses.ui.adapters.CommandListRecyclerViewAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class WakeWordPostUi extends ASGFragment {
     private final String TAG = "WearableAi_WakeWordPostUi";
@@ -46,10 +43,21 @@ public class WakeWordPostUi extends ASGFragment {
         super.onCreate(savedInstanceState);
         super.onViewCreated(view, savedInstanceState);
 
-        String commandList = getArguments().getString("command_list", null);
-        TextView commandListTextView = view.findViewById(R.id.command_list);
-        commandListTextView.setText("Available commands: " + commandList);
-        Log.d(TAG, commandList);
+        JSONArray commandList = null;
+        try {
+            commandList = new JSONArray(getArguments().getString(MessageTypes.VOICE_COMMAND_LIST));
+            CommandListRecyclerViewAdapter commandListRecyclerViewAdapter;
+            RecyclerView commandListRecyclerView = view.findViewById(R.id.command_list_recycler_view);
+            TextView mainTitle = view.findViewById(R.id.main_title);
+            mainTitle.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD));
+            commandListRecyclerView.setLayoutManager(new LinearLayoutManager(this.mainActivity));
+            commandListRecyclerViewAdapter = new CommandListRecyclerViewAdapter(this.mainActivity, commandList);
+            commandListRecyclerView.setAdapter(commandListRecyclerViewAdapter);
+            Log.d(TAG, commandList.getString(0));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
 //        try {
 //            JSONArray data = new JSONArray(getArguments().getString("images", null));
 //            Log.d(TAG, data.toString());

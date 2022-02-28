@@ -33,6 +33,10 @@ public class MessageTypes {
     public static final String INPUT_VOICE_STRING = "INPUT_VOICE_STRING";
     public static final String VOICE_ARG_EXPECT_TYPE = "VOICE_ARG_EXPECT_TYPE";
     public static final String VOICE_ARG_EXPECT_NATURAL_LANGUAGE = "VOICE_ARG_EXPECT_NATURAL_LANGUAGE";
+    public static final String VOICE_COMMAND_LIST = "VOICE_COMMAND_LIST";
+    public static final String INPUT_WAKE_WORD = "INPUT_WAKE_WORD";
+    public static final String INPUT_VOICE_COMMAND_NAME = "INPUT_VOICE_COMMAND_NAME";
+
 
     //FACE/PERSON SIGHTING
     public static final String FACE_SIGHTING_EVENT = "FACE_SIGHTING_EVENT";

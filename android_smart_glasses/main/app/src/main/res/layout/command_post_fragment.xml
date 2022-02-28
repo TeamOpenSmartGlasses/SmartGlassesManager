@@ -6,24 +6,36 @@
     android:background="@color/hud_bg"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/ic_mic_listening"
+        android:layout_marginTop="50dp"
+        android:id="@+id/active_listening_icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+
     <TextView
         android:id="@+id/main_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Command Post Fragment"
-        android:textSize="34dp"
+        android:text="hey computer save speech"
+        android:textSize="14sp"
+        android:textStyle="bold"
         android:textColor="@color/hud_text"
-        app:layout_constraintBottom_toTopOf="@id/command_args"
+        android:layout_marginTop="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/active_listening_icon" />
 
     <TextView
         android:id="@+id/command_args"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:text="args"
-        android:textSize="22dp"
+        android:textSize="22sp"
         android:textColor="@color/hud_text"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -6,27 +6,36 @@
     android:background="@color/hud_bg"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/ic_mic_listening"
+        android:layout_marginTop="50dp"
+        android:id="@+id/active_listening_icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+
     <TextView
         android:id="@+id/main_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Wake Word Post Fragment"
-        android:textSize="34dp"
+        tools:text="hey computer"
+        android:textSize="14sp"
+        android:textStyle="bold"
         android:textColor="@color/hud_text"
-        app:layout_constraintBottom_toTopOf="@id/command_list"
+        android:layout_marginTop="5dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/active_listening_icon" />
 
-
-    <TextView
-        android:id="@+id/command_list"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:text="Wake Word Post Fragment"
-        android:textSize="34dp"
-        android:textColor="@color/hud_text"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/command_list_recycler_view"
+        app:layout_constraintTop_toBottomOf="@id/main_title"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/main_title" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
