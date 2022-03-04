@@ -55,11 +55,9 @@ public class MainActivity extends AppCompatActivity {
     public WearableAiService mService;
     public boolean mBound = false;
 
-    boolean currentlyScrolling = false;
-
     public static String TAG = "WearableAiDisplay_MainActivity";
 
-    public long commandResolveTime = 2000;
+    public long commandResolveTime = 8000;
 
     public long lastFaceUpdateTime = 0;
     public long faceUpdateInterval = 5000; //milliseconds
@@ -70,6 +68,9 @@ public class MainActivity extends AppCompatActivity {
     public final static String WIFI_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.WIFI_CONN_STATUS_UPDATE";
     public final static String BATTERY_CHARGING_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_CHARGIN_STATUS_UPDATE";
     public final static String BATTERY_LEVEL_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_LEVEL_STATUS_UPDATE";
+
+    public final static String VOICE_TEXT_RESPONSE = "VOICE_TEXT_RESPONSE";
+    public final static String VOICE_TEXT_RESPONSE_TEXT = "VOICE_TEXT_RESPONSE_TEXT";
 
     //current person recognized's names
     public ArrayList<String> faceNames = new ArrayList<String>();
@@ -159,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
         navController = navHostFragment.getNavController();
 
         //setup main view
+        Log.d(TAG, "onCreate switchMode");
         switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
 
         //create the WearableAI service if it isn't already running
@@ -278,6 +280,9 @@ public class MainActivity extends AppCompatActivity {
     private void switchMode(String mode) {
         curr_mode = mode;
         String modeDisplayName = "...";
+
+        //clear any previous ui intentions
+        uiHandler.removeCallbacksAndMessages(null);
 
         if (mode != MessageTypes.MODE_BLANK){
             turnOnScreen();
@@ -474,6 +479,7 @@ public class MainActivity extends AppCompatActivity {
                         //parse out the name of the mode
                         String modeName = data.getString(MessageTypes.NEW_MODE);
                         //switch to that mode
+                        Log.d(TAG, "ACTION_SWITCH_MODES switchMode");
                         switchMode(modeName);
                     } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_STREAM_EVENT)) {
                         Log.d(TAG, "GOT VOICE COMMAND STREAM EVENT");
@@ -752,9 +758,10 @@ public class MainActivity extends AppCompatActivity {
         navController.navigate(R.id.nav_reference, args);
 
         //for now, show for n seconds and then return to llc
-        navHandler.postDelayed(new Runnable() {
+        uiHandler.postDelayed(new Runnable() {
             public void run() {
-                switchMode(lastMode);
+                Log.d(TAG, "showReferenceCard switchMode");
+                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
             }
         }, timeout);
     }
@@ -774,8 +781,8 @@ public class MainActivity extends AppCompatActivity {
                 img_url = search_engine_result.getString("image");
             }
 
-            showReferenceCard(title, summary, img_url, 8000);
             switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
+            showReferenceCard(title, summary, img_url, 8000);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }
@@ -823,8 +830,31 @@ public class MainActivity extends AppCompatActivity {
         try{
             String voiceInputType = data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE);
 
-            //if it was a wake word
-            if (voiceInputType.equals(MessageTypes.WAKE_WORD_EVENT_TYPE)){
+            //if it told us to cancel the stream
+
+            if (voiceInputType.equals(MessageTypes.CANCEL_EVENT_TYPE)) {
+                Log.d(TAG, "CANCEL_EVENT_TYPE switchMode");
+                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+            } else if (voiceInputType.equals(MessageTypes.TEXT_RESPONSE_EVENT_TYPE)){ //if it was a wake word
+                String commandResponseDisplayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
+
+                //send a broadcast to our fragment showing the command result
+                final Intent nintent = new Intent();
+                nintent.setAction(VOICE_TEXT_RESPONSE);
+                nintent.putExtra(VOICE_TEXT_RESPONSE_TEXT, commandResponseDisplayString);
+                sendBroadcast(nintent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+
+                //reset ui so user has time to read answer
+                //clear any previous ui intentions
+                uiHandler.removeCallbacksAndMessages(null);
+                uiHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "TEXT_RESPONSE_EVENT_TYPE switchMode");
+                        switchMode(curr_mode);
+                    }
+                }, commandResolveTime);
+            } else if (voiceInputType.equals(MessageTypes.WAKE_WORD_EVENT_TYPE)){ //if it was a wake word
                 JSONArray commandList = new JSONArray(data.getString(MessageTypes.VOICE_COMMAND_LIST));
                 showPostWakeWordInterface(data.getString(MessageTypes.INPUT_WAKE_WORD), commandList);
             } else if (voiceInputType.equals(MessageTypes.COMMAND_EVENT_TYPE)){ //if it was a wake word
@@ -834,7 +864,11 @@ public class MainActivity extends AppCompatActivity {
                     showPostCommandInterface(data.getString(MessageTypes.INPUT_WAKE_WORD), data.getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
                 }
             } else if (voiceInputType.equals(MessageTypes.RESOLVE_EVENT_TYPE)){
-                showCommandResolve(true, "YEAH!");
+                Log.d(TAG, "RESOLVING BRO");
+                boolean status = data.getBoolean(MessageTypes.COMMAND_RESULT);
+                String commandResponseDisplayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
+                Log.d(TAG, "1lDISPLAY STRING: " + commandResponseDisplayString);
+                showCommandResolve(status, commandResponseDisplayString);
             }
         } catch (JSONException e){
             e.printStackTrace();
@@ -846,6 +880,7 @@ public class MainActivity extends AppCompatActivity {
         Bundle args = new Bundle();
         args.putString(MessageTypes.VOICE_COMMAND_LIST, commandOptions.toString());
         args.putString(MessageTypes.INPUT_WAKE_WORD, wakeWord);
+        uiHandler.removeCallbacksAndMessages(null);
         navController.navigate(R.id.nav_wake_word_post, args);
     }
 
@@ -853,10 +888,14 @@ public class MainActivity extends AppCompatActivity {
         Bundle args = new Bundle();
         args.putString(MessageTypes.INPUT_WAKE_WORD, wakeWord);
         args.putString(MessageTypes.INPUT_VOICE_COMMAND_NAME, selectedCommand);
+        uiHandler.removeCallbacksAndMessages(null);
         navController.navigate(R.id.nav_command_post, args);
     }
 
     private void showCommandResolve(boolean success, String message){
+        //clear any previous ui intentions
+        uiHandler.removeCallbacksAndMessages(null);
+
         //show the reference
         Bundle args = new Bundle();
         args.putBoolean("success", success);
@@ -866,6 +905,8 @@ public class MainActivity extends AppCompatActivity {
         uiHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
+
+                Log.d(TAG, "showCommandResolve switch mode");
                 switchMode(curr_mode);
             }
         }, commandResolveTime);

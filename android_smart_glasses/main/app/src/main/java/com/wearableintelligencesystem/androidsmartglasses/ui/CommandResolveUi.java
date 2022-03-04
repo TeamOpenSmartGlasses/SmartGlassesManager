@@ -1,5 +1,8 @@
 package com.wearableintelligencesystem.androidsmartglasses.ui;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,12 +15,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.ASPClientSocket;
+import com.wearableintelligencesystem.androidsmartglasses.MainActivity;
+import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class CommandResolveUi extends ASGFragment {
     private final String TAG = "WearableAi_CommandResolveUi";
+
+    private TextView voiceResponseTextView;
 
     public CommandResolveUi() {
         fragmentLabel = "Command Resolved";
@@ -42,7 +51,12 @@ public class CommandResolveUi extends ASGFragment {
 
         boolean success = getArguments().getBoolean("success", false);
         String message = getArguments().getString("message", null);
+
         TextView successTextView = view.findViewById(R.id.success_message);
+        voiceResponseTextView = view.findViewById(R.id.text_response_text_view);
+        TextView commandResponseStringTextView = view.findViewById(R.id.command_response_description);
+        commandResponseStringTextView.setText(message);
+
         ImageView successImageView = view.findViewById(R.id.command_success_icon);
 
         if(success){
@@ -53,15 +67,24 @@ public class CommandResolveUi extends ASGFragment {
             successImageView.setImageResource(R.drawable.ic_command_failed);
             successTextView.setText("Failed");
         }
+    }
 
-//        try {
-//            JSONArray data = new JSONArray(getArguments().getString("images", null));
+    @Override
+    protected void onBroadcastReceive(Context context, Intent intent){
+        String voiceResponse = intent.getStringExtra(MainActivity.VOICE_TEXT_RESPONSE_TEXT);
+        updateVoiceResponse(voiceResponse);
+    }
 
-//            String data = getArguments().getString("", null);
-//            Log.d(TAG, "OPEN");
-//        } catch (JSONException e){
-//            e.printStackTrace();
-//        }
+    private void updateVoiceResponse(String voiceResponse) {
+        voiceResponseTextView.setText(voiceResponse);
+    }
+
+    @Override
+    public IntentFilter makeComputeUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(MainActivity.VOICE_TEXT_RESPONSE);
+
+        return intentFilter;
     }
 }
 

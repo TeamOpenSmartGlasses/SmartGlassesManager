@@ -76,21 +76,23 @@ public class ReferenceUi extends ASGFragment {
         referenceCardResultSummary.setSelected(true);
 
         //pull the image from web and display
-        Picasso.Builder builder = new Picasso.Builder(getActivity());
-        builder.downloader(new OkHttp3Downloader(getActivity()));
-        builder.build()
-                .load(imgUrl.trim())
-                .into(referenceCardResultImage, new Callback() {
+        if (imgUrl != null) {
+            Picasso.Builder builder = new Picasso.Builder(getActivity());
+            builder.downloader(new OkHttp3Downloader(getActivity()));
+            builder.build()
+                    .load(imgUrl.trim())
+                    .into(referenceCardResultImage, new Callback() {
 
-                    @Override
-                    public void onSuccess() {
-                        Log.d(TAG, "Picasso Image load success");
-                    }
+                        @Override
+                        public void onSuccess() {
+                            Log.d(TAG, "Picasso Image load success");
+                        }
 
-                    @Override
-                    public void onError(Exception e) {
-                        Log.e("Picasso", "Image load failed");
-                    }
-                });
+                        @Override
+                        public void onError(Exception e) {
+                            Log.e("Picasso", "Image load failed");
+                        }
+                    });
+        }
     }
 }

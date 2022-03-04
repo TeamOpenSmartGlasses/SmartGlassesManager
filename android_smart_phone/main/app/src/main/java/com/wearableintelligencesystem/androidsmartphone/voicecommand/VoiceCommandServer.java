@@ -84,9 +84,9 @@ public class VoiceCommandServer {
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.83;
-    private final double commandThreshold = 0.88;
-    private final double endWordThreshold = 0.90;
+    private final double wakeWordThreshold = 0.82;
+    private final double commandThreshold = 0.76;
+    private final double endWordThreshold = 0.92;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -128,7 +128,7 @@ public class VoiceCommandServer {
         voiceCommands.add(new ReferenceTranslateVoiceCommand(context));
         voiceCommands.add(new SelectVoiceCommand(context));
 
-        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "hey google", "alexa", "licklider", "lickliter", "mind extension", "mind expansion", "wearable AI", "ask wolfram"}));
+        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));
 
         startSittingCommandHitter();
@@ -145,6 +145,10 @@ public class VoiceCommandServer {
                 if (newTranscriptSinceRun && (((currTime - lastParseTime) > voiceCommandPauseTime)) && ((currTime - lastTranscriptTime) > voiceCommandPauseTime)){
                     parseVoiceCommmandBuffer(lowPassTranscriptString, true, lowPassTranscriptId);
                     restartTranscriptBuffer(0, true);
+                    if (waked){ //if we had already woken up, but no command has run, let ASG know to go exit the command
+                        cancelVoiceCommand();
+                        resetVoiceCommand();
+                    }
                 }
 
                 long waitTime;
@@ -256,27 +260,26 @@ public class VoiceCommandServer {
         if (useNext != null) {
             useNextTranscriptMetaData = useNext;
         }
-    }
+   }
 
     private void parseVoiceCommmandBuffer(String transcript, boolean run, long transcriptId) {
-        Log.d(TAG, "RUN PARSEE");
         //if we have already found a wake word and a command, but the command is not yet finished, then send a stream of the argument text to the ASG
         if (waked && commanded){
-            Log.d(TAG, "1 waked and commanded");
             if (transcript.length() > commandEndIdx) { //don't send if there's no args
-                Log.d(TAG, "2 waked and commanded");
                 try {
                     JSONObject commandArgsEvent = new JSONObject();
                     commandArgsEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
                     commandArgsEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_ARGS_EVENT_TYPE);
-                    commandArgsEvent.put(MessageTypes.INPUT_VOICE_STRING, transcript.substring(commandEndIdx + 1)); //everything after the wake word and commandEnd //+1 for space
-                    Log.d(TAG, "3 waked and commanded");
-                    Log.d(TAG, transcript);
-                    Log.d(TAG, "wake word end: " + wakeWordEndIdx);
-                    Log.d(TAG, "wake word end string: " + transcript.substring(wakeWordEndIdx));
-                    Log.d(TAG,  "command end: " + commandEndIdx);
-                    Log.d(TAG, "command end string: " + transcript.substring(commandEndIdx));
-                    Log.d(TAG, transcript.substring(commandEndIdx));
+                    String subString = transcript.substring(commandEndIdx); //string after the command ends
+                    Log.d(TAG, "substring: " + subString);
+                    String subSubString = "";
+                    int firstSubStringSpace = subString.indexOf(" ");
+                    if (firstSubStringSpace != -1){ //if there is no space, then there is no new word after the command word, and thus nothing to show
+                        subSubString = subString.substring(firstSubStringSpace + 1);//string after the commands ends and after the next space
+                    }
+
+                    Log.d(TAG, "subsubstring: " + subSubString);
+                    commandArgsEvent.put(MessageTypes.INPUT_VOICE_STRING, subSubString); //everything after the wake word and commandEnd //+1 for space
                     dataObservable.onNext(commandArgsEvent);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -323,7 +326,7 @@ public class VoiceCommandServer {
                     foundWakeWord(currWakeWord, wakeWordLocation + currWakeWord.length());
                     //we found a command, now get its arguments and run it
                     String preArgs = transcript.substring(0, wakeWordLocation);
-                    String postArgs = transcript.substring(transcript.substring(wakeWordLocation).indexOf(" ") + 1); //start at the wake word location, and parse until the after the next space
+                    String postArgs = transcript.substring(transcript.substring(wakeWordLocation).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
                     if (run) {
                         runCommand(voiceCommands.get(i), preArgs, currWakeWord, j, postArgs, currTime, transcriptId);
                     }
@@ -341,7 +344,12 @@ public class VoiceCommandServer {
                 foundWakeWord(currWakeWord, wakeWordLocation + currWakeWord.length());
                 //we found a command, now get its arguments and run it
                 String preArgs = transcript.substring(0, wakeWordLocation);
-                String rest = transcript.substring(wakeWordLocation + currWakeWord.length());
+                String rest;
+                try {
+                     rest = transcript.substring(wakeWordLocation + currWakeWord.length());
+                } catch (StringIndexOutOfBoundsException e){
+                    rest = "";
+                }
                 parseCommand(preArgs, currWakeWord, rest, currTime, transcriptId, run);
                 currentlyParsing = false;
                 return;
@@ -358,8 +366,22 @@ public class VoiceCommandServer {
                 int commandLocation = nlpUtils.findNearMatches(rest, currCommand, commandThreshold);
                 if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
                     foundCommand(currCommand, wakeWordEndIdx + commandLocation + currCommand.length());
-                    String postArgs = rest.substring(commandLocation + currCommand.length());
-                    if (run) {
+                    Log.d(TAG, "rest: " + rest);
+                    Log.d(TAG, "commandLocation: " + commandLocation);
+                    String postArgs;
+                    try {
+                        postArgs = rest.substring(commandLocation + currCommand.length());
+                    } catch (StringIndexOutOfBoundsException e){
+                        postArgs = "";
+                    }
+
+                    int firstSpace = postArgs.indexOf(" ");
+                    if (firstSpace != -1){ //if there is no space, then there is no new word after the command word, and thus nothing to show
+                        postArgs = postArgs.substring(firstSpace + 1);//string after the commands ends and after the next space
+                    }
+
+                    if (run || voiceCommands.get(i).noArgs) {
+                        restartTranscriptBuffer(commandEndIdx, true);
                         runCommand(voiceCommands.get(i), preArgs, wakeWord, j, postArgs, commandTime, transcriptId);
                     }
                     currentlyParsing = false;
@@ -411,7 +433,11 @@ public class VoiceCommandServer {
         //generate commandlist for all commands
         JSONArray commandList = new JSONArray();
         voiceCommands.forEach(voiceCommand -> {
-            commandList.put(voiceCommand.commandName);
+            if (voiceCommand.isPrimary) {
+                voiceCommand.getCommands().forEach(command -> {
+                    commandList.put(command);
+                });
+            }
         });
 
         //tell ASG that we have found this wake word and to display the following command options
@@ -453,9 +479,10 @@ public class VoiceCommandServer {
     }
 
     private void runCommand(VoiceCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime, long transcriptId){
-        boolean success = vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
-        sendResultToAsg(success);
+        //the voice command itself will handle sending the appropriate response to the ASG
         resetVoiceCommand();
+        vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
+        //sendResultToAsg(success);
     }
 
     private void resetVoiceCommand(){
@@ -473,6 +500,21 @@ public class VoiceCommandServer {
             commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
             commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.RESOLVE_EVENT_TYPE);
             commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
+
+            //send the command result
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void cancelVoiceCommand(){
+        Log.d(TAG, "CANCEL VOICE COMMAND");
+        try{
+            //build json object to send voice command cancel notification
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.CANCEL_EVENT_TYPE);
 
             //send the command result
             dataObservable.onNext(commandResponseObject);

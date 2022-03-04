@@ -22,13 +22,16 @@ public class MessageTypes {
     //VOICE COMMANDS
     public static final String VOICE_COMMAND_RESPONSE = "VOICE_COMMAND_RESPONSE";
     public static final String COMMAND_RESULT = "COMMAND_RESULT";
+    public static final String COMMAND_NAME = "COMMAND_NAME";
     public static final String COMMAND_RESPONSE_DISPLAY_STRING = "COMMAND_RESPONSE_DISPLAY_STRING";
     //voice command event
     public static final String VOICE_COMMAND_STREAM_EVENT = "VOICE_COMMAND_STREAM_EVENT";
     public static final String VOICE_COMMAND_STREAM_EVENT_TYPE = "VOICE_COMMAND_STREAM_EVENT_TYPE";
     public static final String WAKE_WORD_EVENT_TYPE = "WAKE_WORD_EVENT_TYPE";
     public static final String COMMAND_EVENT_TYPE = "COMMAND_EVENT_TYPE";
+    public static final String CANCEL_EVENT_TYPE = "CANCEL_EVENT_TYPE";
     public static final String RESOLVE_EVENT_TYPE = "RESOLVE_EVENT_TYPE";
+    public static final String TEXT_RESPONSE_EVENT_TYPE = "TEXT_RESPONSE_EVENT_TYPE";
     public static final String COMMAND_ARGS_EVENT_TYPE = "COMMAND_ARGS_EVENT_TYPE";
     public static final String INPUT_VOICE_STRING = "INPUT_VOICE_STRING";
     public static final String VOICE_ARG_EXPECT_TYPE = "VOICE_ARG_EXPECT_TYPE";

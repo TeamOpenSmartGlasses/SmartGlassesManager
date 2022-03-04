@@ -26,7 +26,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
     SwitchModesVoiceCommand(Context context){
         super(context);
         this.commandName = "switch modes";
-        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"switch modes", "switch to mode"}));
+        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"run"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
 
 //        this.modesList = new ArrayList<>(Arrays.asList(new Pair<String, String> [] {

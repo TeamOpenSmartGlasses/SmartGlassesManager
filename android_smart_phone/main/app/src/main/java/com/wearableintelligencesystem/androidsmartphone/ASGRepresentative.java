@@ -182,8 +182,8 @@ class ASGRepresentative {
         try{
             //build json object to send command result
             JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
-            commandResponseObject.put(MessageTypes.COMMAND_RESULT, true);
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.TEXT_RESPONSE_EVENT_TYPE);
             commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, response);
 
             //send the command result to web socket, to send to asg

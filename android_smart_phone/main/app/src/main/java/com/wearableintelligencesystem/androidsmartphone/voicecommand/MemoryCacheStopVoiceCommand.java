@@ -17,6 +17,7 @@ class MemoryCacheStopVoiceCommand extends VoiceCommand {
         this.commandName = "finish memory cache";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"finish memory cache"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
+        this.noArgs = true;
     }
 
     @Override
@@ -35,15 +36,18 @@ class MemoryCacheStopVoiceCommand extends VoiceCommand {
 
         //make cache active start now
         String displayString;
+        boolean success;
         if (activeCacheId != null) {
             vcServer.mMemoryCacheRepository.updateCacheStopTime(activeCacheId, commandTime);
             displayString = "Stopped memory cache.";
+            success = true;
         } else {
             displayString = "No active memory cache to stop.";
+            success = false;
         }
 
         //tel user what we did
-        sendResult(vcServer, true, this.commandName, displayString);
+        sendResult(vcServer, success, this.commandName, displayString);
         return true;
     }
 }

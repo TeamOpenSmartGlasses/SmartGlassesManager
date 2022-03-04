@@ -526,7 +526,6 @@ public class ASPClientSocket {
             String [] uiMessages = new String[] {MessageTypes.NATURAL_LANGUAGE_QUERY, MessageTypes.SEARCH_ENGINE_RESULT, MessageTypes.VISUAL_SEARCH_RESULT, MessageTypes.TRANSLATE_TEXT_RESULT, MessageTypes.ACTION_SWITCH_MODES, MessageTypes.REFERENCE_SELECT_REQUEST, MessageTypes.VOICE_COMMAND_STREAM_EVENT};
             for (String uiMessage : uiMessages){
                if (typeOf.equals(uiMessage)){
-                   Log.d(TAG, "THIS SHIT IS IN ASP: " + typeOf.toString());
                    final Intent intent = new Intent();
                    intent.setAction(ASPClientSocket.ACTION_UI_DATA);
                    intent.putExtra(RAW_MESSAGE_JSON_STRING, data.toString());
@@ -554,15 +553,15 @@ public class ASPClientSocket {
                 intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 Log.d(TAG, "F. Transcript is: " + data.getString(MessageTypes.TRANSCRIPT_TEXT));
-            } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_RESPONSE)) {
-                Log.d(TAG, "voice command result received");
-                //boolean responseResult = data.getBoolean(MessageTypes.COMMAND_RESULT);
-                String displayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
-                final Intent intent = new Intent();
-                intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, displayString);
-                //intent.putExtra(MessageTypes.COMMAND_RESULT, responseResult);
-                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
-                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+//            } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_RESPONSE)) {
+//                Log.d(TAG, "voice command result received");
+//                //boolean responseResult = data.getBoolean(MessageTypes.COMMAND_RESULT);
+//                String displayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
+//                final Intent intent = new Intent();
+//                intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, displayString);
+//                //intent.putExtra(MessageTypes.COMMAND_RESULT, responseResult);
+//                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+//                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             } else if (typeOf.equals(MessageTypes.FACE_SIGHTING_EVENT)) {
                 final Intent intent = new Intent();
                 intent.setAction(MessageTypes.FACE_SIGHTING_EVENT);
