@@ -38,6 +38,7 @@ public class NlpUtils {
         int highestIndex = -1;
         double highestDistance = -1d;
         toFindString = toFindString.replaceAll("\\s+$", ""); //replace any leading/trailing spaces
+        incomingString = incomingString + " "; //add a couple spaces to the end for comparison
         for (int i = 0; i <= (incomingString.length() - toFindString.length()); i++) {
             //String substring = incomingString.substring(i, i + toFindString.length() + extraChars);
             String substring = incomingString.substring(i, i + toFindString.length());
@@ -50,7 +51,7 @@ public class NlpUtils {
 
         //return highest match
         if (highestDistance > threshold){
-            return highestIndex;
+            return Math.min(highestIndex, incomingString.length()-1); //if the match was found in the spaces at the end, only return the last index of the input string
         } else{
             return -1;
         }

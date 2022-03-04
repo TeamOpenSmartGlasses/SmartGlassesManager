@@ -21,6 +21,7 @@ class SelectVoiceCommand extends VoiceCommand {
         this.commandName = "select";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"select"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
+        this.isPrimary = false; //not a primary command that can be run at any time
     }
 
     @Override

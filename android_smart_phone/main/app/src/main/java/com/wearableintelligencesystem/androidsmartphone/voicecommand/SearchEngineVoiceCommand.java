@@ -39,8 +39,8 @@ class SearchEngineVoiceCommand extends VoiceCommand {
 
         //send user update
         String displayString = "Searching for: " + postArgs;
-        //sendResult(vcServer, true, this.commandName, displayString);
-        sendMessage(vcServer, displayString);
+
+        sendResult(vcServer, true, this.commandName, displayString);
 
         //ask system to do natural language query and send to ASG on result
         JSONObject data = new JSONObject();
