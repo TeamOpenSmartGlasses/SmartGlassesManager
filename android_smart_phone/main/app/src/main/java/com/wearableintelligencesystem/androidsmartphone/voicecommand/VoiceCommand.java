@@ -18,6 +18,9 @@ public abstract class VoiceCommand {
     protected String commandName;
     protected ArrayList<String> commandList;
     protected ArrayList<String> wakeWordList;
+    public boolean requiredArg = false;
+    public String requiredArgString;
+    public ArrayList<String> requiredArgOptions;
 
     protected NlpUtils nlpUtils;
 
@@ -29,6 +32,12 @@ public abstract class VoiceCommand {
     }
 
     public abstract boolean runCommand(VoiceCommandServer vcServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime, long transcriptId);
+
+    protected void setRequiredArg(String requiredArgString, ArrayList<String> requiredArgOptions){
+        this.requiredArgString = requiredArgString;
+        this.requiredArg = true;
+        this.requiredArgOptions = requiredArgOptions;
+    }
 
     public void sendResult(VoiceCommandServer vcServer, boolean success, String commandName, String displayString){
         try{

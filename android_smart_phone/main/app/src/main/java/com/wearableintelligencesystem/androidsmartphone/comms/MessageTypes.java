@@ -33,6 +33,9 @@ public class MessageTypes {
     public static final String RESOLVE_EVENT_TYPE = "RESOLVE_EVENT_TYPE";
     public static final String TEXT_RESPONSE_EVENT_TYPE = "TEXT_RESPONSE_EVENT_TYPE";
     public static final String COMMAND_ARGS_EVENT_TYPE = "COMMAND_ARGS_EVENT_TYPE";
+    public static final String REQUIRED_ARG_EVENT_TYPE = "REQUIRED_ARG_EVENT_TYPE";
+    public static final String ARG_NAME = "ARG_NAME";
+    public static final String ARG_OPTIONS = "ARG_OPTIONS";
     public static final String INPUT_VOICE_STRING = "INPUT_VOICE_STRING";
     public static final String VOICE_ARG_EXPECT_TYPE = "VOICE_ARG_EXPECT_TYPE";
     public static final String VOICE_ARG_EXPECT_NATURAL_LANGUAGE = "VOICE_ARG_EXPECT_NATURAL_LANGUAGE";

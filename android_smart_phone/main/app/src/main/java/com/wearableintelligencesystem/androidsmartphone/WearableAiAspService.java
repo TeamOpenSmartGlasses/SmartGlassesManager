@@ -35,6 +35,7 @@ import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 import com.wearableintelligencesystem.androidsmartphone.facialrecognition.FaceRecApi;
+import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.nlp.WearableReferencerAutocite;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
@@ -282,11 +283,13 @@ public class WearableAiAspService extends LifecycleService {
 
     @Override
     public IBinder onBind(Intent intent) {
+      super.onBind(intent);
         return binder;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
         Log.d(TAG, "WearableAI Service onStartCommand");
 
         if (intent != null){
@@ -416,8 +419,8 @@ public class WearableAiAspService extends LifecycleService {
     //takes in a natural language name for a language and gives back the code
     public NaturalLanguage getLanguageFromName(String languageName){
       for (NaturalLanguage nl : supportedLanguages){
-          int modeMatchChar = nlpUtils.findNearMatches(languageName, nl.getNaturalLanguageName(), 0.8);
-          if (modeMatchChar != -1){
+          FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(languageName, nl.getNaturalLanguageName(), 0.8);
+          if (modeMatchChar != null && modeMatchChar.getIndex() != -1){
               return nl;
           }
       }

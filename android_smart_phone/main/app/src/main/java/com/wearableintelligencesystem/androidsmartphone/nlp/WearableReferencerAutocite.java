@@ -133,8 +133,8 @@ public class WearableReferencerAutocite {
                     int selIdx = -1;
                     for (int i = 0; i < selectorCharNames.length; i++){
                        String currSel = selectorCharNames[i];
-                       int find = nlpUtils.findNearMatches(selection, currSel, selectorCharNameThreshold);
-                       if (find != -1){
+                       FuzzyMatch find = nlpUtils.findNearMatches(selection, currSel, selectorCharNameThreshold);
+                       if (find != null && find.getIndex() != -1){
                            if (i < potentialReferenceBuffer.size()) {
                                MutableTriple ref = getFromBuffer(i);
                                if (ref != null) {

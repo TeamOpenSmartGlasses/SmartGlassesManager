@@ -19,11 +19,11 @@ import com.wearableintelligencesystem.androidsmartglasses.ui.adapters.CommandLis
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public class WakeWordPostUi extends ASGFragment {
-    private final String TAG = "WearableAi_WakeWordPostUi";
+public class RequiredArgsUi extends ASGFragment {
+    private final String TAG = "WearableAi_RequiredArgsUi";
 
-    public WakeWordPostUi() {
-        fragmentLabel = "Wake Word Received";
+    public RequiredArgsUi() {
+        fragmentLabel = "RequiredArgs";
     }
 
     @Override
@@ -35,7 +35,7 @@ public class WakeWordPostUi extends ASGFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.wake_word_post_fragment, container, false);
+        return inflater.inflate(R.layout.required_args_fragment, container, false);
     }
 
     @Override
@@ -43,22 +43,23 @@ public class WakeWordPostUi extends ASGFragment {
         super.onCreate(savedInstanceState);
         super.onViewCreated(view, savedInstanceState);
 
-        JSONArray commandList = null;
+        JSONArray argList = null;
         try {
-            commandList = new JSONArray(getArguments().getString(MessageTypes.VOICE_COMMAND_LIST));
-            CommandListRecyclerViewAdapter commandListRecyclerViewAdapter;
-            RecyclerView commandListRecyclerView = view.findViewById(R.id.command_list_recycler_view);
+            argList = new JSONArray(getArguments().getString(MessageTypes.ARG_OPTIONS));
+            CommandListRecyclerViewAdapter argListRecyclerViewAdapter;
+            RecyclerView argListRecyclerView = view.findViewById(R.id.args_list_recycler_view);
             TextView mainTitle = view.findViewById(R.id.main_title);
-            mainTitle.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD));
-            commandListRecyclerView.setLayoutManager(new LinearLayoutManager(this.mainActivity));
-            commandListRecyclerViewAdapter = new CommandListRecyclerViewAdapter(this.mainActivity, commandList);
-            commandListRecyclerView.setAdapter(commandListRecyclerViewAdapter);
-            Log.d(TAG, commandList.getString(0));
+            mainTitle.setText(getArguments().getString(MessageTypes.ARG_NAME));
+            argListRecyclerView.setLayoutManager(new LinearLayoutManager(this.mainActivity));
+            argListRecyclerViewAdapter = new CommandListRecyclerViewAdapter(this.mainActivity, argList);
+            argListRecyclerView.setAdapter(argListRecyclerViewAdapter);
+            Log.d(TAG, argList.getString(0));
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 }
+
 
 
 

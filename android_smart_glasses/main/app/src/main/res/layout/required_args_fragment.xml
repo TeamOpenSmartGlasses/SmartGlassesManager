@@ -16,12 +16,11 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-
     <TextView
         android:id="@+id/main_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="hey computer save speech"
+        android:text="Language"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="@color/hud_text"
@@ -30,35 +29,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/active_listening_icon" />
 
-    <TextView
-        android:id="@+id/command_args"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:scrollbars="vertical"
-        android:textAlignment="center"
-        android:textColor="@color/hud_text"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/main_title"
-        android:layout_marginTop="28dp"
-        android:layout_marginBottom="28dp"
-        tools:text="args" />
-
-    <TextView
-        android:id="@+id/finish_command_hint"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/args_list_recycler_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="Say 'finish command' when you are done."
-        android:textColor="@color/hud_text"
-        android:textSize="14sp"
-        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/command_args"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@id/main_title" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
