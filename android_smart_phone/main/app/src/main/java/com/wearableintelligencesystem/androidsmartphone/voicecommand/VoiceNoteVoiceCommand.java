@@ -41,7 +41,7 @@ class VoiceNoteVoiceCommand extends VoiceCommand {
         String displayString = "Saved note: " + postArgs + "\n";
         if (foundTags != null && foundTags.size() != 0){ //save the tags and add them to the display string for user
             //make the display string
-            displayString = displayString + "Saved in tag bins: ";
+            displayString = displayString + "\nSaved in tag bins: ";
             for (int i = 0; i < foundTags.size(); i++){
                 //save tag command
                 Log.d(TAG, "Saved tag: " + foundTags.get(i));

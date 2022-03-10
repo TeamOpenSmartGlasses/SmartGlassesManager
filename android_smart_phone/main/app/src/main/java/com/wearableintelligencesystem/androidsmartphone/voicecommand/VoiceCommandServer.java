@@ -31,6 +31,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.content.Context;
+import android.util.Pair;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
@@ -42,6 +43,7 @@ import org.json.JSONException;
 import java.util.Arrays;
 
 //nlp
+import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 
 //parse, interpret, run commands
@@ -85,8 +87,8 @@ public class VoiceCommandServer {
 
     //voice command fuzzy search threshold
     private final double wakeWordThreshold = 0.82;
-    private final double commandThreshold = 0.76;
-    private final double endWordThreshold = 0.92;
+    private final double commandThreshold = 0.82;
+    private final double endWordThreshold = 0.94;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -99,6 +101,8 @@ public class VoiceCommandServer {
     boolean commanded = false;
     String commandGiven = "";
     int commandEndIdx = -1;
+    boolean requiredArged = false;
+    boolean needArg = false;
 
     public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, MemoryCacheRepository memoryCacheRepository, Context context){
         //setup nlp
@@ -119,12 +123,12 @@ public class VoiceCommandServer {
 
         //get all voice commands
         voiceCommands = new ArrayList<VoiceCommand>();
+        voiceCommands.add(new SearchEngineVoiceCommand(context));
+        voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
+        voiceCommands.add(new SwitchModesVoiceCommand(context));
+        voiceCommands.add(new VoiceNoteVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
         voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
-        voiceCommands.add(new VoiceNoteVoiceCommand(context));
-        voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
-        voiceCommands.add(new SearchEngineVoiceCommand(context));
-        voiceCommands.add(new SwitchModesVoiceCommand(context));
         voiceCommands.add(new ReferenceTranslateVoiceCommand(context));
         voiceCommands.add(new SelectVoiceCommand(context));
 
@@ -300,13 +304,13 @@ public class VoiceCommandServer {
         //loop through all global endwords to see if any match
         for (int i = 0; i < endWords.size(); i++) {
             String currEndWord = endWords.get(i);
-            int endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
-            if (endWordLocation != -1) { //if the substring "end word" is in the larger string "transcript"
+            FuzzyMatch endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
+            if (endWordLocation != null && endWordLocation.getIndex() != -1) { //if the substring "end word" is in the larger string "transcript"
                 Log.d(TAG, "Detected end word");
-                String transcriptSansEndWord = transcript.substring(0, endWordLocation);
+                String transcriptSansEndWord = transcript.substring(0, endWordLocation.getIndex());
                 transcript = transcriptSansEndWord;
                 run = true;
-                int partialIdx = partialTranscriptBufferIdx + endWordLocation + currEndWord.length();
+                int partialIdx = partialTranscriptBufferIdx + endWordLocation.getIndex() + currEndWord.length();
                 restartTranscriptBuffer(partialIdx, null);
                 break;
             }
@@ -319,34 +323,49 @@ public class VoiceCommandServer {
         //loop through all voice commands to see if any of their wake words match
         for (int i = 0; i < voiceCommands.size(); i++){
             //check if any of the wake words match
-            for (int j = 0; j < voiceCommands.get(i).getWakeWords().size(); j++){
-                String currWakeWord = voiceCommands.get(i).getWakeWords().get(j);
-                int wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
-                if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
-                    foundWakeWord(currWakeWord, wakeWordLocation + currWakeWord.length());
-                    //we found a command, now get its arguments and run it
-                    String preArgs = transcript.substring(0, wakeWordLocation);
-                    String postArgs = transcript.substring(transcript.substring(wakeWordLocation).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
-                    if (run) {
-                        runCommand(voiceCommands.get(i), preArgs, currWakeWord, j, postArgs, currTime, transcriptId);
-                    }
-                    currentlyParsing = false;
-                    return;
+//            for (int j = 0; j < voiceCommands.get(i).getWakeWords().size(); j++){
+//                String currWakeWord = voiceCommands.get(i).getWakeWords().get(j);
+//                FuzzyMatch wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
+//                if (wakeWordLocation != null && wakeWordLocation.getIndex() != -1){ //if the substring "wake word" is in the larger string "transcript"
+//                    foundWakeWord(currWakeWord, wakeWordLocation.getIndex() + currWakeWord.length());
+//                    //we found a command, now get its arguments and run it
+//                    String preArgs = transcript.substring(0, wakeWordLocation.getIndex());
+//                    String postArgs = transcript.substring(transcript.substring(wakeWordLocation.getIndex()).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
+//                    if (run) {
+//                        runCommand(voiceCommands.get(i), preArgs, currWakeWord, j, postArgs, currTime, transcriptId);
+//                    }
+//                    currentlyParsing = false;
+//                    return;
+//                }
+//            }
+            Pair<FuzzyMatch, Integer> wakeWordBestMatch = nlpUtils.findBestMatch(transcript, voiceCommands.get(i).getWakeWords(), wakeWordThreshold);
+            if (wakeWordBestMatch != null){
+                FuzzyMatch wakeWordMatch = wakeWordBestMatch.first;
+                int wakeWordMatchIdx = wakeWordBestMatch.second;
+                String wakeWordMatchString = voiceCommands.get(i).getWakeWords().get(wakeWordMatchIdx);
+                foundWakeWord(wakeWordMatchString, wakeWordMatch.getIndex() + wakeWordMatchString.length());
+                //we found a command, now get its arguments and run it
+                String preArgs = transcript.substring(0, wakeWordMatch.getIndex());
+                String postArgs = transcript.substring(transcript.substring(wakeWordMatch.getIndex()).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
+                if (run) {
+                    runCommand(voiceCommands.get(i), preArgs, wakeWordMatchString, wakeWordMatchIdx, postArgs, currTime, transcriptId);
                 }
+                currentlyParsing = false;
+                return;
             }
         }
 
         //loop through all global wake words to see if any match
         for (int i = 0; i < wakeWords.size(); i++){
             String currWakeWord = wakeWords.get(i);
-            int wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
-            if (wakeWordLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
-                foundWakeWord(currWakeWord, wakeWordLocation + currWakeWord.length());
+            FuzzyMatch wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
+            if (wakeWordLocation != null && wakeWordLocation.getIndex() != -1){ //if the substring "wake word" is in the larger string "transcript"
+                foundWakeWord(currWakeWord, wakeWordLocation.getIndex() + currWakeWord.length());
                 //we found a command, now get its arguments and run it
-                String preArgs = transcript.substring(0, wakeWordLocation);
+                String preArgs = transcript.substring(0, wakeWordLocation.getIndex());
                 String rest;
                 try {
-                     rest = transcript.substring(wakeWordLocation + currWakeWord.length());
+                     rest = transcript.substring(wakeWordLocation.getIndex() + currWakeWord.length());
                 } catch (StringIndexOutOfBoundsException e){
                     rest = "";
                 }
@@ -360,34 +379,68 @@ public class VoiceCommandServer {
     }
 
     private void parseCommand(String preArgs, String wakeWord, String rest, long commandTime, long transcriptId, boolean run){
-        for (int i = 0; i < voiceCommands.size(); i++){
-            for (int j = 0; j < voiceCommands.get(i).getCommands().size(); j++){
-                String currCommand = voiceCommands.get(i).getCommands().get(j);
-                int commandLocation = nlpUtils.findNearMatches(rest, currCommand, commandThreshold);
-                if (commandLocation != -1){ //if the substring "wake word" is in the larger string "transcript"
-                    foundCommand(currCommand, wakeWordEndIdx + commandLocation + currCommand.length());
-                    Log.d(TAG, "rest: " + rest);
-                    Log.d(TAG, "commandLocation: " + commandLocation);
-                    String postArgs;
-                    try {
-                        postArgs = rest.substring(commandLocation + currCommand.length());
-                    } catch (StringIndexOutOfBoundsException e){
-                        postArgs = "";
-                    }
-
-                    int firstSpace = postArgs.indexOf(" ");
-                    if (firstSpace != -1){ //if there is no space, then there is no new word after the command word, and thus nothing to show
-                        postArgs = postArgs.substring(firstSpace + 1);//string after the commands ends and after the next space
-                    }
-
-                    if (run || voiceCommands.get(i).noArgs) {
-                        restartTranscriptBuffer(commandEndIdx, true);
-                        runCommand(voiceCommands.get(i), preArgs, wakeWord, j, postArgs, commandTime, transcriptId);
-                    }
-                    currentlyParsing = false;
-                    return;
+        FuzzyMatch bestMatch = new FuzzyMatch(-1,0);
+        int bestMatchIdx = -1;
+        int vcIdx = -1;
+        for (int i = 0; i < voiceCommands.size(); i++) {
+            Pair<FuzzyMatch, Integer> commandBestMatch = nlpUtils.findBestMatch(rest, voiceCommands.get(i).getCommands(), commandThreshold);
+            if (commandBestMatch != null) {
+                FuzzyMatch commandMatch = commandBestMatch.first;
+                int commandMatchIdx = commandBestMatch.second;
+                if (commandMatch.getSimilarity() > bestMatch.getSimilarity()) {
+                    bestMatch = commandMatch;
+                    bestMatchIdx = commandMatchIdx;
+                    vcIdx = i;
                 }
             }
+        }
+        if (bestMatch.getIndex() != -1){
+            FuzzyMatch commandMatch = bestMatch;
+            int commandMatchIdx = bestMatchIdx;
+            String commandMatchString = voiceCommands.get(vcIdx).getCommands().get(commandMatchIdx);
+
+            Log.d(TAG, "3FOUND: " + commandMatchString);
+            String postArgs;
+            try {
+                postArgs = rest.substring(commandMatch.getIndex() + commandMatchString.length());
+            } catch (StringIndexOutOfBoundsException e){
+                postArgs = "";
+            }
+
+            int firstSpace = postArgs.indexOf(" ");
+            if (firstSpace != -1){ //if there is no space, then there is no new word after the command word, and thus nothing to show
+                postArgs = postArgs.substring(firstSpace + 1);//string after the commands ends and after the next space
+            }
+
+            //check if there is a full word argument yet, if so, then we have gotten our requiredArg
+            Log.d(TAG, "POSTARGS: " + postArgs);
+            if (postArgs.indexOf(" ") != -1){
+                Log.d(TAG, "POSTARGS RAN THIS BOI");
+                requiredArged = true;
+            }
+
+            //show the user the next menu
+            if (commanded) { //if we've already found a command, just check if we are still waiting on a required argument
+                if (voiceCommands.get(vcIdx).requiredArg && needArg && requiredArged){
+                    needNaturalLanguageArgs(commandMatchString);
+                    needArg = false;
+                }
+            } else { //else, this is the first time we found a command, and we either prompt for a required argument or send user straight to the natural language query selection
+                if (voiceCommands.get(vcIdx).requiredArg) {
+                    needRequiredArg(voiceCommands.get(vcIdx).requiredArgString, voiceCommands.get(vcIdx).requiredArgOptions);
+                } else {
+                    needNaturalLanguageArgs(commandMatchString);
+                }
+            }
+
+            foundCommand(commandMatchString, wakeWordEndIdx + commandMatch.getIndex() + commandMatchString.length());
+
+            if (run || voiceCommands.get(vcIdx).noArgs) {
+                restartTranscriptBuffer(commandEndIdx, true);
+                runCommand(voiceCommands.get(vcIdx), preArgs, wakeWord, commandMatchIdx, postArgs, commandTime, transcriptId);
+            }
+            currentlyParsing = false;
+            return;
         }
     }
 
@@ -414,6 +467,42 @@ public class VoiceCommandServer {
             affective_search_query.put(MessageTypes.MESSAGE_TYPE_LOCAL, "affective_search_query");
             affective_search_query.put("emotion", emotion);
             dataObservable.onNext(affective_search_query);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void needRequiredArg(String argName, ArrayList<String> possibleArgs){
+        needArg = true;
+        //tell ASG that we have found a command but now need a required argument
+        try {
+            //generate args list
+            JSONArray argsList = new JSONArray();
+            possibleArgs.forEach(argPossibility -> {
+                argsList.put(argPossibility);
+            });
+
+            JSONObject wakeWordFoundEvent = new JSONObject();
+            wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.REQUIRED_ARG_EVENT_TYPE);
+            wakeWordFoundEvent.put(MessageTypes.ARG_NAME, argName);
+            wakeWordFoundEvent.put(MessageTypes.ARG_OPTIONS, argsList);
+            dataObservable.onNext(wakeWordFoundEvent);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void needNaturalLanguageArgs(String command){
+        //tell ASG that we have found this command, and what kind of input we need next
+        try {
+            JSONObject commandFoundEvent = new JSONObject();
+            commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_EVENT_TYPE);
+            commandFoundEvent.put(MessageTypes.INPUT_VOICE_COMMAND_NAME, command);
+            commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, this.wakeWordGiven);
+            commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
+            dataObservable.onNext(commandFoundEvent);
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -458,27 +547,16 @@ public class VoiceCommandServer {
         if (commanded){
             return;
         }
-        Log.d(TAG, "FOUND COMMAND");
+        Log.d(TAG, "FOUND COMMAND: " + command);
 
         commanded = true;
         this.commandGiven = command;
         this.commandEndIdx = commandEndIdx;
 
-        //tell ASG that we have found this command, and what kind of input we need next
-        try {
-            JSONObject commandFoundEvent = new JSONObject();
-            commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-            commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_EVENT_TYPE);
-            commandFoundEvent.put(MessageTypes.INPUT_VOICE_COMMAND_NAME, command);
-            commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, this.wakeWordGiven);
-            commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
-            dataObservable.onNext(commandFoundEvent);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
     }
 
     private void runCommand(VoiceCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime, long transcriptId){
+        Log.d(TAG, "running commmand: " + vc.getCommandName());
         //the voice command itself will handle sending the appropriate response to the ASG
         resetVoiceCommand();
         vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
@@ -491,6 +569,8 @@ public class VoiceCommandServer {
         this.wakeWordGiven = "";
         commanded = false;
         this.commandGiven = "";
+        requiredArged = false;
+        needArg = false;
     }
 
     public void sendResultToAsg(boolean success){

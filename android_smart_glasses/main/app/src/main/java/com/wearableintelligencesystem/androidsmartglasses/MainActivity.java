@@ -500,7 +500,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (intent.hasExtra(BATTERY_LEVEL_STATUS_UPDATE)){
                     batteryLevel = intent.getFloatExtra(BATTERY_LEVEL_STATUS_UPDATE, 100f);
-                    if (batteryLevel > 40f) {
+                    if (batteryLevel > 30f) {
                         batteryFull = true;
                     } else {
                         batteryFull = false;
@@ -860,14 +860,14 @@ public class MainActivity extends AppCompatActivity {
             } else if (voiceInputType.equals(MessageTypes.COMMAND_EVENT_TYPE)){ //if it was a wake word
                 String argumentExpect = data.getString(MessageTypes.VOICE_ARG_EXPECT_TYPE);
                 if (argumentExpect.equals(MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE)) {
-
                     showPostCommandInterface(data.getString(MessageTypes.INPUT_WAKE_WORD), data.getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
                 }
+            } else if (voiceInputType.equals(MessageTypes.REQUIRED_ARG_EVENT_TYPE)){ //if it's a required argument we need to show a prompt for
+                JSONArray argsList = new JSONArray(data.getString(MessageTypes.ARG_OPTIONS));
+                showRequiredArgumentInterface(data.getString(MessageTypes.ARG_NAME), argsList);
             } else if (voiceInputType.equals(MessageTypes.RESOLVE_EVENT_TYPE)){
-                Log.d(TAG, "RESOLVING BRO");
                 boolean status = data.getBoolean(MessageTypes.COMMAND_RESULT);
                 String commandResponseDisplayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
-                Log.d(TAG, "1lDISPLAY STRING: " + commandResponseDisplayString);
                 showCommandResolve(status, commandResponseDisplayString);
             }
         } catch (JSONException e){
@@ -882,6 +882,14 @@ public class MainActivity extends AppCompatActivity {
         args.putString(MessageTypes.INPUT_WAKE_WORD, wakeWord);
         uiHandler.removeCallbacksAndMessages(null);
         navController.navigate(R.id.nav_wake_word_post, args);
+    }
+
+    private void showRequiredArgumentInterface(String argName, JSONArray argOptions){
+        Bundle args = new Bundle();
+        args.putString(MessageTypes.ARG_OPTIONS, argOptions.toString());
+        args.putString(MessageTypes.ARG_NAME, argName);
+        uiHandler.removeCallbacksAndMessages(null);
+        navController.navigate(R.id.nav_required_args, args);
     }
 
     private void showPostCommandInterface(String wakeWord, String selectedCommand){
@@ -907,7 +915,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 Log.d(TAG, "showCommandResolve switch mode");
-                switchMode(curr_mode);
+                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
             }
         }, commandResolveTime);
     }

@@ -5,8 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.Html;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -53,7 +55,7 @@ public class CommandPostUi extends ASGFragment {
         super.onCreate(savedInstanceState);
         super.onViewCreated(view, savedInstanceState);
         previousCommandString = view.findViewById(R.id.main_title);
-        commandArgsTextView = view.findViewById(R.id.command_args);
+        setupCommandArgsTextView(view);
         previousCommandString.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD) + " " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
     }
 
@@ -79,7 +81,6 @@ public class CommandPostUi extends ASGFragment {
                     if (data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE).equals(MessageTypes.COMMAND_ARGS_EVENT_TYPE)) {
                         String args = data.getString(MessageTypes.INPUT_VOICE_STRING);
                         commandArgsTextView.setText(args);
-
                     }
                 }
             } catch (JSONException e){
@@ -87,6 +88,29 @@ public class CommandPostUi extends ASGFragment {
             }
         }
     };
+
+
+    private void setupCommandArgsTextView(View view){
+        commandArgsTextView = view.findViewById(R.id.command_args);
+
+        commandArgsTextView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                UiUtils.scrollToBottom(commandArgsTextView);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        UiUtils.scrollToBottom(commandArgsTextView);
+    }
 
     public IntentFilter makeComputeUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();

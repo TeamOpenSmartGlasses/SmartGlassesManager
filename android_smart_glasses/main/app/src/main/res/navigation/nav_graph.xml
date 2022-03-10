@@ -71,5 +71,11 @@
         android:label="Command Resolve" >
     </fragment>
 
+    <fragment
+        android:id="@+id/nav_required_args"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.RequiredArgsUi"
+        tools:layout="@layout/required_args_fragment"
+        android:label="Required Arguments" >
+    </fragment>
 
 </navigation>

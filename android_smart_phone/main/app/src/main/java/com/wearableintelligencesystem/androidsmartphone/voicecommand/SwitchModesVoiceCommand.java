@@ -17,6 +17,7 @@ import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.Vo
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
+import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 
 class SwitchModesVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_SwitchModesVoiceCommand";
@@ -64,8 +65,8 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         for (int i = 0; i < modesList.size(); i++){
             naturalLanguageMode = modesList.get(i).first;
             Log.d(TAG, "args: " + postArgs + "; mode: " + modesList.get(i).first);
-            int modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.8);
-            if (modeMatchChar != -1){
+            FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.8);
+            if (modeMatchChar != null && modeMatchChar.getIndex() != -1){
                 modeMatchIdx = i;
                 newMode = modesList.get(i).second;
                 Log.d(TAG, "Found match: " + newMode);
