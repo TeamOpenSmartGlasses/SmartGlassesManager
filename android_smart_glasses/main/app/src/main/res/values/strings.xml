@@ -1,7 +1,7 @@
 <resources>
     <string name="key">TEMPORARYKEY_CHANGETHISKEY</string>
 
-    <string name="app_name">AAA Wearable Intelligence System</string>
+    <string name="app_name">AA Wearable Intelligence System</string>
     <string name="error_cannot_write">Cannot write image captured by camera.</string>
     <string name="error_cannot_open">Cannot open camera.</string>
     <string name="error_cannot_get_permission">Camera permission not available.</string>

@@ -64,6 +64,7 @@ public class PhraseCreator {
             }
             else{
                 Log.d(TAG, "LOCATION IS NULL");
+                repo.update(phrase.getId(), words, null, null);
             }
         });
         return phrase.getId();
