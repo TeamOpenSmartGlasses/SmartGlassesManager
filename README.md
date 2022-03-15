@@ -1,35 +1,30 @@
 # Wearable Intelligence System
 
-The Wearable Intelligence System (WIS) is the homepage for your smart glasses. The WIS makes aims to make using smart glasses valuable, easy, useful, and fun. It does so with a host of built-in apps, voice controls, always available HUD information, an app launcher, and more. There's a number of powerful and fashionable smart glasses being released, and the WIS gives you an interface and apps to make those glasses useful. The WIS is like your phone homescreen or your computer desktop combined with a smart assistant.
+The Wearable Intelligence System (WIS) is the homepage for your smart glasses with a host of built-in apps, voice controls, always available HUD information, app launcher, and more. The WIS makes building smart glasses applications easy. There's a number of powerful and fashionable smart glasses being released (2022-24), and the WIS gives you an interface and apps to make those glasses useful. The WIS is like your phone homescreen or your computer desktop combined with a smart assistant.
 
+## beta Version Video
+
+Coming soon!
+
+### Early alpha Version Video
 [![Wearable Intelligence System Demo - Part 1](res/early_demo_thumbnail.png)](http://www.youtube.com/watch?v=O2a6ng9jICE "Wearable Intelligence System Demo - Smart Glasses Apps - Part 1")
 
 ## What It Can Do Now
 
-We're working hard to add use cases to the system. Here's a list of what it can already do:
-
-### Users
-
-#### Fully functional: 
+### User Features
 
 - Search - Search the web with voice, see immediate results on your HUD.
 - Ask Questions - Ask an intelligent voice assistant any question, see answers on your HUD.
+- Live Translation - Translate live foreign language speech into your native language, and silently read the output on the screen.
 - Remember More - Memory tools to expand your memory with information recording and recall.
 - Visual Search - Define anything that you see. Find images with similiar content as your point-of-view (POV) camera image.
+- Name Memorizer - Never forget a name again with HUD notifications when you see a familiar face
 - Live Captions - Improve understanding and retention in conversations, meetings, lectures, etc. with live closed captions overlaid on your vision at all times.
 - Autociter / Wearable Referencer - Auto-associative voice search through a personal database, send relevant links to conversation partners over SMS.
-- Name Memorizer - Never forget a name again with HUD notifications when you see a familiar face
 
-#### In Progress: 
+### Developer Use
 
-- Live Translation - Translate live foreign language speech into your native language, and silently read the output on the screen.
-- Social Tools - Improve emotional intelligence with affective computing running on your point-of-view, giving live insights into the non-verbal communication around you.
-- Egocentric/POV Recording - Record your egocentric camera, audio, location, transcripts, all with easy voice commands.
-- Much more
-
-### Developers
-
-The WIS makes is a software framework that makes it easy to build smart glasses applications. Checkout the [Documentation](#documentation) for more information.
+The WIS can do much more if you are a researcher, engineer, scientist, or diy hobby maker because it's a software framework that makes it easy to build smart glasses applications and experiments. Checkout the [Documentation](#documentation) for more information.
  
 ## How To Use 
 
@@ -38,17 +33,44 @@ You will need two pieces of hardware to run the system:
 - ASP - Android Smart Phone
 - ASG - Android Smart Glasses (Supported: Vuzix Blade)
 
+### Voice Commands
+
+All voice commands must be preceded by a `wakeword` (the wake word is "hey computer"). A `wakeword` is "hey computer" or any word you choose to "wake up" the system and start listening to commands.
+    
+##### Wakeword
+
+The wake word is "hey computer".
+    
+#### Voice Commands
+
+Say "hey computer" to see available commands.
+
+##### Some of the available voice commands:
+
+- `search for <query` - search the web for anything, see the intelligently chosen top result
+- `question <query>` - ask a question to an intelligence assistant
+- `run visual search` - use a POV image to search the web for anything that you see around you
+- `save speech <note>` - save any voice note to your cache of notes. This can be used to save ideas, thoughts, notes, reminders, etc.
+- `save speech tag <tagname> <note>` - save any voice note to your cache of notes and to a specific tag bin named <tag>
+- `run speech translate <language>` - live translate the given language into english
+- `run live life captions` - display live closed captions
+- `run blank screen` - blank the screen
+
+## Abbreviations
+
+ASP - Android Smart Phone  
+ASG - Android Smart Glasses  
+GLBOX - GNU/Linux 'Single Board Computer'/Laptop  
+
 #### Initial One Time Setup
 
 Here's the setup you have to do the very first time you want to setup the system:  
 
 1. On your Android smart phone, download the "Wearable Intelligence System" app:
-    - (RECCOMENDED) Play Store: <TODO>
-    - F-droid: <TODO>
+    - (RECCOMENDED) Play Store: Coming soon
     - [Github latest release](https://github.com/emexlabs/WearableIntelligenceSystem/releases)
 2. On your smart glasses, download the "Wearable Intelligence System" app:
-    - (RECCOMENDED) Vuzix Store: <TODO>
-    - F-froid: <TODO>
+    - (RECCOMENDED) Vuzix Store: Coming soon
     - [Github latest release](https://github.com/emexlabs/WearableIntelligenceSystem/releases)
 3. 
     * Launch the "Wearable Intelligence System" app on your smart phone
@@ -71,50 +93,22 @@ Here's how to launch the system after you've already done the initial setup abov
 3. Connect Android smart glasses to Android smart phone WiFi hotspot.
 4. Launch "WIS" app on smart glasses.
 5. Verify system is running by the "Smart Glasses Conection Indicator" icon turning green.
-
-## Voice Commands
-
-All voice commands must be preceded by a `wakeword`. A `wakeword` is any word you choose to "wake up" the system and start listening to commands.
     
-#### Wakewords
-- hey computer
-- licklider
-    
-#### Voice Commands
-
-- `save speech <note>` - save any voice note to your cache of notes. This can be used to save ideas, thoughts, notes, reminders, etc.
-- `save speech tag <tagname> <note>` - save any voice note to your cache of notes and to a specific tag bin named <tag>
-- `quick query <query>` - ask a question to an intelligence assistant
-- `search for <query` - search the web for anything, see the intelligently chosen top result
-- `switch modes translate <language>` - live translate the given language into english
-- `switch modes live life captions` - display live closed captions
-- `switch modes blank mode` - blank the screen
-- `switch modes visual search` - use a POV image to search the web for anything that you see around you
-    
-### Modes
- 
-#### Live Life Captions
- 
-Closed captions of everything you and those around you say. Live view of commands and commmand output. Nouns in transcripts are highlighted. Soon to be extended to give definition, summary, encylopedia, and NLP functionalities.
- 
-#### Social Mode
- 
-A social-emotional intelligence tool to be used in social situations. Live metrics about the social environment (eye-contact, facial emotion, high-level psychological metrics (e.g. stress, confidence, etc.)) overlaid on the users vision. This is experimental and not recommended for real world use.
- 
-#### Blank Mode
- 
-Blanks the screen, sleep mode.
-
 ## Documentation
     
 The docs are hosted on this repo's Wiki, [here are the docs](https://github.com/emexlabs/WearableIntelligenceSystem/wiki).
-    
-## Abbreviations
-
-ASP - Android Smart Phone  
-ASG - Android Smart Glasses  
-GLBOX - GNU/Linux 'Single Board Computer'/Laptop  
-
+   
 ## Authors
 
-Cayden Pierce - [emexwearables.com](https://emexwearables.com)
+The system is fully Open Source and built by this growing list of contributors:
+
+- Cayden Pierce - [Emex Labs](https://emexwearables.com)
+- Aaditya Vaze - https://thisisvaze.com/
+- Jeremy Stairs - https://github.com/stairs1
+- Add Your Name Here!
+
+We are actively building a community that is building cognitive augmentation technologies together. 
+
+The Wearable Intelligence System was started at [Emex Labs](https://emexwearables.com) by [Cayden Pierce](https://caydenpierce.com/).
+
+
