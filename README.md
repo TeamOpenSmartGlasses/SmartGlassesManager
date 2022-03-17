@@ -62,9 +62,9 @@ ASP - Android Smart Phone
 ASG - Android Smart Glasses  
 GLBOX - GNU/Linux 'Single Board Computer'/Laptop  
 
-#### Initial One Time Setup
+## Install / Use
 
-Here's the setup you have to do the very first time you want to setup the system:  
+### First Time Setup
 
 1. On your Android smart phone, download the "Wearable Intelligence System" app:
     - (RECCOMENDED) Play Store: Coming soon
@@ -84,7 +84,7 @@ Here's the setup you have to do the very first time you want to setup the system
     * On the Android smart phone, got to "Memory Tools" -> "Memory Stream" and you will see live transcripts
 8. Setup complete.
 
-#### Subsequent Launch
+### Normal Use
     
 Here's how to launch the system after you've already done the initial setup above:  
 
@@ -92,9 +92,9 @@ Here's how to launch the system after you've already done the initial setup abov
 2. Enable mobile hotspot on smart phone with the "Start WiFi Hotspot" button
 3. Connect Android smart glasses to Android smart phone WiFi hotspot.
 4. Launch "WIS" app on smart glasses.
-5. Verify system is running by the "Smart Glasses Conection Indicator" icon turning green.
+5. Verify system is running by the "Smart Glasses Conection Indicator" icon turning white on the smart glasses HUD.
     
-## Documentation
+## Documentation / Developers
     
 The docs are hosted on this repo's Wiki, [here are the docs](https://github.com/emexlabs/WearableIntelligenceSystem/wiki).
    
