@@ -84,7 +84,7 @@ public class NlpUtils {
         int matchCount = 0;
         for (int j = 0; j < toMatch.length; j++){
             FuzzyMatch matchLocation = findNearMatches(incomingString, toMatch[j], thresh);
-            if (matchLocation.getIndex() != -1){
+            if (matchLocation != null && matchLocation.getIndex() != -1){
                 matchCount++;
             }
         }
