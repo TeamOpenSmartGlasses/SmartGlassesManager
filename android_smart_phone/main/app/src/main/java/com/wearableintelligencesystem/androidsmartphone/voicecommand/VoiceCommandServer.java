@@ -88,7 +88,7 @@ public class VoiceCommandServer {
     //voice command fuzzy search threshold
     private final double wakeWordThreshold = 0.82;
     private final double commandThreshold = 0.82;
-    private final double endWordThreshold = 0.94;
+    private final double endWordThreshold = 0.90;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -103,6 +103,7 @@ public class VoiceCommandServer {
     int commandEndIdx = -1;
     boolean requiredArged = false;
     boolean needArg = false;
+    boolean ended = false;
 
     public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, MemoryCacheRepository memoryCacheRepository, Context context){
         //setup nlp
@@ -310,6 +311,7 @@ public class VoiceCommandServer {
                 String transcriptSansEndWord = transcript.substring(0, endWordLocation.getIndex());
                 transcript = transcriptSansEndWord;
                 run = true;
+                ended = true;
                 int partialIdx = partialTranscriptBufferIdx + endWordLocation.getIndex() + currEndWord.length();
                 restartTranscriptBuffer(partialIdx, null);
                 break;
@@ -350,8 +352,7 @@ public class VoiceCommandServer {
                 if (run) {
                     runCommand(voiceCommands.get(i), preArgs, wakeWordMatchString, wakeWordMatchIdx, postArgs, currTime, transcriptId);
                 }
-                currentlyParsing = false;
-                return;
+                break;
             }
         }
 
@@ -370,12 +371,16 @@ public class VoiceCommandServer {
                     rest = "";
                 }
                 parseCommand(preArgs, currWakeWord, rest, currTime, transcriptId, run);
-                currentlyParsing = false;
-                return;
+                break;
             }
-
         }
+
         currentlyParsing = false;
+        Log.d(TAG, "CHECKIT");
+        if (!commanded && ended && run) {
+            Log.d(TAG, "Wake word detected with no command input");
+            cancelVoiceCommand();
+        }
     }
 
     private void parseCommand(String preArgs, String wakeWord, String rest, long commandTime, long transcriptId, boolean run){
@@ -559,7 +564,10 @@ public class VoiceCommandServer {
         Log.d(TAG, "running commmand: " + vc.getCommandName());
         //the voice command itself will handle sending the appropriate response to the ASG
         resetVoiceCommand();
-        vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
+        boolean result = vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
+        if (!result){
+            cancelVoiceCommand();
+        }
         //sendResultToAsg(success);
     }
 
@@ -569,6 +577,7 @@ public class VoiceCommandServer {
         this.wakeWordGiven = "";
         commanded = false;
         this.commandGiven = "";
+        ended = false;
         requiredArged = false;
         needArg = false;
     }
@@ -589,6 +598,7 @@ public class VoiceCommandServer {
     }
 
     private void cancelVoiceCommand(){
+        resetVoiceCommand();
         Log.d(TAG, "CANCEL VOICE COMMAND");
         try{
             //build json object to send voice command cancel notification

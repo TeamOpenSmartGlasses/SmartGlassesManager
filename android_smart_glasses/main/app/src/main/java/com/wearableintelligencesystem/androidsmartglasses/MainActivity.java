@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     public static String TAG = "WearableAiDisplay_MainActivity";
 
     public long commandResolveTime = 8000;
+    public long searchEngineResultTimeout = 16000;
 
     public long lastFaceUpdateTime = 0;
     public long faceUpdateInterval = 5000; //milliseconds
@@ -782,7 +783,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
-            showReferenceCard(title, summary, img_url, 8000);
+            showReferenceCard(title, summary, img_url, searchEngineResultTimeout);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }
