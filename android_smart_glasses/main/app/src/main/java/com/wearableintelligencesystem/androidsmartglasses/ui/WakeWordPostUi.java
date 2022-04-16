@@ -48,8 +48,8 @@ public class WakeWordPostUi extends ASGFragment {
             commandList = new JSONArray(getArguments().getString(MessageTypes.VOICE_COMMAND_LIST));
             CommandListRecyclerViewAdapter commandListRecyclerViewAdapter;
             RecyclerView commandListRecyclerView = view.findViewById(R.id.command_list_recycler_view);
-            TextView mainTitle = view.findViewById(R.id.main_title);
-            mainTitle.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD));
+//            TextView mainTitle = view.findViewById(R.id.main_title);
+//            mainTitle.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD));
             commandListRecyclerView.setLayoutManager(new LinearLayoutManager(this.mainActivity));
             commandListRecyclerViewAdapter = new CommandListRecyclerViewAdapter(this.mainActivity, commandList);
             commandListRecyclerView.setAdapter(commandListRecyclerViewAdapter);

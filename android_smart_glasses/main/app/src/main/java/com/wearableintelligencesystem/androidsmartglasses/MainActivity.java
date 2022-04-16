@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
 
         //setup main view
         Log.d(TAG, "onCreate switchMode");
-        switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+        switchMode(MessageTypes.MODE_HOME);
 
         //create the WearableAI service if it isn't already running
         startWearableAiService();
@@ -323,6 +323,10 @@ public class MainActivity extends AppCompatActivity {
 //                setupSocialIntelligenceUi();
 //                modeDisplayName = "Social";
 //                break;
+            case MessageTypes.MODE_HOME:
+                navController.navigate(R.id.nav_home_prompt);
+                modeDisplayName = "Home";
+                break;
             case MessageTypes.MODE_LIVE_LIFE_CAPTIONS:
                 navController.navigate(R.id.nav_live_life_captions);
                 modeDisplayName = "LiveCaption";
@@ -718,7 +722,7 @@ public class MainActivity extends AppCompatActivity {
             case KeyEvent.KEYCODE_DEL:
                 Log.d(TAG, "keycode DEL entered - this means go back home");
                 navHandler.removeCallbacksAndMessages(null);
-                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+                switchMode(MessageTypes.MODE_HOME);
                 return super.onKeyUp(keyCode, event);
             default:
                 return super.onKeyUp(keyCode, event);
@@ -762,7 +766,7 @@ public class MainActivity extends AppCompatActivity {
         uiHandler.postDelayed(new Runnable() {
             public void run() {
                 Log.d(TAG, "showReferenceCard switchMode");
-                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+                switchMode(MessageTypes.MODE_HOME);
             }
         }, timeout);
     }
@@ -835,7 +839,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (voiceInputType.equals(MessageTypes.CANCEL_EVENT_TYPE)) {
                 Log.d(TAG, "CANCEL_EVENT_TYPE switchMode");
-                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+                switchMode(MessageTypes.MODE_HOME);
             } else if (voiceInputType.equals(MessageTypes.TEXT_RESPONSE_EVENT_TYPE)){ //if it was a wake word
                 String commandResponseDisplayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
 
@@ -916,7 +920,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
 
                 Log.d(TAG, "showCommandResolve switch mode");
-                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+                switchMode(MessageTypes.MODE_HOME);
             }
         }, commandResolveTime);
     }

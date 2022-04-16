@@ -59,11 +59,9 @@ public class PhraseCreator {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                }
-                Log.d(TAG, "updating phrase with Id: " + phrase.getId() + " and words: " + words);
                 repo.update(phrase.getId(), words, location, address);
             }
             else{
-                Log.d(TAG, "LOCATION IS NULL");
                 repo.update(phrase.getId(), words, null, null);
             }
         });

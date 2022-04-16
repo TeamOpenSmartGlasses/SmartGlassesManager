@@ -56,7 +56,8 @@ public class CommandPostUi extends ASGFragment {
         super.onViewCreated(view, savedInstanceState);
         previousCommandString = view.findViewById(R.id.main_title);
         setupCommandArgsTextView(view);
-        previousCommandString.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD) + " " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
+        //previousCommandString.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD) + " " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
+        previousCommandString.setText("Command: " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
     }
 
     @Override
