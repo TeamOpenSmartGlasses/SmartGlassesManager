@@ -86,8 +86,8 @@ public class VoiceCommandServer {
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.82;
-    private final double commandThreshold = 0.82;
+    private final double wakeWordThreshold = 0.92;
+    private final double commandThreshold = 0.87;
     private final double endWordThreshold = 0.90;
 
     //database to save voice commmands to
@@ -136,7 +136,7 @@ public class VoiceCommandServer {
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));
 
-        startSittingCommandHitter();
+        //startSittingCommandHitter(); //keep checking to see if there is a command to be run
     }
 
     private void startSittingCommandHitter(){
@@ -195,7 +195,8 @@ public class VoiceCommandServer {
         });
     }
 
-    //handles timing of transcripts so users have plenty of time to speak to enter commands
+    //handles timing of transcripts and keeping a proper buffer that is delineated by voice commands
+    // allows users to have plenty of time to speak to enter commands
     private void handleNewTranscript(JSONObject data){
         long currTime = System.currentTimeMillis();
 
@@ -267,6 +268,7 @@ public class VoiceCommandServer {
         }
    }
 
+   //run a parsing pass on the current voice transcript buffer. This depends on the current state of the machine w.r.t. what we have already found - wake word, command, arguments, end word, etc.
     private void parseVoiceCommmandBuffer(String transcript, boolean run, long transcriptId) {
         //if we have already found a wake word and a command, but the command is not yet finished, then send a stream of the argument text to the ASG
         if (waked && commanded){
@@ -301,20 +303,89 @@ public class VoiceCommandServer {
         long currTime = System.currentTimeMillis();
         lastParseTime = currTime;
 
-        //if we find an "end command" voice command, execute now
-        //loop through all global endwords to see if any match
-        for (int i = 0; i < endWords.size(); i++) {
-            String currEndWord = endWords.get(i);
-            FuzzyMatch endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
-            if (endWordLocation != null && endWordLocation.getIndex() != -1) { //if the substring "end word" is in the larger string "transcript"
-                Log.d(TAG, "Detected end word");
-                String transcriptSansEndWord = transcript.substring(0, endWordLocation.getIndex());
-                transcript = transcriptSansEndWord;
-                run = true;
-                ended = true;
-                int partialIdx = partialTranscriptBufferIdx + endWordLocation.getIndex() + currEndWord.length();
-                restartTranscriptBuffer(partialIdx, null);
-                break;
+
+        //loop through all voice commands to see if any of their wake words match
+        if (!waked) { //only run this if we haven't already detected a wake word
+//            for (int i = 0; i < voiceCommands.size(); i++) {
+//                Pair<FuzzyMatch, Integer> wakeWordBestMatch = nlpUtils.findBestMatch(transcript, voiceCommands.get(i).getWakeWords(), wakeWordThreshold);
+//                if (wakeWordBestMatch != null) {
+//                    FuzzyMatch wakeWordMatch = wakeWordBestMatch.first;
+//                    int wakeWordMatchIdx = wakeWordBestMatch.second;
+//                    String wakeWordMatchString = voiceCommands.get(i).getWakeWords().get(wakeWordMatchIdx);
+//                    foundWakeWord(wakeWordMatchString, wakeWordMatch.getIndex() + wakeWordMatchString.length());
+//                    //we found a command, now get its arguments and run it
+//                    String preArgs = transcript.substring(0, wakeWordMatch.getIndex());
+//                    String postArgs = transcript.substring(transcript.substring(wakeWordMatch.getIndex()).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
+//                    if (run) {
+//                        runCommand(voiceCommands.get(i), preArgs, wakeWordMatchString, wakeWordMatchIdx, postArgs, currTime, transcriptId);
+//                    }
+//                    break;
+//                }
+//            }
+
+            //loop through all global wake words to see if any match
+            for (int i = 0; i < wakeWords.size(); i++){
+                String currWakeWord = wakeWords.get(i);
+                FuzzyMatch wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
+                if (wakeWordLocation != null && wakeWordLocation.getIndex() != -1){ //if the substring "wake word" is in the larger string "transcript"
+                    //we found a command, now get its arguments and run it
+                    foundWakeWord(currWakeWord, wakeWordLocation.getIndex() + currWakeWord.length());
+                    String preArgs = transcript.substring(0, wakeWordLocation.getIndex());
+                    String rest;
+                    try {
+                        rest = transcript.substring(wakeWordLocation.getIndex() + currWakeWord.length());
+                    } catch (StringIndexOutOfBoundsException e){
+                        rest = "";
+                    }
+                    break;
+                }
+            }
+        }
+
+        //search for command input
+        String preArgs;
+        String rest;
+        if (waked) { //only search for a command if we've already woken
+            preArgs = transcript.substring(0, wakeWordEndIdx - wakeWordGiven.length()); //get args before the wakeword
+            try {
+                rest = transcript.substring(wakeWordEndIdx);
+            } catch (StringIndexOutOfBoundsException e){
+                rest = "";
+            }
+
+            //search for a command. If it's found, we'll show the arguments screen and save what command was found
+            parseCommand(preArgs, wakeWordGiven, rest, currTime, transcriptId, run);
+
+            //if we find an "end command" voice command, execute now
+            //loop through all global endwords to see if any match
+            Log.d(TAG, "SEARCH FOR END");
+            for (int i = 0; i < endWords.size(); i++) {
+                String currEndWord = endWords.get(i);
+                FuzzyMatch endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
+                if (endWordLocation != null && endWordLocation.getIndex() != -1) { //if the substring "end word" is in the larger string "transcript"
+                    //we detected an end word, so act on it if we've been commanded, or cancel if not
+                    Log.d(TAG, "Detected end word");
+                    int partialIdx = partialTranscriptBufferIdx + endWordLocation.getIndex() + currEndWord.length();
+                    if (!commanded){
+                        Log.d(TAG, "Wake word detected with no command input");
+                        cancelVoiceCommand();
+                        run = true;
+                        restartTranscriptBuffer(partialIdx, null);
+                        break;
+                    }
+                    String transcriptSansEndWord = transcript.substring(0, endWordLocation.getIndex());
+                    rest = transcriptSansEndWord;
+                    run = true;
+                    ended = true;
+
+                    //find the command and run it
+                    Log.d(TAG, "RUN PARSE " + preArgs + ",  " + rest);
+                    parseCommand(preArgs, wakeWordGiven, rest, currTime, transcriptId, run);
+
+                    //restart voice transcript buffer now that we've run a command
+                    restartTranscriptBuffer(partialIdx, null);
+                    break;
+                }
             }
         }
 
@@ -322,65 +393,7 @@ public class VoiceCommandServer {
             newTranscriptSinceRun = false;
         }
 
-        //loop through all voice commands to see if any of their wake words match
-        for (int i = 0; i < voiceCommands.size(); i++){
-            //check if any of the wake words match
-//            for (int j = 0; j < voiceCommands.get(i).getWakeWords().size(); j++){
-//                String currWakeWord = voiceCommands.get(i).getWakeWords().get(j);
-//                FuzzyMatch wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
-//                if (wakeWordLocation != null && wakeWordLocation.getIndex() != -1){ //if the substring "wake word" is in the larger string "transcript"
-//                    foundWakeWord(currWakeWord, wakeWordLocation.getIndex() + currWakeWord.length());
-//                    //we found a command, now get its arguments and run it
-//                    String preArgs = transcript.substring(0, wakeWordLocation.getIndex());
-//                    String postArgs = transcript.substring(transcript.substring(wakeWordLocation.getIndex()).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
-//                    if (run) {
-//                        runCommand(voiceCommands.get(i), preArgs, currWakeWord, j, postArgs, currTime, transcriptId);
-//                    }
-//                    currentlyParsing = false;
-//                    return;
-//                }
-//            }
-            Pair<FuzzyMatch, Integer> wakeWordBestMatch = nlpUtils.findBestMatch(transcript, voiceCommands.get(i).getWakeWords(), wakeWordThreshold);
-            if (wakeWordBestMatch != null){
-                FuzzyMatch wakeWordMatch = wakeWordBestMatch.first;
-                int wakeWordMatchIdx = wakeWordBestMatch.second;
-                String wakeWordMatchString = voiceCommands.get(i).getWakeWords().get(wakeWordMatchIdx);
-                foundWakeWord(wakeWordMatchString, wakeWordMatch.getIndex() + wakeWordMatchString.length());
-                //we found a command, now get its arguments and run it
-                String preArgs = transcript.substring(0, wakeWordMatch.getIndex());
-                String postArgs = transcript.substring(transcript.substring(wakeWordMatch.getIndex()).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
-                if (run) {
-                    runCommand(voiceCommands.get(i), preArgs, wakeWordMatchString, wakeWordMatchIdx, postArgs, currTime, transcriptId);
-                }
-                break;
-            }
-        }
-
-        //loop through all global wake words to see if any match
-        for (int i = 0; i < wakeWords.size(); i++){
-            String currWakeWord = wakeWords.get(i);
-            FuzzyMatch wakeWordLocation = nlpUtils.findNearMatches(transcript, currWakeWord, wakeWordThreshold); //transcript.indexOf(currWakeWord);
-            if (wakeWordLocation != null && wakeWordLocation.getIndex() != -1){ //if the substring "wake word" is in the larger string "transcript"
-                foundWakeWord(currWakeWord, wakeWordLocation.getIndex() + currWakeWord.length());
-                //we found a command, now get its arguments and run it
-                String preArgs = transcript.substring(0, wakeWordLocation.getIndex());
-                String rest;
-                try {
-                     rest = transcript.substring(wakeWordLocation.getIndex() + currWakeWord.length());
-                } catch (StringIndexOutOfBoundsException e){
-                    rest = "";
-                }
-                parseCommand(preArgs, currWakeWord, rest, currTime, transcriptId, run);
-                break;
-            }
-        }
-
         currentlyParsing = false;
-        Log.d(TAG, "CHECKIT");
-        if (!commanded && ended && run) {
-            Log.d(TAG, "Wake word detected with no command input");
-            cancelVoiceCommand();
-        }
     }
 
     private void parseCommand(String preArgs, String wakeWord, String rest, long commandTime, long transcriptId, boolean run){
@@ -557,7 +570,6 @@ public class VoiceCommandServer {
         commanded = true;
         this.commandGiven = command;
         this.commandEndIdx = commandEndIdx;
-
     }
 
     private void runCommand(VoiceCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime, long transcriptId){

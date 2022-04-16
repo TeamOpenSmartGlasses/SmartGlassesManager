@@ -15,4 +15,7 @@
     <string name="cam_on">START</string>
     <string name="cam_off">STOP</string>
     <string name="asg_socket">asg_socket</string>
+
+    <string name="post_wake_text">Say a command:</string>
+    <string name="home_screen_text_prompt">Say \'hey computer\'...</string>
 </resources>

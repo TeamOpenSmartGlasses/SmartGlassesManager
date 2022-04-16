@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/nav_live_life_captions">
+    app:startDestination="@id/nav_home_prompt">
 
     <fragment
         android:id="@+id/nav_convo_mode"
@@ -18,6 +18,13 @@
         android:name="com.wearableintelligencesystem.androidsmartglasses.ui.LiveLifeCaptionsUi"
         tools:layout="@layout/live_life_caption_text"
         android:label="Live Life Captions" >
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_home_prompt"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.HomePromptUi"
+        tools:layout="@layout/home_prompt_fragment"
+        android:label="Home" >
     </fragment>
 
     <fragment

@@ -120,6 +120,7 @@ public class MessageTypes {
     public final static String NEW_MODE = "NEW_MODE";
     public final static String MODE_VISUAL_SEARCH = "MODE_VISUAL_SEARCH";
     public final static String MODE_LIVE_LIFE_CAPTIONS = "MODE_LIVE_LIFE_CAPTIONS";
+    public final static String MODE_HOME = "MODE_HOME";
     public final static String MODE_CONVERSATION_MODE = "MODE_CONVERSATION_MODE";
     public final static String MODE_SOCIAL_MODE = "MODE_SOCIAL_MODE";
     public final static String MODE_REFERENCE_GRID = "MODE_REFERENCE_GRID";
