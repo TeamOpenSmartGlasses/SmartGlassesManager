@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.175" />
+        <entry key="app/src/main/res/drawable/circle_shape.xml" value="0.2445" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.315625" />
         <entry key="app/src/main/res/drawable/loader.xml" value="0.23229166666666667" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.2359375" />
@@ -12,6 +13,7 @@
         <entry key="app/src/main/res/layout/convo_mode_fragment.xml" value="0.22239583333333332" />
         <entry key="app/src/main/res/layout/image_gridview.xml" value="0.20729166666666668" />
         <entry key="app/src/main/res/layout/live_life_caption_text.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/object_translate_mode_view.xml" value="0.23854166666666668" />
         <entry key="app/src/main/res/layout/reference_card.xml" value="0.22760416666666666" />
         <entry key="app/src/main/res/layout/selector_image_gridview.xml" value="0.15885416666666666" />
         <entry key="app/src/main/res/layout/social_intelligence_activity.xml" value="0.240625" />
