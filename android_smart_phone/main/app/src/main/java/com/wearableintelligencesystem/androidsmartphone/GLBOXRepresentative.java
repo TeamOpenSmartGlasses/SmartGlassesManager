@@ -54,7 +54,10 @@ class GLBOXRepresentative {
                 sendTranslateRequest(data);
             } else if (type.equals(MessageTypes.REFERENCE_TRANSLATE_SEARCH_QUERY)) {
                 sendReferenceTranslateQuery(data);
+            }else if (type.equals(MessageTypes.OBJECT_TRANSLATION_REQUEST)) {
+                sendObjectTranslateRequest(data);
             }
+
         }
             catch (JSONException e){
             e.printStackTrace();
@@ -170,6 +173,39 @@ class GLBOXRepresentative {
             e.printStackTrace();
         }
     }
+    public void sendObjectTranslateRequest(JSONObject data){
+        Log.d(TAG, "Running sendObjectTranslateRequest");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("query", data.get(MessageTypes.TRANSCRIPT_TEXT));
+            restMessage.put("source_language", "en");
+            restMessage.put("target_language", "fr");
+            restServerComms.restRequest(RestServerComms.TRANSLATE_TEXT_QUERY_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                public void onSuccess(JSONObject result){
+                    Log.d(TAG, "GOT translated TEXT RESULT:");
+                    Log.d(TAG, result.toString());
+                    JSONObject resultToSend = new JSONObject();
+                    try {
+                        resultToSend.put("source",data.get(MessageTypes.TRANSCRIPT_TEXT));
+                        resultToSend.put("target",result.getString("response"));
+                        asgRep.sendObjectTranslationResults(resultToSend);
+                        Log.d(TAG, resultToSend.toString());
+                    } catch (JSONException e) {
+                        asgRep.sendCommandResponse("Response Falied");
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                public void onFailure() {
+
+                }
+            });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
     private void sendReferenceTranslateQuery(JSONObject data){
         Log.d(TAG, "Running sendReferenceTranslateQuery");
         try{
