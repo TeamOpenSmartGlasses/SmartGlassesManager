@@ -856,7 +856,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Log.d(TAG, "TEXT_RESPONSE_EVENT_TYPE switchMode");
-                        switchMode(curr_mode);
+                        switchMode(MessageTypes.MODE_HOME);
                     }
                 }, commandResolveTime);
             } else if (voiceInputType.equals(MessageTypes.WAKE_WORD_EVENT_TYPE)){ //if it was a wake word
