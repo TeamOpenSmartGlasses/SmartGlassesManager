@@ -6,8 +6,10 @@ The Wearable Intelligence System (WIS) is the homepage for your smart glasses wi
 
 Coming soon!
 
+[![Wearable Intelligence System Beta Release Demo](res/thumbnail_wis_demo_part3_beta_release_play.jpg)](https://www.youtube.com/watch?v=jIWwJxi9bys "Smart Glasses Apps: Wearable Intelligence System Beta Release")
+
 ### Early alpha Version Video
-[![Wearable Intelligence System Demo - Part 1](res/early_demo_thumbnail.png)](http://www.youtube.com/watch?v=O2a6ng9jICE "Wearable Intelligence System Demo - Smart Glasses Apps - Part 1")
+[![Wearable Intelligence System alpha version Demo](res/early_demo_thumbnail.png)](http://www.youtube.com/watch?v=O2a6ng9jICE "Wearable Intelligence System Demo - Smart Glasses Apps - Part 1")
 
 ## What It Can Do Now
 
