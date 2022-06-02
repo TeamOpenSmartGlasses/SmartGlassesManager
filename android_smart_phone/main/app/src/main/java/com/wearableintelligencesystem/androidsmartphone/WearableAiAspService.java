@@ -38,6 +38,7 @@ import com.wearableintelligencesystem.androidsmartphone.facialrecognition.FaceRe
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.nlp.WearableReferencerAutocite;
+import com.wearableintelligencesystem.androidsmartphone.objectdetection.ObjectDetectionSystem;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
 import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
@@ -48,6 +49,7 @@ import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.tensorflow.lite.support.image.TensorImage;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
@@ -91,6 +93,8 @@ public class WearableAiAspService extends LifecycleService {
     //Text to Speech
     private TextToSpeechSystem textToSpeechSystem;
 
+    //Object Detection system
+    private ObjectDetectionSystem objectDetectionSystem;
 
     //UI
     TextView tvIP, tvPort;
@@ -193,6 +197,9 @@ public class WearableAiAspService extends LifecycleService {
     //start text to speech
     textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, getLanguageFromName(baseLanguage).getLocale());
 
+    //start Objectdetection system
+    objectDetectionSystem = new ObjectDetectionSystem(getApplicationContext());
+    objectDetectionSystem.setDataObservable(dataObservable);
     //start voice command server to parse transcript for voice command
     voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
 
@@ -316,6 +323,7 @@ public class WearableAiAspService extends LifecycleService {
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (type.equals(MessageTypes.POV_IMAGE)){
                 sendImageToFaceRec(data);
+                sendImageToObjectDetection(data);
             }  else if (type.equals((MessageTypes.START_FOREIGN_LANGUAGE_ASR))){
                 String languageName = data.getString(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME);
                 speechRecVoskForeignLanguage = new SpeechRecVosk(getLanguageFromName(languageName).getModelLocation(), false, this, audioObservable, dataObservable, mPhraseRepository);
@@ -325,6 +333,23 @@ public class WearableAiAspService extends LifecycleService {
                     speechRecVoskForeignLanguage = null;
                 }
             }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendImageToObjectDetection(JSONObject data){
+        try{
+            String jpgImageString = data.getString(MessageTypes.JPG_BYTES_BASE64);
+            byte [] jpgImage = Base64.decode(jpgImageString, Base64.DEFAULT);
+            //long imageTime = data.getLong(MessageTypes.TIMESTAMP);
+            //long imageId = data.getLong(MessageTypes.IMAGE_ID);
+
+            //convert to bitmap
+            Bitmap bitmap = BitmapFactory.decodeByteArray(jpgImage, 0, jpgImage.length);
+
+            //send through object detection system
+            objectDetectionSystem.runInference(TensorImage.fromBitmap(bitmap));
         } catch (JSONException e){
             e.printStackTrace();
         }

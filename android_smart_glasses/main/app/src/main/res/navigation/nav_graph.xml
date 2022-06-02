@@ -43,6 +43,11 @@
     </fragment>
 
     <fragment
+        android:id="@+id/nav_object_translate"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.ObjectTranslateUi"
+        android:label="Object Translate"
+        tools:layout="@layout/object_translate_mode_view"></fragment>
+    <fragment
         android:id="@+id/nav_visual_search"
         android:name="com.wearableintelligencesystem.androidsmartglasses.ui.VisualSearchUi"
         tools:layout="@layout/viewfinder"

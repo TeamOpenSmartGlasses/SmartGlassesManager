@@ -112,6 +112,10 @@ public class MessageTypes {
     public final static String TRANSLATE_TEXT_RESULT = "TRANSLATE_TEXT_RESULT";
     public final static String TRANSLATE_TEXT_RESULT_DATA = "TRANSLATION_RESULT_DATA";
 
+    //object translation
+    public final static String OBJECT_TRANSLATION_RESULT = "OBJECT_TRANSLATION_RESULT";
+    public final static String OBJECT_TRANSLATION_RESULT_DATA = "OBJECT_TRANSLATION_RESULT_DATA";
+
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
 
@@ -126,6 +130,7 @@ public class MessageTypes {
     public final static String MODE_REFERENCE_GRID = "MODE_REFERENCE_GRID";
     public final static String MODE_WEARABLE_FACE_RECOGNIZER = "MODE_WEARABLE_FACE_RECOGNIZER";
     public final static String MODE_LANGUAGE_TRANSLATE = "MODE_LANGUAGE_TRANSLATE";
+    public final static String MODE_OBJECT_TRANSLATE = "MODE_OBJECT_TRANSLATE";
     public final static String MODE_TEXT_LIST = "MODE_TEXT_LIST";
     public final static String MODE_TEXT_BLOCK = "MODE_TEXT_BLOCK";
     public final static String MODE_BLANK = "MODE_BLANK";
