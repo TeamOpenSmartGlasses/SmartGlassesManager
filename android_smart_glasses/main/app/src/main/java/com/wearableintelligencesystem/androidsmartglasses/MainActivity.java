@@ -298,6 +298,10 @@ public class MainActivity extends AppCompatActivity {
                 navController.navigate(R.id.nav_language_translate);
                 modeDisplayName = "Lang.Trans.";
                 break;
+            case MessageTypes.MODE_OBJECT_TRANSLATE:
+                navController.navigate(R.id.nav_object_translate);
+                modeDisplayName = "Obj.Trans.";
+                break;
             case MessageTypes.MODE_TEXT_LIST:
                 setupTextList();
                 modeDisplayName = "TextList";
