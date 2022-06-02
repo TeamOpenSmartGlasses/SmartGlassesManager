@@ -54,6 +54,7 @@ android {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    implementation 'com.google.mlkit:translate:17.0.0'
     //implementation 'androidx.appcompat:appcompat:1.4.0'
     //implementation 'com.google.android.material:material:1.4.0'
     //implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
@@ -100,6 +101,11 @@ dependencies {
     implementation "com.google.android.gms:play-services-tasks:18.0.0"
     implementation "com.google.android.gms:play-services-location:18.0.0"
     implementation "com.google.code.gson:gson:2.8.6"
+
+    //TensorFlow libraries
+    implementation 'org.tensorflow:tensorflow-lite-task-vision:0.3.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.3.0'
+
     
     //ROOM
     // Room components
@@ -152,9 +158,9 @@ dependencies {
     implementation 'com.google.mlkit:face-detection:16.1.2'
 
     ////TensorFlow Lite dependencies
-    implementation 'org.tensorflow:tensorflow-lite:2.4.0'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.4.0'
-    implementation 'org.tensorflow:tensorflow-lite-support:0.1.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.7.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.7.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.3.0'
 
     ////Kotlin Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1'
