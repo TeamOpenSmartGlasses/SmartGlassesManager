@@ -22,7 +22,27 @@ public class MessageTypes {
     //VOICE COMMANDS
     public static final String VOICE_COMMAND_RESPONSE = "VOICE_COMMAND_RESPONSE";
     public static final String COMMAND_RESULT = "COMMAND_RESULT";
+    public static final String COMMAND_NAME = "COMMAND_NAME";
     public static final String COMMAND_RESPONSE_DISPLAY_STRING = "COMMAND_RESPONSE_DISPLAY_STRING";
+    //voice command event
+    public static final String VOICE_COMMAND_STREAM_EVENT = "VOICE_COMMAND_STREAM_EVENT";
+    public static final String VOICE_COMMAND_STREAM_EVENT_TYPE = "VOICE_COMMAND_STREAM_EVENT_TYPE";
+    public static final String WAKE_WORD_EVENT_TYPE = "WAKE_WORD_EVENT_TYPE";
+    public static final String COMMAND_EVENT_TYPE = "COMMAND_EVENT_TYPE";
+    public static final String CANCEL_EVENT_TYPE = "CANCEL_EVENT_TYPE";
+    public static final String RESOLVE_EVENT_TYPE = "RESOLVE_EVENT_TYPE";
+    public static final String TEXT_RESPONSE_EVENT_TYPE = "TEXT_RESPONSE_EVENT_TYPE";
+    public static final String COMMAND_ARGS_EVENT_TYPE = "COMMAND_ARGS_EVENT_TYPE";
+    public static final String REQUIRED_ARG_EVENT_TYPE = "REQUIRED_ARG_EVENT_TYPE";
+    public static final String ARG_NAME = "ARG_NAME";
+    public static final String ARG_OPTIONS = "ARG_OPTIONS";
+    public static final String INPUT_VOICE_STRING = "INPUT_VOICE_STRING";
+    public static final String VOICE_ARG_EXPECT_TYPE = "VOICE_ARG_EXPECT_TYPE";
+    public static final String VOICE_ARG_EXPECT_NATURAL_LANGUAGE = "VOICE_ARG_EXPECT_NATURAL_LANGUAGE";
+    public static final String VOICE_COMMAND_LIST = "VOICE_COMMAND_LIST";
+    public static final String INPUT_WAKE_WORD = "INPUT_WAKE_WORD";
+    public static final String INPUT_VOICE_COMMAND_NAME = "INPUT_VOICE_COMMAND_NAME";
+
 
     //FACE/PERSON SIGHTING
     public static final String FACE_SIGHTING_EVENT = "FACE_SIGHTING_EVENT";
@@ -72,6 +92,11 @@ public class MessageTypes {
     public final static String STOP_FOREIGN_LANGUAGE_ASR = "STOP_FOREIGN_LANGUAGE_ASR";
     public final static String START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME = "START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME";
 
+    //object translation
+    public final static String OBJECT_TRANSLATION_REQUEST = "OBJECT_TRANSLATION_REQUEST";
+    public final static String OBJECT_TRANSLATION_RESULT = "OBJECT_TRANSLATION_RESULT";
+    public final static String OBJECT_TRANSLATION_RESULT_DATA = "OBJECT_TRANSLATION_RESULT_DATA";
+
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
     //select command
@@ -101,12 +126,10 @@ public class MessageTypes {
     public final static String MODE_REFERENCE_GRID = "MODE_REFERENCE_GRID";
     public final static String MODE_WEARABLE_FACE_RECOGNIZER = "MODE_WEARABLE_FACE_RECOGNIZER";
     public final static String MODE_LANGUAGE_TRANSLATE = "MODE_LANGUAGE_TRANSLATE";
+    public final static String MODE_OBJECT_TRANSLATE = "MODE_OBJECT_TRANSLATE";
     public final static String MODE_TEXT_LIST = "MODE_TEXT_LIST";
     public final static String MODE_TEXT_BLOCK = "MODE_TEXT_BLOCK";
     public final static String MODE_BLANK = "MODE_BLANK";
-
-
-
 }
 
 

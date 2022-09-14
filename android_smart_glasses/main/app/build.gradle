@@ -38,10 +38,17 @@ android {
 
 dependencies {
 
+    //fragments
+    def fragment_version = "1.2.0"
+    def fragment_nav_version = "2.0.0"
+    implementation "androidx.fragment:fragment:$fragment_version"
+    implementation "androidx.navigation:navigation-fragment:$fragment_nav_version"
+    implementation "androidx.navigation:navigation-ui:$fragment_nav_version"
+    implementation "androidx.navigation:navigation-runtime:$fragment_nav_version"
+
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation "com.android.support:support-v4:28.0.0"
-    implementation "com.android.support:support-v13:28.0.0"
+    implementation "androidx.appcompat:appcompat:1.1.0"
+    implementation "androidx.annotation:annotation:1.1.0"
     implementation 'com.android.support.constraint:constraint-layout:2.0.4'
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
@@ -52,7 +59,8 @@ dependencies {
 //        builtBy 'compile'
 //    }
     implementation  (name:'hiddencamera-release', ext:'aar')
-    implementation 'com.squareup.picasso:picasso:2.5.2'
+//    implementation 'com.squareup.picasso:picasso:2.71828"
+    implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'com.intellij:annotations:+@jar'
     implementation "org.java-websocket:Java-WebSocket:1.5.2"
 //    compile 'org.jacoco:jacoco-maven-plugin:0.7.9'

@@ -39,8 +39,8 @@ class NaturalLanguageQueryVoiceCommand extends VoiceCommand {
 
         //send user update
         String displayString = "Querying: " + postArgs;
-        //sendResult(vcServer, true, this.commandName, displayString);
-        sendMessage(vcServer, displayString);
+        sendResult(vcServer, true, this.commandName, displayString);
+        //sendMessage(vcServer, displayString);
 
         //ask system to do natural language query and send to ASG on result
         JSONObject data = new JSONObject();

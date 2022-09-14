@@ -6,13 +6,14 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="white">#DDFFFFFF</color>
     <color name="yellow">#FFFFFF00</color>
     <color name="hud_text">#FFFFFFFF</color>
     <color name="hud_bg">#FF000000</color>
     <color name="white_transparent">#33FFFFFF</color>
     <color name="green_icon">#FF66BB6A</color>
     <color name="red_icon">#FFE53935</color>
+    <color name="red_text">#FFFFA9A5</color>
     <color name="yellow_icon">#FFFFEB3B</color>
     <color name="gray">#FFAAAAAA</color>
 </resources>

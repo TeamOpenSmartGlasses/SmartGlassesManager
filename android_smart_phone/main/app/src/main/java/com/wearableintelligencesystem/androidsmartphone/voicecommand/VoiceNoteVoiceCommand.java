@@ -38,13 +38,13 @@ class VoiceNoteVoiceCommand extends VoiceCommand {
 
         //find tags and return a list of the tags that were found
         ArrayList<String> foundTags = this.parseKeyValueArgs(postArgs, "tag");
-        String displayString = null;
+        String displayString = "Saved note: " + postArgs + "\n";
         if (foundTags != null && foundTags.size() != 0){ //save the tags and add them to the display string for user
             //make the display string
-            displayString = "Saving in tag bins: ";
+            displayString = displayString + "\nSaved in tag bins: ";
             for (int i = 0; i < foundTags.size(); i++){
                 //save tag command
-                Log.d(TAG, "Saving tag: " + foundTags.get(i));
+                Log.d(TAG, "Saved tag: " + foundTags.get(i));
                 VoiceCommandCreator.create(this.commandName, commandSpoken, wakeWord, false, "tag", foundTags.get(i), commandTime, preArgs, postArgs,"asg_transcript", transcriptId, vcServer.mVoiceCommandRepository);
 
                 //add to display string

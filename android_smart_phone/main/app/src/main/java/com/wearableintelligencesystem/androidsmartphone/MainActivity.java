@@ -59,13 +59,14 @@ public class MainActivity extends AppCompatActivity {
 
         //setup the nav bar
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        Log.d(TAG, getSupportFragmentManager().getFragments().toString());
         navController = navHostFragment.getNavController();
         setupBottomNavBar();
         bottomNavigation.setSelectedItemId(R.id.settings_page);
 
         //before service runs, get permissions
+        //requestForPermission(); //files
         checkPermission(); //location
-        requestForPermission(); //files
 
         //start wearable ai service
         startWearableAiService();
@@ -128,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //handle permissions
-    public boolean requestForPermission() {
+    public boolean requestFilesPermission() {
         boolean isPermissionOn = true;
         final int version = Build.VERSION.SDK_INT;
         if (version >= 23) {
@@ -157,6 +158,8 @@ public class MainActivity extends AppCompatActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                     // Background Location Permission is granted so do your work here
+                    //now, get file permissions
+                    requestFilesPermission();
                 } else {
                     // Ask for Background Location Permission
                     askPermissionForBackgroundUsage();
@@ -169,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void askForLocationPermission() {
+        Log.d(TAG, "run askForLocationPermission");
         if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)) {
             new AlertDialog.Builder(this)
                     .setTitle("Permission Needed!")
@@ -194,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void askPermissionForBackgroundUsage() {
+        Log.d(TAG, "run askPermissionForBackgroundUsage");
         if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
             new AlertDialog.Builder(this)
                     .setTitle("Location permissions needed.")
@@ -220,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d(TAG, "run onRequestPermissionsResult");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == LOCATION_PERMISSION_CODE) {
@@ -229,6 +235,8 @@ public class MainActivity extends AppCompatActivity {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         // Background Location Permission is granted so do your work here
+                        //now, get file permissions
+                        requestFilesPermission();
                     } else {
                         // Ask for Background Location Permission
                         askPermissionForBackgroundUsage();
@@ -238,10 +246,9 @@ public class MainActivity extends AppCompatActivity {
                 // User denied location permission
             }
         } else if (requestCode == BACKGROUND_LOCATION_PERMISSION_CODE) {
+            //now, get file permissions
+            requestFilesPermission();
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // User granted for Background Location Permission.
-            } else {
-                // User declined for Background Location Permission.
             }
         }
 

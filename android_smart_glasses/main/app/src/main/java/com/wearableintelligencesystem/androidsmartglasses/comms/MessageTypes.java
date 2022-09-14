@@ -19,7 +19,26 @@ public class MessageTypes {
     //VOICE COMMANDS
     public static final String VOICE_COMMAND_RESPONSE = "VOICE_COMMAND_RESPONSE";
     public static final String COMMAND_RESULT = "COMMAND_RESULT";
+    public static final String COMMAND_NAME = "COMMAND_NAME";
     public static final String COMMAND_RESPONSE_DISPLAY_STRING = "COMMAND_RESPONSE_DISPLAY_STRING";
+    //voice command event
+    public static final String VOICE_COMMAND_STREAM_EVENT = "VOICE_COMMAND_STREAM_EVENT";
+    public static final String VOICE_COMMAND_STREAM_EVENT_TYPE = "VOICE_COMMAND_STREAM_EVENT_TYPE";
+    public static final String WAKE_WORD_EVENT_TYPE = "WAKE_WORD_EVENT_TYPE";
+    public static final String COMMAND_EVENT_TYPE = "COMMAND_EVENT_TYPE";
+    public static final String CANCEL_EVENT_TYPE = "CANCEL_EVENT_TYPE";
+    public static final String RESOLVE_EVENT_TYPE = "RESOLVE_EVENT_TYPE";
+    public static final String TEXT_RESPONSE_EVENT_TYPE = "TEXT_RESPONSE_EVENT_TYPE";
+    public static final String COMMAND_ARGS_EVENT_TYPE = "COMMAND_ARGS_EVENT_TYPE";
+    public static final String REQUIRED_ARG_EVENT_TYPE = "REQUIRED_ARG_EVENT_TYPE";
+    public static final String ARG_NAME = "ARG_NAME";
+    public static final String ARG_OPTIONS = "ARG_OPTIONS";
+    public static final String INPUT_VOICE_STRING = "INPUT_VOICE_STRING";
+    public static final String VOICE_ARG_EXPECT_TYPE = "VOICE_ARG_EXPECT_TYPE";
+    public static final String VOICE_ARG_EXPECT_NATURAL_LANGUAGE = "VOICE_ARG_EXPECT_NATURAL_LANGUAGE";
+    public static final String VOICE_COMMAND_LIST = "VOICE_COMMAND_LIST";
+    public static final String INPUT_WAKE_WORD = "INPUT_WAKE_WORD";
+    public static final String INPUT_VOICE_COMMAND_NAME = "INPUT_VOICE_COMMAND_NAME";
 
     //AUTOCITER/WEARABLE-REFERENCER
     public static final String AUTOCITER_START = "AUTOCITER_START";
@@ -83,11 +102,19 @@ public class MessageTypes {
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
     public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
 
+    //I/O
+    public final static String SG_TOUCHPAD_EVENT = "SG_TOUCHPAD_EVENT";
+    public final static String SG_TOUCHPAD_KEYCODE = "SG_TOUCHPAD_KEYCODE";
+
     //translation
     public final static String TRANSLATE_TEXT_QUERY = "TRANSLATE_TEXT_QUERY";
     public final static String TRANSLATE_TEXT_DATA = "TRANSLATE_TEXT_DATA";
     public final static String TRANSLATE_TEXT_RESULT = "TRANSLATE_TEXT_RESULT";
     public final static String TRANSLATE_TEXT_RESULT_DATA = "TRANSLATION_RESULT_DATA";
+
+    //object translation
+    public final static String OBJECT_TRANSLATION_RESULT = "OBJECT_TRANSLATION_RESULT";
+    public final static String OBJECT_TRANSLATION_RESULT_DATA = "OBJECT_TRANSLATION_RESULT_DATA";
 
     public final static String AFFECTIVE_SUMMARY_RESULT = "AFFECTIVE_SUMMARY_RESULT";
     public final static String COMMAND_SWITCH_MODE = "COMMAND_SWITCH_MODE";
@@ -97,14 +124,17 @@ public class MessageTypes {
     public final static String NEW_MODE = "NEW_MODE";
     public final static String MODE_VISUAL_SEARCH = "MODE_VISUAL_SEARCH";
     public final static String MODE_LIVE_LIFE_CAPTIONS = "MODE_LIVE_LIFE_CAPTIONS";
+    public final static String MODE_HOME = "MODE_HOME";
     public final static String MODE_CONVERSATION_MODE = "MODE_CONVERSATION_MODE";
     public final static String MODE_SOCIAL_MODE = "MODE_SOCIAL_MODE";
     public final static String MODE_REFERENCE_GRID = "MODE_REFERENCE_GRID";
     public final static String MODE_WEARABLE_FACE_RECOGNIZER = "MODE_WEARABLE_FACE_RECOGNIZER";
     public final static String MODE_LANGUAGE_TRANSLATE = "MODE_LANGUAGE_TRANSLATE";
+    public final static String MODE_OBJECT_TRANSLATE = "MODE_OBJECT_TRANSLATE";
     public final static String MODE_TEXT_LIST = "MODE_TEXT_LIST";
     public final static String MODE_TEXT_BLOCK = "MODE_TEXT_BLOCK";
     public final static String MODE_BLANK = "MODE_BLANK";
+    public final static String MODE_SEARCH_ENGINE_RESULT = "MODE_SEARCH_ENGINE_RESULT";
 
 }
 

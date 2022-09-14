@@ -17,6 +17,7 @@ import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.Vo
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
+import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 
 class SwitchModesVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_SwitchModesVoiceCommand";
@@ -26,7 +27,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
     SwitchModesVoiceCommand(Context context){
         super(context);
         this.commandName = "switch modes";
-        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"switch modes", "switch to mode"}));
+        this.commandList = new ArrayList<>(Arrays.asList(new String [] {"run"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
 
 //        this.modesList = new ArrayList<>(Arrays.asList(new Pair<String, String> [] {
@@ -42,8 +43,10 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         modesList.add(Pair.create("social mode", MessageTypes.MODE_SOCIAL_MODE));
         modesList.add(Pair.create("visual search", MessageTypes.MODE_VISUAL_SEARCH));
         modesList.add(Pair.create("conversation", MessageTypes.MODE_CONVERSATION_MODE));
+        modesList.add(Pair.create("object translate", MessageTypes.MODE_OBJECT_TRANSLATE));
         modesList.add(Pair.create("blank", MessageTypes.MODE_BLANK));
         modesList.add(Pair.create("speech translate", MessageTypes.MODE_LANGUAGE_TRANSLATE));
+
     }
 
     @Override
@@ -64,8 +67,8 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         for (int i = 0; i < modesList.size(); i++){
             naturalLanguageMode = modesList.get(i).first;
             Log.d(TAG, "args: " + postArgs + "; mode: " + modesList.get(i).first);
-            int modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.8);
-            if (modeMatchChar != -1){
+            FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.8);
+            if (modeMatchChar != null && modeMatchChar.getIndex() != -1){
                 modeMatchIdx = i;
                 newMode = modesList.get(i).second;
                 Log.d(TAG, "Found match: " + newMode);

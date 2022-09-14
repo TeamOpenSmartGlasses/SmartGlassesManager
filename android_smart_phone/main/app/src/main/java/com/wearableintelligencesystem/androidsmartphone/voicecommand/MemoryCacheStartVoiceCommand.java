@@ -18,6 +18,7 @@ class MemoryCacheStartVoiceCommand extends VoiceCommand {
         this.commandName = "start memory cache";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"start memory cache"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
+        this.noArgs = true;
     }
 
     @Override
@@ -34,17 +35,20 @@ class MemoryCacheStartVoiceCommand extends VoiceCommand {
         Long activeCacheId = vcServer.mMemoryCacheRepository.getActiveCache();
 
         String displayString;
+        boolean success;
         if (activeCacheId != null){
             displayString = "Memory cache already running. Finish current active cache to start a new one.";
+            success = false;
         } else {
             //start memory cache by creating cache and creating start memory cache event
             //make new cache
             long cacheId = MemoryCacheCreator.create(commandTime, vcServer.mMemoryCacheRepository);
 
             displayString = "Started new memory cache.";
+            success = true;
         }
 
-        sendResult(vcServer, true, this.commandName, displayString);
+        sendResult(vcServer, success, this.commandName, displayString);
         return true;
     }
 

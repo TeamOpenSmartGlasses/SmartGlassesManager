@@ -1,7 +1,7 @@
 <resources>
     <string name="key">TEMPORARYKEY_CHANGETHISKEY</string>
 
-    <string name="app_name">AAA Wearable Intelligence System</string>
+    <string name="app_name">AA Wearable Intelligence System</string>
     <string name="error_cannot_write">Cannot write image captured by camera.</string>
     <string name="error_cannot_open">Cannot open camera.</string>
     <string name="error_cannot_get_permission">Camera permission not available.</string>
@@ -15,4 +15,7 @@
     <string name="cam_on">START</string>
     <string name="cam_off">STOP</string>
     <string name="asg_socket">asg_socket</string>
+
+    <string name="post_wake_text">Say a command:</string>
+    <string name="home_screen_text_prompt">Say \'hey computer\'...</string>
 </resources>

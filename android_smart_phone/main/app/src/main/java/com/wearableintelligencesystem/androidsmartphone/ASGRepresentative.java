@@ -182,8 +182,8 @@ class ASGRepresentative {
         try{
             //build json object to send command result
             JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
-            commandResponseObject.put(MessageTypes.COMMAND_RESULT, true);
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.TEXT_RESPONSE_EVENT_TYPE);
             commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, response);
 
             //send the command result to web socket, to send to asg
@@ -280,6 +280,20 @@ class ASGRepresentative {
             dataObservable.onNext(textToBeSpokenObject);
         }
         catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void sendObjectTranslationResults(JSONObject results){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.OBJECT_TRANSLATION_RESULT);
+            commandResponseObject.put(MessageTypes.OBJECT_TRANSLATION_RESULT_DATA, results.toString());
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
             e.printStackTrace();
         }
     }
