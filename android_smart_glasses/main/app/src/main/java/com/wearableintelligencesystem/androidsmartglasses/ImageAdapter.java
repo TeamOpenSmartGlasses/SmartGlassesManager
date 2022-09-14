@@ -4,15 +4,18 @@ package com.wearableintelligencesystem.androidsmartglasses;
  * Created by sigit on 26/01/16.
  */
 import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 public class ImageAdapter extends BaseAdapter {
     public String TAG = "ImageAdapter_WearableAiDisplay";
@@ -58,11 +61,24 @@ public class ImageAdapter extends BaseAdapter {
             imageView = (ImageView) convertView;
         }
         String url = getItem(position);
-        Picasso.with(mContext)
+        Log.d(TAG, "Image URL picasso: " + url);
+        Picasso.get() //with(mContext)
                 .load(url)
                 .placeholder(R.drawable.loader)
                 .fit()
-                .centerCrop().into(imageView);
+                .centerCrop().into(imageView, new Callback() {
+
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "IMAGE PULLED SUCCESS");
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.d(TAG,"Image load failed");
+                e.printStackTrace();
+            }
+        });
         return imageView;
     }
 }

@@ -135,7 +135,6 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.scrollToPosition(recyclerView.getAdapter().getItemCount() -1);
 
-
         // Get a new or existing ViewModel from the ViewModelProvider.
         mPhraseViewModel = new ViewModelProvider(this).get(PhraseViewModel.class);
         mMemoryCacheViewModel = new ViewModelProvider(this).get(MemoryCacheViewModel.class);

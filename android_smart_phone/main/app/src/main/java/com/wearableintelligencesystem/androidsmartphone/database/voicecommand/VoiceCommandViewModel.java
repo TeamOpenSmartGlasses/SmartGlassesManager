@@ -35,8 +35,6 @@ public class VoiceCommandViewModel extends AndroidViewModel {
     //mxt cache snapshot
     public List<Phrase> getVoiceNotesSnapshot() {return mRepository.getVoiceCommandPhrasesSnapshot("save speech", true);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
 
-
-
     public LiveData<List<VoiceCommandEntity>> getTagBin(String tag) {return mRepository.getVoiceCommands("save speech", false, "tag", tag);} //eventually, this will take an id we use to find the specific cache //this will get the phrases where the passed in values are true, so returns phrases
 
 

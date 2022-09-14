@@ -18,8 +18,14 @@ public abstract class VoiceCommand {
     protected String commandName;
     protected ArrayList<String> commandList;
     protected ArrayList<String> wakeWordList;
+    public boolean requiredArg = false;
+    public String requiredArgString;
+    public ArrayList<String> requiredArgOptions;
 
     protected NlpUtils nlpUtils;
+
+    public boolean isPrimary = true; //is this a primary command that can be run at any time
+    public boolean noArgs = false; //does this take no arguments?
 
     public VoiceCommand(Context context){
         nlpUtils = NlpUtils.getInstance(context);
@@ -27,25 +33,22 @@ public abstract class VoiceCommand {
 
     public abstract boolean runCommand(VoiceCommandServer vcServer, String preArgs, String wakeWord, int command, String postArgs, long commandTime, long transcriptId);
 
+    protected void setRequiredArg(String requiredArgString, ArrayList<String> requiredArgOptions){
+        this.requiredArgString = requiredArgString;
+        this.requiredArg = true;
+        this.requiredArgOptions = requiredArgOptions;
+    }
+
     public void sendResult(VoiceCommandServer vcServer, boolean success, String commandName, String displayString){
         try{
             //build json object to send command result
             JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.RESOLVE_EVENT_TYPE);
             commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
-
-            //build the display string
-            String commandResponseDisplayString = "";
-            if (success){
-                commandResponseDisplayString = "COMMAND SUCCESS: " + commandName;
-            } else {
-                commandResponseDisplayString = "COMMAND FAILED: " + commandName;
-            }
-            if (displayString != null){
-                 commandResponseDisplayString = commandResponseDisplayString + "\n" + displayString;
-            }
-
-            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, commandResponseDisplayString);
+            commandResponseObject.put(MessageTypes.COMMAND_NAME, commandName);
+            Log.d(TAG, "DISPLAY STRING: " + displayString);
+            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
 
             //send the command result
             vcServer.dataObservable.onNext(commandResponseObject);

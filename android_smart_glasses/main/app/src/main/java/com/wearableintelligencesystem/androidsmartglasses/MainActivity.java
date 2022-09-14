@@ -7,48 +7,33 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 
-import android.app.Activity;
-import android.hardware.Camera;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.StrictMode;
-import android.text.Editable;
-import android.text.Html;
-import android.text.Spanned;
-import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.wearableintelligencesystemandroidsmartglasses.BuildConfig;
 import com.example.wearableintelligencesystemandroidsmartglasses.R;
@@ -58,9 +43,6 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.PercentFormatter;
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.OkHttpDownloader;
-import com.squareup.picasso.Picasso;
 import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 
@@ -69,33 +51,30 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 
-public class MainActivity extends Activity {
-    WearableAiService mService;
-    boolean mBound = false;
-
-    boolean currentlyScrolling = false;
+public class MainActivity extends AppCompatActivity {
+    public WearableAiService mService;
+    public boolean mBound = false;
 
     public static String TAG = "WearableAiDisplay_MainActivity";
+
+    public long commandResolveTime = 8000;
+    public long searchEngineResultTimeout = 16000;
 
     public long lastFaceUpdateTime = 0;
     public long faceUpdateInterval = 5000; //milliseconds
 
     public final static String ACTION_UI_UPDATE = "com.example.wearableaidisplaymoverio.UI_UPDATE";
+    public final static String ACTION_TEXT_REFERENCE = "com.example.wearableaidisplaymoverio.ACTION_TEXT_REFERENCE";
     public final static String PHONE_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.PHONE_CONN_STATUS_UPDATE";
     public final static String WIFI_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.WIFI_CONN_STATUS_UPDATE";
     public final static String BATTERY_CHARGING_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_CHARGIN_STATUS_UPDATE";
     public final static String BATTERY_LEVEL_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_LEVEL_STATUS_UPDATE";
 
+    public final static String VOICE_TEXT_RESPONSE = "VOICE_TEXT_RESPONSE";
+    public final static String VOICE_TEXT_RESPONSE_TEXT = "VOICE_TEXT_RESPONSE_TEXT";
+
     //current person recognized's names
     public ArrayList<String> faceNames = new ArrayList<String>();
-
-    //store information from visual search response
-    List<String> thumbnailImages;
-    List<String> visualSearchNames;
-
-    //visual search gridview ui
-    GridView gridviewImages;
-    ImageAdapter gridViewImageAdapter;
 
     //social UI
     TextView messageTextView;
@@ -108,24 +87,6 @@ public class MainActivity extends Activity {
     Button toggleCameraButton;
     private PieChart chart;
 
-    //live life captions ui
-    ArrayList<Spanned> textHolder = new ArrayList<>();
-    int textHolderSizeLimit = 10; // how many lines maximum in the text holder
-    TextView liveLifeCaptionsText;
-
-    //referenceCard ui
-    TextView referenceCardResultTitle;
-    TextView referenceCardResultSummary;
-    ImageView referenceCardResultImage;
-
-    //translate ui
-    ArrayList<Spanned> translateTextHolder = new ArrayList<>();
-    int translateTextHolderSizeLimit = 10; // how many lines maximum in the text holder
-    TextView translateText;
-
-    //visual search ui
-    ImageView viewfinder;
-
     //text list ui
     ArrayList<String> textListHolder = new ArrayList<>();
     TextView textListView;
@@ -134,19 +95,13 @@ public class MainActivity extends Activity {
     private String textBlockHolder = "";
     TextView textBlockView;
 
-    //convo mode ui
-    TextView convoModeContentTextView;
-
     //metrics
     float eye_contact_30 = 0;
     String facial_emotion_30 = "";
     String facial_emotion_5 = "";
 
     //save current mode
-    String curr_mode;
-
-    long lastIntermediateMillis = 0;
-    long intermediateTranscriptPeriod = 40; //milliseconds
+    String curr_mode = "";
 
     //HUD ui
     private TextView mClockTextView;
@@ -166,9 +121,15 @@ public class MainActivity extends Activity {
     private Handler uiHandler;
     private Handler navHandler;
 
+    private NavController navController;
+
+    TextView modeStatus;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate running");
+
+        super.onCreate(savedInstanceState);
 
         //help us find potential issues in dev
         if (BuildConfig.DEBUG){
@@ -179,19 +140,29 @@ public class MainActivity extends Activity {
                     .build());
         }
 
-        super.onCreate(savedInstanceState);
-
         //setup ui handler
         uiHandler = new Handler();
 
         //setup nav handler
         navHandler = new Handler();
 
-        //setup main view
-        switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+        //set main view
+        setContentView(R.layout.activity_main);
+        modeStatus = findViewById(R.id.mode_hud);
 
-        //keep the screen on throughout
-        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        //setup the nav bar
+//        Log.d(TAG, getSupportFragmentManager().toString());
+//        Log.d(TAG, getSupportFragmentManager().getFragments().toString());
+////        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+//        NavHostFragment navHostFragment = (NavHostFragment) NavHostFragment.findNavController();
+//        Log.d(TAG, navHostFragment.toString());
+//        navController = navHostFragment.getNavController();
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        navController = navHostFragment.getNavController();
+
+        //setup main view
+        Log.d(TAG, "onCreate switchMode");
+        switchMode(MessageTypes.MODE_HOME);
 
         //create the WearableAI service if it isn't already running
         startWearableAiService();
@@ -221,7 +192,7 @@ public class MainActivity extends Activity {
                     // Default time format for current locale, with respect (on API 22+) to user's 12/24-hour
                     // settings. I couldn't find any simple way to respect it back to API 14.
                     //String prettyTime = DateFormat.getTimeInstance(DateFormat.SHORT).format(new Date()) + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
-                    String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
+                    String prettyTime = new SimpleDateFormat("h:mm a").format(new Date());
                     mClockTextView = (TextView) findViewById(R.id.clock_text_view);
                     if (mClockTextView != null) {
                         mClockTextView.setText(prettyTime);
@@ -231,7 +202,7 @@ public class MainActivity extends Activity {
             });
         } else{
             //do just one update so user doesn't have to wait
-            String prettyTime = new SimpleDateFormat("kk:mm").format(new Date())  + "-" + DateFormat.getDateInstance(DateFormat.SHORT).format(new Date());
+            String prettyTime = new SimpleDateFormat("h:mm a").format(new Date());
             mClockTextView = (TextView) findViewById(R.id.clock_text_view);
             if (mClockTextView != null) {
                 mClockTextView.setText(prettyTime);
@@ -255,8 +226,8 @@ public class MainActivity extends Activity {
             return;
         }
         //wifiConnected = WifiUtils.checkWifiOnAndConnected(this); //check wifi status - don't need now that we have listener in service
-        Drawable wifiOnDrawable = this.getDrawable(R.drawable.wifi_on_green);
-        Drawable wifiOffDrawable = this.getDrawable(R.drawable.wifi_off_red);
+        Drawable wifiOnDrawable = this.getDrawable(R.drawable.ic_wifi_on);
+        Drawable wifiOffDrawable = this.getDrawable(R.drawable.ic_wifi_off);
         if (wifiConnected) {
             mWifiStatusImageView.setImageDrawable(wifiOnDrawable);
         } else {
@@ -269,8 +240,8 @@ public class MainActivity extends Activity {
         if (mPhoneStatusImageView == null){
             return;
         }
-        Drawable phoneOnDrawable = this.getDrawable(R.drawable.phone_connected_green);
-        Drawable phoneOffDrawable = this.getDrawable(R.drawable.phone_disconnected_red);
+        Drawable phoneOnDrawable = this.getDrawable(R.drawable.ic_phone_connected);
+        Drawable phoneOffDrawable = this.getDrawable(R.drawable.ic_phone_disconnected);
         if (phoneConnected) {
             mPhoneStatusImageView.setImageDrawable(phoneOnDrawable);
         } else {
@@ -284,10 +255,10 @@ public class MainActivity extends Activity {
         if (mBatteryStatusImageView == null){
             return;
         }
-        Drawable batteryFullDrawable = this.getDrawable(R.drawable.full_battery_green);
-        Drawable batteryFullChargingDrawable = this.getDrawable(R.drawable.full_battery_charging_green);
-        Drawable batteryLowDrawable = this.getDrawable(R.drawable.low_battery_red);
-        Drawable batteryLowChargingDrawable = this.getDrawable(R.drawable.low_battery_charging_red);
+        Drawable batteryFullDrawable = this.getDrawable(R.drawable.ic_full_battery);
+        Drawable batteryFullChargingDrawable = this.getDrawable(R.drawable.ic_full_battery_charging);
+        Drawable batteryLowDrawable = this.getDrawable(R.drawable.ic_low_battery);
+        Drawable batteryLowChargingDrawable = this.getDrawable(R.drawable.ic_low_battery_charging);
         if (batteryFull) {
             if (batteryCharging) {
                 mBatteryStatusImageView.setImageDrawable(batteryFullChargingDrawable);
@@ -309,41 +280,72 @@ public class MainActivity extends Activity {
 
     private void switchMode(String mode) {
         curr_mode = mode;
+        String modeDisplayName = "...";
+
+        //clear any previous ui intentions
+        uiHandler.removeCallbacksAndMessages(null);
+
         if (mode != MessageTypes.MODE_BLANK){
             turnOnScreen();
         }
+
         switch (mode) {
             case MessageTypes.MODE_BLANK:
                 blankUi();
+                modeDisplayName = "Blank";
                 break;
             case MessageTypes.MODE_LANGUAGE_TRANSLATE:
-                setupTranslateUi();
+                navController.navigate(R.id.nav_language_translate);
+                modeDisplayName = "Lang.Trans.";
+                break;
+            case MessageTypes.MODE_OBJECT_TRANSLATE:
+                navController.navigate(R.id.nav_object_translate);
+                modeDisplayName = "Obj.Trans.";
                 break;
             case MessageTypes.MODE_TEXT_LIST:
                 setupTextList();
+                modeDisplayName = "TextList";
                 break;
             case MessageTypes.MODE_TEXT_BLOCK:
                 setupTextBlock();
+                modeDisplayName = "TextBlock";
                 break;
-            case MessageTypes.MODE_WEARABLE_FACE_RECOGNIZER:
-                showWearableFaceRecognizer();
-                break;
+//            case MessageTypes.MODE_WEARABLE_FACE_RECOGNIZER:
+//                showWearableFaceRecognizer();
+//                modeDisplayName = "FaceRec.";
+//                break;
             case MessageTypes.MODE_VISUAL_SEARCH:
-                setupVisualSearchViewfinder();
+                //setupVisualSearchViewfinder();
+                navController.navigate(R.id.nav_visual_search);
+                modeDisplayName = "VisualSearch";
                 break;
-            case MessageTypes.MODE_REFERENCE_GRID:
-                setContentView(R.layout.image_gridview);
-                break;
-            case MessageTypes.MODE_SOCIAL_MODE:
-                setupSocialIntelligenceUi();
+//            case MessageTypes.MODE_REFERENCE_GRID:
+//                setContentView(R.layout.image_gridview);
+//                modeDisplayName = "Ref.Grid";
+//                break;
+//            case MessageTypes.MODE_SOCIAL_MODE:
+//                setupSocialIntelligenceUi();
+//                modeDisplayName = "Social";
+//                break;
+            case MessageTypes.MODE_HOME:
+                navController.navigate(R.id.nav_home_prompt);
+                modeDisplayName = "Home";
                 break;
             case MessageTypes.MODE_LIVE_LIFE_CAPTIONS:
-                setupLlcUi();
+                navController.navigate(R.id.nav_live_life_captions);
+                modeDisplayName = "LiveCaption";
                 break;
             case MessageTypes.MODE_CONVERSATION_MODE:
-                setupConvoMode();
+                navController.navigate(R.id.nav_convo_mode);
+                modeDisplayName = "Convo";
                 break;
+            case MessageTypes.MODE_SEARCH_ENGINE_RESULT:
+                modeDisplayName = "SearchResult";
+            break;
         }
+
+        //set new mode status
+        modeStatus.setText(modeDisplayName);
 
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
     }
@@ -361,21 +363,6 @@ public class MainActivity extends Activity {
 //                setupLlcUi();
 //            }
 //        }, show_time);
-    }
-
-    private void setupVisualSearchViewfinder() {
-        //live life captions mode gui setup
-        setContentView(R.layout.viewfinder);
-        viewfinder = (ImageView) findViewById(R.id.camera_viewfinder);
-//        if (mBound) {
-//            byte[] curr_cam_image = mService.getCurrentCameraImage();
-//            Bitmap curr_cam_bmp = BitmapFactory.decodeByteArray(curr_cam_image, 0, curr_cam_image.length);
-//            viewfinder.setImageBitmap(curr_cam_bmp);
-//        } else {
-//            Log.d(TAG, "Mbound not true");
-//        }
-
-        updateViewFindFrame();
     }
 
     //generic way to set the current enumerated list of strings and display them, scrollably, on the main UI
@@ -406,102 +393,6 @@ public class MainActivity extends Activity {
         textBlockView.setMovementMethod(new ScrollingMovementMethod());
         textBlockView.setSelected(true);
     }
-
-    private void updateViewFindFrame(){
-        if (mBound) {
-            byte[] curr_cam_image = mService.getCurrentCameraImage();
-            Bitmap curr_cam_bmp = BitmapFactory.decodeByteArray(curr_cam_image, 0, curr_cam_image.length);
-            viewfinder.setImageBitmap(curr_cam_bmp);
-        } else {
-            Log.d(TAG, "Mbound not true");
-        }
-
-        //update the current preview frame in
-        int frame_delay = 50; //milliseconds
-        uiHandler.postDelayed(new Runnable() {
-            public void run() {
-                if (curr_mode.equals(MessageTypes.MODE_VISUAL_SEARCH)) {
-                    updateViewFindFrame();
-                }
-            }
-        }, frame_delay);
-    }
-
-    private void setupLlcUi() {
-        //live life captions mode gui setup
-        setContentView(R.layout.live_life_caption_text);
-
-        setupHud();
-
-        liveLifeCaptionsText = (TextView) findViewById(R.id.livelifecaptionstextview);
-        liveLifeCaptionsText.setMovementMethod(new ScrollingMovementMethod());
-        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
-
-        liveLifeCaptionsText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                scrollToBottom(liveLifeCaptionsText);
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
-        scrollToBottom(liveLifeCaptionsText);
-
-        if (mBound){
-            mService.requestUiUpdate();
-        }
-    }
-
-    private void setupConvoMode() {
-        //live life captions mode gui setup
-        setContentView(R.layout.convo_mode_fragment);
-
-        setupHud();
-
-        convoModeContentTextView = (TextView) findViewById(R.id.references_text_view);
-
-        if (mBound){
-            mService.requestUiUpdate();
-        }
-    }
-
-    private void setupTranslateUi() {
-        //live life captions mode gui setup
-        setContentView(R.layout.translate_mode_view);
-        translateText = (TextView) findViewById(R.id.translatetextview);
-        translateText.setMovementMethod(new ScrollingMovementMethod());
-        translateText.setText(getCurrentTranscriptScrollText());
-
-        translateText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                scrollToBottom(translateText);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-        translateText.setText(getCurrentTranslateScrollText());
-        scrollToBottom(translateText);
-    }
-
     private void setupSocialIntelligenceUi() {
         //social mode ui setup
         setContentView(R.layout.social_intelligence_activity);
@@ -520,7 +411,6 @@ public class MainActivity extends Activity {
         setupChart();
     }
 
-
     private void blankUi() {
         turnOffScreen();
     }
@@ -534,14 +424,6 @@ public class MainActivity extends Activity {
         registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
 
         bindWearableAiService();
-
-        if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)){
-            scrollToBottom(liveLifeCaptionsText);
-        }
-
-        if (curr_mode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)){
-            scrollToBottom(translateText);
-        }
     }
 
     private void teardownHud() {
@@ -575,8 +457,6 @@ public class MainActivity extends Activity {
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
-        intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
         intentFilter.addAction(GlboxClientSocket.COMMAND_SWITCH_MODE);
         intentFilter.addAction(GlboxClientSocket.ACTION_WIKIPEDIA_RESULT);
         intentFilter.addAction(GlboxClientSocket.ACTION_TRANSLATION_RESULT);
@@ -602,28 +482,20 @@ public class MainActivity extends Activity {
                 try {
                     JSONObject data = new JSONObject(intent.getStringExtra(ASPClientSocket.RAW_MESSAGE_JSON_STRING));
                     String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-                    //run visual search results
-                    if (typeOf.equals(MessageTypes.VISUAL_SEARCH_RESULT)){
-                        String payloadString = data.getString(MessageTypes.VISUAL_SEARCH_DATA);
-                        showVisualSearchResults(new JSONArray(payloadString));
-                    } else if (typeOf.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
+                    if (typeOf.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
                         showSearchEngineResults(data);
                     } else if (typeOf.equals(MessageTypes.ACTION_SWITCH_MODES)){
                         //parse out the name of the mode
                         String modeName = data.getString(MessageTypes.NEW_MODE);
                         //switch to that mode
+                        Log.d(TAG, "ACTION_SWITCH_MODES switchMode");
                         switchMode(modeName);
-                    } else if (typeOf.equals(MessageTypes.REFERENCE_SELECT_REQUEST)){
-                        //parse out the name of the mode
-                        JSONArray refsArr = new JSONArray(data.getString(MessageTypes.REFERENCES));
-                        Log.d(TAG, "We got references: " + refsArr.toString());
-                        showPotentialReferences(refsArr);
-                    } else if (typeOf.equals((MessageTypes.TRANSLATE_TEXT_RESULT))){
-                        String translatedTextString = data.getString(MessageTypes.TRANSLATE_TEXT_RESULT_DATA);
-                        updateTranslatedText(translatedTextString);
+                    } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_STREAM_EVENT)) {
+                        Log.d(TAG, "GOT VOICE COMMAND STREAM EVENT");
+                        showVoiceCommandInterface(data);
                     }
-            } catch(JSONException e){
-                    e.printStackTrace();
+                } catch(JSONException e){
+                        e.printStackTrace();
                 }
             } else if (ACTION_UI_UPDATE.equals(action)) {
                 Log.d(TAG, "GOT ACTION_UI_UPDATE");
@@ -637,7 +509,7 @@ public class MainActivity extends Activity {
                 }
                 if (intent.hasExtra(BATTERY_LEVEL_STATUS_UPDATE)){
                     batteryLevel = intent.getFloatExtra(BATTERY_LEVEL_STATUS_UPDATE, 100f);
-                    if (batteryLevel > 40f) {
+                    if (batteryLevel > 30f) {
                         batteryFull = true;
                     } else {
                         batteryFull = false;
@@ -672,73 +544,6 @@ public class MainActivity extends Activity {
                     String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE);
                     setGuiMessage(message, facialEmotionMetricTextView, "");
                 }
-            } else if (GlboxClientSocket.ACTION_RECEIVE_TEXT.equals(action)) {
-                if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)) {
-                    try {
-                        JSONObject transcript_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT));
-//                        JSONObject nlp = transcript_object.getJSONObject("nlp");
-//                        JSONArray nouns = nlp.getJSONArray("nouns");
-                        JSONArray nouns = new JSONArray(); //for now, since we haven't implemented NLP on ASP, we just make this empty
-                        String transcript = transcript_object.getString(MessageTypes.TRANSCRIPT_TEXT);
-                        if ((nouns.length() == 0)) {
-                            textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
-                        } else {
-                            //add text to a string and highlight properly the things we want to highlight (e.g. proper nouns)
-                            String textBuilder = "<p>";
-                            int prev_end = 0;
-                            for (int i = 0; i < nouns.length(); i++) {
-                                String noun = nouns.getJSONObject(i).getString("noun");
-                                int start = nouns.getJSONObject(i).getInt("start");
-                                int end = nouns.getJSONObject(i).getInt("end");
-
-                                //dont' drop the words before the first noun
-                                if (i == 0) {
-                                    textBuilder = textBuilder + transcript.substring(0, start);
-                                } else { //add in the transcript between previous noun and this one
-                                    textBuilder = textBuilder + transcript.substring(prev_end, start);
-                                }
-
-                                //add in current colored noun
-                                textBuilder = textBuilder + "<font color='#00FF00'><u>" + transcript.substring(start, end) + "</u></font>";
-
-                                //add in end of transcript if we just added the last noun
-                                if (i == (nouns.length() - 1)) {
-                                    textBuilder = textBuilder + transcript.substring(end);
-                                }
-
-                                //set this noun end to be the previous noun end for next loop
-                                prev_end = end;
-                            }
-                            textBuilder = textBuilder + "</p>";
-                            textHolder.add(Html.fromHtml(textBuilder));
-                        }
-
-                        if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
-                            liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
-                        }
-                    } catch (JSONException e) {
-                        System.out.println(e);
-                    }
-                } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
-                    //only update this transcript if it's been n milliseconds since the last intermediate update
-                    if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
-                        lastIntermediateMillis = System.currentTimeMillis();
-                        String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
-                        if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
-                            liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
-                        }
-                    }
-                } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
-                    String command_response_text = intent.getStringExtra(GlboxClientSocket.COMMAND_RESPONSE);
-                    //change newlines to <br/>
-                    command_response_text = command_response_text.replaceAll("\n", "<br/>");
-                    textHolder.add(Html.fromHtml("<p><font color='#00CC00'>" + command_response_text.trim() + "</font></p>"));
-                    if (curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
-                        liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
-                    }
-                }
-            } else if (GlboxClientSocket.COMMAND_SWITCH_MODE.equals(action)) {
-                switchMode(intent.getStringExtra(GlboxClientSocket.COMMAND_ARG));
             } else if (ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST.equals(action)) {
                 try {
                     JSONObject affective_mem = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST));
@@ -765,15 +570,6 @@ public class MainActivity extends Activity {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            } else if (GlboxClientSocket.ACTION_TRANSLATION_RESULT.equals(action)) {
-                String translation_result_text = intent.getStringExtra(GlboxClientSocket.TRANSLATION_RESULT);
-                //textHolder.add(Html.fromHtml("<p><font color='#EE0000'>TRANSLATION: " + translation_result_text + "</font></p>"));
-
-                translateTextHolder.add(Html.fromHtml("<p>" + translation_result_text + "</p>"));
-
-                if (curr_mode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)) {
-                    translateText.setText(getCurrentTranslateScrollText());
-                }
             } else if (MessageTypes.FACE_SIGHTING_EVENT.equals(action)) {
                 String currName = intent.getStringExtra(MessageTypes.FACE_NAME);
                 faceNames.clear();
@@ -792,39 +588,6 @@ public class MainActivity extends Activity {
         }
     };
 
-    private Spanned getCurrentTranscriptScrollText() {
-        Spanned current_transcript_scroll = Html.fromHtml("<div></div>");
-        //limit textHolder to our maximum size
-        while ((textHolder.size() - textHolderSizeLimit) > 0){
-            textHolder.remove(0);
-        }
-        for (int i = 0; i < textHolder.size(); i++) {
-            //current_transcript_scroll = current_transcript_scroll + textHolder.get(i) + "\n" + "\n";
-            if (i == 0) {
-                current_transcript_scroll = textHolder.get(i);
-            } else {
-                current_transcript_scroll = (Spanned) TextUtils.concat(current_transcript_scroll, textHolder.get(i));
-            }
-        }
-        return current_transcript_scroll;
-    }
-
-    private Spanned getCurrentTranslateScrollText() {
-        Spanned current_translate_scroll = Html.fromHtml("<div></div>");
-        //limit textHolder to our maximum size
-        while ((translateTextHolder.size() - translateTextHolderSizeLimit) > 0){
-            translateTextHolder.remove(0);
-        }
-        for (int i = 0; i < translateTextHolder.size(); i++) {
-            //current_transcript_scroll = current_transcript_scroll + textHolder.get(i) + "\n" + "\n";
-            if (i == 0) {
-                current_translate_scroll = translateTextHolder.get(i);
-            } else {
-                current_translate_scroll = (Spanned) TextUtils.concat(current_translate_scroll, translateTextHolder.get(i));
-            }
-        }
-        return current_translate_scroll;
-    }
 
     //stuff for the charts
     private void setChartData() {
@@ -924,29 +687,6 @@ public class MainActivity extends Activity {
         chart.setEntryLabelTextSize(19f);
     }
 
-    private void scrollToBottom(TextView tv) {
-        if (!currentlyScrolling) {
-            tv.post(new Runnable() {
-                @Override
-                public void run() {
-                    currentlyScrolling = true;
-                    int lc = tv.getLineCount();
-                    if (lc == 0) {
-                        return;
-                    }
-                    tv.scrollTo(0, tv.getBottom());
-                    int scrollAmount = tv.getLayout().getLineTop(lc) - tv.getHeight();
-                    // if there is no need to scroll, scrollAmount will be <=0
-                    if (scrollAmount > 0)
-                        tv.scrollTo(0, scrollAmount);
-                    else
-                        tv.scrollTo(0, 0);
-                    currentlyScrolling = false;
-                }
-            });
-        }
-    }
-
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection connection = new ServiceConnection() {
 
@@ -969,50 +709,25 @@ public class MainActivity extends Activity {
         }
     };
 
-    public void captureVisualSearchImage(){
-
-        Toast.makeText(MainActivity.this, "Capturing image...", Toast.LENGTH_SHORT).show();
-
-        if (mBound) {
-            //byte[] curr_cam_image = mService.getCurrentCameraImage();
-            //mService.sendGlBoxCurrImage();
-            mService.sendVisualSearch();
-        }
-    }
-
-    private void selectVisualSearchResult(){
-        int pos = gridviewImages.getSelectedItemPosition();
-        String name = visualSearchNames.get(pos);
-        Toast.makeText(MainActivity.this, name, Toast.LENGTH_LONG).show();
-    }
-
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         Log.d(TAG, "got keycode");
         Log.d(TAG, Integer.toString(keyCode));
+        //broadcast to child fragments that this happened
+        final Intent nintent = new Intent();
+        nintent.setAction(MessageTypes.SG_TOUCHPAD_EVENT);
+        nintent.putExtra(MessageTypes.SG_TOUCHPAD_KEYCODE, keyCode);
+        this.sendBroadcast(nintent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+
         switch (keyCode) {
             case KeyEvent.KEYCODE_ENTER:
                 Log.d(TAG, "keycode _ enter felt");
-                if (curr_mode.equals(MessageTypes.MODE_VISUAL_SEARCH)){
-                    captureVisualSearchImage();
-                    return true;
-                } else if (curr_mode.equals(MessageTypes.MODE_VISUAL_SEARCH)){
-                    selectVisualSearchResult();
-                    return true;
-                } else {
-                    return super.onKeyUp(keyCode, event);
-                }
+                return super.onKeyUp(keyCode, event);
             case KeyEvent.KEYCODE_DEL:
                 Log.d(TAG, "keycode DEL entered - this means go back home");
                 navHandler.removeCallbacksAndMessages(null);
-                switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+                switchMode(MessageTypes.MODE_HOME);
                 return super.onKeyUp(keyCode, event);
-//                if (!curr_mode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
-//                    switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
-//                    return true;
-//                } else {
-//                    return super.onKeyUp(keyCode, event);
-//                }
             default:
                 return super.onKeyUp(keyCode, event);
         }
@@ -1028,22 +743,6 @@ public class MainActivity extends Activity {
         wakeLock_partial = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "com.myapp:partial_wake_lock");
         wakeLock_partial.acquire();
     }
-    public void StopPartialWakeLock() {
-        if (wakeLock_partial != null && wakeLock_partial.isHeld()) {
-            Log.i("vmain", "Stopping partial wake-lock.");
-            wakeLock_partial.release();
-        }
-    }
-
-    private WifiManager.WifiLock wifiLock = null;
-    public void StartWifiLock() {
-        WifiManager wifiManager = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, "LockTag");
-        wifiLock.acquire();
-    }
-    public void StopWifiLock() {
-        wifiLock.release();
-    }
 
     public void bindWearableAiService(){
         // Bind to that service
@@ -1056,101 +755,43 @@ public class MainActivity extends Activity {
         unbindService(connection);
     }
 
-    public void showVisualSearchResults(JSONArray data){
-        thumbnailImages = new ArrayList<String>();
-        visualSearchNames = new ArrayList<String>();
-        try {
-            for (int i = 0; i < data.length(); i++) {
-                //get thumnail image urls
-                String thumbnailUrl = data.getJSONObject(i).getString("thumbnailUrl");
-                thumbnailImages.add(thumbnailUrl);
+    private void showReferenceCard(String title, String body, String imgUrl, long timeout){
+        navHandler.removeCallbacksAndMessages(null);
+        String lastMode = curr_mode;
 
-                //get names of items
-                String name = data.getJSONObject(i).getString("name");
-                visualSearchNames.add(name);
+        //show the reference
+        Bundle args = new Bundle();
+        args.putString("title", title);
+        args.putString("body", body);
+        args.putString("img_url", imgUrl);
+        navController.navigate(R.id.nav_reference, args);
+
+        //for now, show for n seconds and then return to llc
+        uiHandler.postDelayed(new Runnable() {
+            public void run() {
+                Log.d(TAG, "showReferenceCard switchMode");
+                switchMode(MessageTypes.MODE_HOME);
             }
-
-        } catch (JSONException e) {
-            Log.d(TAG, e.toString());
-        }
-
-        //setup gridview to view grid of visual search images
-        switchMode(MessageTypes.MODE_REFERENCE_GRID);
-        gridviewImages = (GridView) findViewById(R.id.gridview);
-        gridViewImageAdapter = new ImageAdapter(this);
-        String[] simpleThumbArray = new String[thumbnailImages.size()];
-        thumbnailImages.toArray(simpleThumbArray);
-        gridViewImageAdapter.imageTotal = simpleThumbArray.length;
-        gridViewImageAdapter.mThumbIds = simpleThumbArray;
-        gridviewImages.setDrawSelectorOnTop(false);
-        gridviewImages.setSelector(R.drawable.selector_image_gridview);
-        gridviewImages.setAdapter(gridViewImageAdapter);
-        gridviewImages.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v,
-                                    int position, long id) {
-                Log.d(TAG, "Selected position: " + position);
-                selectVisualSearchResult();
-                gridViewImageAdapter.notifyDataSetChanged();
-            }
-        });
+        }, timeout);
     }
 
     private void showSearchEngineResults(JSONObject data) {
         try {
-            navHandler.removeCallbacksAndMessages(null);
-            String lastMode = curr_mode;
             //parse out the response object - one result for now
             JSONObject search_engine_result = new JSONObject(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
-            //JSONArray search_engine_results = new JSONArray(data.getString(MessageTypes.SEARCH_ENGINE_RESULT_DATA));
-            //JSONObject search_engine_result = search_engine_results.getJSONObject(0); //get the first result
-
-            //change the view to the search results page
-            setContentView(R.layout.reference_card);
-            referenceCardResultTitle = (TextView) findViewById(R.id.reference_card_result_title);
-            referenceCardResultSummary = (TextView) findViewById(R.id.reference_card_result_summary);
-            referenceCardResultImage = (ImageView) findViewById(R.id.reference_card_result_image);
 
             //get content
             String title = search_engine_result.getString("title");
             String summary = search_engine_result.getString("body");
 
-            //set the text
-            referenceCardResultTitle.setText(title);
-            referenceCardResultSummary.setText(summary);
-            referenceCardResultSummary.setMovementMethod(new ScrollingMovementMethod());
-            referenceCardResultSummary.setSelected(true);
-
             //pull image from web and display in imageview
+            String img_url = null;
             if (search_engine_result.has("image")) {
-                String img_url = search_engine_result.getString("image");
-                Picasso.Builder builder = new Picasso.Builder(this);
-                builder.downloader(new OkHttpDownloader(this));
-                builder.build()
-                        .load(img_url.trim())
-                        .into(referenceCardResultImage, new Callback() {
-
-                            @Override
-                            public void onSuccess() {
-                                Log.d(TAG, "Picasso Image load success");
-                            }
-
-                            @Override
-                            public void onError() {
-                                Log.e("Picasso", "Image load failed");
-                            }
-                        });
-                //Picasso.with(this).load(img_url).into(referenceCardResultImage);
-                Log.d(TAG, "Just sent referee image: " + img_url);
+                img_url = search_engine_result.getString("image");
             }
 
-            //for now, show for n seconds and then return to llc
-            int search_show_time = 12000; //milliseconds
-            navHandler.postDelayed(new Runnable() {
-                public void run() {
-                    switchMode(lastMode);
-                }
-            }, search_show_time);
-
+            switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
+            showReferenceCard(title, summary, img_url, searchEngineResultTimeout);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }
@@ -1194,30 +835,98 @@ public class MainActivity extends Activity {
         return false;
     }
 
-    private void showPotentialReferences(JSONArray refs) {
-        if (curr_mode.equals(MessageTypes.MODE_CONVERSATION_MODE)) {
-            String refString = "";
+    private void showVoiceCommandInterface(JSONObject data){
+        try{
+            String voiceInputType = data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE);
 
-            try {
-                for (int i = 0; i < refs.length(); i++) {
-                    JSONObject ref = (JSONObject) refs.get(i);
-                    refString = refString + ref.getString("selector_char") + " - " + ref.getString("title") + '\n';
+            //if it told us to cancel the stream
+
+            if (voiceInputType.equals(MessageTypes.CANCEL_EVENT_TYPE)) {
+                Log.d(TAG, "CANCEL_EVENT_TYPE switchMode");
+                switchMode(MessageTypes.MODE_HOME);
+            } else if (voiceInputType.equals(MessageTypes.TEXT_RESPONSE_EVENT_TYPE)){ //if it was a wake word
+                String commandResponseDisplayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
+
+                //send a broadcast to our fragment showing the command result
+                final Intent nintent = new Intent();
+                nintent.setAction(VOICE_TEXT_RESPONSE);
+                nintent.putExtra(VOICE_TEXT_RESPONSE_TEXT, commandResponseDisplayString);
+                sendBroadcast(nintent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+
+                //reset ui so user has time to read answer
+                //clear any previous ui intentions
+                uiHandler.removeCallbacksAndMessages(null);
+                uiHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "TEXT_RESPONSE_EVENT_TYPE switchMode");
+                        switchMode(MessageTypes.MODE_HOME);
+                    }
+                }, commandResolveTime);
+            } else if (voiceInputType.equals(MessageTypes.WAKE_WORD_EVENT_TYPE)){ //if it was a wake word
+                JSONArray commandList = new JSONArray(data.getString(MessageTypes.VOICE_COMMAND_LIST));
+                showPostWakeWordInterface(data.getString(MessageTypes.INPUT_WAKE_WORD), commandList);
+            } else if (voiceInputType.equals(MessageTypes.COMMAND_EVENT_TYPE)){ //if it was a wake word
+                String argumentExpect = data.getString(MessageTypes.VOICE_ARG_EXPECT_TYPE);
+                if (argumentExpect.equals(MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE)) {
+                    showPostCommandInterface(data.getString(MessageTypes.INPUT_WAKE_WORD), data.getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
                 }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                return;
+            } else if (voiceInputType.equals(MessageTypes.REQUIRED_ARG_EVENT_TYPE)){ //if it's a required argument we need to show a prompt for
+                JSONArray argsList = new JSONArray(data.getString(MessageTypes.ARG_OPTIONS));
+                showRequiredArgumentInterface(data.getString(MessageTypes.ARG_NAME), argsList);
+            } else if (voiceInputType.equals(MessageTypes.RESOLVE_EVENT_TYPE)){
+                boolean status = data.getBoolean(MessageTypes.COMMAND_RESULT);
+                String commandResponseDisplayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
+                showCommandResolve(status, commandResponseDisplayString);
             }
-            convoModeContentTextView.setText(refString);
+        } catch (JSONException e){
+            e.printStackTrace();
         }
     }
 
-    private void updateTranslatedText(String translationResultString){
-        translateTextHolder.add(Html.fromHtml("<p>" + translationResultString + "</p>"));
-
-        if (curr_mode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)) {
-            translateText.setText(getCurrentTranslateScrollText());
-        }
+    private void showPostWakeWordInterface(String wakeWord, JSONArray commandOptions){
+        //show the reference
+        Bundle args = new Bundle();
+        args.putString(MessageTypes.VOICE_COMMAND_LIST, commandOptions.toString());
+        args.putString(MessageTypes.INPUT_WAKE_WORD, wakeWord);
+        uiHandler.removeCallbacksAndMessages(null);
+        navController.navigate(R.id.nav_wake_word_post, args);
     }
 
+    private void showRequiredArgumentInterface(String argName, JSONArray argOptions){
+        Bundle args = new Bundle();
+        args.putString(MessageTypes.ARG_OPTIONS, argOptions.toString());
+        args.putString(MessageTypes.ARG_NAME, argName);
+        uiHandler.removeCallbacksAndMessages(null);
+        navController.navigate(R.id.nav_required_args, args);
+    }
+
+    private void showPostCommandInterface(String wakeWord, String selectedCommand){
+        Bundle args = new Bundle();
+        args.putString(MessageTypes.INPUT_WAKE_WORD, wakeWord);
+        args.putString(MessageTypes.INPUT_VOICE_COMMAND_NAME, selectedCommand);
+        uiHandler.removeCallbacksAndMessages(null);
+        navController.navigate(R.id.nav_command_post, args);
+    }
+
+    private void showCommandResolve(boolean success, String message){
+        //clear any previous ui intentions
+        uiHandler.removeCallbacksAndMessages(null);
+
+        //show the reference
+        Bundle args = new Bundle();
+        args.putBoolean("success", success);
+        args.putString("message", message);
+        navController.navigate(R.id.nav_command_resolve, args);
+
+        uiHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+                Log.d(TAG, "showCommandResolve switch mode");
+                switchMode(MessageTypes.MODE_HOME);
+            }
+        }, commandResolveTime);
+    }
 }
 

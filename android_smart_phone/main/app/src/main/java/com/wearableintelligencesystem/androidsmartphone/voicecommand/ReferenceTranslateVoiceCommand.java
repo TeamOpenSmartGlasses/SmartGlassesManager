@@ -6,6 +6,7 @@ import android.util.Log;
 import com.wearableintelligencesystem.androidsmartphone.WearableAiAspService;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
+import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 
 import org.json.JSONException;
@@ -24,6 +25,8 @@ class ReferenceTranslateVoiceCommand extends VoiceCommand {
         this.commandName = "translate word";
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"translate"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
+        ArrayList argOptions = new ArrayList<>(Arrays.asList(new String [] {"french"}));
+        setRequiredArg("Language", argOptions);
     }
 
     @Override
@@ -39,12 +42,6 @@ class ReferenceTranslateVoiceCommand extends VoiceCommand {
         //String translate text
         String textToBeTranslated = postArgs.substring(postArgs.trim().indexOf(" ")+ 1);
 
-        //send user update
-        String displayString = "Translating: " + textToBeTranslated;
-
-        //sendResult(vcServer, true, this.commandName, displayString);
-        sendMessage(vcServer, displayString);
-
         //parse the argument to find which language they want to translate
 
         List<NaturalLanguage> languagesList = WearableAiAspService.supportedLanguages;
@@ -56,8 +53,8 @@ class ReferenceTranslateVoiceCommand extends VoiceCommand {
         for (int i = 0; i < languagesList.size(); i++){
             naturalLanguageMode = languagesList.get(i).getNaturalLanguageName();
             Log.d(TAG, "args: " + getFirstArg(postArgs) + "; mode: " + languagesList.get(i));
-            int modeMatchChar = nlpUtils.findNearMatches(getFirstArg(postArgs), naturalLanguageMode, 0.8);
-            if (modeMatchChar != -1){
+            FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(getFirstArg(postArgs), naturalLanguageMode, 0.8);
+            if (modeMatchChar != null && modeMatchChar.getIndex() != -1){
                 lanugageMatchIdx = i;
                 selectedTargetLanguage = languagesList.get(i).getCode();
                 Log.d(TAG, "Found language match: " +  languagesList.get(i).getNaturalLanguageName());
@@ -67,10 +64,14 @@ class ReferenceTranslateVoiceCommand extends VoiceCommand {
 
         if (lanugageMatchIdx == -1){
             //send user update
-            String displayString1 = "No language detected.";
-            sendMessage(vcServer, displayString1);
+            String displayStringFail = "No language detected. Please say the target language as the first argument to the command.";
+            sendResult(vcServer, false, this.commandName, displayStringFail);
             return false;
         }
+
+        //send user update
+        String displayString = "Translating: " + textToBeTranslated + "\nTo: " + naturalLanguageMode;
+        sendResult(vcServer, true, this.commandName, displayString);
 
         //ask system to do natural language query and send to ASG on result
         JSONObject data = new JSONObject();
