@@ -17,6 +17,7 @@ from datetime import datetime
 class VisualSearchApi(Resource):
     def __init__(self, tools):
         self.tools = tools
+        self.img_limit = 15
         pass
 
     def send_fail(self):
