@@ -68,7 +68,7 @@ public class AsgWebSocketClient extends WebSocketClient {
             JSONObject ping = new JSONObject();
             ping.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.PING);
             ping.put("ping", "ping");
-            send(ping.toString());
+            //send(ping.toString());
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -197,8 +197,9 @@ public class AsgWebSocketClient extends WebSocketClient {
     private void parseData(JSONObject data){
         try {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (typeOf.equals(MessageTypes.AUDIO_CHUNK_ENCRYPTED)) {
-                sendJson(data);
+            if (typeOf.equals(MessageTypes.AUDIO_CHUNK_DECRYPTED)) {
+                Log.d(TAG, "Sending decrypted audio");
+                sendString(data.getString(MessageTypes.AUDIO_DATA));
             } else if (typeOf.equals(MessageTypes.VISUAL_SEARCH_QUERY)) {
                 sendJson(data);
             } else if (typeOf.equals(MessageTypes.POV_IMAGE)) {
@@ -211,7 +212,7 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     public void sendJson(JSONObject data){
         String encodedData = data.toString();
-        sendString(encodedData);
+        //sendString(encodedData);
     }
 
     public void sendString(String data){

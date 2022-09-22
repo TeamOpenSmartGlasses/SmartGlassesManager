@@ -67,7 +67,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         for (int i = 0; i < modesList.size(); i++){
             naturalLanguageMode = modesList.get(i).first;
             Log.d(TAG, "args: " + postArgs + "; mode: " + modesList.get(i).first);
-            FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.8);
+            FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.85);
             if (modeMatchChar != null && modeMatchChar.getIndex() != -1){
                 modeMatchIdx = i;
                 newMode = modesList.get(i).second;

@@ -101,7 +101,6 @@ public class AspWebsocketServer extends WebSocketServer {
 
     public void sendJson(JSONObject data){
         if (connected == 2){
-            Log.d(TAG, "SENDING JSON FROM ASP WS");
             try {
                 asgConn.send(data.toString());
             } catch (WebsocketNotConnectedException e){
