@@ -128,7 +128,7 @@ public class AudioSystem {
         try {
             JSONObject audioChunkJson = new JSONObject();
             String encodedData = Base64.encodeToString(data, Base64.DEFAULT);
-            audioChunkJson.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUDIO_CHUNK_ENCRYPTED);
+            audioChunkJson.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUDIO_CHUNK_DECRYPTED);
             audioChunkJson.put(MessageTypes.AUDIO_DATA, encodedData);
             dataObservable.onNext(audioChunkJson);
         } catch (JSONException e){
@@ -138,8 +138,8 @@ public class AudioSystem {
 
     private void receiveChunk(ByteBuffer chunk){
         byte[] audio_bytes = chunk.array();
-        byte[] encrypted_audio_bytes = encryptBytes(audio_bytes);
-        sendBytes(encrypted_audio_bytes);
+        //byte[] encrypted_audio_bytes = encryptBytes(audio_bytes);
+        sendBytes(audio_bytes);
     }
 
     private void activateBluetoothSco() {
