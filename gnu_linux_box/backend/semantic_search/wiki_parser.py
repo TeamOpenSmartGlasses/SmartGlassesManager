@@ -8,6 +8,8 @@ import csv
 import time
 import os
 
+from wiki_mapper import WikiMapper
+
 # http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
 
 PATH_WIKI_XML = "./"
@@ -45,14 +47,16 @@ redirectCount = 0
 templateCount = 0
 title = None
 start_time = time.time()
+skip = False
 
+mapper = WikiMapper("index_enwiki_latest_ossg.db")
 with codecs.open(pathArticles, "w", ENCODING) as articlesFH, \
         codecs.open(pathArticlesRedirect, "w", ENCODING) as redirectFH, \
         codecs.open(pathTemplateRedirect, "w", ENCODING) as templateFH:
     articlesWriter = csv.writer(articlesFH, quoting=csv.QUOTE_MINIMAL)
     redirectWriter = csv.writer(redirectFH, quoting=csv.QUOTE_MINIMAL)
 
-    articlesWriter.writerow(['id', 'title', 'redirect'])
+    articlesWriter.writerow(['id', 'title', 'redirect', 'wikidata_id'])
 
     for event, elem in etree.iterparse(pathWikiXML, events=('start', 'end')):
         tname = strip_tag_name(elem.tag)
@@ -64,12 +68,17 @@ with codecs.open(pathArticles, "w", ENCODING) as articlesFH, \
                 redirect = ''
                 inrevision = False
                 ns = 0
+                wikidata_id = -1
             elif tname == 'revision':
                 # Do not pick up on revision id's
                 inrevision = True
         else:
             if tname == 'title':
                 title = elem.text
+                wikidata_id = mapper.title_to_id(title.replace(" ", "_"))
+                if wikidata_id is None:
+                    print("{} not found.".format(title))
+                    skip = True
             elif tname == 'id' and not inrevision:
                 id = int(elem.text)
             elif tname == 'redirect':
@@ -90,7 +99,9 @@ with codecs.open(pathArticles, "w", ENCODING) as articlesFH, \
                     #redirectWriter.writerow([id, title, redirect])
 
                 #articlesWriter.writerow([id, title, redirect, text])
-                articlesWriter.writerow([id, title, redirect])
+                if not skip:
+                    articlesWriter.writerow([id, title, redirect, wikidata_id])
+                skip = False
 
 #                if totalCount > 1000:
 #                    break

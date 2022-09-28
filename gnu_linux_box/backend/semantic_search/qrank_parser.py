@@ -69,6 +69,6 @@ num_entries = 100000
 df = pd.read_csv(filename)
 #df = df.sort_values("QRank", ascending=False) #they are already sorted by QRank, so this is just wasted compute
 df = df.head(num_entries)
-df['Entity'] = df['Entity'].str[1:].astype(int)
-df.to_csv("./qrank_top_n_pandas_hundredthousand.csv")
+#df['Entity'] = df['Entity'].str[1:].astype(int) #previously removed the "Q", but that was a mistake, not needed
+df.to_csv("./qrank_top_n_pandas_hundredthousand_2.csv")
 #print(df)
