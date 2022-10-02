@@ -65,10 +65,10 @@ filename = "wikidata-qrank.csv"
 #        break
 #
 
-num_entries = 100000
+num_entries = 10000
 df = pd.read_csv(filename)
 #df = df.sort_values("QRank", ascending=False) #they are already sorted by QRank, so this is just wasted compute
 df = df.head(num_entries)
 #df['Entity'] = df['Entity'].str[1:].astype(int) #previously removed the "Q", but that was a mistake, not needed
-df.to_csv("./qrank_top_n_pandas_hundredthousand_2.csv")
+df.to_csv("./qrank_top_n_pandas_tenthousand_2.csv")
 #print(df)
