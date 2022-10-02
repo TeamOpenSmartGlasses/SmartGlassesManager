@@ -28,6 +28,7 @@ public class RestServerComms {
 
     //endpoints
     public static final String NATURAL_LANGUAGE_QUERY_SEND_ENDPOINT = "/natural_language_query";
+    public static final String FINAL_TRANSCRIPT_SEND_ENDPOINT = "/final_transcript";
     public static final String VISUAL_SEARCH_QUERY_SEND_ENDPOINT = "/visual_search_search";
     public static final String SEARCH_ENGINE_QUERY_SEND_ENDPOINT = "/search_engine_search";
     public static final String MAP_IMAGE_QUERY_SEND_ENDPOINT = "/get_static_map";
@@ -45,7 +46,8 @@ public class RestServerComms {
         // Instantiate the RequestQueue.
         mContext = context;
         mRequestQueue = Volley.newRequestQueue(mContext);
-        serverUrl = "https://wis.emexwearables.com/api";
+//        serverUrl = "https://wis.emexwearables.com/api";
+        serverUrl = "https://wisdev.emexwearables.com/api";
         //serverUrl = "http://192.168.174.188:5000";
     }
 
@@ -68,8 +70,8 @@ public class RestServerComms {
                     @Override
                     public void onResponse(JSONObject response) {
                         // Display the first 500 characters of the response string.
-                        Log.d(TAG, "Success requesting data, response:");
-                        Log.d(TAG, response.toString());
+//                        Log.d(TAG, "Success requesting data, response:");
+//                        Log.d(TAG, response.toString());
                         try{
                             if (response.getBoolean("success")){
                                 callback.onSuccess(response);
