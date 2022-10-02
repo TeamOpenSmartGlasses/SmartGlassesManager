@@ -197,8 +197,7 @@ public class VoiceCommandServer {
 
     //handles timing of transcripts and keeping a proper buffer that is delineated by voice commands
     // allows users to have plenty of time to speak to enter commands
-    private void handleNewTranscript(JSONObject data){
-        long currTime = System.currentTimeMillis();
+    private void handleNewTranscript(JSONObject data){ long currTime = System.currentTimeMillis();
 
         //set last transcript heard time
         lastTranscriptTime = currTime;
@@ -414,6 +413,7 @@ public class VoiceCommandServer {
         }
         if (bestMatch.getIndex() != -1){
             FuzzyMatch commandMatch = bestMatch;
+            Log.d(TAG, "BEST MATCH COMMAND: " + bestMatch);
             int commandMatchIdx = bestMatchIdx;
             String commandMatchString = voiceCommands.get(vcIdx).getCommands().get(commandMatchIdx);
 

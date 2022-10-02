@@ -68,11 +68,12 @@ public class AspWebsocketServer extends WebSocketServer {
     @Override
     public void onMessage(WebSocket conn, String message) {
         try {
+            Log.d(TAG, message);
             JSONObject json_obj = new JSONObject(message);
             dataObservable.onNext(json_obj);
         } catch (JSONException e){
             //if we send a string, this will get thrown, all messages should be JSON or byte []
-            e.printStackTrace();
+//            e.printStackTrace();
         }
     }
 
@@ -149,7 +150,7 @@ public class AspWebsocketServer extends WebSocketServer {
                 sendJson(data);
             }
             else if (type.equals(MessageTypes.OBJECT_TRANSLATION_RESULT)){
-                Log.d(TAG, "AspWebsocketServer got OBJECT_TRANSLATE_RESULT, sending to ASG");
+//                Log.d(TAG, "AspWebsocketServer got OBJECT_TRANSLATE_RESULT, sending to ASG");
                 sendJson(data);
             }else if (type.equals(MessageTypes.REFERENCE_SELECT_REQUEST)){
                 Log.d(TAG, "AspWebsocketServer got REFERENCE_SELECT_REQUEST, sending to ASG");
