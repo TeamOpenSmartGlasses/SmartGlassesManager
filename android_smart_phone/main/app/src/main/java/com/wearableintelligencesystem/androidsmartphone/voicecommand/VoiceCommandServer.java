@@ -86,9 +86,9 @@ public class VoiceCommandServer {
     private Context mContext;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.92;
-    private final double commandThreshold = 0.87;
-    private final double endWordThreshold = 0.90;
+    private final double wakeWordThreshold = 0.88;
+    private final double commandThreshold = 0.82;
+    private final double endWordThreshold = 0.88;
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
@@ -124,19 +124,19 @@ public class VoiceCommandServer {
 
         //get all voice commands
         voiceCommands = new ArrayList<VoiceCommand>();
+        voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
+        voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
         voiceCommands.add(new SearchEngineVoiceCommand(context));
         voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
         voiceCommands.add(new SwitchModesVoiceCommand(context));
         voiceCommands.add(new VoiceNoteVoiceCommand(context));
-        voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
-        voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
         voiceCommands.add(new ReferenceTranslateVoiceCommand(context));
         voiceCommands.add(new SelectVoiceCommand(context));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));
 
-        //startSittingCommandHitter(); //keep checking to see if there is a command to be run
+//        startSittingCommandHitter(); //keep checking to see if there is a command to be run
     }
 
     private void startSittingCommandHitter(){
@@ -197,8 +197,7 @@ public class VoiceCommandServer {
 
     //handles timing of transcripts and keeping a proper buffer that is delineated by voice commands
     // allows users to have plenty of time to speak to enter commands
-    private void handleNewTranscript(JSONObject data){
-        long currTime = System.currentTimeMillis();
+    private void handleNewTranscript(JSONObject data){ long currTime = System.currentTimeMillis();
 
         //set last transcript heard time
         lastTranscriptTime = currTime;
@@ -367,7 +366,7 @@ public class VoiceCommandServer {
                     Log.d(TAG, "Detected end word");
                     int partialIdx = partialTranscriptBufferIdx + endWordLocation.getIndex() + currEndWord.length();
                     if (!commanded){
-                        Log.d(TAG, "Wake word detected with no command input");
+                        Log.d(TAG, "Wake word detected with no command input: " + rest);
                         cancelVoiceCommand();
                         run = true;
                         restartTranscriptBuffer(partialIdx, null);
@@ -414,6 +413,7 @@ public class VoiceCommandServer {
         }
         if (bestMatch.getIndex() != -1){
             FuzzyMatch commandMatch = bestMatch;
+            Log.d(TAG, "BEST MATCH COMMAND: " + bestMatch);
             int commandMatchIdx = bestMatchIdx;
             String commandMatchString = voiceCommands.get(vcIdx).getCommands().get(commandMatchIdx);
 

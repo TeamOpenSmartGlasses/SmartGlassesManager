@@ -13,6 +13,8 @@ import android.content.Context;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
+import java.util.Locale;
+
 class GLBOXRepresentative {
     private static final String TAG = "WearableAi_GLBOXRepresentative";
 
@@ -56,9 +58,12 @@ class GLBOXRepresentative {
                 sendReferenceTranslateQuery(data);
             }else if (type.equals(MessageTypes.OBJECT_TRANSLATION_REQUEST)) {
                 sendObjectTranslateRequest(data);
+            } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+                Log.d(TAG, "GOT FINAL TRANSCRIPT");
+                sendFinalTranscript(data);
             }
 
-        }
+    }
             catch (JSONException e){
             e.printStackTrace();
         }
@@ -73,9 +78,7 @@ class GLBOXRepresentative {
             restServerComms.restRequest(RestServerComms.VISUAL_SEARCH_QUERY_SEND_ENDPOINT, restMessage, new VolleyCallback(){
                 @Override
                     public void onSuccess(JSONObject result){
-                        Log.d(TAG, "GOT visual search REST RESULT:");
-                        Log.d(TAG, result.toString());
-                            asgRep.sendCommandResponse("Search success, displaying results.");
+                        asgRep.sendCommandResponse("Search success, displaying results.");
                         try{
                             asgRep.sendVisualSearchResults(result.getJSONArray("response"));
                         } catch (JSONException e){
@@ -88,6 +91,35 @@ class GLBOXRepresentative {
                 }
 
                 });
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void sendFinalTranscript(JSONObject data){
+        Log.d(TAG, "Running sendFinalTranscript");
+        try{
+            JSONObject restMessage = new JSONObject();
+            restMessage.put("transcript", data.getString(MessageTypes.TRANSCRIPT_TEXT).toLowerCase());
+            restMessage.put("timestamp", data.getString(MessageTypes.TIMESTAMP));
+            restMessage.put("id", data.getString(MessageTypes.TRANSCRIPT_ID));
+
+            restServerComms.restRequest(RestServerComms.FINAL_TRANSCRIPT_SEND_ENDPOINT, restMessage, new VolleyCallback(){
+                @Override
+                public void onSuccess(JSONObject result){
+                    asgRep.sendCommandResponse("Final transcript send success, displaying results.");
+                    try{
+                        asgRep.sendVisualSearchResults(result.getJSONArray("response"));
+                    } catch (JSONException e){
+                        e.printStackTrace();
+                    }
+                }
+                @Override
+                public void onFailure(){
+                    asgRep.sendCommandResponse("Search failed, please try again.");
+                }
+
+            });
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -157,8 +189,8 @@ class GLBOXRepresentative {
             restServerComms.restRequest(RestServerComms.TRANSLATE_TEXT_QUERY_ENDPOINT, restMessage, new VolleyCallback(){
                 @Override
                 public void onSuccess(JSONObject result){
-                    Log.d(TAG, "GOT translate TEXT RESULT:");
-                    Log.d(TAG, result.toString());
+//                    Log.d(TAG, "GOT translate TEXT RESULT:");
+//                    Log.d(TAG, result.toString());
                     try{
                         asgRep.sendTranslateResults(result.getString("response"));
                     } catch (JSONException e){
@@ -174,7 +206,7 @@ class GLBOXRepresentative {
         }
     }
     public void sendObjectTranslateRequest(JSONObject data){
-        Log.d(TAG, "Running sendObjectTranslateRequest");
+//        Log.d(TAG, "Running sendObjectTranslateRequest");
         try{
             JSONObject restMessage = new JSONObject();
             restMessage.put("query", data.get(MessageTypes.TRANSCRIPT_TEXT));
@@ -183,14 +215,14 @@ class GLBOXRepresentative {
             restServerComms.restRequest(RestServerComms.TRANSLATE_TEXT_QUERY_ENDPOINT, restMessage, new VolleyCallback(){
                 @Override
                 public void onSuccess(JSONObject result){
-                    Log.d(TAG, "GOT translated TEXT RESULT:");
-                    Log.d(TAG, result.toString());
+//                    Log.d(TAG, "GOT translated TEXT RESULT:");
+//                    Log.d(TAG, result.toString());
                     JSONObject resultToSend = new JSONObject();
                     try {
                         resultToSend.put("source",data.get(MessageTypes.TRANSCRIPT_TEXT));
                         resultToSend.put("target",result.getString("response"));
                         asgRep.sendObjectTranslationResults(resultToSend);
-                        Log.d(TAG, resultToSend.toString());
+//                        Log.d(TAG, resultToSend.toString());
                     } catch (JSONException e) {
                         asgRep.sendCommandResponse("Response Falied");
                         e.printStackTrace();
