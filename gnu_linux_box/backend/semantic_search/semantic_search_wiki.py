@@ -22,8 +22,8 @@ finished = False
 def stream(dataset):
   global stream_index, finished
   for idx, row in dataset.iterrows():
-    wiki_title = row['title']
-    text = wiki_title + " " + row['abstract']
+    wiki_title = str(row['title'])
+    text = wiki_title + " " + str(row['abstract'])
     wiki_id = row['wikidata_id']
     #print("Embedding: {}".format(row))
     yield (wiki_title, text, wiki_id)
@@ -121,8 +121,8 @@ for chunk in pd.read_csv(csv_path, chunksize=chunksize):
     proc_finished_flag = process(chunk)
     print("Processed CSV chunk.");
     i+=1
-    if i >= 1:
-        break
+#    if i >= 3:
+#        break
     if proc_finished_flag:
         break
 embeddings.save("./current_wikipedia_title_embedding_articletext_numero_{}_time_{}.txtai".format(numero, time.time()))
