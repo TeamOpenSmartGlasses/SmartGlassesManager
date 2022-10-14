@@ -199,7 +199,8 @@ public class AsgWebSocketClient extends WebSocketClient {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (typeOf.equals(MessageTypes.AUDIO_CHUNK_DECRYPTED)) {
                 Log.d(TAG, "Sending decrypted audio");
-                sendString(data.getString(MessageTypes.AUDIO_DATA));
+                //sendString(data.getString(MessageTypes.AUDIO_DATA));
+                sendJson(data);
             } else if (typeOf.equals(MessageTypes.VISUAL_SEARCH_QUERY)) {
                 sendJson(data);
             } else if (typeOf.equals(MessageTypes.POV_IMAGE)) {
@@ -212,7 +213,7 @@ public class AsgWebSocketClient extends WebSocketClient {
 
     public void sendJson(JSONObject data){
         String encodedData = data.toString();
-        //sendString(encodedData);
+        sendString(encodedData);
     }
 
     public void sendString(String data){
