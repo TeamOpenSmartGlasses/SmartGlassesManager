@@ -452,6 +452,26 @@ public class WearableAiAspService extends LifecycleService {
       return null;
     }
 
+    public void sendTestCard(String title, String content, String img){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
+
+            JSONObject searchData = new JSONObject();
+            searchData.put("title", title);
+            searchData.put("body", content);
+            searchData.put("image", img);
+
+            commandResponseObject.put(MessageTypes.SEARCH_ENGINE_RESULT_DATA, searchData.toString());
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
     //takes in a natural language code for a language and gives back the NaturalLanguage
     public static NaturalLanguage getLanguageFromCode(String codeName){
         for (NaturalLanguage nl : supportedLanguages){

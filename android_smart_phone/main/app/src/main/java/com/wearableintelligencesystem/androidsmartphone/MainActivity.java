@@ -269,6 +269,9 @@ public class MainActivity extends AppCompatActivity {
                 } else if (R.id.social_page == itemId){
                     Log.d(TAG, "Clicked social tools");
                     navController.navigate(R.id.nav_social_tools);
+                } else if (R.id.smart_glasses_debug_page == itemId){
+                    Log.d(TAG, "Clicked smart glasses debug page");
+                    navController.navigate(R.id.nav_smart_glasses_debug);
                 } else if (R.id.settings_page == itemId){
                     Log.d(TAG, "Clicked settings page");
                     navController.navigate(R.id.nav_settings);

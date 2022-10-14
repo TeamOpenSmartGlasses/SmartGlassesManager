@@ -210,7 +210,6 @@ class ASGRepresentative {
         }
     }
 
-
     public void sendSearchEngineResults(JSONObject results){
         try{
             //build json object to send command result
