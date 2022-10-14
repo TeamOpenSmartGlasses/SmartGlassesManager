@@ -1,6 +1,6 @@
 from flask import render_template, make_response
 from flask_restful import Resource, reqparse, fields, marshal_with
-#from db import Database
+from db import Database
 from datetime import datetime
 #from bson.objectid import ObjectId
 #from flask_bcrypt import Bcrypt
@@ -17,6 +17,8 @@ from datetime import datetime
 class FinalTranscriptApi(Resource):
     def __init__(self, tools):
         self.tools = tools
+        self.db = Database()
+        self.db.connect()
         pass
 
     def send_fail(self):
@@ -29,25 +31,20 @@ class FinalTranscriptApi(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("transcript", type=str)
         parser.add_argument("timestamp")
+        parser.add_argument("userId") #later this should be verified, for now, just trust the user
         parser.add_argument("id")
         args = parser.parse_args()
 
         # get incoming text
-        #query = args["query"]
+        print("FINAL_TRANSCRIPT API ARGS:")
         print(args)
-        #source_language = args["source_language"]
-        #target_language = args["target_language"]
 
-        #run translation
-        #translated_reference_response = self.tools.translate_reference(query, source_language=source_language, target_language=target_language)
-
-        #build payload
-        #if translated_reference_response is not None:
-        #    resp = dict()
-        #    resp["success"] = True
-        #    resp["response"] = translated_reference_response
-        #else:
-        #    return self.send_fail()
+        #save transcript to database
+        userId = args['userId']
+        transcript = args['transcript']
+        timestamp = args['timestamp']
+        dbResp = self.db.insertTranscript(userId, transcript, timestamp)
+        print(dbResp)
 
         resp = dict()
         resp["success"] = True
