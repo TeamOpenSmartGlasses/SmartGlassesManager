@@ -8,8 +8,6 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.content.Context;
@@ -61,7 +59,7 @@ public class MainUi extends Fragment {
             }
         });
 
-        final Button startWearableAiServiceButton = view.findViewById(R.id.start_wearableai_service);
+        final Button startWearableAiServiceButton = view.findViewById(R.id.send_test_card);
             startWearableAiServiceButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button

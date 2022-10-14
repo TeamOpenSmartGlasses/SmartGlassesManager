@@ -7,7 +7,7 @@
 
 
     <Button
-        android:id="@+id/start_wearableai_service"
+        android:id="@+id/send_test_card"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="28dp"
@@ -37,7 +37,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/start_wearableai_service"
+        app:layout_constraintTop_toBottomOf="@+id/send_test_card"
         app:layout_constraintVertical_bias="0.138" />
 
 

@@ -25,7 +25,7 @@
         android:icon="@drawable/outline_groups_white_24"
         android:title="Social Tools"/>
     <item
-        android:id="@+id/glasses_page"
+        android:id="@+id/smart_glasses_debug_page"
         android:enabled="true"
         android:icon="@drawable/outline_device_hub_white_24"
         android:title="Smart Glasses"/>
