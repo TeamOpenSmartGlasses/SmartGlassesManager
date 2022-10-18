@@ -11,7 +11,5 @@ gevent
 google-cloud-translate
 git+https://github.com/neuml/txtai
 pandas
-pandas
 youtube-transcript-api
-pandas
-youtube-transcript-api
+pymongo

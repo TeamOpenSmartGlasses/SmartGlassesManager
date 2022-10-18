@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -48,51 +49,74 @@ public class ReferenceUi extends ASGFragment {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy called");
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.d(TAG, "onDestroyView called");
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+        Log.d(TAG, "REFERENCE ON CREATE VIEW");
         return inflater.inflate(R.layout.reference_card, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        Log.d(TAG, "REFERENCE ON VIEW CREATED");
         super.onCreate(savedInstanceState);
         super.onViewCreated(view, savedInstanceState);
 
         //get the passed in arguments
-        title = getArguments().getString("title", null);
-        body = getArguments().getString("body", null);
-        imgUrl = getArguments().getString("img_url", null);
+        Handler h = new Handler();
 
-        //get the views
-        referenceCardResultTitle = (TextView) getActivity().findViewById(R.id.reference_card_result_title);
-        referenceCardResultSummary = (TextView) getActivity().findViewById(R.id.reference_card_result_summary);
-        referenceCardResultImage = (ImageView) getActivity().findViewById(R.id.reference_card_result_image);
+        h.postDelayed(new Runnable() {
+            public void run() {
+                title = getArguments().getString("title", null);
+                body = getArguments().getString("body", null);
+                imgUrl = getArguments().getString("img_url", null);
+                Log.d(TAG, "moi: " + title);
+                Log.d(TAG, "moi: " + body);
 
-        //set the text
-        referenceCardResultTitle.setText(title);
-        referenceCardResultSummary.setText(body);
-        referenceCardResultSummary.setMovementMethod(new ScrollingMovementMethod());
-        referenceCardResultSummary.setSelected(true);
+                //get the views
+                referenceCardResultTitle = (TextView) getActivity().findViewById(R.id.reference_card_result_title);
+                referenceCardResultSummary = (TextView) getActivity().findViewById(R.id.reference_card_result_summary);
+                referenceCardResultImage = (ImageView) getActivity().findViewById(R.id.reference_card_result_image);
 
-        //pull the image from web and display
-        if (imgUrl != null) {
-            Picasso.Builder builder = new Picasso.Builder(getActivity());
-            builder.downloader(new OkHttp3Downloader(getActivity()));
-            builder.build()
-                    .load(imgUrl.trim())
-                    .into(referenceCardResultImage, new Callback() {
+                //set the text
+                referenceCardResultTitle.setText(title);
+                referenceCardResultSummary.setText(body);
+                referenceCardResultSummary.setMovementMethod(new ScrollingMovementMethod());
+                referenceCardResultSummary.setSelected(true);
+                //        //pull the image from web and display
+                if (imgUrl != null) {
+                    Picasso.Builder builder = new Picasso.Builder(getActivity());
+                    builder.downloader(new OkHttp3Downloader(getActivity()));
+                    builder.build()
+                            .load(imgUrl.trim())
+                            .into(referenceCardResultImage, new Callback() {
 
-                        @Override
-                        public void onSuccess() {
-                            Log.d(TAG, "Picasso Image load success");
-                        }
+                                @Override
+                                public void onSuccess() {
+                                    Log.d(TAG, "Picasso Image load success");
+                                }
 
-                        @Override
-                        public void onError(Exception e) {
-                            Log.e("Picasso", "Image load failed");
-                        }
-                    });
-        }
+                                @Override
+                                public void onError(Exception e) {
+                                    Log.e("Picasso", "Image load failed");
+                                }
+                            });
+                }
+            }
+        }, 100);
+
+
     }
 }

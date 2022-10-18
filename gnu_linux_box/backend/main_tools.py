@@ -12,10 +12,15 @@ import sys
 import threading
 from google.cloud import translate
 
+from txtai.embeddings import Embeddings
+from txtai.pipeline import Similarity
+import pandas as pd
+
+
 #function structured into their classes and/or modules
 from utils.bing_visual_search import bing_visual_search
 
-#for lack of a better structure, this is all the functions, the tools
+wiki_score_threshold = 0.40
 class Tools:
     def __init__(self):
         #import nlp
@@ -44,6 +49,29 @@ class Tools:
                 "en" : "wt-wt",
                  "fr" : "fr-fr"
                      }
+
+        #load and hold semantic search index
+        # Load embeddings
+        print("Loading embeddings...")
+        self.embeddings = Embeddings({"path": "sentence-transformers/paraphrase-MiniLM-L3-v2", "content": True})
+        embeddings_folder = "./semantic_search/current_wikipedia_title_embedding_articletext_numero_100000000_time_1664807043.2603853.txtai"
+        self.embeddings.load(embeddings_folder)
+        dir(self.embeddings)
+        print("Embeddings loaded.")
+
+
+    def semantic_wiki_filters(self, data):
+        data_filtered = list()
+        for item in data:
+            if item['score'] > wiki_score_threshold:
+                data_filtered.append(item)
+        return data_filtered
+
+    def run_semantic_wiki(self, query, filters=True, n=3):
+        #res = self.embeddings.search(query, n)
+        res = self.embeddings.search("select id, text, score, tags from txtai where similar('{}')".format(query))
+        res_filtered = self.semantic_wiki_filters(res)
+        return res_filtered
 
     def run_ner(self, text):
         #run nlp

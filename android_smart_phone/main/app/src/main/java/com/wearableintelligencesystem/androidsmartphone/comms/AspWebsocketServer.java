@@ -68,7 +68,7 @@ public class AspWebsocketServer extends WebSocketServer {
     @Override
     public void onMessage(WebSocket conn, String message) {
         try {
-            Log.d(TAG, message);
+//            Log.d(TAG, message);
             JSONObject json_obj = new JSONObject(message);
             dataObservable.onNext(json_obj);
         } catch (JSONException e){

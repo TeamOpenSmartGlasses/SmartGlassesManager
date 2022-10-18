@@ -482,6 +482,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     JSONObject data = new JSONObject(intent.getStringExtra(ASPClientSocket.RAW_MESSAGE_JSON_STRING));
                     String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+                    Log.d(TAG, typeOf);
                     if (typeOf.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
                         showSearchEngineResults(data);
                     } else if (typeOf.equals(MessageTypes.ACTION_SWITCH_MODES)){
@@ -756,7 +757,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showReferenceCard(String title, String body, String imgUrl, long timeout){
-        navHandler.removeCallbacksAndMessages(null);
+        //navHandler.removeCallbacksAndMessages(null);
+        uiHandler.removeCallbacksAndMessages(null);
         String lastMode = curr_mode;
 
         //show the reference
@@ -764,6 +766,8 @@ public class MainActivity extends AppCompatActivity {
         args.putString("title", title);
         args.putString("body", body);
         args.putString("img_url", imgUrl);
+        //quickly go home then to result, because if we go straight to the result, it will fail to display results if the nav_reference page is already loaded - this is a hack
+//        switchMode(MessageTypes.MODE_HOME);
         navController.navigate(R.id.nav_reference, args);
 
         //for now, show for n seconds and then return to llc
@@ -790,6 +794,9 @@ public class MainActivity extends AppCompatActivity {
                 img_url = search_engine_result.getString("image");
             }
 
+            Log.d(TAG, "Running search engine result");
+            Log.d(TAG, title);
+            Log.d(TAG, summary);
             switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
             showReferenceCard(title, summary, img_url, searchEngineResultTimeout);
         } catch (JSONException e) {
@@ -838,6 +845,7 @@ public class MainActivity extends AppCompatActivity {
     private void showVoiceCommandInterface(JSONObject data){
         try{
             String voiceInputType = data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE);
+            Log.d(TAG, voiceInputType);
 
             //if it told us to cancel the stream
 

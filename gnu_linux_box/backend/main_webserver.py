@@ -21,6 +21,7 @@ from api.MapStaticImageApi import MapStaticImageApi
 from api.TranslateTextSimpleApi import TranslateTextSimpleApi
 from api.TranslateReferenceApi import TranslateReferenceApi
 from api.FinalTranscriptApi import FinalTranscriptApi
+from api.SemanticSearchApi import SemanticSearchApi
 
 # app setup
 app = Flask(__name__)
@@ -40,6 +41,7 @@ api.add_resource(MapStaticImageApi, "/get_static_map", resource_class_args=[tool
 api.add_resource(TranslateTextSimpleApi, "/translate_text_simple_query", resource_class_args=[tools])
 api.add_resource(TranslateReferenceApi, "/translate_reference_query", resource_class_args=[tools])
 api.add_resource(FinalTranscriptApi, "/final_transcript", resource_class_args=[tools])
+api.add_resource(SemanticSearchApi, "/semantic_search", resource_class_args=[tools])
 
 # for dev server
 def start():

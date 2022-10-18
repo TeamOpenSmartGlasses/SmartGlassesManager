@@ -1,7 +1,10 @@
 package com.wearableintelligencesystem.androidsmartphone.objectdetection;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.RectF;
+import android.util.Base64;
 import android.util.Log;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
@@ -15,6 +18,7 @@ import org.tensorflow.lite.task.vision.detector.ObjectDetector;
 import java.io.IOException;
 import java.util.List;
 
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 public class ObjectDetectionSystem {
@@ -22,9 +26,10 @@ public class ObjectDetectionSystem {
     private  ObjectDetector  objectDetector;
     private String modelFile = "coco_objectdetection.tflite";
     private PublishSubject<JSONObject> dataObservable;
+    private Disposable dataSubscriber;
+    private boolean iAmActive = false;
 
     public ObjectDetectionSystem(Context context){
-
         // Initialization
         ObjectDetector.ObjectDetectorOptions options =
                 ObjectDetector.ObjectDetectorOptions.builder()
@@ -38,6 +43,21 @@ public class ObjectDetectionSystem {
 
             Log.d("Object Detection Model setup", objectDetector.toString());
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void parseImageForObjectDetection(JSONObject data){
+        try{
+            String jpgImageString = data.getString(MessageTypes.JPG_BYTES_BASE64);
+            byte [] jpgImage = Base64.decode(jpgImageString, Base64.DEFAULT);
+
+            //convert to bitmap
+            Bitmap bitmap = BitmapFactory.decodeByteArray(jpgImage, 0, jpgImage.length);
+
+            //send through object detection system
+            runInference(TensorImage.fromBitmap(bitmap));
+        } catch (JSONException e){
             e.printStackTrace();
         }
     }
@@ -84,6 +104,34 @@ public class ObjectDetectionSystem {
     }
 
     public void setDataObservable(PublishSubject<JSONObject> observable){
-          dataObservable = observable;
+        dataObservable = observable;
+        dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
     }
+
+    public void setActive(){
+        iAmActive = true;
+    }
+
+    public void setInactive(){
+        iAmActive = false;
+    }
+
+    private void handleDataStream(JSONObject data){
+        try {
+            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
+            if (dataType.equals(MessageTypes.START_OBJECT_DETECTION)) {
+                setActive();
+            } else if (dataType.equals(MessageTypes.STOP_OBJECT_DETECTION)) {
+                setInactive();
+            }
+
+            //then, if we're active, check for things to do
+            if (iAmActive && dataType.equals(MessageTypes.POV_IMAGE)) {
+                parseImageForObjectDetection(data);
+            }
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
 }

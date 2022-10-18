@@ -108,15 +108,19 @@ class GLBOXRepresentative {
                 @Override
                 public void onSuccess(JSONObject result){
                     asgRep.sendCommandResponse("Final transcript send success, displaying results.");
-                    try{
-                        asgRep.sendVisualSearchResults(result.getJSONArray("response"));
+                    //check if there was a result at all
+                    try {
+                        boolean search_result = result.getBoolean("result");
+                        if (search_result) {
+                            asgRep.sendSearchEngineResults(result);
+                        }
                     } catch (JSONException e){
                         e.printStackTrace();
                     }
                 }
                 @Override
                 public void onFailure(){
-                    asgRep.sendCommandResponse("Search failed, please try again.");
+                    asgRep.sendCommandResponse("Semantic search failed, please try again.");
                 }
 
             });
