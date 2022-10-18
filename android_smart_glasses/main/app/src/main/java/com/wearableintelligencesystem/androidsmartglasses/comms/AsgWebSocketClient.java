@@ -63,7 +63,7 @@ public class AsgWebSocketClient extends WebSocketClient {
     }
 
     public void sendHeartBeat(){
-        Log.d(TAG, "send heartbeat");
+//        Log.d(TAG, "send heartbeat");
         try {
             JSONObject ping = new JSONObject();
             ping.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.PING);
@@ -138,7 +138,7 @@ public class AsgWebSocketClient extends WebSocketClient {
     @Override
     public void onMessage(String message) {
         try {
-            Log.d(TAG, "received: " + message);
+//            Log.d(TAG, "received: " + message);
             JSONObject json_message = new JSONObject(message);
             json_message.put("local_source", mySourceName); //ad our set name so rest of program knows the source of this message
             dataObservable.onNext(json_message);
@@ -198,7 +198,6 @@ public class AsgWebSocketClient extends WebSocketClient {
         try {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (typeOf.equals(MessageTypes.AUDIO_CHUNK_DECRYPTED)) {
-                Log.d(TAG, "Sending decrypted audio");
                 //sendString(data.getString(MessageTypes.AUDIO_DATA));
                 sendJson(data);
             } else if (typeOf.equals(MessageTypes.VISUAL_SEARCH_QUERY)) {

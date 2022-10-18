@@ -32,6 +32,9 @@
         android:name="com.wearableintelligencesystem.androidsmartglasses.ui.ReferenceUi"
         tools:layout="@layout/reference_card"
         android:label="Reference" >
+        <action
+            android:id="@+id/action_nav_reference_self"
+            app:destination="@id/nav_reference" />
     </fragment>
 
 

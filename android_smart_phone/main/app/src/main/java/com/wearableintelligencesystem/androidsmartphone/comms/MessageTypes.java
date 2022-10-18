@@ -24,6 +24,7 @@ public class MessageTypes {
     public static final String COMMAND_RESULT = "COMMAND_RESULT";
     public static final String COMMAND_NAME = "COMMAND_NAME";
     public static final String COMMAND_RESPONSE_DISPLAY_STRING = "COMMAND_RESPONSE_DISPLAY_STRING";
+
     //voice command event
     public static final String VOICE_COMMAND_STREAM_EVENT = "VOICE_COMMAND_STREAM_EVENT";
     public static final String VOICE_COMMAND_STREAM_EVENT_TYPE = "VOICE_COMMAND_STREAM_EVENT_TYPE";
@@ -42,7 +43,6 @@ public class MessageTypes {
     public static final String VOICE_COMMAND_LIST = "VOICE_COMMAND_LIST";
     public static final String INPUT_WAKE_WORD = "INPUT_WAKE_WORD";
     public static final String INPUT_VOICE_COMMAND_NAME = "INPUT_VOICE_COMMAND_NAME";
-
 
     //FACE/PERSON SIGHTING
     public static final String FACE_SIGHTING_EVENT = "FACE_SIGHTING_EVENT";
@@ -82,6 +82,9 @@ public class MessageTypes {
     public final static String SEARCH_ENGINE_QUERY = "SEARCH_ENGINE_QUERY";
     public final static String SEARCH_ENGINE_RESULT = "SEARCH_ENGINE_RESULT";
     public final static String SEARCH_ENGINE_RESULT_DATA = "SEARCH_ENGINE_RESULT_DATA";
+    public final static String SEARCH_ENGINE_RESULT_TITLE = "SEARCH_ENGINE_RESULT_TITLE";
+    public final static String SEARCH_ENGINE_RESULT_BODY = "SEARCH_ENGINE_RESULT_BODY";
+    public final static String SEARCH_ENGINE_RESULT_IMAGE = "SEARCH_ENGINE_RESULT_IMAGE";
 
     //translation
     public final static String TRANSLATE_TEXT_QUERY = "TRANSLATE_TEXT_QUERY";
@@ -93,6 +96,8 @@ public class MessageTypes {
     public final static String START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME = "START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME";
 
     //object translation
+    public final static String START_OBJECT_DETECTION = "START_OBJECT_DETECTION";
+    public final static String STOP_OBJECT_DETECTION = "STOP_OBJECT_DETECTION";
     public final static String OBJECT_TRANSLATION_REQUEST = "OBJECT_TRANSLATION_REQUEST";
     public final static String OBJECT_TRANSLATION_RESULT = "OBJECT_TRANSLATION_RESULT";
     public final static String OBJECT_TRANSLATION_RESULT_DATA = "OBJECT_TRANSLATION_RESULT_DATA";

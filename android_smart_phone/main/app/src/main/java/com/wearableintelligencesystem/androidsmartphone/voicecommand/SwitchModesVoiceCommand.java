@@ -101,8 +101,13 @@ class SwitchModesVoiceCommand extends VoiceCommand {
                 translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_FOREIGN_LANGUAGE_ASR);
                 translateMessage.put(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME, naturalLanguageLanguage);
                 vcServer.dataObservable.onNext(translateMessage);
-            } else {
+            } else if (newMode.equals(MessageTypes.MODE_OBJECT_TRANSLATE)) {
+                JSONObject objectMessage = new JSONObject();
+                objectMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_OBJECT_DETECTION);
+                vcServer.dataObservable.onNext(objectMessage);
+            }else {
                 translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_FOREIGN_LANGUAGE_ASR);
+                translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_OBJECT_DETECTION);
                 vcServer.dataObservable.onNext(translateMessage);
             }
         } catch (JSONException e){
