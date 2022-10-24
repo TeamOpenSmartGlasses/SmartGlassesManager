@@ -67,8 +67,10 @@ class SemanticSearchApi(Resource):
 
         title = res[0]['id']
         resp["title"] = title #"Test from backend server"
-        body = res[0]['text']
-        body_short = body[:min(len(body), 280)]
+        #body = res[0]['text']
+        body = res[0]['text'][len(title)+1:] #get ride of first word, which is title of article
+        body_length = 380
+        body_short = body[:min(len(body), body_length)]
         resp["body"] = body_short #"This is that big old test stuff, where we test it all, let's let the testing happen.\nOh yeah, good test stuff man."
 
         #get image from wikidata page
@@ -78,8 +80,21 @@ class SemanticSearchApi(Resource):
         wikidata_id = res[0]['tags']
         image_name_url = "https://www.wikidata.org/w/api.php?action=query&prop=images&format=json&titles={}".format(wikidata_id)
         try:
-            image_name = requests.get(url=image_name_url).json()
-            image_name = image_name["query"]["pages"][list(image_name["query"]["pages"].keys())[0]]["images"][0]["title"]
+            image_name = requests.get(url=image_name_url, timeout=5).json()
+            image_names = image_name["query"]["pages"][list(image_name["query"]["pages"].keys())[0]]["images"]
+            image_idx = 0
+            image_name = image_names[0]["title"]
+            #sometimes we get a weird image, like the wave file icon, so make sure we don't here
+            banned_image_names = [".wav", ".ogg"]
+            bad_name = True
+            while bad_name:
+                bad_name = False
+                for b in banned_image_names:
+                    if b in image_name:
+                        bad_name = True
+                        image_idx += 1
+                        image_name = image_names[image_idx]["title"]
+            print(image_name)
             image_raw_url = "https://commons.wikimedia.org/w/index.php?title=Special:Redirect/file/{}&width={}".format(image_name, image_width).replace (" ","%20")
             resp["image"] = image_raw_url
         except Exception as e:
