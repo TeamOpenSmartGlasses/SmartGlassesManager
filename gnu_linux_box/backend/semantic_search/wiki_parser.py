@@ -1,7 +1,3 @@
-# Simple example of streaming a Wikipedia 
-# Copyright 2017 by Jeff Heaton, released under the The GNU Lesser General Public License (LGPL).
-# http://www.heatonresearch.com
-# -----------------------------
 import xml.etree.ElementTree as etree
 import codecs
 import csv
@@ -70,22 +66,48 @@ def remove_text_inside_brackets(text, brackets="{}"):
                 saved_chars.append(character)
     return ''.join(saved_chars)
 
-def get_abstract(text):
-    stripped_text = text.replace("\n", " ").strip()
+from bs4 import BeautifulSoup
 
+#this is a nasty parser to deal with the nasty format we receive the page in. I'm sure somewhere there is an official wikipedia parser that would do a better job, we should switch to that if we ever find it
+def get_abstract(text):
+    #remove html tags
+    #print(text)
+    cleantext = BeautifulSoup(text, "lxml").text
+
+    stripped_text = cleantext.replace("\n", " ").strip()
+
+    #drop everything after first header start, so we only take the abstract
     drop_post = stripped_text[:stripped_text.find("==")]
 
-    drop_headers = remove_text_inside_brackets(drop_post)#re.sub(r'{{.*?}}', '', drop_post)
+    #get rid of special types File: and Image:, etc.
+    #drop_Image = re.sub(r'\[\[Image.+?\]\]', '', drop_post)
+    #drop_File = re.sub(r'\[\[File.+?\]\]', '', drop_Image)
+    #drop_media = re.sub(r'/\[\[(File|Image|Media):[^[\]\]]*(\[\[.*]])?[^[\]\]]*]]/gi', '', drop_post) # https://stackoverflow.com/questions/34717096/how-to-remove-all-files-from-wiki-string
+    drop_File = re.sub(r'\[\[File:[^[\]]*(?:\[\[[^[\]]*]][^[\]]*)*]]', '', drop_post)
+    drop_Image = re.sub(r'\[\[Image:[^[\]]*(?:\[\[[^[\]]*]][^[\]]*)*]]', '', drop_File)
+    drop_Media = re.sub(r'\[\[Media:[^[\]]*(?:\[\[[^[\]]*]][^[\]]*)*]]', '', drop_Image) #https://stackoverflow.com/questions/34717096/how-to-remove-all-files-from-wiki-string
+
+    drop_headers = remove_text_inside_brackets(drop_Media)#re.sub(r'{{.*?}}', '', drop_post)
 
     drop_links = drop_headers.replace("[[", "").replace("]]", "")
 
     split_links = drop_links.replace("|", " ")
 
-    drop_ref = re.sub(r'<ref.+?ref>', ' ', split_links).strip()
+    drop_parans = re.sub(r'\([^()]*\)', '', split_links)
 
-    drop_special = drop_ref.replace("'", "").replace("\"", "")
+    drop_special = drop_parans.replace("'", "").replace("\"", "").strip()
 
-    abstract = drop_special
+    #drop nots
+    drop_notes = remove_text_inside_brackets(drop_special, brackets="[]")#re.sub(r'{{.*?}}', '', drop_post)
+
+    #fix spaces and newlines
+    single_spaces = re.sub(' +', ' ', drop_notes)
+    no_newlines = re.sub('\n+', ' ', single_spaces)
+    no_newlines_two = re.sub('\r+', ' ', no_newlines)
+
+    abstract = no_newlines_two
+    #print(abstract)
+    #print("\n\n")
     return abstract
 
 
