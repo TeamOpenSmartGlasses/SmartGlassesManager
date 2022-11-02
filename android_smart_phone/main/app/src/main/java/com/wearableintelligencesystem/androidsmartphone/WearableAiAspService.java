@@ -323,7 +323,6 @@ public class WearableAiAspService extends LifecycleService {
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (type.equals(MessageTypes.POV_IMAGE)){
                 sendImageToFaceRec(data);
-                sendImageToObjectDetection(data);
             }  else if (type.equals((MessageTypes.START_FOREIGN_LANGUAGE_ASR))){
                 String languageName = data.getString(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME);
                 speechRecVoskForeignLanguage = new SpeechRecVosk(getLanguageFromName(languageName).getModelLocation(), false, this, audioObservable, dataObservable, mPhraseRepository);
@@ -333,23 +332,6 @@ public class WearableAiAspService extends LifecycleService {
                     speechRecVoskForeignLanguage = null;
                 }
             }
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
-    private void sendImageToObjectDetection(JSONObject data){
-        try{
-            String jpgImageString = data.getString(MessageTypes.JPG_BYTES_BASE64);
-            byte [] jpgImage = Base64.decode(jpgImageString, Base64.DEFAULT);
-            //long imageTime = data.getLong(MessageTypes.TIMESTAMP);
-            //long imageId = data.getLong(MessageTypes.IMAGE_ID);
-
-            //convert to bitmap
-            Bitmap bitmap = BitmapFactory.decodeByteArray(jpgImage, 0, jpgImage.length);
-
-            //send through object detection system
-            objectDetectionSystem.runInference(TensorImage.fromBitmap(bitmap));
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -395,13 +377,14 @@ public class WearableAiAspService extends LifecycleService {
 
         //kill textToSpeech
         textToSpeechSystem.destroy();
+
         //kill vosk
         speechRecVosk.destroy();
         if (speechRecVoskForeignLanguage != null) {
             speechRecVoskForeignLanguage.destroy();
         }
 
-            //close room database(s)
+        //close room database(s)
         WearableAiRoomDatabase.destroy();
 
         //call parent destroy
@@ -450,6 +433,26 @@ public class WearableAiAspService extends LifecycleService {
           }
       }
       return null;
+    }
+
+    public void sendTestCard(String title, String content, String img){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
+
+            JSONObject searchData = new JSONObject();
+            searchData.put("title", title);
+            searchData.put("body", content);
+            searchData.put("image", img);
+
+            commandResponseObject.put(MessageTypes.SEARCH_ENGINE_RESULT_DATA, searchData.toString());
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
     //takes in a natural language code for a language and gives back the NaturalLanguage

@@ -12,16 +12,21 @@ import sys
 import threading
 from google.cloud import translate
 
+from txtai.embeddings import Embeddings
+from txtai.pipeline import Similarity
+import pandas as pd
+
+
 #function structured into their classes and/or modules
 from utils.bing_visual_search import bing_visual_search
 
-#for lack of a better structure, this is all the functions, the tools
+wiki_score_threshold = 0.40
 class Tools:
     def __init__(self):
         #import nlp
         self.spacey_nlp = spacy.load("en_core_web_sm") # if not found, download with python -m spacy download en_core_web_sm
         self.og_limit = 3 #only open up this many pages to check for open graph, or it will take too long
-        self.summary_limit = 35 #word limit on summary
+        self.summary_limit = 90 #word limit on summary
         self.check_wiki_limit = 15 #don't use wiki unless it's in the top n results
 
         #setup gcp translate client
@@ -45,6 +50,29 @@ class Tools:
                  "fr" : "fr-fr"
                      }
 
+        #load and hold semantic search index
+        # Load embeddings
+        print("Loading embeddings...")
+        self.embeddings = Embeddings({"path": "sentence-transformers/paraphrase-MiniLM-L3-v2", "content": True})
+        embeddings_folder = "./semantic_search/current_wikipedia_title_embedding_articletext_numero_100000000_time_1664807043.2603853.txtai"
+        self.embeddings.load(embeddings_folder)
+        dir(self.embeddings)
+        print("Embeddings loaded.")
+
+
+    def semantic_wiki_filters(self, data):
+        data_filtered = list()
+        for item in data:
+            if item['score'] > wiki_score_threshold:
+                data_filtered.append(item)
+        return data_filtered
+
+    def run_semantic_wiki(self, query, filters=True, n=3):
+        #res = self.embeddings.search(query, n)
+        res = self.embeddings.search("select id, text, score, tags from txtai where similar('{}')".format(query))
+        res_filtered = self.semantic_wiki_filters(res)
+        return res_filtered
+
     def run_ner(self, text):
         #run nlp
         doc = self.spacey_nlp(text)
@@ -54,7 +82,8 @@ class Tools:
         #duckduckgosearch for entities
         #don't run this more than once every two seconds, or there will be an error
         region = self.ddg_langs[language]
-        results = ddg(entity_name, region=region, safesearch='Moderate', time='y', max_results=8)
+        results = ddg(entity_name, region=region, safesearch='Moderate', max_results=8)
+
         return results
 
     def check_links_for(self, search_results, tag):
@@ -274,7 +303,14 @@ class Tools:
         return message_bytes
 
     def visual_search(self, img_bytes):
-        result = bing_visual_search(img_bytes)
+        raw_result = bing_visual_search(img_bytes)
+        keepKeys = ["thumbnailUrl", "name"]
+        result = list()
+        for raw_res in raw_result:
+            res = dict()
+            for key in keepKeys:
+                res[key] = raw_res[key]
+            result.append(res)
         return result
 
     def search_engine(self, query, language="en"):
@@ -287,8 +323,11 @@ class Tools:
             return None
 
         #get the best link and its first image
+        for i, link in enumerate(links):
+            print("{} -- {}".format(i, link))
+
         best_link = self.get_best_link_info(links, language=language)
-        print("BEST DDG LINK:")
+        print("BEST SEARCH LINK OVERALL:")
         print(best_link)
         if best_link is None:
             return None

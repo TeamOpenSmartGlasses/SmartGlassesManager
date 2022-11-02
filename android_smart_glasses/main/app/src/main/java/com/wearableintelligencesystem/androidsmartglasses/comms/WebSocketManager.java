@@ -47,7 +47,7 @@ public class WebSocketManager implements Runnable{
     }
 
     public void sendJson(JSONObject data){
-        Log.d(TAG, "SENDING JSON FROM ASG WS");
+//        Log.d(TAG, "SENDING JSON FROM ASG WS");
         if (ws != null) {
             ws.send(data.toString());
         }
@@ -77,11 +77,11 @@ public class WebSocketManager implements Runnable{
                 //if the ws doesn't exist or is not open, then the manager already knows we A) need to restart b) are starting, so don't send heart beat
                 if (ws != null) {
                     if (ws.getConnectionState() == 2 && !ws.isClosed()) {
-                        Log.d(TAG, "tryna send heart beat");
+//                        Log.d(TAG, "tryna send heart beat");
                         ws.sendHeartBeat();
-                        Log.d(TAG, "done did send heart beat");
+//                        Log.d(TAG, "done did send heart beat");
                     } else {
-                        Log.d(TAG, "not even gonna tryna send eart beat");
+//                        Log.d(TAG, "not even gonna tryna send eart beat");
                     }
                 }
                 handler.postDelayed(this, 3000); //run again in delay milliseconds
