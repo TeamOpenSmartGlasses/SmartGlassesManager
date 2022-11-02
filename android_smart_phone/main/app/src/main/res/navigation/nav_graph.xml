@@ -18,6 +18,12 @@
             app:destination="@id/nav_social_tools" />
     </fragment>
     <fragment
+        android:id="@+id/nav_smart_glasses_debug"
+        android:name="com.wearableintelligencesystem.androidsmartphone.ui.SmartGlassesDebugUi"
+        tools:layout="@layout/smart_glasses_debug_fragment"
+        android:label="Smart Glasses + Debug" >
+    </fragment>
+    <fragment
         android:id="@+id/nav_settings"
         android:name="com.wearableintelligencesystem.androidsmartphone.ui.SettingsUi"
         tools:layout="@layout/settings_fragment"

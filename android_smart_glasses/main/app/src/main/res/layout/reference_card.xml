@@ -34,8 +34,8 @@
     <ImageView
         android:id="@+id/reference_card_result_image"
         android:layout_width="wrap_content"
-        android:background="@color/gray"
-        android:layout_gravity="bottom"
-        android:layout_height="wrap_content"></ImageView>
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/black"></ImageView>
 
 </LinearLayout>

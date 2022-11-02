@@ -6,20 +6,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
-import android.util.Log;
+
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.content.Context;
 import android.content.Intent;
-import android.app.ActivityManager;
+
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import android.content.ComponentName;
 
-import com.wearableintelligencesystem.androidsmartphone.WearableAiAspService;
 import com.wearableintelligencesystem.androidsmartphone.MainActivity;
 
 //import res
@@ -59,7 +55,7 @@ public class SettingsUi extends Fragment {
             }
         });
 
-        final Button startWearableAiServiceButton = view.findViewById(R.id.start_wearableai_service);
+        final Button startWearableAiServiceButton = view.findViewById(R.id.send_test_card);
             startWearableAiServiceButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button

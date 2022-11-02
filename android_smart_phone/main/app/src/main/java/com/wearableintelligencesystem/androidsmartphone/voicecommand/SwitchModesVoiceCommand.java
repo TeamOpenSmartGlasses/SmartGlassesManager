@@ -67,7 +67,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         for (int i = 0; i < modesList.size(); i++){
             naturalLanguageMode = modesList.get(i).first;
             Log.d(TAG, "args: " + postArgs + "; mode: " + modesList.get(i).first);
-            FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.8);
+            FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(postArgs, naturalLanguageMode, 0.85);
             if (modeMatchChar != null && modeMatchChar.getIndex() != -1){
                 modeMatchIdx = i;
                 newMode = modesList.get(i).second;
@@ -101,8 +101,13 @@ class SwitchModesVoiceCommand extends VoiceCommand {
                 translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_FOREIGN_LANGUAGE_ASR);
                 translateMessage.put(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME, naturalLanguageLanguage);
                 vcServer.dataObservable.onNext(translateMessage);
-            } else {
+            } else if (newMode.equals(MessageTypes.MODE_OBJECT_TRANSLATE)) {
+                JSONObject objectMessage = new JSONObject();
+                objectMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_OBJECT_DETECTION);
+                vcServer.dataObservable.onNext(objectMessage);
+            }else {
                 translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_FOREIGN_LANGUAGE_ASR);
+                translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_OBJECT_DETECTION);
                 vcServer.dataObservable.onNext(translateMessage);
             }
         } catch (JSONException e){
