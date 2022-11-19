@@ -50,6 +50,11 @@ class SemanticSearchApi(Resource):
         if timestamp is None:
             timestamp = time.time()
 
+        #run word frequency on transcript
+        low_freq_words = self.tools.find_low_freq_words(transcript)
+        definitions = [self.tools.define_word(lfw) for lfw in low_freq_words]
+        print("LOW FREQUENCY WORDS TO DEFINE: {}".format(definitions))
+
         #run semantic search on wikipedia
         res = self.tools.run_semantic_wiki(transcript)
         resp = dict()

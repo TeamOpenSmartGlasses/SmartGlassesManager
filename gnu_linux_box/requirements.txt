@@ -13,3 +13,4 @@ git+https://github.com/neuml/txtai
 pandas
 youtube-transcript-api
 pymongo
+nltk
