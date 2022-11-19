@@ -5,10 +5,10 @@ After=network.target
 [Service]
 User=ubuntu
 Group=www-data
-WorkingDirectory=/var/www/html/wis/gnu_linux_box/backend
-Environment=/var/www/html/wis/gnu_linux_box/venv/bin
+WorkingDirectory=/var/www/html/WearableIntelligenceSystem/gnu_linux_box/backend
+Environment=/var/www/html/WearableIntelligenceSystem/gnu_linux_box/venv/bin
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/var/www/html/wis/gnu_linux_box/venv/bin/gunicorn -w 1 --bind unix:wis.sock gunicorn_deploy_flask:app
+ExecStart=/var/www/html/WearableIntelligenceSystem/gnu_linux_box/venv/bin/gunicorn -w 1 --bind unix:wis.sock gunicorn_deploy_flask:app
 
 [Install]
 WantedBy=multi-user.target
