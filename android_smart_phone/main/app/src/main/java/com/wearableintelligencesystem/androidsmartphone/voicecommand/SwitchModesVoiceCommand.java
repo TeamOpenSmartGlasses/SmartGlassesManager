@@ -46,6 +46,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         modesList.add(Pair.create("object translate", MessageTypes.MODE_OBJECT_TRANSLATE));
         modesList.add(Pair.create("blank", MessageTypes.MODE_BLANK));
         modesList.add(Pair.create("speech translate", MessageTypes.MODE_LANGUAGE_TRANSLATE));
+        modesList.add(Pair.create("contextual search", MessageTypes.MODE_CONTEXTUAL_SEARCH));
 
     }
 
@@ -104,6 +105,10 @@ class SwitchModesVoiceCommand extends VoiceCommand {
             } else if (newMode.equals(MessageTypes.MODE_OBJECT_TRANSLATE)) {
                 JSONObject objectMessage = new JSONObject();
                 objectMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_OBJECT_DETECTION);
+                vcServer.dataObservable.onNext(objectMessage);
+            } else if (newMode.equals(MessageTypes.MODE_CONTEXTUAL_SEARCH)) {
+                JSONObject objectMessage = new JSONObject();
+                objectMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_CONTEXTUAL_SEARCH);
                 vcServer.dataObservable.onNext(objectMessage);
             }else {
                 translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_FOREIGN_LANGUAGE_ASR);

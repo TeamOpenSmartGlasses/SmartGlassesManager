@@ -58,9 +58,11 @@ class GLBOXRepresentative {
                 sendReferenceTranslateQuery(data);
             }else if (type.equals(MessageTypes.OBJECT_TRANSLATION_REQUEST)) {
                 sendObjectTranslateRequest(data);
+            }else if (type.equals(MessageTypes.CONTEXTUAL_SEARCH_REQUEST)) {
+                sendContextualSearch(data);
             } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                 Log.d(TAG, "GOT FINAL TRANSCRIPT");
-                sendFinalTranscript(data);
+                //sendFinalTranscript(data);
             }
 
     }
@@ -96,8 +98,8 @@ class GLBOXRepresentative {
         }
     }
 
-    public void sendFinalTranscript(JSONObject data){
-        Log.d(TAG, "Running sendFinalTranscript");
+    public void sendContextualSearch(JSONObject data){
+        Log.d(TAG, "Running sendContextualSearch");
         try{
             JSONObject restMessage = new JSONObject();
             restMessage.put("transcript", data.getString(MessageTypes.TRANSCRIPT_TEXT).toLowerCase());
@@ -107,7 +109,7 @@ class GLBOXRepresentative {
             restServerComms.restRequest(RestServerComms.FINAL_TRANSCRIPT_SEND_ENDPOINT, restMessage, new VolleyCallback(){
                 @Override
                 public void onSuccess(JSONObject result){
-                    asgRep.sendCommandResponse("Final transcript send success, displaying results.");
+                    asgRep.sendCommandResponse("Final transcript to contextual search send success, displaying results.");
                     //check if there was a result at all
                     try {
                         boolean search_result = result.getBoolean("result");
@@ -120,14 +122,46 @@ class GLBOXRepresentative {
                 }
                 @Override
                 public void onFailure(){
-                    asgRep.sendCommandResponse("Semantic search failed, please try again.");
+                    asgRep.sendCommandResponse("Contextual search failed, please try again.");
                 }
-
             });
         } catch (JSONException e){
             e.printStackTrace();
         }
     }
+
+//
+//    public void sendFinalTranscript(JSONObject data){
+//        Log.d(TAG, "Running sendFinalTranscript");
+//        try{
+//            JSONObject restMessage = new JSONObject();
+//            restMessage.put("transcript", data.getString(MessageTypes.TRANSCRIPT_TEXT).toLowerCase());
+//            restMessage.put("timestamp", data.getString(MessageTypes.TIMESTAMP));
+//            restMessage.put("id", data.getString(MessageTypes.TRANSCRIPT_ID));
+//
+//            restServerComms.restRequest(RestServerComms.FINAL_TRANSCRIPT_SEND_ENDPOINT, restMessage, new VolleyCallback(){
+//                @Override
+//                public void onSuccess(JSONObject result){
+//                    asgRep.sendCommandResponse("Final transcript send success, displaying results.");
+//                    //check if there was a result at all
+//                    try {
+//                        boolean search_result = result.getBoolean("result");
+//                        if (search_result) {
+//                            asgRep.sendSearchEngineResults(result);
+//                        }
+//                    } catch (JSONException e){
+//                        e.printStackTrace();
+//                    }
+//                }
+//                @Override
+//                public void onFailure(){
+//                    asgRep.sendCommandResponse("Semantic search failed, please try again.");
+//                }
+//            });
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
+//    }
 
     private void sendNaturalLanguageQuery(JSONObject data){
         Log.d(TAG, "Running sendNaturalLanguageQuery");

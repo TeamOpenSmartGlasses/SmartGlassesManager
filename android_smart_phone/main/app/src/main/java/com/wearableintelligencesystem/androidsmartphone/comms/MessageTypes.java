@@ -95,6 +95,13 @@ public class MessageTypes {
     public final static String STOP_FOREIGN_LANGUAGE_ASR = "STOP_FOREIGN_LANGUAGE_ASR";
     public final static String START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME = "START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME";
 
+    //contextual/semantic search
+    public final static String START_CONTEXTUAL_SEARCH = "START_CONTEXTUAL_SEARCH";
+    public final static String STOP_CONTEXTUAL_SEARCH = "STOP_CONTEXTUAL_SEARCH";
+    public final static String CONTEXTUAL_SEARCH_REQUEST = "CONTEXTUAL_SEARCH_REQUEST";
+    public final static String CONTEXTUAL_SEARCH_RESULT = "CONTEXTUAL_SEARCH_RESULT";
+    public final static String CONTEXTUAL_SEARCH_RESULT_DATA = "CONTEXTUAL_SEARCH_RESULT_DATA";
+
     //object translation
     public final static String START_OBJECT_DETECTION = "START_OBJECT_DETECTION";
     public final static String STOP_OBJECT_DETECTION = "STOP_OBJECT_DETECTION";
@@ -128,6 +135,7 @@ public class MessageTypes {
     public final static String MODE_LIVE_LIFE_CAPTIONS = "MODE_LIVE_LIFE_CAPTIONS";
     public final static String MODE_SOCIAL_MODE = "MODE_SOCIAL_MODE";
     public final static String MODE_CONVERSATION_MODE = "MODE_CONVERSATION_MODE";
+    public final static String MODE_CONTEXTUAL_SEARCH = "MODE_CONTEXTUAL_SEARCH";
     public final static String MODE_REFERENCE_GRID = "MODE_REFERENCE_GRID";
     public final static String MODE_WEARABLE_FACE_RECOGNIZER = "MODE_WEARABLE_FACE_RECOGNIZER";
     public final static String MODE_LANGUAGE_TRANSLATE = "MODE_LANGUAGE_TRANSLATE";
