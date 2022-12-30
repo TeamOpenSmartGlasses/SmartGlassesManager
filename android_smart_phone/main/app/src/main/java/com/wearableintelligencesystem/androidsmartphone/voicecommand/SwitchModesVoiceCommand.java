@@ -46,6 +46,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         modesList.add(Pair.create("object translate", MessageTypes.MODE_OBJECT_TRANSLATE));
         modesList.add(Pair.create("blank", MessageTypes.MODE_BLANK));
         modesList.add(Pair.create("speech translate", MessageTypes.MODE_LANGUAGE_TRANSLATE));
+        modesList.add(Pair.create("contextual search", MessageTypes.MODE_CONTEXTUAL_SEARCH));
 
     }
 
@@ -85,7 +86,7 @@ class SwitchModesVoiceCommand extends VoiceCommand {
 
         //special actions ASP takes based on the mode we are entering
         try {
-            JSONObject translateMessage = new JSONObject();
+            JSONObject modeMessage = new JSONObject();
             if (newMode.equals(MessageTypes.MODE_LANGUAGE_TRANSLATE)){
                 //get the language we want to translate from into base language
                 String naturalLanguageLanguage = this.getFirstArg(postArgs.trim().substring(naturalLanguageMode.length()));
@@ -98,17 +99,22 @@ class SwitchModesVoiceCommand extends VoiceCommand {
                 Log.d(TAG, postArgs);
                 Log.d(TAG, naturalLanguageMode);
                 Log.d(TAG, naturalLanguageLanguage);
-                translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_FOREIGN_LANGUAGE_ASR);
-                translateMessage.put(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME, naturalLanguageLanguage);
-                vcServer.dataObservable.onNext(translateMessage);
+                modeMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_FOREIGN_LANGUAGE_ASR);
+                modeMessage.put(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME, naturalLanguageLanguage);
+                vcServer.dataObservable.onNext(modeMessage);
             } else if (newMode.equals(MessageTypes.MODE_OBJECT_TRANSLATE)) {
                 JSONObject objectMessage = new JSONObject();
                 objectMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_OBJECT_DETECTION);
                 vcServer.dataObservable.onNext(objectMessage);
+            } else if (newMode.equals(MessageTypes.MODE_CONTEXTUAL_SEARCH)) {
+                JSONObject objectMessage = new JSONObject();
+                objectMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_CONTEXTUAL_SEARCH);
+                vcServer.dataObservable.onNext(objectMessage);
             }else {
-                translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_FOREIGN_LANGUAGE_ASR);
-                translateMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_OBJECT_DETECTION);
-                vcServer.dataObservable.onNext(translateMessage);
+                modeMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_FOREIGN_LANGUAGE_ASR);
+                modeMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_OBJECT_DETECTION);
+                modeMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_CONTEXTUAL_SEARCH);
+                vcServer.dataObservable.onNext(modeMessage);
             }
         } catch (JSONException e){
             e.printStackTrace();
