@@ -16,6 +16,8 @@ from txtai.embeddings import Embeddings
 from txtai.pipeline import Similarity
 import pandas as pd
 
+#word frequency + definitions
+from nltk.corpus import wordnet
 
 #function structured into their classes and/or modules
 from utils.bing_visual_search import bing_visual_search
@@ -59,6 +61,19 @@ class Tools:
         dir(self.embeddings)
         print("Embeddings loaded.")
 
+        #setup word frequency + definitions
+        self.df_word_freq = pd.read_csv("./semantic_search/english_word_freq_list/unigram_freq.csv")
+        self.idx_dict_word_freq = self.df_word_freq.groupby(by='word').apply(lambda x: x.index.tolist()).to_dict()
+        self.low_freq_constant = 250000 #relative to dataset used, up for debate, maybe user-settable (example english not you first language? Want to be higher)... in general, frequency can't be the only metric - maybe you say a rare word every day, we shouldn't keep defining it - cayden
+
+        #load text indices
+        print("Loading word frequency index...")
+        self.df_word_freq.iloc[self.idx_dict_word_freq["golgw"]] # run once to build the index
+        print("--- Word frequency index loaded.")
+
+        print("Loading word definitions index...")
+        syns = wordnet.synsets("dog") #run once to build index
+        print("--- Word definitions index loaded.")
 
     def semantic_wiki_filters(self, data):
         data_filtered = list()
@@ -96,7 +111,6 @@ class Tools:
         #run named entity recognition
         nes = self.run_ner(text).ents
 
-        # for each thing (name entity) search engine (duckduckgo) to find the top result for that thing
         entities_results= list()
         for ne in nes:
             print("Entity found: " + ne.text)
@@ -377,9 +391,36 @@ class Tools:
 
     def translate_reference(self, text, source_language="en", target_language="fr"):
         translated_text = self.translate_text_simple(text, source_language=source_language, target_language=target_language)
+        translated_text = self.translate_text_simple(text, source_language=source_language, target_language=target_language)
         print("Translated text is: {}".format(translated_text))
         res = self.get_wikipedia_data_from_page_title(translated_text, language=target_language)
         if res is not None:
             res["body"] = " ".join(res["body"].split(" ")[:self.summary_limit]) + "..."
             res["language"] = target_language
         return res
+
+    #we use this indexing for fast string search, thanks to: https://stackoverflow.com/questions/44058097/optimize-a-string-query-with-pandas-large-data
+    def find_low_freq_words(self, text):
+        low_freq_words = list()
+        for word in text.split(' '):
+            print(word)
+            try:
+                word_freq = self.df_word_freq.iloc[self.idx_dict_word_freq[word]]
+            except KeyError as e:
+                print(e) #word doesn't exist in frequency list
+                continue
+            if len(word_freq) > 0 and word_freq["count"].iloc[0] < self.low_freq_constant: #we use iloc[0] because our dataset should only have one of each word
+                word = word_freq["word"].iloc[0]
+                low_freq_words.append(word)
+        return low_freq_words
+
+    def define_word(self, word):
+        # lookup the word
+        syns = wordnet.synsets(word)
+        try:
+            definition = syns[0].definition()
+        except IndexError as e:
+            print("Definition unknown for: {}".format(word))
+            return {word : None}
+        return {word : definition}
+

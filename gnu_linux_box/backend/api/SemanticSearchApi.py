@@ -1,4 +1,5 @@
 from flask import render_template, make_response
+import time
 from flask_restful import Resource, reqparse, fields, marshal_with
 from db import Database
 from datetime import datetime
@@ -49,6 +50,11 @@ class SemanticSearchApi(Resource):
         timestamp = args['timestamp']
         if timestamp is None:
             timestamp = time.time()
+
+        #run word frequency on transcript
+        low_freq_words = self.tools.find_low_freq_words(transcript)
+        definitions = [self.tools.define_word(lfw) for lfw in low_freq_words]
+        print("LOW FREQUENCY WORDS TO DEFINE: {}".format(definitions))
 
         #run semantic search on wikipedia
         res = self.tools.run_semantic_wiki(transcript)

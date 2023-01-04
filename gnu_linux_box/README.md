@@ -53,7 +53,7 @@ curl -X POST -F "query=who's the president of the us" http://127.0.0.1:5000/natu
 1. Setup a cloud connected Linux box (tested on Ubuntu 18 LTS AWS EC2)
 2. Install nginx
 3. Clone the repo at /var/www/html
-4. Add the two .confi files at `gnu_linux_box/backend/deploy` to `/etc/nginx/site-available` and activate them with:
+4. Add the two .conf files at `gnu_linux_box/backend/deploy` to `/etc/nginx/site-available` and activate them with:
 ```
 sudo rm /etc/nginx/sites-enabled/default
 sudo ln /etc/nginx/sites-available/wis_backend.conf /etc/nginx/sites-enabled/
@@ -63,3 +63,5 @@ sudo systemctl restart nginx
 5. Setup the backend to run by setting up virtualenv and installing requirements (discussed above)
 6. Copy the service service file to `/etc/systemd/system`
 7. Enable the service file with `sudo systemctl start wis_gunicorn && sudo systemctl enable wis_gunicorn`
+8. Use certbot to setup SSL for your domain, and point the /etc/nginx/site-enabled/*conf files to point to that SSL config file
+9. Restart Nginx `sudo systemctl restart nginx`

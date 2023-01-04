@@ -24,6 +24,7 @@ import androidx.lifecycle.LifecycleService;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.comms.SmsComms;
+import com.wearableintelligencesystem.androidsmartphone.contextualsearch.ContextualSearchSystem;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotion;
 import com.wearableintelligencesystem.androidsmartphone.database.facialemotion.FacialEmotionCreator;
@@ -95,6 +96,9 @@ public class WearableAiAspService extends LifecycleService {
 
     //Object Detection system
     private ObjectDetectionSystem objectDetectionSystem;
+
+    //contextual search system
+    private ContextualSearchSystem contextualSearchSystem;
 
     //UI
     TextView tvIP, tvPort;
@@ -200,6 +204,11 @@ public class WearableAiAspService extends LifecycleService {
     //start Objectdetection system
     objectDetectionSystem = new ObjectDetectionSystem(getApplicationContext());
     objectDetectionSystem.setDataObservable(dataObservable);
+
+    //start contextual search system
+    contextualSearchSystem = new ContextualSearchSystem();
+    contextualSearchSystem.setDataObservable(dataObservable);
+
     //start voice command server to parse transcript for voice command
     voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
 

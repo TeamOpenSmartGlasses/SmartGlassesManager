@@ -5,7 +5,7 @@ import sys
 import os
 
 logging.basicConfig(stream=sys.stderr)
-sys.path.insert(0, '/var/www/html/wis/gnu_linux_box/backend')
+sys.path.insert(0, '/var/www/html/WearableIntelligenceSystem/gnu_linux_box/backend')
 
 print("****************** exec is {}".format(sys.executable))
 
