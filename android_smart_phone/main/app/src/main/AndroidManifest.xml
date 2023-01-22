@@ -52,11 +52,5 @@
               android:resource="@xml/file_provider" />
       </provider>
 
-<!--      <meta-data android:name="cameraFacingFront" android:value="${cameraFacingFront}"/>-->
-<!--      <meta-data android:name="binaryGraphName" android:value="${binaryGraphName}"/>-->
-<!--      <meta-data android:name="inputVideoStreamName" android:value="${inputVideoStreamName}"/>-->
-<!--      <meta-data android:name="outputVideoStreamName" android:value="${outputVideoStreamName}"/>-->
-<!--      <meta-data android:name="flipFramesVertically" android:value="${flipFramesVertically}"/>-->
-<!--      <meta-data android:name="converterNumBuffers" android:value="${converterNumBuffers}"/>-->
   </application>
 </manifest>

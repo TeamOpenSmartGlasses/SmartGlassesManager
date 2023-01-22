@@ -26,7 +26,8 @@ public class PhraseListAdapter extends RecyclerView.Adapter<PhraseListAdapter.Ph
         private PhraseViewHolder(View itemView) {
             super(itemView);
             phraseItemView = itemView.findViewById(R.id.textView);
-            itemView.setOnClickListener(this);
+            //disable clicking transcripts
+            //itemView.setOnClickListener(this);
         }
 
         @Override

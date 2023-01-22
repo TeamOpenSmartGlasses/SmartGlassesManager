@@ -193,23 +193,6 @@ class ASGRepresentative {
         }
     }
 
-    public void sendPovImage(byte [] img, long imageId, long imageTime){
-        String encodedImage = Base64.encodeToString(img, Base64.DEFAULT);
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.POV_IMAGE);
-            commandResponseObject.put(MessageTypes.JPG_BYTES_BASE64, encodedImage);
-            commandResponseObject.put(MessageTypes.TIMESTAMP, imageTime);
-            commandResponseObject.put(MessageTypes.IMAGE_ID, imageId);
-
-            //send the image to everyone else, so they can process it if they want it
-            dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
     public void sendSearchEngineResults(JSONObject results){
         try{
             //build json object to send command result
@@ -513,43 +496,11 @@ class ASGRepresentative {
                 if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])){ //heart beat id tag
                     outbound_heart_beats--;
                 } else if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //an ack id
-                } else if ((b1 == img_id[0]) && (b2 == img_id[1])){ //an img id
-                    if (raw_data != null) {
-                        //remember the time we received it
-                        long imageTime = System.currentTimeMillis();
-
-                        //ping back the client to let it know we received the message
-                        sendBytes(ack_id, null);
-
-                        handleImage(raw_data, imageTime);
-                    }
                 } else {
                     break;
                 }
             }
             throwBrokenSocket();
-        }
-    }
-
-    //    public void handleImage(String raw_data_b64, long imageTime){
-    //        //convert to jpg
-    //        byte [] raw_data = Base64.decode(raw_data_b64, Base64.DEFAULT);
-    public void handleImage(byte [] raw_data, long imageTime){
-        //convert to bitmap
-        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
-
-        //save and process 1 image at set frequency
-        long currTime = System.currentTimeMillis();
-        if (((currTime - lastImageSave) / 1000) >= (1 / imageSaveFrequency)){ // divide by 1000 to convert to fps (per second) instead of per millisecond
-            //save image
-            Long imageId = FileUtils.savePicture(context, raw_data, imageTime, mMediaFileRepository);
-            if (imageId == null){
-                return;
-            }
-            lastImageSave = currTime;
-
-            //send to everyone else
-            sendPovImage(raw_data, imageId, imageTime);
         }
     }
 

@@ -13,7 +13,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
@@ -88,18 +87,15 @@ public class MainActivity extends AppCompatActivity {
         unbindWearableAiAspService();
     }
 
-   public void stopWearableAiService() {
-//       Log.d(TAG, "Kill all the children of service");
-//       unbindWearableAiAspService();
-
-       Log.d(TAG, "Stopping WearableAI service");
+    public void stopWearableAiService() {
+        Log.d(TAG, "Stopping WearableAI service");
         unbindWearableAiAspService();
 
         if (!isMyServiceRunning(WearableAiAspService.class)) return;
         Intent stopIntent = new Intent(this, WearableAiAspService.class);
         stopIntent.setAction(WearableAiAspService.ACTION_STOP_FOREGROUND_SERVICE);
         startService(stopIntent);
-   }
+    }
 
    public void sendWearableAiServiceMessage(String message) {
         if (!isMyServiceRunning(WearableAiAspService.class)) return;
@@ -115,7 +111,8 @@ public class MainActivity extends AppCompatActivity {
         Intent startIntent = new Intent(this, WearableAiAspService.class);
         startIntent.setAction(WearableAiAspService.ACTION_START_FOREGROUND_SERVICE);
         startService(startIntent);
-    }
+       bindWearableAiAspService();
+   }
 
     //check if service is running
     private boolean isMyServiceRunning(Class<?> serviceClass) {
@@ -266,9 +263,6 @@ public class MainActivity extends AppCompatActivity {
                 if(R.id.memory_page == itemId){
                     Log.d(TAG, "Clicked memory tools");
                     navController.navigate(R.id.nav_memory_tools);
-                } else if (R.id.social_page == itemId){
-                    Log.d(TAG, "Clicked social tools");
-                    navController.navigate(R.id.nav_social_tools);
                 } else if (R.id.smart_glasses_debug_page == itemId){
                     Log.d(TAG, "Clicked smart glasses debug page");
                     navController.navigate(R.id.nav_smart_glasses_debug);

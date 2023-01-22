@@ -20,11 +20,6 @@
         android:icon="@drawable/outline_memory_white_24"
         android:title="Memory Tools"/>
     <item
-        android:id="@+id/social_page"
-        android:enabled="true"
-        android:icon="@drawable/outline_groups_white_24"
-        android:title="Social Tools"/>
-    <item
         android:id="@+id/smart_glasses_debug_page"
         android:enabled="true"
         android:icon="@drawable/outline_device_hub_white_24"

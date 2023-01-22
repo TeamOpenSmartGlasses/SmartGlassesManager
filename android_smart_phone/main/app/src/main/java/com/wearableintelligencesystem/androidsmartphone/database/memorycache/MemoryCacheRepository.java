@@ -5,22 +5,17 @@ package com.wearableintelligencesystem.androidsmartphone.database.memorycache;
 //https://github.com/stairs1/memory-expansion-tools
 
 import android.app.Application;
-import android.location.Location;
-import android.util.Log;
 
 import androidx.lifecycle.LiveData;
+
+import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.lang.InterruptedException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonEntity;
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 
 public class MemoryCacheRepository {
     private final String TAG = "WearableAi_MemoryCacheRepository";
@@ -33,7 +28,6 @@ public class MemoryCacheRepository {
         WearableAiRoomDatabase db = WearableAiRoomDatabase.getDatabase(application);
         mMemoryCacheDao = db.memoryCacheDao();
         mMemoryCacheTimesDao = db.memoryCacheTimesDao();
-//        mAllMemoryCaches = mMemoryCacheDao.getAllMemoryCaches();
     }
 
     public void destroy() {

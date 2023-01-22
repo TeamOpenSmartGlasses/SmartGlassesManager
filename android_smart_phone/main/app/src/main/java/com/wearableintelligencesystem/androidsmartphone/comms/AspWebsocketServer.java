@@ -116,6 +116,7 @@ public class AspWebsocketServer extends WebSocketServer {
 
     //receive observable to send and receive data
     public void setObservable(PublishSubject<JSONObject> observable){
+        Log.d(TAG, "called setObservable");
         dataObservable = observable;
         dataSub = dataObservable.subscribe(i -> handleDataStream(i));
     }
@@ -136,21 +137,11 @@ public class AspWebsocketServer extends WebSocketServer {
             } else if (type.equals(MessageTypes.VOICE_COMMAND_RESPONSE)){
 //                Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_RESPONSE, sending to ASG");
                 sendJson(data);
-            } else if (type.equals(MessageTypes.FACE_SIGHTING_EVENT)){
-                Log.d(TAG, "AspWebsocketServer got FACE_SIGHTING_EVENT, sending to ASG");
-                sendJson(data);
             } else if (type.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
                 Log.d(TAG, "AspWebsocketServer got SEARCH_ENGINE_RESULT, sending to ASG");
                 sendJson(data);
             } else if (type.equals(MessageTypes.ACTION_SWITCH_MODES)){
                 Log.d(TAG, "AspWebsocketServer got ACTION_SWITCH_MODES, sending to ASG");
-                sendJson(data);
-            } else if (type.equals(MessageTypes.VISUAL_SEARCH_RESULT)){
-                Log.d(TAG, "AspWebsocketServer got VISUAL_SEARCH_RESULT, sending to ASG");
-                sendJson(data);
-            }
-            else if (type.equals(MessageTypes.OBJECT_TRANSLATION_RESULT)){
-//                Log.d(TAG, "AspWebsocketServer got OBJECT_TRANSLATE_RESULT, sending to ASG");
                 sendJson(data);
             }else if (type.equals(MessageTypes.REFERENCE_SELECT_REQUEST)){
                 Log.d(TAG, "AspWebsocketServer got REFERENCE_SELECT_REQUEST, sending to ASG");
@@ -173,6 +164,7 @@ public class AspWebsocketServer extends WebSocketServer {
         Log.d(TAG, "destroying");
         connected = 0;
         dataSub.dispose();
+        dataSub = null;
 
         try{
             stop(400);
