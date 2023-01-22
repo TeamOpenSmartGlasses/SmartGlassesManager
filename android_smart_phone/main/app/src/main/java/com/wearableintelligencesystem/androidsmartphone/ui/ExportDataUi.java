@@ -3,26 +3,20 @@ package com.wearableintelligencesystem.androidsmartphone.ui;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
-
-import androidx.core.content.FileProvider;
-import androidx.core.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
+import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -31,23 +25,15 @@ import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.datepicker.MaterialPickerOnPositiveButtonClickListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.opencsv.CSVWriter;
-import com.wearableintelligencesystem.androidsmartphone.MainActivity;
 import com.wearableintelligencesystem.androidsmartphone.R;
-import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileEntity;
-import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonEntity;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
-import com.wearableintelligencesystem.androidsmartphone.facialrecognition.FaceRecDbUtils;
-import com.wearableintelligencesystem.androidsmartphone.utils.BitmapJavaUtils;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class ExportDataUi extends Fragment {
     private  final String TAG = "WearableAi_ExportDataUiFragment";
@@ -56,7 +42,6 @@ public class ExportDataUi extends Fragment {
 
     private NavController navController;
     private PhraseRepository mPhraseRepository;
-    private List<PersonEntity> unknownPeople;
 
     private MaterialDatePicker materialDatePicker;
     private Long startDate;
@@ -183,13 +168,6 @@ public class ExportDataUi extends Fragment {
         alert.setCancelable(false);
 
         alert.setNegativeButton("Cancel", (dialog, which) -> {
-        });
-
-        alert.setPositiveButton("Done", (dialog, which) -> {
-            Log.d(TAG, "HIT DONE, SAVING FACE");
-            String personName = etPersonName.getText().toString();
-            long id = unknownPeople.get(0).getPersonId();
-            Log.d(TAG, "personId in face rec ui: " + id);
         });
 
         AlertDialog dialog = alert.create();

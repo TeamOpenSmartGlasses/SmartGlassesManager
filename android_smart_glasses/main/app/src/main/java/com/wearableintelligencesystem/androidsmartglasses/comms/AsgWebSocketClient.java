@@ -156,7 +156,7 @@ public class AsgWebSocketClient extends WebSocketClient {
         Log.d(TAG, "onClose called");
         connected = 0;
         if (dataSubscriber != null) {
-            Log.d(TAG, "displose data subscriber");
+            Log.d(TAG, "dispose data subscriber");
             dataSubscriber.dispose();
         }
 

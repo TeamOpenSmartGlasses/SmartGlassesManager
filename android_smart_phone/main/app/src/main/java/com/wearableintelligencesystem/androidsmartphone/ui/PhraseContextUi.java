@@ -28,15 +28,8 @@ import android.graphics.BitmapFactory;
 //bitmap utils
 import com.wearableintelligencesystem.androidsmartphone.comms.RestServerComms;
 import com.wearableintelligencesystem.androidsmartphone.comms.VolleyCallback;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonEntity;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonViewModel;
 import com.wearableintelligencesystem.androidsmartphone.utils.BitmapJavaUtils;
 
-//date/time
-//import org.threeten.bp.LocalDateTime;
-//import org.threeten.bp.format.DateTimeFormatter;
-//import org.threeten.bp.Instant;
-//import org.threeten.bp.ZoneId;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.Instant;
@@ -71,7 +64,6 @@ public class PhraseContextUi extends Fragment {
     private VoiceCommandViewModel mVoiceCommandViewModel;
     private MediaFileViewModel mMediaFileViewModel;
     private PhraseViewModel mPhraseViewModel;
-    private PersonViewModel mPersonViewModel;
 
     private Phrase mainPhrase;
     private MediaFileEntity mainImage;
@@ -112,7 +104,6 @@ public class PhraseContextUi extends Fragment {
         mVoiceCommandViewModel = new ViewModelProvider(this).get(VoiceCommandViewModel.class);
         mMediaFileViewModel = new ViewModelProvider(this).get(MediaFileViewModel.class);
         mPhraseViewModel = new ViewModelProvider(this).get(PhraseViewModel.class);
-        mPersonViewModel = new ViewModelProvider(this).get(PersonViewModel.class);
 
         //populate the image gallery with images
         LinearLayout imageGallery = view.findViewById(R.id.image_gallery);
@@ -138,37 +129,35 @@ public class PhraseContextUi extends Fragment {
         long phraseTime = mainPhrase.getTimestamp();
         long startTime = phraseTime - (personIntervalSeconds * 1000);
         long endTime = phraseTime + (personIntervalSeconds * 1000);
-        List<PersonEntity> peopleSeen = mPersonViewModel.getAllPersonsSnapshotTimePeriod(startTime, endTime);
-        if (peopleSeen != null){
-            updatePeopleSeen(peopleSeen);
-        }
 
         for (int i = (-1 * numMemories); i < numMemories; i++){ //number should be odd so there is a center image, even number on both sides
             //get image
             MediaFileEntity currentImage = mMediaFileViewModel.getClosestMediaFileSnapshot("image", mainPhrase.getTimestamp() + (i * memInterval));
 
-            //put new image into horizontally scrolling linear layout
-            View imageView = localInflater.inflate(R.layout.image_item, imageGallery, false);
+            if (currentImage != null) {
+                //put new image into horizontally scrolling linear layout
+                View imageView = localInflater.inflate(R.layout.image_item, imageGallery, false);
 
-            //get the image view
-            ImageView imageViewImage = imageView.findViewById(R.id.imageView);
-            //imageViewImage.setImageResource(R.drawable.elon);
-            //set the image of the image view
-            String imagePath = currentImage.getLocalPath();
-            Bitmap imageBitmap = BitmapJavaUtils.loadImageFromStorage(imagePath);
-            if (imageBitmap != null){
-                imageViewImage.setImageBitmap(imageBitmap);
-            } else {
-                continue;
+                //get the image view
+                ImageView imageViewImage = imageView.findViewById(R.id.imageView);
+                //imageViewImage.setImageResource(R.drawable.elon);
+                //set the image of the image view
+                String imagePath = currentImage.getLocalPath();
+                Bitmap imageBitmap = BitmapJavaUtils.loadImageFromStorage(imagePath);
+                if (imageBitmap != null) {
+                    imageViewImage.setImageBitmap(imageBitmap);
+                } else {
+                    continue;
+                }
+
+                //set text of the image item
+                TextView imageViewTextView = imageView.findViewById(R.id.textView);
+                String prettyTime = getPrettyDate(currentImage.getStartTimestamp());
+                imageViewTextView.setText(prettyTime);
+
+                //add the new image item to the gallery
+                imageGallery.addView(imageView);
             }
-
-            //set text of the image item
-            TextView imageViewTextView = imageView.findViewById(R.id.textView);
-            String prettyTime = getPrettyDate(currentImage.getStartTimestamp());
-            imageViewTextView.setText(prettyTime);
-
-            //add the new image item to the gallery
-            imageGallery.addView(imageView);
         }
 
         //after it's created, scroll to the center
@@ -232,26 +221,6 @@ public class PhraseContextUi extends Fragment {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm:ssa");
         String prettyTime = date.format(formatter);
         return prettyTime;
-    }
-
-    private void updatePeopleSeen(List<PersonEntity> peopleSeen){
-        String displayString = "";
-        List<Long> personIdsSeen = new ArrayList<Long>();
-        for (PersonEntity pe : peopleSeen){
-            Log.d(TAG, "PERSON:");
-            Log.d(TAG, "---argVal: " + pe.getArgValue());
-            Log.d(TAG, "---argKey: " + pe.getArgKey());
-            Log.d(TAG, "---personId: " + pe.getPersonId());
-            long personId = pe.getPersonId();
-            if (! personIdsSeen.contains(personId)){
-                    String displayName = mPersonViewModel.getPersonsName(personId);
-                if ((!displayName.equals("deleted")) && (!displayName.equals("unknown")) && (!displayName.equals("confirmed_unknown"))) {
-                    displayString = displayString + "- " + displayName + "\n";
-                    personIdsSeen.add(personId);
-                }
-            }
-        }
-        personListTextView.setText(displayString);
     }
 
 }

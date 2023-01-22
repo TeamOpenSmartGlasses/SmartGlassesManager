@@ -3,6 +3,7 @@ package com.wearableintelligencesystem.androidsmartphone.ui;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,6 +55,7 @@ public class SmartGlassesDebugUi extends Fragment {
     }
 
     public void sendTestCard(){
+        Log.d(TAG, "SENDING TEST CARD FROM SGDUI");
         ((MainActivity)getActivity()).mService.sendTestCard(testCardTitle, testCardContent, testCardImg);
     }
 
