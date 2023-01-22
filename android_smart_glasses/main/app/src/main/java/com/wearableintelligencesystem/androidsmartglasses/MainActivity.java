@@ -1,5 +1,6 @@
 package com.wearableintelligencesystem.androidsmartglasses;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -7,48 +8,41 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.text.method.ScrollingMovementMethod;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-
-import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.wearableintelligencesystemandroidsmartglasses.BuildConfig;
 import com.example.wearableintelligencesystemandroidsmartglasses.R;
-import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -57,35 +51,20 @@ public class MainActivity extends AppCompatActivity {
 
     public static String TAG = "WearableAiDisplay_MainActivity";
 
+    public boolean binding = false; //should we be binding to the service?
+
     public long commandResolveTime = 8000;
     public long searchEngineResultTimeout = 16000;
 
-    public long lastFaceUpdateTime = 0;
-    public long faceUpdateInterval = 5000; //milliseconds
-
+    //local ID strings for UI updating
     public final static String ACTION_UI_UPDATE = "com.example.wearableaidisplaymoverio.UI_UPDATE";
     public final static String ACTION_TEXT_REFERENCE = "com.example.wearableaidisplaymoverio.ACTION_TEXT_REFERENCE";
     public final static String PHONE_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.PHONE_CONN_STATUS_UPDATE";
     public final static String WIFI_CONN_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.WIFI_CONN_STATUS_UPDATE";
     public final static String BATTERY_CHARGING_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_CHARGIN_STATUS_UPDATE";
     public final static String BATTERY_LEVEL_STATUS_UPDATE = "com.example.wearableaidisplaymoverio.BATTERY_LEVEL_STATUS_UPDATE";
-
     public final static String VOICE_TEXT_RESPONSE = "VOICE_TEXT_RESPONSE";
     public final static String VOICE_TEXT_RESPONSE_TEXT = "VOICE_TEXT_RESPONSE_TEXT";
-
-    //current person recognized's names
-    public ArrayList<String> faceNames = new ArrayList<String>();
-
-    //social UI
-    TextView messageTextView;
-    TextView eyeContactMetricTextView;
-    TextView eyeContact5MetricTextView;
-    TextView eyeContact30MetricTextView;
-    TextView facialEmotionMetricTextView;
-    TextView facialEmotion5MetricTextView;
-    TextView facialEmotion30MetricTextView;
-    Button toggleCameraButton;
-    private PieChart chart;
 
     //text list ui
     ArrayList<String> textListHolder = new ArrayList<>();
@@ -94,11 +73,6 @@ public class MainActivity extends AppCompatActivity {
     //text list ui
     private String textBlockHolder = "";
     TextView textBlockView;
-
-    //metrics
-    float eye_contact_30 = 0;
-    String facial_emotion_30 = "";
-    String facial_emotion_5 = "";
 
     //save current mode
     String curr_mode = "";
@@ -136,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
             StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
                     .detectAll()
                     .penaltyLog()
-                    .penaltyDeath()
                     .build());
         }
 
@@ -164,8 +137,37 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate switchMode");
         switchMode(MessageTypes.MODE_HOME);
 
-        //create the WearableAI service if it isn't already running
-        startWearableAiService();
+        //setup permissions
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    1234);
+        } else {
+            //create the WearableAI service if it isn't already running
+            startWearableAiService();
+        }
+
+    }
+
+    //handle permissions
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1234: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("TAG", "User granted audio permissions.");
+                    startWearableAiService();
+                } else {
+                    Log.d("TAG", "permission denied by user");
+                }
+                return;
+            }
+        }
     }
 
     private void turnOffScreen(){
@@ -310,15 +312,6 @@ public class MainActivity extends AppCompatActivity {
                 setupTextBlock();
                 modeDisplayName = "TextBlock";
                 break;
-//            case MessageTypes.MODE_WEARABLE_FACE_RECOGNIZER:
-//                showWearableFaceRecognizer();
-//                modeDisplayName = "FaceRec.";
-//                break;
-            case MessageTypes.MODE_VISUAL_SEARCH:
-                //setupVisualSearchViewfinder();
-                navController.navigate(R.id.nav_visual_search);
-                modeDisplayName = "VisualSearch";
-                break;
 //            case MessageTypes.MODE_REFERENCE_GRID:
 //                setContentView(R.layout.image_gridview);
 //                modeDisplayName = "Ref.Grid";
@@ -350,21 +343,6 @@ public class MainActivity extends AppCompatActivity {
         //registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
     }
 
-    private void showWearableFaceRecognizer(){
-        setContentView(R.layout.wearable_face_recognizer);
-        TextView faceRecTitle = findViewById(R.id.face_rec_title);
-        faceRecTitle.setText("Face detected!\nName: " + faceNames.get(0));
-
-//        //for now, show for n seconds and then return to llc
-//        int show_time = 3000; //milliseconds
-//        Handler handler = new Handler();
-//        handler.postDelayed(new Runnable() {
-//            public void run() {
-//                setupLlcUi();
-//            }
-//        }, show_time);
-    }
-
     //generic way to set the current enumerated list of strings and display them, scrollably, on the main UI
     private void setupTextList() {
         //live life captions mode gui setup
@@ -393,23 +371,6 @@ public class MainActivity extends AppCompatActivity {
         textBlockView.setMovementMethod(new ScrollingMovementMethod());
         textBlockView.setSelected(true);
     }
-    private void setupSocialIntelligenceUi() {
-        //social mode ui setup
-        setContentView(R.layout.social_intelligence_activity);
-        messageTextView = (TextView) findViewById(R.id.message);
-        eyeContactMetricTextView = (TextView) findViewById(R.id.eye_contact_metric);
-        eyeContact5MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_5);
-        eyeContact30MetricTextView = (TextView) findViewById(R.id.eye_contact_metric_30);
-        facialEmotionMetricTextView = (TextView) findViewById(R.id.facial_emotion_metric);
-        facialEmotion5MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_5);
-        facialEmotion30MetricTextView = (TextView) findViewById(R.id.facial_emotion_metric_30);
-
-        //handle chart
-        chart = findViewById(R.id.stress_confidence_chart);
-        chart.setBackgroundColor(Color.BLACK);
-        moveOffScreen(); //not sure what this does really
-        setupChart();
-    }
 
     private void blankUi() {
         turnOffScreen();
@@ -423,7 +384,9 @@ public class MainActivity extends AppCompatActivity {
 
         registerReceiver(mComputeUpdateReceiver, makeComputeUpdateIntentFilter());
 
-        bindWearableAiService();
+        if (binding) {
+            bindWearableAiService();
+        }
     }
 
     private void teardownHud() {
@@ -437,22 +400,12 @@ public class MainActivity extends AppCompatActivity {
 
         teardownHud();
 
+        if (binding) {
         unbindWearableAiService();
+        }
 
         //unregister receiver
         unregisterReceiver(mComputeUpdateReceiver);
-    }
-
-    public void setGuiMessage(String message, TextView tv, String postfix) {
-        //see if the message is generic or one of the metrics to be displayed
-        messageTextView.setText("");
-        tv.setText(message + postfix);
-    }
-
-    public void receiveFacialEmotionMessage(String message) {
-        //see if the message is generic or one of the metrics to be displayed
-        messageTextView.setText("");
-        facialEmotionMetricTextView.setText(message);
     }
 
     private static IntentFilter makeComputeUpdateIntentFilter() {
@@ -521,172 +474,9 @@ public class MainActivity extends AppCompatActivity {
                     wifiConnected = intent.getBooleanExtra(WIFI_CONN_STATUS_UPDATE, false);
                     updateWifiHud();
                 }
-        } else if (curr_mode.equals(MessageTypes.MODE_SOCIAL_MODE) && ASPClientSocket.ACTION_RECEIVE_MESSAGE.equals(action)) {
-                if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE)) {
-                    String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE);
-                    setGuiMessage(message, eyeContact5MetricTextView, "%");
-                } else if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_30_MESSAGE)) {
-                    String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_30_MESSAGE);
-                    setGuiMessage(message, eyeContact30MetricTextView, "%");
-                    eye_contact_30 = Float.parseFloat(message);
-                    setChartData();
-                } else if (intent.hasExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE)) {
-                    String message = intent.getStringExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE);
-                    setGuiMessage(message, eyeContactMetricTextView, "%");
-                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE)) {
-                    String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE);
-                    setGuiMessage(message, facialEmotion5MetricTextView, "");
-                    facial_emotion_5 = message;
-                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE)) {
-                    String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE);
-                    setGuiMessage(message, facialEmotion30MetricTextView, "");
-                    facial_emotion_30 = message;
-                } else if (intent.hasExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE)) {
-                    String message = intent.getStringExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE);
-                    setGuiMessage(message, facialEmotionMetricTextView, "");
-                }
-            } else if (ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST.equals(action)) {
-                try {
-                    JSONObject affective_mem = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST));
-                    textListHolder.clear();
-                    int i = 0;
-                    while (true) {
-                        if (!affective_mem.has(Integer.toString(i))) {
-                            break;
-                        }
-                        String transcript = affective_mem.getString(Integer.toString(i));
-                        textListHolder.add(transcript);
-                        i++;
-                    }
-                    switchMode(MessageTypes.MODE_TEXT_LIST);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            } else if (ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY.equals(action)) {
-                try {
-                    JSONObject affective_query_result = new JSONObject(intent.getStringExtra(ASPClientSocket.AFFECTIVE_SEARCH_QUERY_RESULT));
-                    textBlockHolder = "";
-                    textBlockHolder = "Most " + affective_query_result.getString("emotion") + " of last conversation: \n\n" + affective_query_result.getString("phrase");
-                    switchMode(MessageTypes.MODE_TEXT_BLOCK);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            } else if (MessageTypes.FACE_SIGHTING_EVENT.equals(action)) {
-                String currName = intent.getStringExtra(MessageTypes.FACE_NAME);
-                faceNames.clear();
-                faceNames.add(currName);
-                long timeSinceLastFaceUpdate = System.currentTimeMillis() - lastFaceUpdateTime;
-                if (timeSinceLastFaceUpdate > faceUpdateInterval){
-                    Toast.makeText(MainActivity.this, "Saw: " + currName, Toast.LENGTH_SHORT).show();
-                    lastFaceUpdateTime = System.currentTimeMillis();
-                }
-                //switchMode(MessageTypes.MODE_WEARABLE_FACE_RECOGNIZER);
-            } else if (GlboxClientSocket.ACTION_AFFECTIVE_SUMMARY_RESULT.equals(action)) {
-                String str_data = intent.getStringExtra(GlboxClientSocket.AFFECTIVE_SUMMARY_RESULT);
-                textBlockHolder = str_data;
-                switchMode(MessageTypes.MODE_TEXT_BLOCK);
             }
         }
     };
-
-
-    //stuff for the charts
-    private void setChartData() {
-        float max = 100;
-        ArrayList<PieEntry> values = new ArrayList<>();
-
-        //temporary method of deducing stress
-        float input = (max - eye_contact_30);
-        if ((facial_emotion_30 == "Happy") || (facial_emotion_5 == "Happy")) {
-            input = Math.max(0, input - 20);
-        }
-
-//        for (int i = 0; i < count; i++) {
-//            values.add(new PieEntry((float) ((Math.random() * range) + range / 5), "Stress"));
-//        }
-        values.add(new PieEntry((float) (input), ""));
-        values.add(new PieEntry((float) (max - input), ""));
-
-        PieDataSet dataSet = new PieDataSet(values, "Election Results");
-        dataSet.setSliceSpace(3f);
-        dataSet.setSelectionShift(5f);
-        dataSet.setDrawValues(false);
-
-        //dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
-        dataSet.setColors(Color.RED, Color.BLACK);
-        //dataSet.setSelectionShift(0f);
-
-        PieData data = new PieData(dataSet);
-        data.setValueFormatter(new PercentFormatter());
-        data.setValueTextSize(24f);
-        data.setValueTextColor(Color.BLACK);
-        //data.setValueTypeface(tfLight);
-        chart.setData(data);
-        //chart.animateY(1400, Easing.EaseInOutQuad);
-
-        chart.invalidate();
-    }
-
-    private void moveOffScreen() {
-
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-
-        int height = displayMetrics.heightPixels;
-
-        int offset = (int) (height * 0.65); /* percent to move */
-
-        RelativeLayout.LayoutParams rlParams =
-                (RelativeLayout.LayoutParams) chart.getLayoutParams();
-        rlParams.setMargins(0, 0, 0, -offset);
-        chart.setLayoutParams(rlParams);
-    }
-
-    private void setupChart() {
-        chart.setUsePercentValues(false);
-        chart.getDescription().setEnabled(false);
-
-        //chart.setCenterTextTypeface(tfLight);
-
-        chart.setDrawHoleEnabled(true);
-        chart.setHoleColor(Color.BLACK);
-
-        chart.setTransparentCircleColor(Color.BLACK);
-        chart.setTransparentCircleAlpha(110);
-
-        chart.setHoleRadius(58f);
-        chart.setTransparentCircleRadius(61f);
-
-        chart.setDrawCenterText(true);
-
-        chart.setRotationEnabled(false);
-        chart.setHighlightPerTapEnabled(false);
-
-        chart.setMaxAngle(180f); // HALF CHART
-        chart.setRotationAngle(180f);
-        chart.setCenterTextOffset(0, -20);
-        chart.setCenterTextColor(Color.WHITE);
-        chart.setCenterTextSize(28);
-        chart.setCenterText("Stress");
-
-        setChartData();
-
-        chart.animateY(1400, Easing.EaseInOutQuad);
-
-//        Legend l = chart.getLegend();
-//        l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
-//        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
-//        l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
-//        l.setDrawInside(false);
-//        l.setXEntrySpace(7f);
-//        l.setYEntrySpace(0f);
-//        l.setYOffset(0f);
-//
-//        // entry label styling
-        chart.setEntryLabelColor(Color.BLACK);
-        //chart.setEntryLabelTypeface(tfRegular);
-        chart.setEntryLabelTextSize(19f);
-    }
 
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection connection = new ServiceConnection() {
@@ -718,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
         final Intent nintent = new Intent();
         nintent.setAction(MessageTypes.SG_TOUCHPAD_EVENT);
         nintent.putExtra(MessageTypes.SG_TOUCHPAD_KEYCODE, keyCode);
-        this.sendBroadcast(nintent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
+        this.sendBroadcast(nintent);
 
         switch (keyCode) {
             case KeyEvent.KEYCODE_ENTER:
@@ -752,7 +542,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void unbindWearableAiService() {
-        // Bind to that service
+        // Unind to that service
         unbindService(connection);
     }
 
@@ -808,6 +598,7 @@ public class MainActivity extends AppCompatActivity {
     public void stopWearableAiService() {
         Log.d(TAG, "Stopping WearableAI service");
         unbindWearableAiService();
+        binding = false;
 
         if (!isMyServiceRunning(WearableAiService.class)) return;
         Intent stopIntent = new Intent(this, WearableAiService.class);
@@ -825,6 +616,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void startWearableAiService() {
         Log.d(TAG, "Starting wearableAiService");
+        binding = true;
         if (isMyServiceRunning(WearableAiService.class)) return;
         Intent startIntent = new Intent(this, WearableAiService.class);
         startIntent.setAction(WearableAiService.ACTION_START_FOREGROUND_SERVICE);
