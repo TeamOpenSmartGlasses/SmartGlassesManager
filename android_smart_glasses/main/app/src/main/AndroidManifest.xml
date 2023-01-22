@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.wearableintelligencesystemandroidsmartglasses">
 
-    <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -34,20 +33,11 @@
         </activity>
         <service
             android:name="com.wearableintelligencesystem.androidsmartglasses.WearableAiService"
-            android:label="CameraService" >
+            android:label="WearableAiService" >
         </service>
         <service android:name="com.wearableintelligencesystem.androidsmartglasses.sensors.MuseService" android:enabled="true"/>
 
         <service android:name="com.wearableintelligencesystem.androidsmartglasses.archive.AudioService" android:enabled="true" android:exported="true"></service>
-
-        <!-- Receive Wi-Fi connection state changes -->
-<!--        <receiver android:name=".comms.WifiUtils$WifiReceiver">-->
-<!--            <intent-filter>-->
-<!--                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />-->
-<!--&lt;!&ndash;                <action android:name="android.net.wifi.STATE_CHANGE" />&ndash;&gt;-->
-<!--            </intent-filter>-->
-<!--        </receiver>-->
-
 
     </application>
 

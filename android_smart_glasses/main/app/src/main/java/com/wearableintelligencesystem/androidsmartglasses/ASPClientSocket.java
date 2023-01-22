@@ -79,19 +79,8 @@ public class ASPClientSocket {
     static Thread SendThread = null;
     static Thread WebSocketThread = null;
     static private DataOutputStream output;
-    //ids of message types
+
     //socket message ids
-    //metrics
-    static final byte [] eye_contact_info_id_5 = {0x12, 0x01};
-    static final byte [] eye_contact_info_id_30 = {0x12, 0x02};
-    static final byte [] eye_contact_info_id_300 = {0x12, 0x03};
-    static final byte [] facial_emotion_info_id_5 = {0x13, 0x01};
-    static final byte [] facial_emotion_info_id_30 = {0x13, 0x02};
-    static final byte [] facial_emotion_info_id_300 = {0x13, 0x03};
-
-    static final byte [] affective_conversation = {0x13, 0x38};
-
-    static final byte [] img_id = {0x01, 0x10}; //id for images
     static final byte [] heart_beat_id = {0x19, 0x20}; //id for heart beat
     static final byte [] ack_id = {0x13, 0x37};
 
@@ -297,11 +286,6 @@ public class ASPClientSocket {
         }
     }
 
-    //returns how many images are in the buffer
-    public static int getImageBuf(){
-        return image_buf_size;
-    }
-
     public int getConnected(){
         return mConnectState;
     }
@@ -433,42 +417,6 @@ public class ASPClientSocket {
                 } else if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])) { //heart beat check if alive
                     //got heart beat, respond with heart beat
                     clientsocket.sendBytes(heart_beat_id, null, "heartbeat");
-                } else if ((b1 == eye_contact_info_id_5[0]) && (b2 == eye_contact_info_id_5[1])) { //we got a message with information to display
-                    String message = Integer.toString(my_bb_to_int_be(raw_data));
-                    final Intent intent = new Intent();
-                    intent.putExtra(ASPClientSocket.EYE_CONTACT_5_MESSAGE, message);
-                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                } else if ((b1 == eye_contact_info_id_30[0]) && (b2 == eye_contact_info_id_30[1])) { //we got a message with information to display
-                    String message = Integer.toString(my_bb_to_int_be(raw_data));
-                    final Intent intent = new Intent();
-                    intent.putExtra(ASPClientSocket.EYE_CONTACT_30_MESSAGE, message);
-                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                } else if ((b1 == eye_contact_info_id_300[0]) && (b2 == eye_contact_info_id_300[1])) { //we got a message with information to display
-                    String message = Integer.toString(my_bb_to_int_be(raw_data));
-                    final Intent intent = new Intent();
-                    intent.putExtra(ASPClientSocket.EYE_CONTACT_300_MESSAGE, message);
-                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                } else if ((b1 == facial_emotion_info_id_5[0]) && (b2 == facial_emotion_info_id_5[1])) {
-                    String message = new String(raw_data);
-                    final Intent intent = new Intent();
-                    intent.putExtra(ASPClientSocket.FACIAL_EMOTION_5_MESSAGE, message);
-                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                }  else if ((b1 == facial_emotion_info_id_30[0]) && (b2 == facial_emotion_info_id_30[1])) {
-                    String message = new String(raw_data);
-                    final Intent intent = new Intent();
-                    intent.putExtra(ASPClientSocket.FACIAL_EMOTION_30_MESSAGE, message);
-                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-                }  else if ((b1 == facial_emotion_info_id_300[0]) && (b2 == facial_emotion_info_id_300[1])) {
-                    String message = new String(raw_data);
-                    final Intent intent = new Intent();
-                    intent.putExtra(ASPClientSocket.FACIAL_EMOTION_300_MESSAGE, message);
-                    intent.setAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
-                    mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
                 } else {
                     System.out.println("BAD SIGNAL, RECONNECT");
                     mConnectState = 0;
@@ -546,44 +494,10 @@ public class ASPClientSocket {
                 intent.putExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT, intermediate_transcript);
                 intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-//                Log.d(TAG, "I. Transcript is: " + intermediate_transcript);
             } else if (typeOf.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                 final Intent intent = new Intent();
                 intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, data.toString());
                 intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
-                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-//                Log.d(TAG, "F. Transcript is: " + data.getString(MessageTypes.TRANSCRIPT_TEXT));
-//            } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_RESPONSE)) {
-//                Log.d(TAG, "voice command result received");
-//                //boolean responseResult = data.getBoolean(MessageTypes.COMMAND_RESULT);
-//                String displayString = data.getString(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING);
-//                final Intent intent = new Intent();
-//                intent.putExtra(GlboxClientSocket.COMMAND_RESPONSE, displayString);
-//                //intent.putExtra(MessageTypes.COMMAND_RESULT, responseResult);
-//                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
-//                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-            } else if (typeOf.equals(MessageTypes.FACE_SIGHTING_EVENT)) {
-                final Intent intent = new Intent();
-                intent.setAction(MessageTypes.FACE_SIGHTING_EVENT);
-                intent.putExtra(MessageTypes.FACE_NAME, data.getString(MessageTypes.FACE_NAME));
-                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-            } else if (typeOf.equals("affective_mem_transcripts")) {
-                final Intent intent = new Intent();
-                intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
-                intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
-                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-            } else if (typeOf.equals("affective_conversation")) {
-                Log.d(TAG, data.toString());
-                //clientsocket.sendBytes(affective_conversation, data.toString().getBytes(), "affective_conversation");
-                //dataObservable.onNext(data);
-//                final Intent intent = new Intent();
-//                intent.putExtra(ASPClientSocket.AFFECTIVE_MEM_TRANSCRIPT_LIST, data.toString());
-//                intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_MEM_TRANSCRIPT_LIST);
-//                mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-            } else if (typeOf.equals("affective_search_query")) {
-                final Intent intent = new Intent();
-                intent.putExtra(ASPClientSocket.AFFECTIVE_SEARCH_QUERY_RESULT, data.toString());
-                intent.setAction(ASPClientSocket.ACTION_AFFECTIVE_SEARCH_QUERY);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             }
         } catch (JSONException e){
@@ -636,22 +550,6 @@ public class ASPClientSocket {
             uiUpdate.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.UI_UPDATE_ACTION);
             uiUpdate.put(MessageTypes.PHONE_CONNECTION_STATUS, connected);
             dataObservable.onNext(uiUpdate);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
-    public static void sendImage(byte [] image){
-        Log.d(TAG, "sendImage called");
-        long currTime = System.currentTimeMillis();
-        //build the object and send through web socket
-        String encodedImage = Base64.encodeToString(image, Base64.DEFAULT);
-        try{
-            JSONObject data = new JSONObject();
-            data.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.POV_IMAGE);
-            data.put(MessageTypes.JPG_BYTES_BASE64, encodedImage);
-            data.put(MessageTypes.TIMESTAMP, currTime);
-            dataObservable.onNext(data);
         } catch (JSONException e){
             e.printStackTrace();
         }
