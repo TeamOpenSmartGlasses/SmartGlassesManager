@@ -112,29 +112,6 @@ public class MxtTagBinsUi extends Fragment implements ItemClickListenerVoiceComm
         return inflater.inflate(R.layout.mxt_tag_bins_fragment, container, false);
     }
 
-//    @Override
-//    public void onSaveInstanceState(Bundle outState) {
-//        Log.d(TAG, "called on save instance state");
-////        outState.putParcelableArrayList(HEALTH_ITEMS, (ArrayList) mList);
-////        outState.putString(TITLE, mTitle);
-//    }
-//
-//    @Override
-//    public void onCreate(@Nullable Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        if(savedInstanceState != null){
-////            mList = savedInstanceState.getParcelableArrayList(HEALTH_ITEMS);
-////            mTitle = savedInstanceState.getString(TITLE);
-////            itemId = savedInstanceState.getInt(ID);
-////            mChoiceMode = savedInstanceState.getInt(CHOICE_MODE);
-//        }
-////        getActivity().setTitle(mTitle);
-////        adapter = (ListAdapter) new HealthAdapter(mList, getContext()).load(itemId);
-////
-//        //populate dropdown with tags
-//        populateTopMenu(view);
-//    }
-
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);

@@ -26,7 +26,7 @@ public class VoiceCommandEntityListAdapter extends RecyclerView.Adapter<VoiceCom
         private VoiceCommandEntityViewHolder(View itemView) {
             super(itemView);
             phraseItemView = itemView.findViewById(R.id.textView);
-            itemView.setOnClickListener(this);
+//            itemView.setOnClickListener(this);
         }
 
         @Override

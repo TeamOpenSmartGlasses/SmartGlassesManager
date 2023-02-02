@@ -93,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
     boolean batteryCharging = false;
 
     private Handler uiHandler;
+    private Handler clockHandler;
     private Handler navHandler;
 
     private NavController navController;
@@ -115,6 +116,9 @@ public class MainActivity extends AppCompatActivity {
 
         //setup ui handler
         uiHandler = new Handler();
+
+        //setup clock handler
+        clockHandler = new Handler();
 
         //setup nav handler
         navHandler = new Handler();
@@ -189,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
         //setup clock
         if (! clockRunning) {
             clockRunning = true;
-            uiHandler.post(new Runnable() {
+            clockHandler.post(new Runnable() {
                 public void run() {
                     // Default time format for current locale, with respect (on API 22+) to user's 12/24-hour
                     // settings. I couldn't find any simple way to respect it back to API 14.
@@ -199,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                     if (mClockTextView != null) {
                         mClockTextView.setText(prettyTime);
                     }
-                    uiHandler.postDelayed(this, 1000);
+                    clockHandler.postDelayed(this, 1000);
                 }
             });
         } else{
@@ -391,6 +395,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void teardownHud() {
         uiHandler.removeCallbacksAndMessages(null);
+        clockHandler.removeCallbacksAndMessages(null);
         clockRunning = false;
     }
 
@@ -401,7 +406,7 @@ public class MainActivity extends AppCompatActivity {
         teardownHud();
 
         if (binding) {
-        unbindWearableAiService();
+            unbindWearableAiService();
         }
 
         //unregister receiver
