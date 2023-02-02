@@ -45,24 +45,21 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /** Main service of WearableAI compute module android app. */
 public class WearableAiAspService extends LifecycleService {
-    // Service Binder given to clients
-    private final IBinder binder = new LocalBinder();
-
     private static final String TAG = "WearableAi_ASP_Service";
 
-    private static final String TAG_FOREGROUND_SERVICE = "FOREGROUND_SERVICE";
+    // Service Binder given to clients
+    private final IBinder binder = new LocalBinder();
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
-    public static final String ACTION_RUN_AFFECTIVE_MEM = "ACTION_RUN_AFFECTIVE_MEM";
 
     //our base language
     String baseLanguage = "english";
 
+    //tools for doing NLP, used for voice command system
     NlpUtils nlpUtils;
-
     public static List<NaturalLanguage> supportedLanguages = new ArrayList<NaturalLanguage>();
 
-    //handler for adv
+    //handler for advertising
     private Handler adv_handler;
 
     //speech recognition
@@ -72,12 +69,10 @@ public class WearableAiAspService extends LifecycleService {
     //Text to Speech
     private TextToSpeechSystem textToSpeechSystem;
 
-    //temp, update this on repeat and send to wearable to show connection is live
-    private int count = 10;
-
     //holds connection state
     private boolean mConnectionState = false;
 
+    //network details
     public int PORT_NUM = 8891;
     public DatagramSocket adv_socket;
     public String adv_key = "WearableAiCyborg";
@@ -91,7 +86,6 @@ public class WearableAiAspService extends LifecycleService {
 
     //database
     private PhraseRepository mPhraseRepository = null;
-    private List<Phrase> mAllPhrasesSnapshot;
     private VoiceCommandRepository mVoiceCommandRepository = null;
     private MemoryCacheRepository mMemoryCacheRepository = null;
     private MediaFileRepository mMediaFileRepository = null;

@@ -25,22 +25,24 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-/** Main activity of WearableAI compute module android app. */
+/** Main activity of WearableAI compute module android app. **/
+/** This provides a simple UI for users to connect and setup their glasses. This activity launches the service which does all of the work to communicate with glasses and third party apps. **/
 public class MainActivity extends AppCompatActivity {
-
     private  final String TAG = "WearableAi_MainActivity";
 
+    //handle the foreground service which does all of the important stuff
     public WearableAiAspService mService;
     boolean mBound = false;
 
-    //bottom nav bar
+    //UI - bottom nav bar
     private BottomNavigationView bottomNavigation;
     private NavController navController;
 
     //permissions
     //file storage and SMS permissions
-    public final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.SEND_SMS};
+    public final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
     public final int EXTERNAL_REQUEST = 138;
+
     //location permissions
     private int LOCATION_PERMISSION_CODE = 1;
     private int BACKGROUND_LOCATION_PERMISSION_CODE = 2;
@@ -64,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigation.setSelectedItemId(R.id.settings_page);
 
         //before service runs, get permissions
-        //requestForPermission(); //files
         checkPermission(); //location
 
         //start wearable ai service
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         Intent startIntent = new Intent(this, WearableAiAspService.class);
         startIntent.setAction(WearableAiAspService.ACTION_START_FOREGROUND_SERVICE);
         startService(startIntent);
-       bindWearableAiAspService();
+        bindWearableAiAspService();
    }
 
     //check if service is running
@@ -135,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
                 requestPermissions(EXTERNAL_PERMS, EXTERNAL_REQUEST);
             }
         }
-
         return isPermissionOn;
     }
 
