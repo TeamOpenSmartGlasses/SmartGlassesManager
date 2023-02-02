@@ -25,7 +25,6 @@ import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRe
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
-import com.wearableintelligencesystem.androidsmartphone.nlp.WearableReferencerAutocite;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
 import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
@@ -85,9 +84,6 @@ public class WearableAiAspService extends LifecycleService {
 
     //voice command system
     VoiceCommandServer voiceCommandServer;
-
-    //nlp system
-    private WearableReferencerAutocite mWearableReferencerAutocite;
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
@@ -160,10 +156,6 @@ public class WearableAiAspService extends LifecycleService {
 
         //start voice command server to parse transcript for voice command
         voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
-
-        //start nlp
-        mWearableReferencerAutocite = new WearableReferencerAutocite(this);
-        mWearableReferencerAutocite.setObservable(dataObservable);
     }
 
     public void openSocket() {

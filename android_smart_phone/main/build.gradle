@@ -5,9 +5,6 @@ buildscript {
         google()
         mavenCentral()
         jcenter()
-//        "https://jcenter.bintray.com",
-//        "https://dl.google.com/dl/android/maven2",
-//        "https://oss.jfrog.org/libs-snapshot",
     }
     dependencies {
         classpath "com.android.tools.build:gradle:7.0.2"
