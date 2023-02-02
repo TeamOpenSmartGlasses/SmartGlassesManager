@@ -143,8 +143,8 @@ public class WearableAiService extends Service {
             @Override
             public void onSuccess(boolean connected) {
                 wifiConnected = connected;
-                if (!wifiConnected){ //if wifi connects, then phone must disconnect too
-                    phoneConnected = false;
+                if (!wifiConnected){ //if wifi connects, then phone must disconnect too - ACTUALLY not true on all phone, some bounce off and on, but websocket stays up
+//                    phoneConnected = false;
                 }
                 updateUi();
             }

@@ -136,7 +136,7 @@ public class VoiceCommandServer {
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));
 
-//        startSittingCommandHitter(); //keep checking to see if there is a command to be run
+        startSittingCommandHitter(); //keep checking to see if there is a command to be run
     }
 
     private void startSittingCommandHitter(){
