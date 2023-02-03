@@ -6,68 +6,8 @@ import android.content.IntentFilter;
 import android.util.Log;
 import android.widget.Toast;
 import android.content.BroadcastReceiver;
-import androidx.lifecycle.LifecycleService;
-import android.util.Log;
-import android.Manifest;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import androidx.lifecycle.Observer;
-import android.media.ExifInterface;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
-import android.text.method.ScrollingMovementMethod;
-import android.util.Size;
-import android.view.View;
-import android.view.WindowInsets;
-import android.widget.TextView;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.documentfile.provider.DocumentFile;
-import androidx.lifecycle.LifecycleOwner;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.wearableintelligencesystem.androidsmartphone.MainActivity;
 import com.wearableintelligencesystem.androidsmartphone.WearableAiAspService;
-import com.wearableintelligencesystem.androidsmartphone.facialrecognition.model.FaceNetModel;
-import com.wearableintelligencesystem.androidsmartphone.facialrecognition.model.Models;
-import com.wearableintelligencesystem.androidsmartphone.facialrecognition.Prediction;
-import java.io.*;
-//rxjava
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.subjects.PublishSubject;
-import org.json.JSONObject;
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
-
-//database
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonCreator;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonEntity;
-import com.wearableintelligencesystem.androidsmartphone.database.person.PersonViewModel;
-
-import androidx.lifecycle.ViewModelProvider;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-
-import com.wearableintelligencesystem.androidsmartphone.MainActivity;
-import com.wearableintelligencesystem.androidsmartphone.R;
 
 public class SGMBroadcastReceiver extends BroadcastReceiver {
     private Context context;
