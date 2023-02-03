@@ -58,5 +58,15 @@
 <!--      <meta-data android:name="outputVideoStreamName" android:value="${outputVideoStreamName}"/>-->
 <!--      <meta-data android:name="flipFramesVertically" android:value="${flipFramesVertically}"/>-->
 <!--      <meta-data android:name="converterNumBuffers" android:value="${converterNumBuffers}"/>-->
+
+      <receiver android:name=".comms.SGMBroadcastReceiver"
+          android:enabled="true"
+          android:exported="true"
+          >
+
+          <intent-filter>
+              <action android:name="com.teamsmartglasses.from3pa" />
+          </intent-filter>
+      </receiver>
   </application>
 </manifest>

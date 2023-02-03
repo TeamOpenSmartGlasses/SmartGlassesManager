@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -25,6 +26,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.wearableintelligencesystem.androidsmartphone.comms.SGMBroadcastReceiver;
 
 /** Main activity of WearableAI compute module android app. */
 public class MainActivity extends AppCompatActivity {
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private int LOCATION_PERMISSION_CODE = 1;
     private int BACKGROUND_LOCATION_PERMISSION_CODE = 2;
 
+    public SGMBroadcastReceiver receiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
 
         //start wearable ai service
         startWearableAiService();
+
+        //init broadcast receiver
+        receiver = new SGMBroadcastReceiver(this, mService);
     }
 
     @Override
