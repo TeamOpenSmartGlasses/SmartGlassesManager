@@ -5,40 +5,45 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
     <Button
-        android:id="@+id/send_test_card"
+        android:id="@+id/connect_smart_glasses"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:text="Start WearableAI Service"
+        android:layout_marginTop="224dp"
+        android:text="Connect Smart Glasses"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/kill_wearableai_service" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/kill_wearableai_service"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="212dp"
-        android:text="Kill WearableAI Service"
+        android:layout_marginTop="25dp"
+        android:text="Disconnect Smart Glasses"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.494"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/connect_smart_glasses" />
 
     <Button
         android:id="@+id/start_hotspot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="192dp"
+        android:layout_marginTop="25dp"
         android:text="Start Wifi Hotspot"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/send_test_card"
-        app:layout_constraintVertical_bias="0.138" />
+        app:layout_constraintTop_toBottomOf="@+id/kill_wearableai_service" />
+
+    <Button
+        android:id="@+id/send_test_card_old"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:text="Send Test Card to Glasses"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/start_hotspot" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -24,6 +24,12 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.wearableintelligencesystem.androidsmartphone.supportedglasses.EngoTwo;
+import com.wearableintelligencesystem.androidsmartphone.supportedglasses.InmoAirOne;
+import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
+import com.wearableintelligencesystem.androidsmartphone.supportedglasses.TCLRayNeoXTwo;
+import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixShield;
+import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixUltralite;
 
 /** Main activity of WearableAI compute module android app. **/
 /** This provides a simple UI for users to connect and setup their glasses. This activity launches the service which does all of the work to communicate with glasses and third party apps. **/
@@ -47,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
     private int LOCATION_PERMISSION_CODE = 1;
     private int BACKGROUND_LOCATION_PERMISSION_CODE = 2;
 
+    //list of glasses we support
+    public SmartGlassesDevice [] smartGlassesDevices;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,12 +67,15 @@ public class MainActivity extends AppCompatActivity {
         //set main view
         setContentView(R.layout.activity_main);
 
+        //setup the available smart glasses we support
+        smartGlassesDevices = new SmartGlassesDevice[]{new VuzixShield(), new EngoTwo(), new InmoAirOne(), new TCLRayNeoXTwo(), new VuzixUltralite()};
+
         //setup the nav bar
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         Log.d(TAG, getSupportFragmentManager().getFragments().toString());
         navController = navHostFragment.getNavController();
-        setupBottomNavBar();
-        bottomNavigation.setSelectedItemId(R.id.settings_page);
+//        setupBottomNavBar();
+//        bottomNavigation.setSelectedItemId(R.id.settings_page);
 
         //before service runs, get permissions
         checkPermission(); //location
@@ -253,27 +265,27 @@ public class MainActivity extends AppCompatActivity {
     //^^^ handle permissions
 
     //handle bottom app bar navigation
-    private void setupBottomNavBar(){
-        bottomNavigation = (BottomNavigationView) findViewById(R.id.bottom_nav_main_menu_nav);
-        bottomNavigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                //this has to be an if-else: https://stackoverflow.com/questions/21005205/what-causes-constant-expression-required-errors-for-the-generated-r-id-xxx-val
-                int itemId = item.getItemId();
-                if(R.id.memory_page == itemId){
-                    Log.d(TAG, "Clicked memory tools");
-                    navController.navigate(R.id.nav_memory_tools);
-                } else if (R.id.smart_glasses_debug_page == itemId){
-                    Log.d(TAG, "Clicked smart glasses debug page");
-                    navController.navigate(R.id.nav_smart_glasses_debug);
-                } else if (R.id.settings_page == itemId){
-                    Log.d(TAG, "Clicked settings page");
-                    navController.navigate(R.id.nav_settings);
-                }
-                return true;
-            }
-        });
-    }
+//    private void setupBottomNavBar(){
+//        bottomNavigation = (BottomNavigationView) findViewById(R.id.bottom_nav_main_menu_nav);
+//        bottomNavigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+//            @Override
+//            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+//                //this has to be an if-else: https://stackoverflow.com/questions/21005205/what-causes-constant-expression-required-errors-for-the-generated-r-id-xxx-val
+//                int itemId = item.getItemId();
+//                if(R.id.memory_page == itemId){
+//                    Log.d(TAG, "Clicked memory tools");
+//                    navController.navigate(R.id.nav_memory_tools);
+//                } else if (R.id.smart_glasses_debug_page == itemId){
+//                    Log.d(TAG, "Clicked smart glasses debug page");
+//                    navController.navigate(R.id.nav_smart_glasses_debug);
+//                } else if (R.id.settings_page == itemId){
+//                    Log.d(TAG, "Clicked settings page");
+//                    navController.navigate(R.id.nav_settings);
+//                }
+//                return true;
+//            }
+//        });
+//    }
 
     public void bindWearableAiAspService(){
         // Bind to that service
@@ -308,5 +320,14 @@ public class MainActivity extends AppCompatActivity {
             mBound = false;
         }
     };
+
+    public boolean areSmartGlassesConnected(){
+//        if (!isMyServiceRunning(WearableAiAspService.class)){
+//            return false;
+//        } else {
+//            return mService.areSmartGlassesConnected();
+//        }
+        return false;
+    }
 
 }

@@ -6,7 +6,7 @@
     android:padding="15dp">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/title"
+        android:id="@+id/glasses_name"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

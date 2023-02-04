@@ -59,7 +59,7 @@ public class MainUi extends Fragment {
             }
         });
 
-        final Button startWearableAiServiceButton = view.findViewById(R.id.send_test_card);
+        final Button startWearableAiServiceButton = view.findViewById(R.id.send_test_card_old);
             startWearableAiServiceButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button

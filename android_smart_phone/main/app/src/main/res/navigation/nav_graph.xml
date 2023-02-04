@@ -24,7 +24,13 @@
         android:id="@+id/nav_settings"
         android:name="com.wearableintelligencesystem.androidsmartphone.ui.SettingsUi"
         tools:layout="@layout/settings_fragment"
-        android:label="Settings" >
+        android:label="Smart Glasses Manager" >
+    </fragment>
+    <fragment
+        android:id="@+id/nav_select_smart_glasses"
+        android:name="com.wearableintelligencesystem.androidsmartphone.ui.SelectSmartGlassesUi"
+        tools:layout="@layout/select_glasses_fragment"
+        android:label="Select Smart Glasses" >
     </fragment>
     <fragment
         android:id="@+id/nav_memory_tools"

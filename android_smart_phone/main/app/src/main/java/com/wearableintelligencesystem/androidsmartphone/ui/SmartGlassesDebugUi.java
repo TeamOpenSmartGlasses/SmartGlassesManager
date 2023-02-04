@@ -1,7 +1,5 @@
 package com.wearableintelligencesystem.androidsmartphone.ui;
 
-import android.content.ComponentName;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,7 +42,7 @@ public class SmartGlassesDebugUi extends Fragment {
 
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
 
-        final Button sendTestCardButton = view.findViewById(R.id.send_test_card);
+        final Button sendTestCardButton = view.findViewById(R.id.send_test_card_old);
         sendTestCardButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Code here executes on main thread after user presses button
