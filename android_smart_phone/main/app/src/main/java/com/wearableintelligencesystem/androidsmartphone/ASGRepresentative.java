@@ -635,6 +635,14 @@ class ASGRepresentative {
 
     //^^^ SOCKET STUFF
 
+    public boolean isConnected(){
+        if (mConnectState != 2){
+            return false;
+        } else {
+            return true;
+        }
+    }
+
 
 
 }

@@ -329,4 +329,12 @@ public class WearableAiAspService extends LifecycleService {
         }
         return null;
     }
+
+    public boolean areSmartGlassesConnected(){
+        if (asgRep != null) {
+            return asgRep.isConnected();
+        } else {
+            return false;
+        }
+    }
 }

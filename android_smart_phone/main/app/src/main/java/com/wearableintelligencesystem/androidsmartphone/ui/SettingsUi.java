@@ -1,5 +1,6 @@
 package com.wearableintelligencesystem.androidsmartphone.ui;
 
+import android.util.Log;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
@@ -24,9 +25,14 @@ import com.wearableintelligencesystem.androidsmartphone.R;
 public class SettingsUi extends Fragment {
     private  final String TAG = "WearableAi_SettingsUIFragment";
 
-    private final String fragmentLabel = "Settings";
+    private final String fragmentLabel = "Smart Glasses Manager";
 
     private NavController navController;
+
+    //test card raw data
+    public String testCardImg = "https://ichef.bbci.co.uk/news/976/cpsprodpb/7727/production/_103330503_musk3.jpg";
+    public String testCardTitle = "We Out Here Testing Stuff";
+    public String testCardContent = "Local man runs in circles for hours after losing cognitive control of his left leg.";
 
     public SettingsUi() {
     }
@@ -47,19 +53,27 @@ public class SettingsUi extends Fragment {
 
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
 
+
+
         final Button killServiceButton = view.findViewById(R.id.kill_wearableai_service);
-            killServiceButton.setOnClickListener(new View.OnClickListener() {
+        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
+            killServiceButton.setEnabled(true);
+        } else {
+            killServiceButton.setEnabled(false);
+        }
+        killServiceButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button
                 ((MainActivity)getActivity()).stopWearableAiService();
             }
         });
 
-        final Button startWearableAiServiceButton = view.findViewById(R.id.send_test_card);
-            startWearableAiServiceButton.setOnClickListener(new View.OnClickListener() {
+        final Button connectSmartGlassesButton = view.findViewById(R.id.connect_smart_glasses);
+            connectSmartGlassesButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button
-                ((MainActivity)getActivity()).startWearableAiService();
+//                ((MainActivity)getActivity()).startWearableAiService();
+                    navController.navigate(R.id.nav_select_smart_glasses);
             }
         });
 
@@ -72,8 +86,26 @@ public class SettingsUi extends Fragment {
             }
         });
 
+        // setup test card sender
+        final Button sendTestCardButton = view.findViewById(R.id.send_test_card_old);
+        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
+            sendTestCardButton.setEnabled(true);
+        } else {
+            sendTestCardButton.setEnabled(false);
+        }
+
+        sendTestCardButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Code here executes on main thread after user presses button
+                sendTestCard();
+            }
+        });
     }
 
+    public void sendTestCard(){
+        Log.d(TAG, "SENDING TEST CARD");
+        ((MainActivity)getActivity()).mService.sendTestCard(testCardTitle, testCardContent, testCardImg);
+    }
 
     //open hotspot settings
     private void launchHotspotSettings(){

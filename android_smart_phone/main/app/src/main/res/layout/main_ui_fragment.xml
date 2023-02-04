@@ -51,12 +51,12 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="40dp"
         android:text="Kill WearableAI Service"
-        app:layout_constraintBottom_toTopOf="@+id/send_test_card"
+        app:layout_constraintBottom_toTopOf="@+id/send_test_card_old"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
-        android:id="@+id/send_test_card"
+        android:id="@+id/send_test_card_old"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="40dp"
