@@ -1,5 +1,7 @@
 package com.wearableintelligencesystem.androidsmartphone.ui;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -97,15 +99,38 @@ public class SelectSmartGlassesUi extends Fragment {
                 SmartGlassesDevice selectedDevice = glassesListAdapter.getSelectedDevice();
                 if (selectedDevice == null) {
                     Log.d(TAG, "Please choose a smart glasses device to continue.");
+                    showNoGlassSelectedDialog();
                 } else if (!selectedDevice.getAnySupport()){
                     Log.d(TAG, "Glasses not yet supported, we're working on it.");
+                    showUnsupportedGlassSelected();
                 } else {
                     Log.d(TAG, "Connecting to " + selectedDevice.getDeviceModelName() + "...");
-                    navController.navigate(R.id.nav_settings);
+                    ((MainActivity)getActivity()).connectSmartGlasses(selectedDevice);
                 }
             }
         });
+    }
 
+    public void showNoGlassSelectedDialog(){
+        new AlertDialog.Builder(this.getContext()) .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("No Smart Glasses Selected")
+                .setMessage("Please select a smart glasses model from the list to proceed, or press 'Cancel'.")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).show();
+    }
+
+    public void showUnsupportedGlassSelected(){
+        new AlertDialog.Builder(this.getContext()) .setIcon(android.R.drawable.ic_dialog_info)
+                .setTitle("Unsupported Smart Glasses Selected")
+                .setMessage("We don't yet support those smart glasses, but we're working to add support for them. Please choose another pair of smart glasses from the list.")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).show();
     }
 }
 

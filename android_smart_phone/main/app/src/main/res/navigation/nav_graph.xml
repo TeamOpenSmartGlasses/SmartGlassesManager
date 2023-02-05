@@ -10,9 +10,6 @@
         android:name="com.wearableintelligencesystem.androidsmartphone.ui.MainUi"
         tools:layout="@layout/main_ui_fragment"
         android:label="Home Main Page" >
-        <action
-            android:id="@+id/action_nav_main_ui_to_nav_memory_tools"
-            app:destination="@id/nav_memory_tools" />
     </fragment>
     <fragment
         android:id="@+id/nav_smart_glasses_debug"
@@ -33,15 +30,6 @@
         android:label="Select Smart Glasses" >
     </fragment>
     <fragment
-        android:id="@+id/nav_memory_tools"
-        android:name="com.wearableintelligencesystem.androidsmartphone.ui.MemoryToolsUi"
-        tools:layout="@layout/memory_tools_fragment"
-        android:label="Memory Tools" >
-        <action
-            android:id="@+id/action_nav_memory_tools_to_nav_main_ui"
-            app:destination="@id/nav_main_ui" />
-    </fragment>
-    <fragment
         android:id="@+id/nav_all_transcripts"
         android:name="com.wearableintelligencesystem.androidsmartphone.ui.AllTranscriptsUi"
         tools:layout="@layout/all_transcripts_fragment"
@@ -51,43 +39,10 @@
             app:destination="@id/nav_all_transcripts" />
     </fragment>
     <fragment
-        android:id="@+id/nav_mxt_cache"
-        android:name="com.wearableintelligencesystem.androidsmartphone.ui.VoiceNotesUi"
-        tools:layout="@layout/mxt_cache_fragment"
-        android:label="MXT Cache" >
-        <action
-            android:id="@+id/action_nav_memory_tools_to_nav_mxt_cache"
-            app:destination="@id/nav_mxt_cache" />
-    </fragment>
-    <fragment
-        android:id="@+id/nav_mxt_tag_bins"
-        android:name="com.wearableintelligencesystem.androidsmartphone.ui.MxtTagBinsUi"
-        tools:layout="@layout/mxt_tag_bins_fragment"
-        android:label="MXT Tag Bins" >
-        <action
-            android:id="@+id/action_nav_memory_tools_to_nav_mxt_tag_bins"
-            app:destination="@id/nav_mxt_tag_bins" />
-        <action
-            android:id="@+id/action_nav_mxt_tag_bins_to_nav_phrase_context"
-            app:destination="@id/nav_phrase_context" />
-    </fragment>
-    <fragment
-        android:id="@+id/nav_memory_timeline"
-        android:name="com.wearableintelligencesystem.androidsmartphone.ui.MemoryTimelineUi"
-        tools:layout="@layout/memory_timeline_fragment"
-        android:label="Memory Timeline" >
-    </fragment>
-    <fragment
         android:id="@+id/nav_export_data"
         android:name="com.wearableintelligencesystem.androidsmartphone.ui.ExportDataUi"
         tools:layout="@layout/export_data_fragment"
         android:label="Export Data" >
-    </fragment>
-    <fragment
-        android:id="@+id/nav_memory_caches"
-        android:name="com.wearableintelligencesystem.androidsmartphone.ui.MemoryCachesUi"
-        tools:layout="@layout/memory_cache_fragment"
-        android:label="Memory Caches" >
     </fragment>
     <fragment
         android:id="@+id/nav_phrase_context"
@@ -100,10 +55,5 @@
         <action
             android:id="@+id/action_nav_mxt_cache_to_nav_phrase_context"
             app:destination="@id/nav_phrase_context" />
-        <action
-            android:id="@+id/action_nav_phrase_context_to_nav_mxt_tag_bins"
-            app:destination="@id/nav_mxt_tag_bins" />
     </fragment>
-
-
 </navigation>

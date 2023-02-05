@@ -56,11 +56,11 @@ public class SettingsUi extends Fragment {
 
 
         final Button killServiceButton = view.findViewById(R.id.kill_wearableai_service);
-        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
-            killServiceButton.setEnabled(true);
-        } else {
-            killServiceButton.setEnabled(false);
-        }
+//        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
+//            killServiceButton.setEnabled(true);
+//        } else {
+//            killServiceButton.setEnabled(false);
+//        }
         killServiceButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button
@@ -72,11 +72,9 @@ public class SettingsUi extends Fragment {
             connectSmartGlassesButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button
-//                ((MainActivity)getActivity()).startWearableAiService();
                     navController.navigate(R.id.nav_select_smart_glasses);
             }
         });
-
 
         final Button startHotspotButton = view.findViewById(R.id.start_hotspot);
             startHotspotButton.setOnClickListener(new View.OnClickListener() {

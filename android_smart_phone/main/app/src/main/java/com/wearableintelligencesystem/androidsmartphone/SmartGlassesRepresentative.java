@@ -9,86 +9,28 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.net.InetSocketAddress;
-import android.widget.TextView;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-import android.content.Intent;
-import android.os.IBinder;
 import java.util.Random;
-import java.util.Queue;
-import android.os.HandlerThread;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.util.Base64;
-import android.app.Service;
+import android.os.HandlerThread;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import android.os.Environment;
-import android.net.Uri;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.graphics.SurfaceTexture;
-import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
-import android.util.Size;
-import android.view.SurfaceHolder;
-import android.os.Binder;
-import android.view.SurfaceView;
-import android.view.View;
-import android.view.ViewGroup;
-import android.os.Bundle;
-import android.util.Log;
-import java.util.HashMap;
-import java.util.Map;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
-import java.io.DataInputStream;
+
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.InterfaceAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Enumeration;
 
 
 //custom, our code
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
-
-import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
-import com.wearableintelligencesystem.androidsmartphone.utils.FileUtils;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.AspWebsocketServer;
 import com.wearableintelligencesystem.androidsmartphone.comms.AudioSystem;
@@ -96,11 +38,10 @@ import com.wearableintelligencesystem.androidsmartphone.comms.AudioSystem;
 import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileRepository;
 
 //rxjava
-import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
-class ASGRepresentative {
+class SmartGlassesRepresentative {
     private static final String TAG = "WearableAi_ASGRepresentative";
 
     private static boolean killme = false;
@@ -114,9 +55,6 @@ class ASGRepresentative {
     //images saving info
     private long lastImageSave = 0;
     private float imageSaveFrequency = 0.5f; //fps
-
-    //database
-    private MediaFileRepository mMediaFileRepository = null;
 
     //SOCKET STUFF
     //socket
@@ -152,9 +90,8 @@ class ASGRepresentative {
 
     Context context;
 
-    ASGRepresentative(Context context, PublishSubject<JSONObject> dataObservable, MediaFileRepository mMediaFileRepository){
+    SmartGlassesRepresentative(Context context, PublishSubject<JSONObject> dataObservable){
         this.context = context;
-        this.mMediaFileRepository = mMediaFileRepository;
 
         //create a new queue to hold outbound message
         queue = new ArrayBlockingQueue<byte[]>(50);
@@ -226,52 +163,6 @@ class ASGRepresentative {
             JSONObject commandResponseObject = new JSONObject();
             commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.TRANSLATE_TEXT_RESULT);
             commandResponseObject.put(MessageTypes.TRANSLATE_TEXT_RESULT_DATA, translatedText);
-
-            //send the command result to web socket, to send to asg
-            dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
-    public void sendReferenceTranslateResults(JSONObject results){
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
-            commandResponseObject.put(MessageTypes.SEARCH_ENGINE_RESULT_DATA, results.toString());
-
-            //send the command result to web socket, to send to asg
-            dataObservable.onNext(commandResponseObject);
-
-            //speak translated text title
-            speakTextToSpeechResults(results.getString("title"), results.getString("language"));
-            //speak translated text summary
-            speakTextToSpeechResults(results.getString("summary"), results.getString("language"));
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
-    public void speakTextToSpeechResults(String text, String languageCode){
-        try{
-            JSONObject textToBeSpokenObject = new JSONObject();
-            textToBeSpokenObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.TEXT_TO_SPEECH_SPEAK);
-            textToBeSpokenObject.put(MessageTypes.TEXT_TO_SPEECH_SPEAK_DATA, text);
-            textToBeSpokenObject.put(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE, languageCode);
-            dataObservable.onNext(textToBeSpokenObject);
-        }
-        catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
-    public void sendObjectTranslationResults(JSONObject results){
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.OBJECT_TRANSLATION_RESULT);
-            commandResponseObject.put(MessageTypes.OBJECT_TRANSLATION_RESULT_DATA, results.toString());
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);

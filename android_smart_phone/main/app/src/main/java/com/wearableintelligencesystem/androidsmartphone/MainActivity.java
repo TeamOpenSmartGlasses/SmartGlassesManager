@@ -36,22 +36,19 @@ import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixUl
 public class MainActivity extends AppCompatActivity {
     private  final String TAG = "WearableAi_MainActivity";
 
+    //the smart glasses we're currently connecting and communicating with
+    public SmartGlassesDevice selectedDevice;
+
     //handle the foreground service which does all of the important stuff
     public WearableAiAspService mService;
     boolean mBound = false;
 
+    //handle permissions
+    PermissionsUtils permissionsUtils;
+
     //UI - bottom nav bar
     private BottomNavigationView bottomNavigation;
     private NavController navController;
-
-    //permissions
-    //file storage and SMS permissions
-    public final String[] EXTERNAL_PERMS = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
-    public final int EXTERNAL_REQUEST = 138;
-
-    //location permissions
-    private int LOCATION_PERMISSION_CODE = 1;
-    private int BACKGROUND_LOCATION_PERMISSION_CODE = 2;
 
     //list of glasses we support
     public SmartGlassesDevice [] smartGlassesDevices;
@@ -77,11 +74,19 @@ public class MainActivity extends AppCompatActivity {
 //        setupBottomNavBar();
 //        bottomNavigation.setSelectedItemId(R.id.settings_page);
 
-        //before service runs, get permissions
-        checkPermission(); //location
+        //get permissions
+        permissionsUtils = new PermissionsUtils(this, TAG);
+        permissionsUtils.checkPermission();
 
         //start wearable ai service
         startWearableAiService();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d(TAG, "run onRequestPermissionsResult");
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        permissionsUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
@@ -137,132 +142,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
-
-    //handle permissions
-    public boolean requestFilesPermission() {
-        boolean isPermissionOn = true;
-        final int version = Build.VERSION.SDK_INT;
-        if (version >= 23) {
-            if (!canAccessExternalSd()) {
-                isPermissionOn = false;
-                requestPermissions(EXTERNAL_PERMS, EXTERNAL_REQUEST);
-            }
-        }
-        return isPermissionOn;
-    }
-
-    public boolean canAccessExternalSd() {
-        return (hasPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE));
-    }
-
-    private boolean hasPermission(String perm) {
-        return (PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(this, perm));
-
-    }
-
-    private void checkPermission() {
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // Fine Location permission is granted
-            // Check if current android version >= 11, if >= 11 check for Background Location permission
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    // Background Location Permission is granted so do your work here
-                    //now, get file permissions
-                    requestFilesPermission();
-                } else {
-                    // Ask for Background Location Permission
-                    askPermissionForBackgroundUsage();
-                }
-            }
-        } else {
-            // Fine Location Permission is not granted so ask for permission
-            askForLocationPermission();
-        }
-    }
-
-    private void askForLocationPermission() {
-        Log.d(TAG, "run askForLocationPermission");
-        if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Permission Needed!")
-                    .setMessage("Location Permission Needed!")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ActivityCompat.requestPermissions(MainActivity.this,
-                                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_CODE);
-                        }
-                    })
-                    .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // Permission is denied by the user
-                        }
-                    })
-                    .create().show();
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_CODE);
-        }
-    }
-
-    private void askPermissionForBackgroundUsage() {
-        Log.d(TAG, "run askPermissionForBackgroundUsage");
-        if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Location permissions needed.")
-                    .setMessage("To tag memories and data based on where you were, the WIS app needs to collect location data. Many features won't work without location permissions. To allow, tap \"Allow all the time\" on the next screen.")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ActivityCompat.requestPermissions(MainActivity.this,
-                                    new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_PERMISSION_CODE);
-                        }
-                    })
-                    .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // User declined for Background Location Permission.
-                        }
-                    })
-                    .create().show();
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_PERMISSION_CODE);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d(TAG, "run onRequestPermissionsResult");
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (requestCode == LOCATION_PERMISSION_CODE) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // User granted location permission
-                // Now check if android version >= 11, if >= 11 check for Background Location Permission
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        // Background Location Permission is granted so do your work here
-                        //now, get file permissions
-                        requestFilesPermission();
-                    } else {
-                        // Ask for Background Location Permission
-                        askPermissionForBackgroundUsage();
-                    }
-                }
-            } else {
-                // User denied location permission
-            }
-        } else if (requestCode == BACKGROUND_LOCATION_PERMISSION_CODE) {
-            //now, get file permissions
-            requestFilesPermission();
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            }
-        }
-
-    }
-    //^^^ handle permissions
 
     //handle bottom app bar navigation
 //    private void setupBottomNavBar(){
@@ -320,6 +199,12 @@ public class MainActivity extends AppCompatActivity {
             mBound = false;
         }
     };
+
+    public void connectSmartGlasses(SmartGlassesDevice device){
+        this.selectedDevice = device;
+        mService.connectToSmartGlasses(device);
+        //startWearableAiService();
+    }
 
     public boolean areSmartGlassesConnected(){
 //        if (!isMyServiceRunning(WearableAiAspService.class)){

@@ -20,13 +20,13 @@ import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
+import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
 import com.wearableintelligencesystem.androidsmartphone.utils.NetworkUtils;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
@@ -37,13 +37,15 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
-/** Main service of WearableAI compute module android app. */
+/** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
 public class WearableAiAspService extends LifecycleService {
     private static final String TAG = "WearableAi_ASP_Service";
 
@@ -57,7 +59,7 @@ public class WearableAiAspService extends LifecycleService {
 
     //tools for doing NLP, used for voice command system
     NlpUtils nlpUtils;
-    public static List<NaturalLanguage> supportedLanguages = new ArrayList<NaturalLanguage>();
+    public static Dictionary<String, NaturalLanguage> supportedLanguages = new Hashtable<String, NaturalLanguage>();
 
     //handler for advertising
     private Handler adv_handler;
@@ -67,7 +69,7 @@ public class WearableAiAspService extends LifecycleService {
     private SpeechRecVosk speechRecVoskForeignLanguage;
 
     //Text to Speech
-    private TextToSpeechSystem textToSpeechSystem;
+//    private TextToSpeechSystem textToSpeechSystem;
 
     //holds connection state
     private boolean mConnectionState = false;
@@ -91,8 +93,7 @@ public class WearableAiAspService extends LifecycleService {
     private MediaFileRepository mMediaFileRepository = null;
 
     //representatives of the other pieces of the system
-    ASGRepresentative asgRep;
-    GLBOXRepresentative glboxRep;
+    SmartGlassesRepresentative smartGlassesRepresentative;
 
     @Override
     public void onCreate() {
@@ -110,43 +111,43 @@ public class WearableAiAspService extends LifecycleService {
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
         audioObservable = PublishSubject.create();
-        Disposable s = dataObservable.subscribe(i -> handleDataStream(i));
+    }
 
-        //our representatives - they represent the ASG and GLBOX, they hold their connection, they decide what gets sent out to them, etc
-        asgRep = new ASGRepresentative(this, dataObservable, mMediaFileRepository);
-        glboxRep = new GLBOXRepresentative(this, dataObservable, asgRep);
+    public void connectToSmartGlasses(SmartGlassesDevice device){
+        //this represents the smart glasses - it handles the connection, sending data to them, etc
+        smartGlassesRepresentative = new SmartGlassesRepresentative(this, dataObservable);
 
         //the order below is to minimize time between launch and transcription appearing on the ASG
 
-        //open the UDP socket to broadcast our ip address
+        //open the UDP socket to broadcast our IP address
         openSocket();
 
-        //send broadcast
+        //send broadcast over UDP that tells smart glasses they can find us
         adv_handler = new Handler();
         final int delay = 1000; // 1000 milliseconds == 1 second
         adv_handler.postDelayed(new Runnable() {
-        public void run() {
-            new Thread(new SendAdvThread()).start();
+            public void run() {
+                new Thread(new SendAdvThread()).start();
                 adv_handler.postDelayed(this, delay);
             }
-            }, 5);
+        }, 5);
 
         //start connection to ASG
         Log.d(TAG, "Starting ASG connection");
-        asgRep.startAsgConnection();
+        smartGlassesRepresentative.startAsgConnection();
 
         //setup languages
-        supportedLanguages.add(new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
-        supportedLanguages.add(new NaturalLanguage("french", "fr", "model-fr-small", Locale.FRENCH)); //french
+        supportedLanguages.put("english", new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
+        supportedLanguages.put("french", new NaturalLanguage("french", "fr", "model-fr-small", Locale.FRENCH)); //french
         //supportedLanguages.add(new NaturalLanguage("chinese", "zh", "model-cn-small", Locale.CHINESE)); //chinese
         //supportedLanguages.add(new NaturalLanguage("italian", "it", "model-it-small", Locale.ITALIAN)); //italian
         //supportedLanguages.add(new NaturalLanguage("japanese", "ja", "model-jp-small", Locale.JAPANESE)); //japanese
 
         //start vosk
-        speechRecVosk = new SpeechRecVosk(getLanguageFromName(baseLanguage).getModelLocation(), true, this, audioObservable, dataObservable, mPhraseRepository);
+        speechRecVosk = new SpeechRecVosk(supportedLanguages.get(baseLanguage).getModelLocation(), true, this, audioObservable, dataObservable, mPhraseRepository);
 
         //start text to speech
-        textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, getLanguageFromName(baseLanguage).getLocale());
+//        textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, supportedLanguages.get(baseLanguage).getLocale());
 
         //start voice command server to parse transcript for voice command
         voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
@@ -167,7 +168,7 @@ public class WearableAiAspService extends LifecycleService {
 
     class SendAdvThread extends Thread {
         public void run() {
-            //send broadcast so ASG knows our address
+            //send broadcast so smart glasses know our address
             NetworkUtils.sendBroadcast(adv_key, adv_socket, PORT_NUM, getApplicationContext());
         }
     }
@@ -183,12 +184,11 @@ public class WearableAiAspService extends LifecycleService {
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         NotificationCompat.Builder builder;
 
-
         String CHANNEL_ID = "wearable_ai_service_channel";
 
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Wearable Intelligence System",
+        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Smart Glasses Manager",
                 NotificationManager.IMPORTANCE_HIGH);
-        channel.setDescription("Running intelligence suite...");
+        channel.setDescription("Running smart glasses middleware...");
         manager.createNotificationChannel(channel);
 
         builder = new NotificationCompat.Builder(this, CHANNEL_ID);
@@ -220,7 +220,6 @@ public class WearableAiAspService extends LifecycleService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         Log.d(TAG, "WearableAI Service onStartCommand");
-
         if (intent != null){
             String action = intent.getAction();
             switch (action) {
@@ -234,26 +233,7 @@ public class WearableAiAspService extends LifecycleService {
                     break;
             }
         }
-
         return Service.START_STICKY;
-    }
-
-    private void handleDataStream(JSONObject data){
-        //first check if it's a type we should handle
-        try{
-            String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (type.equals((MessageTypes.START_FOREIGN_LANGUAGE_ASR))){
-                String languageName = data.getString(MessageTypes.START_FOREIGN_LANGUAGE_SOURCE_LANGUAGE_NAME);
-                speechRecVoskForeignLanguage = new SpeechRecVosk(getLanguageFromName(languageName).getModelLocation(), false, this, audioObservable, dataObservable, mPhraseRepository);
-            }  else if (type.equals((MessageTypes.STOP_FOREIGN_LANGUAGE_ASR))){
-                if (speechRecVoskForeignLanguage != null) {
-                    speechRecVoskForeignLanguage.destroy();
-                    speechRecVoskForeignLanguage = null;
-                }
-            }
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -261,22 +241,32 @@ public class WearableAiAspService extends LifecycleService {
         Log.d(TAG, "WearableAiAspService killing itself and all its children");
 
         //stop advertising broadcasting IP
-        adv_handler.removeCallbacksAndMessages(null);
+        if (adv_handler != null) {
+            adv_handler.removeCallbacksAndMessages(null);
+        }
 
         //kill asg connection
-        asgRep.destroy();
+        if (smartGlassesRepresentative != null) {
+            smartGlassesRepresentative.destroy();
+        }
 
         //kill data transmitters
-        dataObservable.onComplete();
-        audioObservable.onComplete();
+        if (dataObservable != null) {
+            dataObservable.onComplete();
+        }
+        if (audioObservable != null) {
+            audioObservable.onComplete();
+        }
 
         //kill textToSpeech
-        textToSpeechSystem.destroy();
+//        textToSpeechSystem.destroy();
 
         //kill vosk
-        speechRecVosk.destroy();
-        if (speechRecVoskForeignLanguage != null) {
-            speechRecVoskForeignLanguage.destroy();
+        if (speechRecVosk != null) {
+            speechRecVosk.destroy();
+            if (speechRecVoskForeignLanguage != null) {
+                speechRecVoskForeignLanguage.destroy();
+            }
         }
 
         //close room database(s)
@@ -285,17 +275,6 @@ public class WearableAiAspService extends LifecycleService {
         //call parent destroy
         super.onDestroy();
         Log.d(TAG, "WearableAiAspService destroy complete");
-    }
-
-    //takes in a natural language name for a language and gives back the code
-    public NaturalLanguage getLanguageFromName(String languageName){
-      for (NaturalLanguage nl : supportedLanguages){
-          FuzzyMatch modeMatchChar = nlpUtils.findNearMatches(languageName, nl.getNaturalLanguageName(), 0.8);
-          if (modeMatchChar != null && modeMatchChar.getIndex() != -1){
-              return nl;
-          }
-      }
-      return null;
     }
 
     public void sendTestCard(String title, String content, String img){
@@ -320,19 +299,9 @@ public class WearableAiAspService extends LifecycleService {
         }
     }
 
-    //takes in a natural language code for a language and gives back the NaturalLanguage
-    public static NaturalLanguage getLanguageFromCode(String codeName){
-        for (NaturalLanguage nl : supportedLanguages){
-            if (nl.getCode().equals(codeName)){
-                return nl;
-            }
-        }
-        return null;
-    }
-
     public boolean areSmartGlassesConnected(){
-        if (asgRep != null) {
-            return asgRep.isConnected();
+        if (smartGlassesRepresentative != null) {
+            return smartGlassesRepresentative.isConnected();
         } else {
             return false;
         }

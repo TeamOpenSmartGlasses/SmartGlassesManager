@@ -155,24 +155,24 @@ public class ExportDataUi extends Fragment {
 
     }
 
-    private void createExportDialog(){
-        LayoutInflater inflater = getLayoutInflater();
-        View alertLayout = inflater.inflate(R.layout.face_rec_naming_modal, null);
-        final TextInputEditText etPersonName = alertLayout.findViewById(R.id.tiet_personName);
-
-        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-        alert.setTitle("Who is this?");
-        // this is set the view from XML inside AlertDialog
-        alert.setView(alertLayout);
-        // disallow cancel of AlertDialog on click of back button and outside touch
-        alert.setCancelable(false);
-
-        alert.setNegativeButton("Cancel", (dialog, which) -> {
-        });
-
-        AlertDialog dialog = alert.create();
-        dialog.show();
-    }
+//    private void createExportDialog(){
+//        LayoutInflater inflater = getLayoutInflater();
+//        View alertLayout = inflater.inflate(R.layout.face_rec_naming_modal, null);
+//        final TextInputEditText etPersonName = alertLayout.findViewById(R.id.tiet_personName);
+//
+//        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+//        alert.setTitle("Who is this?");
+//        // this is set the view from XML inside AlertDialog
+//        alert.setView(alertLayout);
+//        // disallow cancel of AlertDialog on click of back button and outside touch
+//        alert.setCancelable(false);
+//
+//        alert.setNegativeButton("Cancel", (dialog, which) -> {
+//        });
+//
+//        AlertDialog dialog = alert.create();
+//        dialog.show();
+//    }
 
     //this export is ugly and we should rewrite it to better tie into room, especially when we add more data
     //not exactly sure best way to do it yet
