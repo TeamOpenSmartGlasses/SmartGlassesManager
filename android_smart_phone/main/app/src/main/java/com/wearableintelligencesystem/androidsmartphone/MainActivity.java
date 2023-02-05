@@ -1,35 +1,34 @@
 package com.wearableintelligencesystem.androidsmartphone;
 
-import android.Manifest;
 import android.app.ActivityManager;
-import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.EngoTwo;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.InmoAirOne;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.TCLRayNeoXTwo;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixShield;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixUltralite;
+import com.wearableintelligencesystem.androidsmartphone.utils.PermissionsUtils;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /** Main activity of WearableAI compute module android app. **/
 /** This provides a simple UI for users to connect and setup their glasses. This activity launches the service which does all of the work to communicate with glasses and third party apps. **/
@@ -78,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
         permissionsUtils = new PermissionsUtils(this, TAG);
         permissionsUtils.checkPermission();
 
-        //start wearable ai service
         startWearableAiService();
     }
 
@@ -89,12 +87,51 @@ public class MainActivity extends AppCompatActivity {
         permissionsUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+    private static IntentFilter makeMainServiceReceiverIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(MessageTypes.GLASSES_STATUS_UPDATE);
+
+        return intentFilter;
+    }
+
+    private final BroadcastReceiver mMainServiceReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            Log.d(TAG, "Got main service broadcast: " + action.toString());
+            if (MessageTypes.GLASSES_STATUS_UPDATE.equals(action)) {
+                int glassesConnectionState = intent.getIntExtra(MessageTypes.CONNECTION_GLASSES_STATUS_UPDATE, -1);
+                updateGlassesConnectionState(glassesConnectionState);
+            }
+        }
+    };
+
+    public void updateGlassesConnectionState(int glassesConnectionState){
+        Log.d(TAG, "Smart glasses conect state: " + glassesConnectionState);
+        if (selectedDevice != null) {
+            selectedDevice.setConnectionState(glassesConnectionState);
+        }
+
+        //show connection page
+        if (glassesConnectionState == 2){
+            navController.navigate(R.id.nav_connected_to_smart_glasses);
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
 
         //bind to WearableAi service
         bindWearableAiAspService();
+
+        //register receiver that gets data from the service
+        registerReceiver(mMainServiceReceiver, makeMainServiceReceiverIntentFilter());
+
+        //ask the service to send us information about the connection
+        if (mService != null) {
+            mService.sendUiUpdate();
+        }
     }
 
     @Override
@@ -103,6 +140,9 @@ public class MainActivity extends AppCompatActivity {
 
         //unbind wearableAi service
         unbindWearableAiAspService();
+
+        //unregister receiver
+        unregisterReceiver(mMainServiceReceiver);
     }
 
     public void stopWearableAiService() {
@@ -125,7 +165,11 @@ public class MainActivity extends AppCompatActivity {
 
    public void startWearableAiService() {
        Log.d(TAG, "Starting wearableAiService");
-        if (isMyServiceRunning(WearableAiAspService.class)) return;
+        if (isMyServiceRunning(WearableAiAspService.class)){
+            Log.i(TAG, "WAI Service already running...");
+            return;
+        }
+
         Intent startIntent = new Intent(this, WearableAiAspService.class);
         startIntent.setAction(WearableAiAspService.ACTION_START_FOREGROUND_SERVICE);
         startService(startIntent);
@@ -192,6 +236,9 @@ public class MainActivity extends AppCompatActivity {
             WearableAiAspService.LocalBinder wearableAiServiceBinder = (WearableAiAspService.LocalBinder) service;
             mService = wearableAiServiceBinder.getService();
             mBound = true;
+
+            //get update for UI
+            mService.sendUiUpdate();
         }
 
         @Override
@@ -200,19 +247,24 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    //this should only be called after the WAI Service is up and bound
     public void connectSmartGlasses(SmartGlassesDevice device){
         this.selectedDevice = device;
-        mService.connectToSmartGlasses(device);
-        //startWearableAiService();
+
+        //check if the service is running. If not, we should start it first, so it doesn't die when we unbind
+        if (!isMyServiceRunning(WearableAiAspService.class)){
+            Log.e(TAG, "Something went wrong, service should be started and bound.");
+        } else {
+            mService.connectToSmartGlasses(device);
+        }
     }
 
     public boolean areSmartGlassesConnected(){
-//        if (!isMyServiceRunning(WearableAiAspService.class)){
-//            return false;
-//        } else {
-//            return mService.areSmartGlassesConnected();
-//        }
-        return false;
+        if (!isMyServiceRunning(WearableAiAspService.class)){
+            return false;
+        } else {
+            return (mService.getSmartGlassesConnectState() == 2);
+        }
     }
 
 }

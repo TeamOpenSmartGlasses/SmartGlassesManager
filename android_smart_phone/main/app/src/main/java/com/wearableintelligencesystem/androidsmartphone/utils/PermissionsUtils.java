@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartphone;
+package com.wearableintelligencesystem.androidsmartphone.utils;
 
 import android.Manifest;
 import android.app.AlertDialog;

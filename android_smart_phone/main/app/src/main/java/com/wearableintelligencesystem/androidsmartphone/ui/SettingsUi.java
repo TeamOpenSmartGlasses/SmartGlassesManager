@@ -72,7 +72,8 @@ public class SettingsUi extends Fragment {
             connectSmartGlassesButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button
-                    navController.navigate(R.id.nav_select_smart_glasses);
+                ((MainActivity)getActivity()).startWearableAiService();
+                navController.navigate(R.id.nav_select_smart_glasses);
             }
         });
 
@@ -86,11 +87,11 @@ public class SettingsUi extends Fragment {
 
         // setup test card sender
         final Button sendTestCardButton = view.findViewById(R.id.send_test_card_old);
-        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
-            sendTestCardButton.setEnabled(true);
-        } else {
-            sendTestCardButton.setEnabled(false);
-        }
+//        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
+//            sendTestCardButton.setEnabled(true);
+//        } else {
+//            sendTestCardButton.setEnabled(false);
+//        }
 
         sendTestCardButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {

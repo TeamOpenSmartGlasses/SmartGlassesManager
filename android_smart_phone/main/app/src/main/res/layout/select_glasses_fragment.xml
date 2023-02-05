@@ -35,28 +35,25 @@ xmlns:app="http://schemas.android.com/apk/res-auto">
         android:id="@+id/select_smart_glasses_button"
         android:layout_width="99dp"
         android:layout_height="66dp"
-        android:layout_marginEnd="68dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginRight ="72dp"
+        android:layout_marginBottom="48dp"
         android:text="Select"
         app:backgroundTint="@color/green"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/smart_glasses_list"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/smart_glasses_list" />
 
     <Button
         android:id="@+id/cancel_select_smart_glasses_button"
         android:layout_width="99dp"
-        android:layout_height="71dp"
-        android:layout_marginBottom="28dp"
+        android:layout_height="66dp"
+        android:layout_marginBottom="48dp"
+        android:layout_marginLeft="72dp"
         android:text="Cancel"
         app:backgroundTint="@color/red"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/select_smart_glasses_button"
-        app:layout_constraintHorizontal_bias="0.455"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/smart_glasses_list"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/smart_glasses_list" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

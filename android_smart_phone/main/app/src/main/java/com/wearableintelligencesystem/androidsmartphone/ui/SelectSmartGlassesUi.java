@@ -106,6 +106,7 @@ public class SelectSmartGlassesUi extends Fragment {
                 } else {
                     Log.d(TAG, "Connecting to " + selectedDevice.getDeviceModelName() + "...");
                     ((MainActivity)getActivity()).connectSmartGlasses(selectedDevice);
+                    navController.navigate(R.id.nav_connecting_to_smart_glasses);
                 }
             }
         });

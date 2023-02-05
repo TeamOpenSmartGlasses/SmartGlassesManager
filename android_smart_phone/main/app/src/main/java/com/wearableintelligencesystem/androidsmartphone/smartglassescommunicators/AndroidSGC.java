@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartphone;
+package com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators;
 
 import android.content.Context;
 import android.os.Handler;
@@ -11,7 +11,6 @@ import com.wearableintelligencesystem.androidsmartphone.comms.AudioSystem;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.utils.NetworkUtils;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,6 +26,7 @@ import java.nio.ByteOrder;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -35,7 +35,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
     PublishSubject<JSONObject> dataObservable;
 
-    private static boolean killme = false;
+    private static boolean killme;
 
     private static Handler heart_beat_handler;
 
@@ -87,6 +87,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
         //create a new queue to hold outbound message
         queue = new ArrayBlockingQueue<byte[]>(50);
+
+        killme = false;
     }
 
     public void connectToSmartGlasses(){
@@ -167,6 +169,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         if (socket == null) {
             Log.d(TAG, "starting new SocketThread" + socket);
             mConnectState = 1;
+            sendConnectionEvent(mConnectState);
             SocketThread = new Thread(new SocketThread());
             SocketThread.start();
 
@@ -210,8 +213,10 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     class SocketThread implements Runnable {
         @Override
         public void run() {
+            Log.d(TAG, "I have started SOCKETTHREAD");
             try {
                 if (killme){
+                    Log.d(TAG, "I have killed myself");
                     return;
                 }
                 Log.d(TAG, "Starting new socket, waiting for connection...");
@@ -222,12 +227,13 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                     if (killme){
                         return;
                     }
-                    socket.setSoTimeout(10000);
+                    socket.setSoTimeout(2000);
                     Log.d(TAG, "Got socket connection.");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
                     input = new DataInputStream(new DataInputStream(socket.getInputStream()));
                     mConnectState = 2;
+                    sendConnectionEvent(mConnectState);
                     if (ReceiveThread == null) { //if the thread is null, make a new one (the first one)
                         ReceiveThread = new Thread(new ReceiveThread());
                         ReceiveThread.start();
@@ -255,10 +261,12 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                 } catch (IOException e) {
                     e.printStackTrace();
                     mConnectState = 0;
+                    sendConnectionEvent(mConnectState);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 mConnectState = 0;
+                sendConnectionEvent(mConnectState);
             }
         }
     }
@@ -325,7 +333,12 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                     goodbye2 = input.readByte(); // read goodbye of incoming message
                     goodbye3 = input.readByte(); // read goodbye of incoming message
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    if (killme){
+                        Log.d(TAG, "Socket closed (by us), cleaning up.");
+                    } else {
+                        Log.d(TAG, "Socket closed.");
+                        e.printStackTrace();
+                    }
                     break;
                 }
 
@@ -348,6 +361,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
     public void restartSocket(){
         mConnectState = 1;
+        sendConnectionEvent(mConnectState);
 
         outbound_heart_beats = 0;
 
@@ -425,6 +439,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             outputStream.write(goodbye);
         } catch (IOException e){
             mConnectState = 0;
+            sendConnectionEvent(mConnectState);
             return;
         }
         byte [] payload = outputStream.toByteArray();
@@ -453,7 +468,10 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                 }
                 byte [] data;
                 try {
-                    data = queue.take(); //block until there is something we can pull out to send
+                    data = queue.poll(100, TimeUnit.MILLISECONDS); //block until there is something we can pull out to send
+                    if (data == null){
+                        continue;
+                    }
                 } catch (InterruptedException e){
                     e.printStackTrace();
                     break;
@@ -472,26 +490,25 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     public  void throwBrokenSocket(){
         if (mConnectState == 2){
             mConnectState = 0;
+            sendConnectionEvent(mConnectState);
         }
     }
     //^^^ SOCKET STUFF
 
-    public boolean isConnected(){
-        if (mConnectState != 2){
-            return false;
-        } else {
-            return true;
-        }
+    public int getConnectionState(){
+        return mConnectState;
     }
 
     public void destroy(){
+        killme = true;
+
         //kill AudioSystem
         audioSystem.destroy();
 
         //kill asgWebSocket
         asgWebSocket.destroy();
 
-        //stop sockets
+        //stop sending heart beats
         heart_beat_handler.removeCallbacksAndMessages(null);
 
         //stop advertising broadcasting IP
@@ -499,16 +516,23 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             adv_handler.removeCallbacksAndMessages(null);
         }
 
-        //kill this socket
-//        try {
-//            SocketThread.join();
-//            SendThread.join();
-//            ReceiveThread.join();
-//        } catch (InterruptedException e){
-//            e.printStackTrace();
-//            Log.d(TAG, "Error waiting for threads to joing");
-//        }
-
+        //stop sockets
         killSocket();
+
+        //kill this socket
+        try {
+            Log.i(TAG, "SOCKETTHREAD TRYNA JOIN");
+            SocketThread.join();
+            Log.i(TAG, "SOCKETTHREAD JOINED");
+            Log.i(TAG, "SENDTTHREAD TRYNA JOIN");
+            SendThread.join();
+            Log.i(TAG, "SENDTTHREAD JOINED");
+            Log.i(TAG, "RECEIVE THREAD TRYNA JOIN");
+            ReceiveThread.join();
+            Log.i(TAG, "RECEIVE THREAD JOINED");
+        } catch (InterruptedException e){
+            e.printStackTrace();
+            Log.d(TAG, "Error waiting for threads to joing");
+        }
     }
 }

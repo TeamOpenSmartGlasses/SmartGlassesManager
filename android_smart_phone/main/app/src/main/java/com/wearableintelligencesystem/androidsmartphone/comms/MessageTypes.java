@@ -4,6 +4,10 @@ public class MessageTypes {
     //top level
     public static final String MESSAGE_TYPE_LOCAL = "MESSAGE_TYPE_LOCAL";
 
+    //SERVICE TO ACTIVITY
+    public static final String GLASSES_STATUS_UPDATE = "GLASSES_STATUS_UPDATE";
+    public static final String CONNECTION_GLASSES_STATUS_UPDATE = "CONNECTION_GLASSES_STATUS_UPDATE";
+
     //DATA TYPES
     public static final String POV_IMAGE = "POV_IMAGE";
     public static final String JPG_BYTES_BASE64 = "JPG_BYTES_BASE64";
