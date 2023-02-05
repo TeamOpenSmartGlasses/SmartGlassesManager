@@ -61,23 +61,12 @@ public class WearableAiAspService extends LifecycleService {
     NlpUtils nlpUtils;
     public static Dictionary<String, NaturalLanguage> supportedLanguages = new Hashtable<String, NaturalLanguage>();
 
-    //handler for advertising
-    private Handler adv_handler;
-
     //speech recognition
     private SpeechRecVosk speechRecVosk;
     private SpeechRecVosk speechRecVoskForeignLanguage;
 
     //Text to Speech
 //    private TextToSpeechSystem textToSpeechSystem;
-
-    //holds connection state
-    private boolean mConnectionState = false;
-
-    //network details
-    public int PORT_NUM = 8891;
-    public DatagramSocket adv_socket;
-    public String adv_key = "WearableAiCyborg";
 
     //voice command system
     VoiceCommandServer voiceCommandServer;
@@ -89,8 +78,6 @@ public class WearableAiAspService extends LifecycleService {
     //database
     private PhraseRepository mPhraseRepository = null;
     private VoiceCommandRepository mVoiceCommandRepository = null;
-    private MemoryCacheRepository mMemoryCacheRepository = null;
-    private MediaFileRepository mMediaFileRepository = null;
 
     //representatives of the other pieces of the system
     SmartGlassesRepresentative smartGlassesRepresentative;
@@ -105,36 +92,10 @@ public class WearableAiAspService extends LifecycleService {
         //setup room database interfaces
         mPhraseRepository = new PhraseRepository(getApplication());
         mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
-        mMemoryCacheRepository = new MemoryCacheRepository(getApplication());
-        mMediaFileRepository = new MediaFileRepository(getApplication());
 
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
         audioObservable = PublishSubject.create();
-    }
-
-    public void connectToSmartGlasses(SmartGlassesDevice device){
-        //this represents the smart glasses - it handles the connection, sending data to them, etc
-        smartGlassesRepresentative = new SmartGlassesRepresentative(this, dataObservable);
-
-        //the order below is to minimize time between launch and transcription appearing on the ASG
-
-        //open the UDP socket to broadcast our IP address
-        openSocket();
-
-        //send broadcast over UDP that tells smart glasses they can find us
-        adv_handler = new Handler();
-        final int delay = 1000; // 1000 milliseconds == 1 second
-        adv_handler.postDelayed(new Runnable() {
-            public void run() {
-                new Thread(new SendAdvThread()).start();
-                adv_handler.postDelayed(this, delay);
-            }
-        }, 5);
-
-        //start connection to ASG
-        Log.d(TAG, "Starting ASG connection");
-        smartGlassesRepresentative.startAsgConnection();
 
         //setup languages
         supportedLanguages.put("english", new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
@@ -150,27 +111,13 @@ public class WearableAiAspService extends LifecycleService {
 //        textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, supportedLanguages.get(baseLanguage).getLocale());
 
         //start voice command server to parse transcript for voice command
-        voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, mMemoryCacheRepository, getApplicationContext());
+        voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
     }
 
-    public void openSocket() {
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
-
-        try {
-            //Open a random port to send the package
-            adv_socket = new DatagramSocket();
-            adv_socket.setBroadcast(true);
-        } catch (IOException e) {
-            Log.e(TAG, "IOException: " + e.getMessage());
-        }
-    }
-
-    class SendAdvThread extends Thread {
-        public void run() {
-            //send broadcast so smart glasses know our address
-            NetworkUtils.sendBroadcast(adv_key, adv_socket, PORT_NUM, getApplicationContext());
-        }
+    public void connectToSmartGlasses(SmartGlassesDevice device){
+        //this represents the smart glasses - it handles the connection, sending data to them, etc
+        smartGlassesRepresentative = new SmartGlassesRepresentative(this, device, dataObservable);
+        smartGlassesRepresentative.connectToSmartGlasses();
     }
 
     //service stuff
@@ -239,11 +186,6 @@ public class WearableAiAspService extends LifecycleService {
     @Override
     public void onDestroy() {
         Log.d(TAG, "WearableAiAspService killing itself and all its children");
-
-        //stop advertising broadcasting IP
-        if (adv_handler != null) {
-            adv_handler.removeCallbacksAndMessages(null);
-        }
 
         //kill asg connection
         if (smartGlassesRepresentative != null) {
