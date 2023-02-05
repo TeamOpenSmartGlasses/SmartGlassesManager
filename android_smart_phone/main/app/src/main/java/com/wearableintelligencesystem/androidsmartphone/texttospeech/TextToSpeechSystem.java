@@ -65,42 +65,42 @@ public class TextToSpeechSystem {
         try {
             String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (dataType.equals(MessageTypes.TEXT_TO_SPEECH_SPEAK)) {
-                handleNewTextToSpeak(data);
+//                handleNewTextToSpeak(data);
             }
         } catch (JSONException e){
             e.printStackTrace();
         }
     }
 
-    private void handleNewTextToSpeak(JSONObject data){
-        String toSpeak;
-        String languageCodeFromData;
-
-        try {
-            //extract text to speak
-            toSpeak = data.getString(MessageTypes.TEXT_TO_SPEECH_SPEAK_DATA);
-            //extract the target language accent
-            Locale newLocale;
-            if (data.has(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE)) {
-                languageCodeFromData = data.getString(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE);
-
-                //get the local from the code
-                newLocale = WearableAiAspService.getLanguageFromCode(languageCodeFromData).getLocale();
-            } else {
-                newLocale = language;
-            }
-
-            // now say it
-            main_handler.post(new Runnable() {
-                public void run() {
-                    speak(toSpeak, newLocale);
-                }
-            });
-        }
-        catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
+//    private void handleNewTextToSpeak(JSONObject data){
+//        String toSpeak;
+//        String languageCodeFromData;
+//
+//        try {
+//            //extract text to speak
+//            toSpeak = data.getString(MessageTypes.TEXT_TO_SPEECH_SPEAK_DATA);
+//            //extract the target language accent
+//            Locale newLocale;
+//            if (data.has(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE)) {
+//                languageCodeFromData = data.getString(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE);
+//
+//                //get the local from the code
+//                newLocale = WearableAiAspService.getLanguageFromCode(languageCodeFromData).getLocale();
+//            } else {
+//                newLocale = language;
+//            }
+//
+//            // now say it
+//            main_handler.post(new Runnable() {
+//                public void run() {
+//                    speak(toSpeak, newLocale);
+//                }
+//            });
+//        }
+//        catch (JSONException e){
+//            e.printStackTrace();
+//        }
+//    }
 
     public void destroy(){
         ttsModel.shutdown();

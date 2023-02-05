@@ -26,7 +26,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 //bitmap utils
-import com.wearableintelligencesystem.androidsmartphone.comms.RestServerComms;
 import com.wearableintelligencesystem.androidsmartphone.comms.VolleyCallback;
 import com.wearableintelligencesystem.androidsmartphone.utils.BitmapJavaUtils;
 
@@ -118,7 +117,7 @@ public class PhraseContextUi extends Fragment {
             Log.d(TAG, "GOT CURRET LOCATION");
             double longitude = currentLocation.getLongitude();
             double latitude = currentLocation.getLatitude();
-            updateMapImage(latitude, longitude);
+//            updateMapImage(latitude, longitude);
         } else {
             Log.d(TAG, "CURRENT LOCATION FOR PHRASE IS NULL");
         }
@@ -172,48 +171,6 @@ public class PhraseContextUi extends Fragment {
                 galleryHolder.scrollTo(scrollPos, 0);
             }
         }, 10);
-    }
-
-    public void updateMapImage(double latitude, double longitude){
-        try {
-            JSONObject params = new JSONObject();
-            params.put("center", Double.toString(latitude) + "," + Double.toString(longitude));
-            params.put("locations", Double.toString(latitude) + "," + Double.toString(longitude));
-            sendMapImageQuery(params);
-        } catch(JSONException e){
-            e.printStackTrace();
-        }
-    }
-
-    public void sendMapImageQuery(JSONObject params){
-        Log.d(TAG, "Running sendMapImageQuery");
-        try{
-            JSONObject restMessage = new JSONObject();
-            restMessage.put("params", params);
-            RestServerComms.getInstance(getActivity()).restRequest(RestServerComms.MAP_IMAGE_QUERY_SEND_ENDPOINT, restMessage, new VolleyCallback(){
-                @Override
-                public void onSuccess(JSONObject result){
-                    Log.d(TAG, "GOT map image REST RESULT:");
-                    Log.d(TAG, result.toString());
-                    //display in ui
-                    try{
-                        String image_b64 = result.getString("image_b64");
-                        byte [] imgBytes = Base64.decode(image_b64, Base64.DEFAULT);
-                        Bitmap imgBitmap = BitmapFactory.decodeByteArray(imgBytes, 0, imgBytes.length);
-                        mapImageView.setImageBitmap(imgBitmap);
-                    } catch (JSONException e){
-                        e.printStackTrace();
-                    }
-                }
-                @Override
-                public void onFailure(){
-                    Log.d(TAG, "Failed to get map view");
-                }
-
-            });
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
     }
 
     public String getPrettyDate(long timestamp){

@@ -30,18 +30,9 @@ class SwitchModesVoiceCommand extends VoiceCommand {
         this.commandList = new ArrayList<>(Arrays.asList(new String [] {"run"}));
         this.wakeWordList = new ArrayList<>(Arrays.asList(new String [] {}));
 
-//        this.modesList = new ArrayList<>(Arrays.asList(new Pair<String, String> [] {
-//                        new Pair("live life captions", MessageTypes.MODE_VISUAL_SEARCH),
-//                        new Pair("social mode", MessageTypes.MODE_VISUAL_SEARCH),
-//                        new Pair("visual search", MessageTypes.MODE_VISUAL_SEARCH)
-//                    }
-//                  )
-//                );
-
         modesList = new ArrayList<>();
         modesList.add(Pair.create("live life captions", MessageTypes.MODE_LIVE_LIFE_CAPTIONS));
         modesList.add(Pair.create("blank", MessageTypes.MODE_BLANK));
-        modesList.add(Pair.create("speech translate", MessageTypes.MODE_LANGUAGE_TRANSLATE));
     }
 
     @Override

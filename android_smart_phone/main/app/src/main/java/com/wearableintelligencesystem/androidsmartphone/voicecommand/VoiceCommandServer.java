@@ -124,14 +124,7 @@ public class VoiceCommandServer {
 
         //get all voice commands
         voiceCommands = new ArrayList<VoiceCommand>();
-        voiceCommands.add(new MemoryCacheStartVoiceCommand(context));
-        voiceCommands.add(new MemoryCacheStopVoiceCommand(context));
-        voiceCommands.add(new SearchEngineVoiceCommand(context));
-        voiceCommands.add(new NaturalLanguageQueryVoiceCommand(context));
         voiceCommands.add(new SwitchModesVoiceCommand(context));
-        voiceCommands.add(new VoiceNoteVoiceCommand(context));
-        voiceCommands.add(new ReferenceTranslateVoiceCommand(context));
-        voiceCommands.add(new SelectVoiceCommand(context));
 
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));

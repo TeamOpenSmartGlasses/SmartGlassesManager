@@ -62,9 +62,9 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
         Log.d(TAG, "Click on transcript");
 
         //open a fragment which shows in-depth, contextual view of that transcript
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("phrase", phrase);
-        navController.navigate(R.id.nav_phrase_context, bundle);
+//        Bundle bundle = new Bundle();
+//        bundle.putSerializable("phrase", phrase);
+//        navController.navigate(R.id.nav_phrase_context, bundle);
     }
 
     public AllTranscriptsUi() {
@@ -159,30 +159,30 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
 
     }
 
-    private void nameCache(){
-        LayoutInflater inflater = getLayoutInflater();
-        View alertLayout = inflater.inflate(R.layout.memory_cache_name_change_modal, null);
-        final TextInputEditText cacheNameEditText = (TextInputEditText) alertLayout.findViewById(R.id.memory_cache_name_edit_text);
-
-        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
-        alert.setTitle("Memory Cache Change Name");
-        // this is set the view from XML inside AlertDialog
-        alert.setView(alertLayout);
-        // disallow cancel of AlertDialog on click of back button and outside touch
-        alert.setCancelable(false);
-
-        alert.setNegativeButton("Cancel", (dialog, which) -> {
-        });
-
-        alert.setPositiveButton("Done", (dialog, which) -> {
-            String cacheName = cacheNameEditText.getText().toString();
-            mMemoryCacheViewModel.setCacheName(cacheId, cacheName);
-            Log.d(TAG, "THE NEW CACHE NAME IS: " + cacheName);
-        });
-
-        AlertDialog dialog = alert.create();
-        dialog.show();
-    }
+//    private void nameCache(){
+//        LayoutInflater inflater = getLayoutInflater();
+//        View alertLayout = inflater.inflate(R.layout.memory_cache_name_change_modal, null);
+//        final TextInputEditText cacheNameEditText = (TextInputEditText) alertLayout.findViewById(R.id.memory_cache_name_edit_text);
+//
+//        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+//        alert.setTitle("Memory Cache Change Name");
+//        // this is set the view from XML inside AlertDialog
+//        alert.setView(alertLayout);
+//        // disallow cancel of AlertDialog on click of back button and outside touch
+//        alert.setCancelable(false);
+//
+//        alert.setNegativeButton("Cancel", (dialog, which) -> {
+//        });
+//
+//        alert.setPositiveButton("Done", (dialog, which) -> {
+//            String cacheName = cacheNameEditText.getText().toString();
+//            mMemoryCacheViewModel.setCacheName(cacheId, cacheName);
+//            Log.d(TAG, "THE NEW CACHE NAME IS: " + cacheName);
+//        });
+//
+//        AlertDialog dialog = alert.create();
+//        dialog.show();
+//    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu,MenuInflater inflater) {
@@ -195,7 +195,7 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.name_cache:
-                nameCache();
+//                nameCache();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
