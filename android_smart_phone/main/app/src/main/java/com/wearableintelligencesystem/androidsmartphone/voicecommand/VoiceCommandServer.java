@@ -22,7 +22,6 @@ package com.wearableintelligencesystem.androidsmartphone.voicecommand;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
-import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 
 import java.util.ArrayList;
@@ -92,7 +91,6 @@ public class VoiceCommandServer {
 
     //database to save voice commmands to
     public VoiceCommandRepository mVoiceCommandRepository;
-    public MemoryCacheRepository mMemoryCacheRepository;
 
     //flags to save the current state and info about the currenlty streaming in voice command
     boolean waked = false;
@@ -105,12 +103,11 @@ public class VoiceCommandServer {
     boolean needArg = false;
     boolean ended = false;
 
-    public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, MemoryCacheRepository memoryCacheRepository, Context context){
+    public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, Context context){
         //setup nlp
         nlpUtils = NlpUtils.getInstance(context);
 
         mVoiceCommandRepository = voiceCommandRepository;
-        mMemoryCacheRepository = memoryCacheRepository;
 
         mContext = context;
 
