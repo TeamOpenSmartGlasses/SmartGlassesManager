@@ -8,9 +8,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.StrictMode;
+import android.os.Message;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -18,31 +17,24 @@ import androidx.lifecycle.LifecycleService;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
-import com.wearableintelligencesystem.androidsmartphone.database.mediafile.MediaFileRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.memorycache.MemoryCacheRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
-import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
-import com.wearableintelligencesystem.androidsmartphone.texttospeech.TextToSpeechSystem;
-import com.wearableintelligencesystem.androidsmartphone.utils.NetworkUtils;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.net.DatagramSocket;
-import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Locale;
 
-import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
@@ -112,6 +104,18 @@ public class WearableAiAspService extends LifecycleService {
 
         //start voice command server to parse transcript for voice command
         voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
+
+        //setup event bus subscribers
+        setupEventBusSubscribers();
+    }
+
+    private void setupEventBusSubscribers(){
+        EventBus.getDefault().register(this);
+    }
+
+    @Subscribe
+    public void handleConnectionEvent(SmartGlassesConnectionEvent event) {
+        sendUiUpdate();
     }
 
     public void connectToSmartGlasses(SmartGlassesDevice device){
@@ -190,6 +194,7 @@ public class WearableAiAspService extends LifecycleService {
         //kill asg connection
         if (smartGlassesRepresentative != null) {
             smartGlassesRepresentative.destroy();
+            smartGlassesRepresentative = null;
         }
 
         //kill data transmitters
@@ -241,11 +246,25 @@ public class WearableAiAspService extends LifecycleService {
         }
     }
 
-    public boolean areSmartGlassesConnected(){
+    public int getSmartGlassesConnectState(){
         if (smartGlassesRepresentative != null) {
-            return smartGlassesRepresentative.isConnected();
+            return smartGlassesRepresentative.getConnectionState();
         } else {
-            return false;
+            return 0;
         }
+    }
+
+    public void sendUiUpdate(){
+        Intent intent = new Intent();
+        intent.setAction(MessageTypes.GLASSES_STATUS_UPDATE);
+        // Set the optional additional information in extra field.
+        int connectionState;
+        if (smartGlassesRepresentative != null){
+            connectionState = smartGlassesRepresentative.getConnectionState();
+        } else {
+            connectionState = 0;
+        }
+        intent.putExtra(MessageTypes.CONNECTION_GLASSES_STATUS_UPDATE, connectionState);
+        sendBroadcast(intent);
     }
 }

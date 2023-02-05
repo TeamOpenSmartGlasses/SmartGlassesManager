@@ -124,6 +124,9 @@ dependencies {
 
     //http(s) lib
     implementation "com.android.volley:volley:1.2.1"
+
+    //EventBus, greenrobot
+    implementation("org.greenrobot:eventbus:3.3.1")
 }
 
 //VOSK ASR prep models - need one for each language

@@ -13,6 +13,8 @@ public class SmartGlassesDevice {
     public boolean hasOutMic;
     public double weight;
 
+    public int connectionState = -1; //0 is not connected, 1 is trying to connect, 2 is connected
+
     public String getDeviceModelName() {
         return deviceModelName;
     }
@@ -99,5 +101,13 @@ public class SmartGlassesDevice {
 
     public void setWeight(double weight) {
         this.weight = weight;
+    }
+
+    public int getConnectionState() {
+        return connectionState;
+    }
+
+    public void setConnectionState(int connectionState) {
+        this.connectionState = connectionState;
     }
 }
