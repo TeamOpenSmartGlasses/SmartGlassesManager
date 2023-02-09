@@ -52,5 +52,15 @@
               android:resource="@xml/file_provider" />
       </provider>
 
+        <receiver android:name="SGMLib.SGMBroadcastReceiver"
+          android:enabled="true"
+          android:exported="true"
+          >
+
+          <intent-filter>
+              <action android:name="com.teamsmartglasses.from3pa" />
+          </intent-filter>
+      </receiver>
+
   </application>
 </manifest>
