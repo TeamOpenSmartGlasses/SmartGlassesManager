@@ -8,6 +8,12 @@ public class MessageTypes {
     public static final String GLASSES_STATUS_UPDATE = "GLASSES_STATUS_UPDATE";
     public static final String CONNECTION_GLASSES_STATUS_UPDATE = "CONNECTION_GLASSES_STATUS_UPDATE";
 
+    //GLASSES CONNECTION EVENT/STATE
+    public static final int CONNECTED_GLASSES = 2;
+    public static final int DISCONNECTED_GLASSES = 0;
+    public static final int TRYNA_CONNECT_GLASSES = 1;
+    public static final int FAILED_CONNECTING_GLASSES = 3;
+
     //DATA TYPES
     public static final String POV_IMAGE = "POV_IMAGE";
     public static final String JPG_BYTES_BASE64 = "JPG_BYTES_BASE64";

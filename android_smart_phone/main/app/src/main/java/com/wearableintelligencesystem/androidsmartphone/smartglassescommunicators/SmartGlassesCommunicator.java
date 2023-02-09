@@ -5,11 +5,17 @@ import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGl
 import org.greenrobot.eventbus.EventBus;
 
 public abstract class SmartGlassesCommunicator {
+    public int mConnectState = 0;
+
     public abstract void connectToSmartGlasses();
     public abstract void destroy();
-    public abstract int getConnectionState();
 
-    public void sendConnectionEvent(int connectionState){
-        EventBus.getDefault().post(new SmartGlassesConnectionEvent(connectionState));
+    public int getConnectionState(){
+        return mConnectState;
+    }
+
+    public void connectionEvent(int connectState){
+        mConnectState = connectState;
+        EventBus.getDefault().post(new SmartGlassesConnectionEvent(mConnectState));
     }
 }

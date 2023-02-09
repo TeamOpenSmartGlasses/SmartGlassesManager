@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import android.util.Log;
 
 //custom, our code
+import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.AndroidSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.SmartGlassesCommunicator;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
@@ -37,8 +38,8 @@ class SmartGlassesRepresentative {
         switch (smartGlassesDevice.getGlassesOs()){
             case ANDROID_OS_GLASSES:
                 smartGlassesCommunicator = new AndroidSGC(context, dataObservable);
-//            case ACTIVELOOK_OS_GLASSES:
-//                smartGlassesCommunicator = new ActiveLookSGC();
+            case ACTIVELOOK_OS_GLASSES:
+                smartGlassesCommunicator = new ActiveLookSGC(context, dataObservable);
         }
 
         smartGlassesCommunicator.connectToSmartGlasses();
