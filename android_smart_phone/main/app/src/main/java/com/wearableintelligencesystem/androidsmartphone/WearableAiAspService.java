@@ -9,8 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
@@ -26,6 +26,10 @@ import com.wearableintelligencesystem.androidsmartphone.speechrecognition.Speech
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
 
+import SGMLib.SGMBroadcastReceiver;
+import SGMLib.SGMBroadcastSender;
+import SGMLib.SGMData;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
@@ -39,6 +43,9 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
 public class WearableAiAspService extends LifecycleService {
+    public SGMBroadcastReceiver receiver;
+    public SGMBroadcastSender sender;
+
     private static final String TAG = "WearableAi_ASP_Service";
 
     // Service Binder given to clients
@@ -58,7 +65,7 @@ public class WearableAiAspService extends LifecycleService {
     private SpeechRecVosk speechRecVoskForeignLanguage;
 
     //Text to Speech
-//    private TextToSpeechSystem textToSpeechSystem;
+    //private TextToSpeechSystem textToSpeechSystem;
 
     //voice command system
     VoiceCommandServer voiceCommandServer;
@@ -107,6 +114,16 @@ public class WearableAiAspService extends LifecycleService {
 
         //setup event bus subscribers
         setupEventBusSubscribers();
+
+        //init broadcasters
+        sender = new SGMBroadcastSender(getApplicationContext());
+        receiver = new SGMBroadcastReceiver(getApplicationContext());
+        SGMData.sgmOnDataSubscription = SGMData.sgmOnData.subscribe(i -> onReceiveData(i));
+    }
+
+    private void onReceiveData(String data){
+        //TODO: Properly handle messages
+        Toast.makeText(getApplicationContext(), "Broadcast message is received", Toast.LENGTH_LONG).show();
     }
 
     private void setupEventBusSubscribers(){

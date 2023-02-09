@@ -27,9 +27,6 @@ import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixSh
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixUltralite;
 import com.wearableintelligencesystem.androidsmartphone.utils.PermissionsUtils;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /** Main activity of WearableAI compute module android app. **/
 /** This provides a simple UI for users to connect and setup their glasses. This activity launches the service which does all of the work to communicate with glasses and third party apps. **/
 public class MainActivity extends AppCompatActivity {
