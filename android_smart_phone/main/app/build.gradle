@@ -127,6 +127,9 @@ dependencies {
 
     //EventBus, greenrobot
     implementation("org.greenrobot:eventbus:3.3.1")
+
+    //activelook SDK
+    implementation 'com.github.activelook:android-sdk:v4.4.0'
 }
 
 //VOSK ASR prep models - need one for each language
