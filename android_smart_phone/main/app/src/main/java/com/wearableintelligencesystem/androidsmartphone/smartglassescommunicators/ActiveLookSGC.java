@@ -3,6 +3,7 @@ package com.wearableintelligencesystem.androidsmartphone.smartglassescommunicato
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,6 +23,7 @@ import com.activelook.activelooksdk.DiscoveredGlasses;
 import com.activelook.activelooksdk.Glasses;
 import com.activelook.activelooksdk.Sdk;
 import com.activelook.activelooksdk.types.GlassesUpdate;
+import com.activelook.activelooksdk.types.Rotation;
 import com.wearableintelligencesystem.androidsmartphone.R;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
@@ -39,6 +41,8 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     private static final String TAG = "WearableAi_ActivelookSGC";
 
     private Glasses connectedGlasses;
+    private int displayWidthPixels = 304;
+    private int displayHeightPixels = 256;
     private Sdk alsdk;
     private ArrayAdapter<DiscoveredGlasses> scanResults;
     private ArrayList<DiscoveredGlasses> discoveredGlasses;
@@ -73,7 +77,16 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         device.connect(glasses -> {
                     Log.d(TAG, "Activelook connected.");
                     mConnectState = 2;
+                    connectedGlasses = glasses;
                     connectionEvent(MessageTypes.CONNECTED_GLASSES);
+                    // Power on the glasses
+                    connectedGlasses.power(true);
+                    // Clear the glasses display
+                    connectedGlasses.clear();
+                    //clear any fonts to use just default fonts
+                    connectedGlasses.fontDeleteAll();
+                    // Set the display luminance level
+                    glasses.luma((byte) 7);
                 },
                 discoveredGlasses -> {
                     Log.d(TAG, "Activelook connection failed.");
@@ -87,6 +100,9 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     @Override
     public void destroy(){
+       if (connectedGlasses != null){
+           connectedGlasses.disconnect();
+       }
     }
 
     private void onUpdateStart(final GlassesUpdate glassesUpdate) {
@@ -106,5 +122,54 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
     private void onUpdateError(final GlassesUpdate glassesUpdate) {
         Log.d(TAG, "onUpdateError");
+    }
+
+    private boolean isConnected(){
+        return (mConnectState == 2);
+    }
+    //HCI
+    public void displayText(String text, int fontSize, int xLocVw, int yLocVh){
+        /**
+         * Write text string at coordinates (x, y) with rotation, font size, and color.
+         *
+         * @param x The x coordinate for the text.
+         * @param y The y coordinate for the text.
+         * @param r The rotation of the text.
+         * @param f The font size of the text.
+         * @param c The color of the text.
+         * @param s The text.
+         */
+        if (isConnected()) {
+            int xCoord = displayWidthPixels - Math.round((((float) xLocVw) / 100) * displayWidthPixels);
+            int yCoord = displayHeightPixels - Math.round((((float) yLocVh) / 100) * displayHeightPixels);
+            connectedGlasses.power(true);
+            // we flip coords because Activelook (0,0) is bottom right, whereas computer graphics is always top left
+            textWrapping(xCoord, yCoord, fontSize, text);
+        }
+    }
+
+    //handles text wrapping, returns how many lines were wrapped
+    public int textWrapping(int xCoord, int yCoord, int fontSize, String text){
+        int fontHeight = 24;
+        double fontAspectRatio = 2.5; //this many times as taller than, found by trial and error
+        int fontWidth = (int) (fontHeight / fontAspectRatio);
+        int textWidth = (int) (text.length() * fontWidth); //width in pixels
+        ArrayList<String> chunkedText = new ArrayList<>();
+
+        Log.d(TAG, "Text width is: " + textWidth);
+        int numWraps = ((int) Math.floor(((float) textWidth) / displayWidthPixels));
+        int wrapLen = ((int) Math.floor((displayWidthPixels / (float) fontWidth)));
+        Log.d(TAG, "Num wraps is: " + numWraps);
+        Log.d(TAG, "Wrap len is: " + wrapLen);
+        for (int i = 0; i <= numWraps; i++){
+            int startIdx = wrapLen * i;
+            int endIdx = Math.min(startIdx + wrapLen, text.length());
+            String subText = text.substring(startIdx, endIdx);
+            chunkedText.add(subText);
+            Log.d(TAG, "Check it out: " + text.substring(startIdx, endIdx));
+            connectedGlasses.txt(new Point(xCoord, yCoord - (int)((i * fontHeight) * 1.1)), Rotation.TOP_LR, (byte) 0, (byte) 0x0F, subText);
+        }
+
+        return numWraps;
     }
 }

@@ -19,7 +19,6 @@ class SmartGlassesRepresentative {
 
     //receive/send data stream
     PublishSubject<JSONObject> dataObservable;
-    Disposable dataSub;
 
     Context context;
 
@@ -62,6 +61,13 @@ class SmartGlassesRepresentative {
             return 0;
         } else {
             return smartGlassesCommunicator.getConnectionState();
+        }
+    }
+
+    public void showReferenceCard(String title, String content){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayText(title, 2, 0, 0);
+            smartGlassesCommunicator.displayText(content, 0, 0, 20);
         }
     }
 }
