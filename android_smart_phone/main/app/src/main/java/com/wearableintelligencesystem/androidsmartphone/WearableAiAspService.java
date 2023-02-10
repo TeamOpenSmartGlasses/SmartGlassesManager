@@ -226,23 +226,8 @@ public class WearableAiAspService extends LifecycleService {
 
     public void sendTestCard(String title, String content, String img){
         Log.d(TAG, "SENDING TEST CARD FROM WAIService");
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
-
-            JSONObject searchData = new JSONObject();
-            searchData.put("title", title);
-            searchData.put("body", content);
-            searchData.put("image", img);
-
-            commandResponseObject.put(MessageTypes.SEARCH_ENGINE_RESULT_DATA, searchData.toString());
-
-            //send the command result to web socket, to send to asg
-            dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            Log.d(TAG, "FAILED!!!!!!!!!");
-            e.printStackTrace();
+        if (smartGlassesRepresentative != null) {
+            smartGlassesRepresentative.showReferenceCard(title, content);
         }
     }
 

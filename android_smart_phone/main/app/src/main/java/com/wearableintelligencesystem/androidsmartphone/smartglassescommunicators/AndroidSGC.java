@@ -529,4 +529,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             Log.d(TAG, "Error waiting for threads to joing");
         }
     }
+
+    public void displayText(String text, int fontSize, int xLocVw, int yLocVh){
+        //pass
+    }
 }

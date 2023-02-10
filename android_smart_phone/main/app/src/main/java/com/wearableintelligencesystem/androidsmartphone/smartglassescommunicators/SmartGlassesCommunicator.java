@@ -9,6 +9,7 @@ public abstract class SmartGlassesCommunicator {
 
     public abstract void connectToSmartGlasses();
     public abstract void destroy();
+    public abstract void displayText(String text, int fontSize, int xLocVw, int yLocVh);
 
     public int getConnectionState(){
         return mConnectState;
