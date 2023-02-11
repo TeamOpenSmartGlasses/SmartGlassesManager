@@ -80,6 +80,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     Context context;
 
     public AndroidSGC(Context context, PublishSubject<JSONObject> dataObservable){
+        super();
         this.dataObservable = dataObservable;
         this.context = context;
 
@@ -90,6 +91,14 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
         //state information
         mConnectState = 0;
+    }
+
+    //not used/valid yet
+    @Override
+    protected void setFontSizes(){
+        LARGE_FONT = 3;
+        MEDIUM_FONT = 2;
+        SMALL_FONT = 0;
     }
 
     public void connectToSmartGlasses(){
@@ -530,7 +539,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
-    public void displayText(String text, int fontSize, int xLocVw, int yLocVh){
+    public void displayReferenceCardSimple(String title, String body){
         //pass
     }
 }

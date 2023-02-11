@@ -66,8 +66,10 @@ class SmartGlassesRepresentative {
 
     public void showReferenceCard(String title, String content){
         if (smartGlassesCommunicator != null) {
-            smartGlassesCommunicator.displayText(title, 2, 0, 0);
-            smartGlassesCommunicator.displayText(content, 0, 0, 20);
+//            smartGlassesCommunicator.displayText(title, smartGlassesCommunicator.LARGE_FONT, 0, 0);
+//            smartGlassesCommunicator.displayText(content, smartGlassesCommunicator.SMALL_FONT, 0, 20);
+
+            smartGlassesCommunicator.displayReferenceCardSimple(title, content);
         }
     }
 }
