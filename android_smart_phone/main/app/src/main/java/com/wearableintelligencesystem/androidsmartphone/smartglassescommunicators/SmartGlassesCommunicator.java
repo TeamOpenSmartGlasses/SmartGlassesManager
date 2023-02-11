@@ -9,7 +9,18 @@ public abstract class SmartGlassesCommunicator {
 
     public abstract void connectToSmartGlasses();
     public abstract void destroy();
-    public abstract void displayText(String text, int fontSize, int xLocVw, int yLocVh);
+    public abstract void displayReferenceCardSimple(String title, String body);
+
+    public int LARGE_FONT;
+    public int MEDIUM_FONT;
+    public int SMALL_FONT;
+
+    public SmartGlassesCommunicator(){
+        setFontSizes();
+    }
+
+    //must be run and set font sizes
+    protected abstract void setFontSizes();
 
     public int getConnectionState(){
         return mConnectState;

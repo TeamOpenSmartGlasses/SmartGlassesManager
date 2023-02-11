@@ -32,6 +32,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -47,7 +48,12 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     private ArrayAdapter<DiscoveredGlasses> scanResults;
     private ArrayList<DiscoveredGlasses> discoveredGlasses;
 
+    //map font size to actual size in pixels - specific to Activelook because we have to handle text wrapping manually
+    private Hashtable<Integer, Integer> fontToSize;
+    private Hashtable<Integer, Float> fontToRatio;
+
     public ActiveLookSGC(Context context, PublishSubject< JSONObject > dataObservable) {
+        super();
         //hold all glasses we find
         discoveredGlasses = new ArrayList<>();
 
@@ -62,6 +68,26 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                 this::onUpdateSuccess,
                 this::onUpdateError
         );
+    }
+
+    @Override
+    protected void setFontSizes(){
+        int EXTRA_LARGE_FONT = 3;
+        LARGE_FONT = 2;
+        MEDIUM_FONT = 1;
+        SMALL_FONT = 0;
+
+        fontToSize = new Hashtable<>();
+        fontToSize.put(LARGE_FONT, 35);
+        fontToSize.put(MEDIUM_FONT, 24);
+        fontToSize.put(SMALL_FONT, 24);
+        fontToSize.put(EXTRA_LARGE_FONT, 49);
+
+        fontToRatio = new Hashtable<>();
+        fontToRatio.put(LARGE_FONT, 2.0f);
+        fontToRatio.put(MEDIUM_FONT, 2.1f);
+        fontToRatio.put(SMALL_FONT, 2.1f);
+        fontToRatio.put(EXTRA_LARGE_FONT, 3.0f);
     }
 
     @Override
@@ -127,49 +153,93 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     private boolean isConnected(){
         return (mConnectState == 2);
     }
-    //HCI
-    public void displayText(String text, int fontSize, int xLocVw, int yLocVh){
-        /**
-         * Write text string at coordinates (x, y) with rotation, font size, and color.
-         *
-         * @param x The x coordinate for the text.
-         * @param y The y coordinate for the text.
-         * @param r The rotation of the text.
-         * @param f The font size of the text.
-         * @param c The color of the text.
-         * @param s The text.
-         */
-        if (isConnected()) {
-            int xCoord = displayWidthPixels - Math.round((((float) xLocVw) / 100) * displayWidthPixels);
-            int yCoord = displayHeightPixels - Math.round((((float) yLocVh) / 100) * displayHeightPixels);
-            connectedGlasses.power(true);
-            // we flip coords because Activelook (0,0) is bottom right, whereas computer graphics is always top left
-            textWrapping(xCoord, yCoord, fontSize, text);
+
+    public void displayReferenceCardSimple(String title, String body){
+        ArrayList<Object> stuffToDisplay = new ArrayList<>();
+        stuffToDisplay.add(new TextLineSG(title, LARGE_FONT));
+        stuffToDisplay.add(new TextLineSG(body, SMALL_FONT));
+        displayLinearStuff(stuffToDisplay);
+    }
+
+    //takes a list of strings and images and displays them in a line from top of the screen to the bottom
+    private void displayLinearStuff(ArrayList<Object> stuffToDisplay){
+        if (!isConnected()){
+            return;
+        }
+
+        //make sure our glasses are powered on and cleared
+        connectedGlasses.power(true);
+        connectedGlasses.clear();
+
+        //loop through the stuff to display, and display it, moving the next item below the previous item in each loop
+        Point currPercentPoint = new Point(0,0);
+        int yMargin = 5;
+        for (Object thing : stuffToDisplay){
+            Point endPercentPoint;
+            if (thing instanceof TextLineSG) { //could this be done cleaner with polymorphism? https://stackoverflow.com/questions/5579309/is-it-possible-to-use-the-instanceof-operator-in-a-switch-statement
+                endPercentPoint = displayText((TextLineSG) thing, currPercentPoint);
+//            } else if (thing instanceof ImageSG) {
+                //endPoint = displaySomething((ImageSG) thing, currPoint);
+            } else { //unsupported type
+                continue;
+            }
+            currPercentPoint = new Point(0, endPercentPoint.y + yMargin); //move the next thing to display down below the previous thing
         }
     }
 
-    //handles text wrapping, returns how many lines were wrapped
-    public int textWrapping(int xCoord, int yCoord, int fontSize, String text){
-        int fontHeight = 24;
-        double fontAspectRatio = 2.5; //this many times as taller than, found by trial and error
-        int fontWidth = (int) (fontHeight / fontAspectRatio);
-        int textWidth = (int) (text.length() * fontWidth); //width in pixels
-        ArrayList<String> chunkedText = new ArrayList<>();
+    private Point percentScreenToPixels(int xLocVw, int yLocVh){
+        Log.d(TAG, "percentScreenToPixels x: " + xLocVw);
+        Log.d(TAG, "percentScreenToPixels y: " + yLocVh);
+        int xCoord = displayWidthPixels - Math.round((((float) xLocVw) / 100) * displayWidthPixels);
+        int yCoord = displayHeightPixels - Math.round((((float) yLocVh) / 100) * displayHeightPixels);
+        return new Point(xCoord, yCoord);
+    }
 
-        Log.d(TAG, "Text width is: " + textWidth);
-        int numWraps = ((int) Math.floor(((float) textWidth) / displayWidthPixels));
-        int wrapLen = ((int) Math.floor((displayWidthPixels / (float) fontWidth)));
-        Log.d(TAG, "Num wraps is: " + numWraps);
-        Log.d(TAG, "Wrap len is: " + wrapLen);
-        for (int i = 0; i <= numWraps; i++){
-            int startIdx = wrapLen * i;
-            int endIdx = Math.min(startIdx + wrapLen, text.length());
-            String subText = text.substring(startIdx, endIdx);
-            chunkedText.add(subText);
-            Log.d(TAG, "Check it out: " + text.substring(startIdx, endIdx));
-            connectedGlasses.txt(new Point(xCoord, yCoord - (int)((i * fontHeight) * 1.1)), Rotation.TOP_LR, (byte) 0, (byte) 0x0F, subText);
+    private Point pixelsToPercentScreen(Point point){
+        Log.d(TAG, "pixels to percent screen point INPUT: " + point);
+        int xPercent = (int)(((float)point.x / displayWidthPixels) * 100);
+        int yPercent = (int)(((float)point.y / displayHeightPixels) * 100);
+        Point percentPoint = new Point(xPercent, yPercent);
+        Log.d(TAG, "pixels to percent screen point RETURN : " + percentPoint);
+        return percentPoint;
+    }
+
+    //handles text wrapping, returns how many lines were wrapped
+    private Point displayText(TextLineSG textLine, Point percentLoc){
+        if (!isConnected()){
+            return null;
         }
 
-        return numWraps;
+        //compute information about how to wrap this line
+        int fontHeight = fontToSize.get(textLine.getFontSize());
+        float fontAspectRatio = fontToRatio.get(textLine.getFontSize()); //this many times as taller than, found by trial and error
+        int fontWidth = (int) (fontHeight / fontAspectRatio);
+        int textWidth = (int) (textLine.getText().length() * fontWidth); //width in pixels
+        int numWraps = ((int) Math.floor(((float) textWidth) / displayWidthPixels));
+        int wrapLen = ((int) Math.floor((displayWidthPixels / (float) fontWidth)));
+
+        //loop through the text, writing out individual lines to the glasses
+        ArrayList<String> chunkedText = new ArrayList<>();
+        Point textPoint = percentLoc;
+        int textMarginY = pixelsToPercentScreen(new Point((int)(fontHeight * 1.3), 0)).x;
+        for (int i = 0; i <= numWraps; i++){
+            int startIdx = wrapLen * i;
+            int endIdx = Math.min(startIdx + wrapLen, textLine.getText().length());
+            String subText = textLine.getText().substring(startIdx, endIdx).trim();
+            chunkedText.add(subText);
+            Log.d(TAG, "display text as percent pos: " + textPoint);
+//            connectedGlasses.txt(textPoint, Rotation.TOP_LR, (byte) textLine.getFontSize(), (byte) 0x0F, subText);
+            sendTextToGlasses(new TextLineSG(subText, textLine.getFontSize()), textPoint);
+            textPoint = new Point(textPoint.x, textPoint.y + textMarginY); //lower our text for the next loop
+        }
+
+        return textPoint;
+    }
+
+    private void sendTextToGlasses(TextLineSG textLine, Point percentLoc){
+        Log.d(TAG, "Sending text to glasses: " + textLine.getText());
+        Log.d(TAG, "At pos: " + percentLoc);
+        Point pixelLoc = percentScreenToPixels(percentLoc.x, percentLoc.y);
+        connectedGlasses.txt(pixelLoc, Rotation.TOP_LR, (byte) textLine.getFontSize(), (byte) 0x0F, textLine.getText());
     }
 }

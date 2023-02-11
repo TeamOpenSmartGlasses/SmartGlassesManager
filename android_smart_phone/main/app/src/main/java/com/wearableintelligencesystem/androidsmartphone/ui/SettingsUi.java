@@ -31,8 +31,8 @@ public class SettingsUi extends Fragment {
 
     //test card raw data
     public String testCardImg = "https://ichef.bbci.co.uk/news/976/cpsprodpb/7727/production/_103330503_musk3.jpg";
-    public String testCardTitle = "We Out Here Testing Stuff";
-    public String testCardContent = "Local man runs in circles for hours after losing cognitive control of his left leg.";
+    public String testCardTitle = "Reference Card";
+    public String testCardContent = "This is an example of a reference card. This should appear on your glasses after pressing the 'Send Test Card' button.";
 
     public SettingsUi() {
     }
