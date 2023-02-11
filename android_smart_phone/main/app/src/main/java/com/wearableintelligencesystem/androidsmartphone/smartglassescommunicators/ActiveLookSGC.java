@@ -1,34 +1,17 @@
 package com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Point;
-import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.util.Consumer;
 
 import com.activelook.activelooksdk.DiscoveredGlasses;
 import com.activelook.activelooksdk.Glasses;
 import com.activelook.activelooksdk.Sdk;
 import com.activelook.activelooksdk.types.GlassesUpdate;
 import com.activelook.activelooksdk.types.Rotation;
-import com.wearableintelligencesystem.androidsmartphone.R;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 
-import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -52,7 +35,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     private Hashtable<Integer, Integer> fontToSize;
     private Hashtable<Integer, Float> fontToRatio;
 
-    public ActiveLookSGC(Context context, PublishSubject< JSONObject > dataObservable) {
+    public ActiveLookSGC(Context context) {
         super();
         //hold all glasses we find
         discoveredGlasses = new ArrayList<>();
@@ -92,6 +75,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     @Override
     public void connectToSmartGlasses(){
+        Log.d(TAG, "Activelook scanning, trying to connect...");
         this.alsdk.startScan(activeLookDiscoveredGlassesI -> {
             discoveredGlasses.add(activeLookDiscoveredGlassesI);
             tryConnectNewGlasses(activeLookDiscoveredGlassesI);
@@ -188,19 +172,15 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     private Point percentScreenToPixels(int xLocVw, int yLocVh){
-        Log.d(TAG, "percentScreenToPixels x: " + xLocVw);
-        Log.d(TAG, "percentScreenToPixels y: " + yLocVh);
         int xCoord = displayWidthPixels - Math.round((((float) xLocVw) / 100) * displayWidthPixels);
         int yCoord = displayHeightPixels - Math.round((((float) yLocVh) / 100) * displayHeightPixels);
         return new Point(xCoord, yCoord);
     }
 
     private Point pixelsToPercentScreen(Point point){
-        Log.d(TAG, "pixels to percent screen point INPUT: " + point);
         int xPercent = (int)(((float)point.x / displayWidthPixels) * 100);
         int yPercent = (int)(((float)point.y / displayHeightPixels) * 100);
         Point percentPoint = new Point(xPercent, yPercent);
-        Log.d(TAG, "pixels to percent screen point RETURN : " + percentPoint);
         return percentPoint;
     }
 
@@ -227,8 +207,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             int endIdx = Math.min(startIdx + wrapLen, textLine.getText().length());
             String subText = textLine.getText().substring(startIdx, endIdx).trim();
             chunkedText.add(subText);
-            Log.d(TAG, "display text as percent pos: " + textPoint);
-//            connectedGlasses.txt(textPoint, Rotation.TOP_LR, (byte) textLine.getFontSize(), (byte) 0x0F, subText);
             sendTextToGlasses(new TextLineSG(subText, textLine.getFontSize()), textPoint);
             textPoint = new Point(textPoint.x, textPoint.y + textMarginY); //lower our text for the next loop
         }
@@ -237,8 +215,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     private void sendTextToGlasses(TextLineSG textLine, Point percentLoc){
-        Log.d(TAG, "Sending text to glasses: " + textLine.getText());
-        Log.d(TAG, "At pos: " + percentLoc);
         Point pixelLoc = percentScreenToPixels(percentLoc.x, percentLoc.y);
         connectedGlasses.txt(pixelLoc, Rotation.TOP_LR, (byte) textLine.getFontSize(), (byte) 0x0F, textLine.getText());
     }

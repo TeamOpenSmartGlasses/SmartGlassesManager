@@ -131,36 +131,6 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
-
-//    public void sendCommandResponse(String response){
-//        try{
-//            //build json object to send command result
-//            JSONObject commandResponseObject = new JSONObject();
-//            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-//            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.TEXT_RESPONSE_EVENT_TYPE);
-//            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, response);
-//
-//            //send the command result to web socket, to send to asg
-//            dataObservable.onNext(commandResponseObject);
-//        } catch (JSONException e){
-//            e.printStackTrace();
-//        }
-//    }
-
-    public void sendSearchEngineResults(JSONObject results){
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SEARCH_ENGINE_RESULT);
-            commandResponseObject.put(MessageTypes.SEARCH_ENGINE_RESULT_DATA, results.toString());
-
-            //send the command result to web socket, to send to asg
-            dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
     public void startAsgWebSocketConnection(){
         Log.d(TAG, "Starting WebSocket Server");
         //String address = "localhost:8887";
@@ -236,7 +206,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                     if (killme){
                         return;
                     }
-                    socket.setSoTimeout(2000);
+                    socket.setSoTimeout(5000);
                     Log.d(TAG, "Got socket connection.");
                     //output = new PrintWriter(socket.getOutputStream(), true);
                     output = new DataOutputStream(socket.getOutputStream());
@@ -540,6 +510,17 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body){
-        //pass
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.REFERENCE_CARD_SIMPLE_VIEW);
+            commandResponseObject.put(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_TITLE, title);
+            commandResponseObject.put(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_BODY, body);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 }

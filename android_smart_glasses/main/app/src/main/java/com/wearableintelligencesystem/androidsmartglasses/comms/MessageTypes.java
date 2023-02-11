@@ -5,6 +5,11 @@ public class MessageTypes {
     public static final String MESSAGE_TYPE_LOCAL = "MESSAGE_TYPE_LOCAL";
     public static final String TIMESTAMP = "TIMESTAMP";
 
+    //Reference card view
+    public static final String REFERENCE_CARD_SIMPLE_VIEW = "REFERENCE_CARD_SIMPLE_VIEW";
+    public static final String REFERENCE_CARD_SIMPLE_VIEW_TITLE = "REFERENCE_CARD_SIMPLE_VIEW_TITLE";
+    public static final String REFERENCE_CARD_SIMPLE_VIEW_BODY = "REFERENCE_CARD_SIMPLE_VIEW_BODY";
+
     //DATA TYPES
     public static final String POV_IMAGE = "POV_IMAGE";
     public static final String JPG_BYTES_BASE64 = "JPG_BYTES_BASE64";

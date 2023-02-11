@@ -99,11 +99,25 @@ public class SettingsUi extends Fragment {
                 sendTestCard();
             }
         });
+
+        //setup live captions launcher
+        final Button startLiveCaptions = view.findViewById(R.id.start_live_captions);
+        startLiveCaptions.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Code here executes on main thread after user presses button
+                startLiveCaptions();
+            }
+        });
     }
 
     public void sendTestCard(){
         Log.d(TAG, "SENDING TEST CARD");
         ((MainActivity)getActivity()).mService.sendTestCard(testCardTitle, testCardContent, testCardImg);
+    }
+
+    public void startLiveCaptions(){
+        Log.d(TAG, "starting live cpations");
+        ((MainActivity)getActivity()).mService.startLiveCaptions();
     }
 
     //open hotspot settings

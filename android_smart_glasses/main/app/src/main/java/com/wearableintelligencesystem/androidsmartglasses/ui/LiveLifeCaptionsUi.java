@@ -81,7 +81,7 @@ public class LiveLifeCaptionsUi extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                UiUtils.scrollToBottom(liveLifeCaptionsText);
+//                UiUtils.scrollToBottom(liveLifeCaptionsText);
             }
 
             @Override
@@ -91,7 +91,7 @@ public class LiveLifeCaptionsUi extends Fragment {
         });
 
         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
-        UiUtils.scrollToBottom(liveLifeCaptionsText);
+//        UiUtils.scrollToBottom(liveLifeCaptionsText);
         //navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
     }
 
