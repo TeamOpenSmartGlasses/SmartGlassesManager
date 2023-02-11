@@ -443,6 +443,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG, typeOf);
                     if (typeOf.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
                         showSearchEngineResults(data);
+                    } else if (typeOf.equals(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW)){
+                        showReferenceCardSimpleView(data);
                     } else if (typeOf.equals(MessageTypes.ACTION_SWITCH_MODES)){
                         //parse out the name of the mode
                         String modeName = data.getString(MessageTypes.NEW_MODE);
@@ -594,6 +596,23 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, summary);
             switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
             showReferenceCard(title, summary, img_url, searchEngineResultTimeout);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+            e.printStackTrace();
+        }
+    }
+
+    private void showReferenceCardSimpleView(JSONObject data) {
+        try {
+            //get content
+            String title = data.getString(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_TITLE);
+            String body = data.getString(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_BODY);
+
+            Log.d(TAG, "Running reference card simple view");
+            Log.d(TAG, title);
+            Log.d(TAG, body);
+            switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
+            showReferenceCard(title, body, null, searchEngineResultTimeout);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }

@@ -8,6 +8,11 @@ public class MessageTypes {
     public static final String GLASSES_STATUS_UPDATE = "GLASSES_STATUS_UPDATE";
     public static final String CONNECTION_GLASSES_STATUS_UPDATE = "CONNECTION_GLASSES_STATUS_UPDATE";
 
+    //Reference card view
+    public static final String REFERENCE_CARD_SIMPLE_VIEW = "REFERENCE_CARD_SIMPLE_VIEW";
+    public static final String REFERENCE_CARD_SIMPLE_VIEW_TITLE = "REFERENCE_CARD_SIMPLE_VIEW_TITLE";
+    public static final String REFERENCE_CARD_SIMPLE_VIEW_BODY = "REFERENCE_CARD_SIMPLE_VIEW_BODY";
+
     //GLASSES CONNECTION EVENT/STATE
     public static final int CONNECTED_GLASSES = 2;
     public static final int DISCONNECTED_GLASSES = 0;

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="largeText">48sp</dimen>
+    <dimen name="mediumText">40sp</dimen>
+    <dimen name="smallText">34sp</dimen>
+    <dimen name="headerIconWidth">36sp</dimen>
+    <dimen name="headerIconHeight">36sp</dimen>
+</resources>

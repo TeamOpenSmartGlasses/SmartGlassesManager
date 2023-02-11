@@ -36,9 +36,12 @@ class SmartGlassesRepresentative {
     public void connectToSmartGlasses(){
         switch (smartGlassesDevice.getGlassesOs()){
             case ANDROID_OS_GLASSES:
+                Log.d(TAG, "MAKING ANDROID SGC");
                 smartGlassesCommunicator = new AndroidSGC(context, dataObservable);
+                break;
             case ACTIVELOOK_OS_GLASSES:
-                smartGlassesCommunicator = new ActiveLookSGC(context, dataObservable);
+                smartGlassesCommunicator = new ActiveLookSGC(context);
+                break;
         }
 
         smartGlassesCommunicator.connectToSmartGlasses();
@@ -70,6 +73,13 @@ class SmartGlassesRepresentative {
 //            smartGlassesCommunicator.displayText(content, smartGlassesCommunicator.SMALL_FONT, 0, 20);
 
             smartGlassesCommunicator.displayReferenceCardSimple(title, content);
+        }
+    }
+
+    public void startLiveCaptions(){
+        //pass for now
+        if (smartGlassesCommunicator != null) {
+//            smartGlassesCommunicator.startLiveCaptions();
         }
     }
 }
