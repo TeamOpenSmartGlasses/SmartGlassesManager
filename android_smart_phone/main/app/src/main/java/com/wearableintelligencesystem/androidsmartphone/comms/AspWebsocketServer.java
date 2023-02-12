@@ -132,15 +132,9 @@ public class AspWebsocketServer extends WebSocketServer {
                 //data.put(MessageTypes.MESSAGE_TYPE_LOCAL, data.getString(MessageTypes.MESSAGE_TYPE_ASG)); //change the type to the type for ASG
                 //data.remove(MessageTypes.MESSAGE_TYPE_ASG);
                 sendJson(data);
-
-                //TODO: Find a more elegant place for this
-                SGMData.sgmBroadcastSender.broadcastData(data.toString());
             } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)){
 //                Log.d(TAG, "AspWebsocketServer got FINAL_TRANSCRIPT, sending to ASG");
                 sendJson(data);
-
-                //TODO: Find a more elegant place for this
-                SGMData.sgmBroadcastSender.broadcastData(data.toString());
             } else if (type.equals(MessageTypes.VOICE_COMMAND_RESPONSE)){
 //                Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_RESPONSE, sending to ASG");
                 sendJson(data);
