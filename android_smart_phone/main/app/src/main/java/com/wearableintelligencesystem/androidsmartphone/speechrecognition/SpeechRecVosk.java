@@ -16,7 +16,6 @@ import android.util.Base64;
 import android.content.Context;
 import android.util.Log;
 import android.os.Handler;
-import android.util.Pair;
 
 import java.lang.InterruptedException;
 import java.io.InputStream;
@@ -24,7 +23,7 @@ import java.io.InputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.wearableintelligencesystem.androidsmartphone.comms.SendableTranscriptEvent;
+import SGMLib.SendableIntentEvent;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;
@@ -36,7 +35,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 
 //rxjava
-import SGMLib.SGMData;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -263,7 +261,7 @@ public class SpeechRecVosk implements RecognitionListener {
             transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
             dataObservable.onNext(transcriptObj);
 
-            EventBus.getDefault().post(new SendableTranscriptEvent(transcriptObj));
+            EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));
         } catch (JSONException e){
             e.printStackTrace();
         }

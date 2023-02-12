@@ -121,12 +121,6 @@ public class WearableAiAspService extends LifecycleService {
         tpaCommunicator = new TPACommunicator();
         sender = new SGMBroadcastSender(getApplicationContext());
         receiver = new SGMBroadcastReceiver(getApplicationContext());
-        SGMData.sgmOnDataSubscription = SGMData.sgmOnData.subscribe(i -> onReceiveData(i));
-    }
-
-    private void onReceiveData(String data){
-        //TODO: Properly handle messages
-        Toast.makeText(getApplicationContext(), "Broadcast message is received", Toast.LENGTH_LONG).show();
     }
 
     private void setupEventBusSubscribers(){
