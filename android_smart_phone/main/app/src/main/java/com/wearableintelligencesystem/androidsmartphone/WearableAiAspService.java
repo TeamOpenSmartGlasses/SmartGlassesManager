@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
+import com.wearableintelligencesystem.androidsmartphone.comms.TPACommunicator;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
@@ -45,6 +46,7 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 public class WearableAiAspService extends LifecycleService {
     public SGMBroadcastReceiver receiver;
     public SGMBroadcastSender sender;
+    public TPACommunicator tpaCommunicator;
 
     private static final String TAG = "WearableAi_ASP_Service";
 
@@ -116,6 +118,7 @@ public class WearableAiAspService extends LifecycleService {
         setupEventBusSubscribers();
 
         //init broadcasters
+        tpaCommunicator = new TPACommunicator();
         sender = new SGMBroadcastSender(getApplicationContext());
         receiver = new SGMBroadcastReceiver(getApplicationContext());
         SGMData.sgmOnDataSubscription = SGMData.sgmOnData.subscribe(i -> onReceiveData(i));
