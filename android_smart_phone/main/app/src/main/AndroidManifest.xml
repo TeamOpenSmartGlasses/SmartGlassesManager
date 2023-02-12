@@ -58,7 +58,7 @@
           >
 
           <intent-filter>
-              <action android:name="com.teamsmartglasses.from3pa" />
+              <action android:name="com.teamopensmartglasses.from3pa" />
           </intent-filter>
       </receiver>
 
