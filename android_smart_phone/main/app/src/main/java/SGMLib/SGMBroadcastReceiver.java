@@ -24,7 +24,7 @@ public class SGMBroadcastReceiver extends BroadcastReceiver {
         Log.d(TAG, "PKGFILTER: 1");
         SGMData.sgmOnData = PublishSubject.create();
         Log.d(TAG, "log: ctxpkgn: " + this.context.getPackageName() + " sgmdat: " + SGMData.SGMPkgName);
-        this.filterPkg = this.context.getPackageName().contains(SGMData.SGMPkgName) ? "com.teamsmartglasses.from3pa" : "com.teamsmartglasses.to3pa";
+        this.filterPkg = this.context.getPackageName().contains(SGMData.SGMPkgName) ? "com.teamopensmartglasses.from3pa" : "com.teamopensmartglasses.to3pa";
         Log.d(TAG, "PKGFILTER: " + this.filterPkg);
         IntentFilter intentFilter = new IntentFilter(this.filterPkg);
         this.context.registerReceiver(this, intentFilter);

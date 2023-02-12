@@ -9,7 +9,7 @@ public class SGMBroadcastSender {
 
     public SGMBroadcastSender(Context context) {
         this.context = context;
-        this.intentPkg = this.context.getPackageName().contains(SGMData.SGMPkgName) ? "com.teamsmartglasses.to3pa" : "com.teamsmartglasses.from3pa";
+        this.intentPkg = this.context.getPackageName().contains(SGMData.SGMPkgName) ? "com.teamopensmartglasses.to3pa" : "com.teamopensmartglasses.from3pa";
         SGMData.sgmBroadcastSender = this;
     }
 
