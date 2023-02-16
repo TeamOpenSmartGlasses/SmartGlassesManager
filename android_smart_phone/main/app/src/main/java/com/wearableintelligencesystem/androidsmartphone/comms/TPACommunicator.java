@@ -7,9 +7,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import SGMLib.ReceivedIntentEvent;
-import SGMLib.SGMData;
-import SGMLib.SendableIntentEvent;
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.*;
 
 public class TPACommunicator {
     private String TAG = "TPACommunicator: ";

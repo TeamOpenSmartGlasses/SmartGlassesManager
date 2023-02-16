@@ -23,7 +23,7 @@ import java.io.InputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import SGMLib.SendableIntentEvent;
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.*;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;

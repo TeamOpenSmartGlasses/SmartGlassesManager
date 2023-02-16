@@ -14,7 +14,7 @@ import android.util.Log;
 import org.json.JSONObject;
 import org.json.JSONException;
 
-import SGMLib.SGMData;
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.*;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 

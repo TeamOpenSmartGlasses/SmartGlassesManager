@@ -1,7 +1,8 @@
-package SGMLib;
+package com.wearableintelligencesystem.androidsmartphone.SGMLib;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 public class SGMBroadcastSender {
     private String intentPkg;
@@ -14,6 +15,7 @@ public class SGMBroadcastSender {
     }
 
     public void broadcastData(String data) {
+        Log.d("3PASEND: ", this.intentPkg);
         Intent intent = new Intent();
         intent.putExtra("data", data);
         intent.setAction(intentPkg);

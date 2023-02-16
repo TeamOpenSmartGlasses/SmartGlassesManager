@@ -15,6 +15,9 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.ReceivedIntentEvent;
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMBroadcastReceiver;
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMBroadcastSender;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.comms.TPACommunicator;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
@@ -27,9 +30,7 @@ import com.wearableintelligencesystem.androidsmartphone.speechrecognition.Speech
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
 
-import SGMLib.SGMBroadcastReceiver;
-import SGMLib.SGMBroadcastSender;
-import SGMLib.SGMData;
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMData;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -125,6 +126,11 @@ public class WearableAiAspService extends LifecycleService {
 
     private void setupEventBusSubscribers(){
         EventBus.getDefault().register(this);
+    }
+
+    @Subscribe
+    public void onIntentReceivedEvent(ReceivedIntentEvent receivedIntentEvent) throws JSONException {
+        Log.d(TAG, "ReceivedIntentData: " + receivedIntentEvent.data);
     }
 
     @Subscribe

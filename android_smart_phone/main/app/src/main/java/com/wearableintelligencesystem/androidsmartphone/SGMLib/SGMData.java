@@ -1,9 +1,9 @@
-package SGMLib;
+package com.wearableintelligencesystem.androidsmartphone.SGMLib;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.subjects.PublishSubject;
+import java.util.ArrayList;
 
 public class SGMData {
     public static final String SGMPkgName = "com.wearableintelligencesystem.androidsmartphone";
     public static SGMBroadcastSender sgmBroadcastSender;
+    public static ArrayList<TPACommand> commandsToRegister;
 }
