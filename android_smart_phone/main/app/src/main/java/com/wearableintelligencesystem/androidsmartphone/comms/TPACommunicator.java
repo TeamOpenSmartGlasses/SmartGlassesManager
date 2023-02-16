@@ -8,6 +8,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.wearableintelligencesystem.androidsmartphone.SGMLib.*;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 
 public class TPACommunicator {
     private String TAG = "TPACommunicator: ";
@@ -31,7 +33,7 @@ public class TPACommunicator {
             String title = receivedObj.getString(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_TITLE);
             String body = receivedObj.getString(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_BODY);
             //TODO: Once everything is merged, add the call to ActiveLookSGC's displayReferenceCardSimple here
-            //displayReferenceCardSimple(title, body);
+            EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
         }
     }
 }
