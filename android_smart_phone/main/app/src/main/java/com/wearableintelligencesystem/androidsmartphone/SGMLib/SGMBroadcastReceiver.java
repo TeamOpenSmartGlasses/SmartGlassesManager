@@ -1,11 +1,12 @@
-package SGMLib;
+package com.wearableintelligencesystem.androidsmartphone.SGMLib;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.util.Log;
-import android.content.BroadcastReceiver;
 import android.os.Bundle;
+import android.util.Log;
+
 import org.greenrobot.eventbus.EventBus;
 
 public class SGMBroadcastReceiver extends BroadcastReceiver {

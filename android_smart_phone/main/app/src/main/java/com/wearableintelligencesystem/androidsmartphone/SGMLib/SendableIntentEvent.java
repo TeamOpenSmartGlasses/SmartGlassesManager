@@ -1,4 +1,4 @@
-package SGMLib;
+package com.wearableintelligencesystem.androidsmartphone.SGMLib;
 
 import org.json.JSONObject;
 
