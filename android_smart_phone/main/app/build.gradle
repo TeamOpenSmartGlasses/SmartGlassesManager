@@ -130,6 +130,9 @@ dependencies {
 
     //activelook SDK
     implementation 'com.github.activelook:android-sdk:v4.4.0'
+    
+    //Json (de/)serialization
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 //VOSK ASR prep models - need one for each language

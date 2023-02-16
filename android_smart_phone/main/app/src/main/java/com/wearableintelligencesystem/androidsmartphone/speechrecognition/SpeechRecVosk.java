@@ -1,6 +1,7 @@
 package com.wearableintelligencesystem.androidsmartphone.speechrecognition;
 
 //Vosk ASR
+import org.greenrobot.eventbus.EventBus;
 import org.vosk.LibVosk;
 import org.vosk.LogLevel;
 import org.vosk.Model;
@@ -15,7 +16,6 @@ import android.util.Base64;
 import android.content.Context;
 import android.util.Log;
 import android.os.Handler;
-import android.util.Pair;
 
 import java.lang.InterruptedException;
 import java.io.InputStream;
@@ -23,6 +23,7 @@ import java.io.InputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.wearableintelligencesystem.androidsmartphone.SGMLib.*;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;
@@ -259,6 +260,8 @@ public class SpeechRecVosk implements RecognitionListener {
             }
             transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
             dataObservable.onNext(transcriptObj);
+
+            EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));
         } catch (JSONException e){
             e.printStackTrace();
         }
