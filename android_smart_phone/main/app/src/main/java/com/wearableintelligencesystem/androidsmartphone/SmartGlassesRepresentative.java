@@ -1,10 +1,15 @@
 package com.wearableintelligencesystem.androidsmartphone;
 
 import android.content.Context;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.json.JSONException;
 import org.json.JSONObject;
 import android.util.Log;
 
 //custom, our code
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.AndroidSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.SmartGlassesCommunicator;
@@ -31,6 +36,9 @@ class SmartGlassesRepresentative {
 
         //receive/send data
         this.dataObservable = dataObservable;
+
+        //register event bus subscribers
+        EventBus.getDefault().register(this);
     }
 
     public void connectToSmartGlasses(){
@@ -67,12 +75,9 @@ class SmartGlassesRepresentative {
         }
     }
 
-    public void showReferenceCard(String title, String content){
+    public void showReferenceCard(String title, String body){
         if (smartGlassesCommunicator != null) {
-//            smartGlassesCommunicator.displayText(title, smartGlassesCommunicator.LARGE_FONT, 0, 0);
-//            smartGlassesCommunicator.displayText(content, smartGlassesCommunicator.SMALL_FONT, 0, 20);
-
-            smartGlassesCommunicator.displayReferenceCardSimple(title, content);
+            smartGlassesCommunicator.displayReferenceCardSimple(title, body);
         }
     }
 
@@ -80,6 +85,13 @@ class SmartGlassesRepresentative {
         //pass for now
         if (smartGlassesCommunicator != null) {
 //            smartGlassesCommunicator.startLiveCaptions();
+        }
+    }
+
+    @Subscribe
+    public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
         }
     }
 }

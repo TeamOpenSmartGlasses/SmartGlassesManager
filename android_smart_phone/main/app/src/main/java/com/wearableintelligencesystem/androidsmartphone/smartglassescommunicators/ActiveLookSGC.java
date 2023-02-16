@@ -139,10 +139,12 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body){
-        ArrayList<Object> stuffToDisplay = new ArrayList<>();
-        stuffToDisplay.add(new TextLineSG(title, LARGE_FONT));
-        stuffToDisplay.add(new TextLineSG(body, SMALL_FONT));
-        displayLinearStuff(stuffToDisplay);
+        if (isConnected()) {
+            ArrayList<Object> stuffToDisplay = new ArrayList<>();
+            stuffToDisplay.add(new TextLineSG(title, LARGE_FONT));
+            stuffToDisplay.add(new TextLineSG(body, SMALL_FONT));
+            displayLinearStuff(stuffToDisplay);
+        }
     }
 
     //takes a list of strings and images and displays them in a line from top of the screen to the bottom

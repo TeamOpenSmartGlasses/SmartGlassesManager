@@ -15,7 +15,6 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
-import com.wearableintelligencesystem.androidsmartphone.SGMLib.ReceivedIntentEvent;
 import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMBroadcastReceiver;
 import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMBroadcastSender;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
@@ -126,11 +125,6 @@ public class WearableAiAspService extends LifecycleService {
 
     private void setupEventBusSubscribers(){
         EventBus.getDefault().register(this);
-    }
-
-    @Subscribe
-    public void onIntentReceivedEvent(ReceivedIntentEvent receivedIntentEvent) throws JSONException {
-        Log.d(TAG, "ReceivedIntentData: " + receivedIntentEvent.data);
     }
 
     @Subscribe
