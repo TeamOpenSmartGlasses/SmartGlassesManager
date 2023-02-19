@@ -85,7 +85,7 @@ class SmartGlassesRepresentative {
     public void startScrollingTextViewMode(){
         //pass for now
         if (smartGlassesCommunicator != null) {
-            smartGlassesCommunicator.startScrollingTextViewMode("Test Scrolling Text View");
+            smartGlassesCommunicator.startScrollingTextViewMode("ScrollingTextView");
             smartGlassesCommunicator.scrollingTextViewFinalText("test line 1");
             smartGlassesCommunicator.scrollingTextViewFinalText("line 2 testy boi");
             smartGlassesCommunicator.scrollingTextViewFinalText("how's this?");
