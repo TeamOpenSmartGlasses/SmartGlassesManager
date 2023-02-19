@@ -286,6 +286,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         //figure out the maximum we can display
         int totalRows = 0;
         ArrayList<String> finalTextToDisplay = new ArrayList<>();
+        boolean hitBottom = false;
         for (int i = finalScrollingTextStrings.toArray().length - 1; i >= 0; i--){
             String finalText = finalScrollingTextStrings.get(i);
             Log.d(TAG, finalText);
@@ -301,25 +302,28 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                 Log.d(TAG, "HIT THE ALLOWED TEXT ROW LIMIT, taking partial string if possible and exiting loop");
                 finalScrollingTextStrings = finalTextToDisplay;
                 lastLocScrollingTextView = belowTitleLocScrollingTextView;
-//                connectedGlasses.clear(); //clear the glasses as we hit our limit and need to redraw
+                //clear the glasses as we hit our limit and need to redraw
                 connectedGlasses.color((byte)0x00);
                 connectedGlasses.rectf(percentScreenToPixelsLocation(belowTitleLocScrollingTextView.x, belowTitleLocScrollingTextView.y), percentScreenToPixelsLocation(100, 100));
-                break;
+                //stop looping, as we've ran out of room
+                hitBottom = true;
             } else {
                 finalTextToDisplay.add(0, finalText);
             }
         }
 
         //display all of the text that we can
-        for (String finalString: finalTextToDisplay) {
-            TextLineSG tlString = new TextLineSG(finalString, SMALL_FONT);
-            //write this text at the last location + margin
-            Log.d(TAG, "Writing string: " + tlString.getText());
+        if (hitBottom) { //if we ran out of room, we need to redraw all the text
+            for (String finalString : finalTextToDisplay) {
+                TextLineSG tlString = new TextLineSG(finalString, scrollingTextTextFontSize);
+                //write this text at the last location + margin
+                Log.d(TAG, "Writing string: " + tlString.getText());
+                lastLocScrollingTextView = displayText(tlString, new Point(0, lastLocScrollingTextView.y));
+            }
+        } else { //if we didn't hit the bottom, and there's room, we can just display the next line
+            TextLineSG tlString = new TextLineSG(text, scrollingTextTextFontSize);
             lastLocScrollingTextView = displayText(tlString, new Point(0, lastLocScrollingTextView.y));
         }
-    }
-
-    private void clearBlock(Point topLeft, Point bottomRight){
 
     }
 
