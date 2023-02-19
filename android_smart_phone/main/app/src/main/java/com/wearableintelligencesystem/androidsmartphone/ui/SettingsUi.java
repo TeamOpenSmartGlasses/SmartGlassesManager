@@ -101,8 +101,8 @@ public class SettingsUi extends Fragment {
         });
 
         //setup live captions launcher
-        final Button startLiveCaptions = view.findViewById(R.id.start_live_captions);
-        startLiveCaptions.setOnClickListener(new View.OnClickListener() {
+        final Button startLiveCaptionsButton = view.findViewById(R.id.start_live_captions);
+        startLiveCaptionsButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Code here executes on main thread after user presses button
                 startLiveCaptions();

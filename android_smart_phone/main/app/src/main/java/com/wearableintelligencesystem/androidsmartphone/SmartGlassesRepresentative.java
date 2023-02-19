@@ -10,6 +10,7 @@ import android.util.Log;
 
 //custom, our code
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.AndroidSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.SmartGlassesCommunicator;
@@ -81,10 +82,17 @@ class SmartGlassesRepresentative {
         }
     }
 
-    public void startLiveCaptions(){
+    public void startScrollingTextViewMode(){
         //pass for now
         if (smartGlassesCommunicator != null) {
-//            smartGlassesCommunicator.startLiveCaptions();
+            smartGlassesCommunicator.startScrollingTextViewMode("Test Scrolling Text View");
+            smartGlassesCommunicator.scrollingTextViewFinalText("test line 1");
+            smartGlassesCommunicator.scrollingTextViewFinalText("line 2 testy boi");
+            smartGlassesCommunicator.scrollingTextViewFinalText("how's this?");
+            smartGlassesCommunicator.scrollingTextViewFinalText("this is a line of text that is going to be long enough to wrap around, it would be good to see if it doesn so, that would be super cool");
+            smartGlassesCommunicator.scrollingTextViewFinalText("test line n");
+            smartGlassesCommunicator.scrollingTextViewFinalText("line n + 1 testy boi");
+            smartGlassesCommunicator.scrollingTextViewFinalText("seconnndd how's this?");
         }
     }
 
@@ -92,6 +100,13 @@ class SmartGlassesRepresentative {
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
+        }
+    }
+
+    @Subscribe
+    public void onStartScrollingTextViewEvent(ScrollingTextViewStartEvent receivedEvent){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.startScrollingTextViewMode(receivedEvent.title);
         }
     }
 }

@@ -73,8 +73,6 @@ public class MainActivity extends AppCompatActivity {
         //get permissions
         permissionsUtils = new PermissionsUtils(this, TAG);
         permissionsUtils.checkPermission();
-
-//        startWearableAiService();
     }
 
     @Override

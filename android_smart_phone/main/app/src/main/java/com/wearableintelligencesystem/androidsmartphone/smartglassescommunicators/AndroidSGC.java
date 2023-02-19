@@ -523,4 +523,16 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             e.printStackTrace();
         }
     }
+
+    public void startScrollingTextViewMode(String title){
+        //pass
+    }
+
+    public void scrollingTextViewIntermediateText(String text){
+        //pass
+    }
+
+    public void scrollingTextViewFinalText(String text){
+        //pass
+    }
 }
