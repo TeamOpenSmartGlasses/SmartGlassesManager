@@ -27,6 +27,8 @@ import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixSh
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.VuzixUltralite;
 import com.wearableintelligencesystem.androidsmartphone.utils.PermissionsUtils;
 
+import io.reactivex.rxjava3.subjects.PublishSubject;
+
 /** Main activity of WearableAI compute module android app. **/
 /** This provides a simple UI for users to connect and setup their glasses. This activity launches the service which does all of the work to communicate with glasses and third party apps. **/
 public class MainActivity extends AppCompatActivity {
@@ -93,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            Log.d(TAG, "Got main service broadcast: " + action.toString());
             if (MessageTypes.GLASSES_STATUS_UPDATE.equals(action)) {
                 int glassesConnectionState = intent.getIntExtra(MessageTypes.CONNECTION_GLASSES_STATUS_UPDATE, -1);
                 updateGlassesConnectionState(glassesConnectionState);
@@ -102,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void updateGlassesConnectionState(int glassesConnectionState){
-        Log.d(TAG, "Smart glasses conect state: " + glassesConnectionState);
         if (selectedDevice != null) {
             selectedDevice.setConnectionState(glassesConnectionState);
         }

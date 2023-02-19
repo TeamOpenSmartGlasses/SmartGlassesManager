@@ -4,20 +4,24 @@ import android.content.Context;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.json.JSONException;
 import org.json.JSONObject;
 import android.util.Log;
 
 //custom, our code
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
+import com.wearableintelligencesystem.androidsmartphone.sensors.AudioChunkCallback;
+import com.wearableintelligencesystem.androidsmartphone.sensors.MicrophoneLocalAndBluetooth;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.AndroidSGC;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.SmartGlassesCommunicator;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
 
 //rxjava
-import io.reactivex.rxjava3.disposables.Disposable;
+import java.nio.ByteBuffer;
+
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 class SmartGlassesRepresentative {
@@ -30,6 +34,7 @@ class SmartGlassesRepresentative {
 
     SmartGlassesDevice smartGlassesDevice;
     SmartGlassesCommunicator smartGlassesCommunicator;
+    MicrophoneLocalAndBluetooth bluetoothAudio;
 
     SmartGlassesRepresentative(Context context, SmartGlassesDevice smartGlassesDevice, PublishSubject<JSONObject> dataObservable){
         this.context = context;
@@ -54,10 +59,34 @@ class SmartGlassesRepresentative {
         }
 
         smartGlassesCommunicator.connectToSmartGlasses();
+
+        //if the glasses don't support a microphone, this Representative handles local microphone
+        if (!smartGlassesDevice.getHasInMic() && !smartGlassesDevice.getHasOutMic()) {
+            connectAndStreamLocalMicrophone();
+        }
+    }
+
+    private void connectAndStreamLocalMicrophone(){
+        //follow this order for speed
+        //start audio from bluetooth headset
+        bluetoothAudio = new MicrophoneLocalAndBluetooth(context, new AudioChunkCallback(){
+            @Override
+            public void onSuccess(ByteBuffer chunk){
+                                                  receiveChunk(chunk);
+                                                                      }
+        });
+    }
+
+    private void receiveChunk(ByteBuffer chunk){
+        byte[] audio_bytes = chunk.array();
+        //throw off new audio chunk event
+        EventBus.getDefault().post(new AudioChunkNewEvent(audio_bytes));
     }
 
     public void destroy(){
         Log.d(TAG, "SG rep destroying");
+
+        bluetoothAudio.destroy();
 
         if (smartGlassesCommunicator != null){
             smartGlassesCommunicator.destroy();
@@ -107,6 +136,13 @@ class SmartGlassesRepresentative {
     public void onStartScrollingTextViewEvent(ScrollingTextViewStartEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.startScrollingTextViewMode(receivedEvent.title);
+        }
+    }
+
+    @Subscribe
+    public void onFinalScrollingTextEvent(FinalScrollingTextEvent receivedEvent) {
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.scrollingTextViewFinalText(receivedEvent.text);
         }
     }
 }
