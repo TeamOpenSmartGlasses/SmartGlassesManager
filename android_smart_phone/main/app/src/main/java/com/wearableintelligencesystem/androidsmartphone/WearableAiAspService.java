@@ -247,9 +247,10 @@ public class WearableAiAspService extends LifecycleService {
 
     public void startLiveCaptions(){
         Log.d(TAG, "SENDING TEST CARD FROM WAIService");
-        if (smartGlassesRepresentative != null) {
-            smartGlassesRepresentative.startScrollingTextViewMode();
-        }
+//        if (smartGlassesRepresentative != null) {
+//            smartGlassesRepresentative.startScrollingTextViewMode();
+//        }
+        LiveCaptionsDebugSystem liveCaptionsDebugSystem = new LiveCaptionsDebugSystem();
     }
 
     public int getSmartGlassesConnectState(){

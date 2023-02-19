@@ -85,7 +85,7 @@ public class PermissionsUtils {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             ActivityCompat.requestPermissions(mCallingActivity,
-                                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN}, LOCATION_PERMISSION_CODE);
+                                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.RECORD_AUDIO}, LOCATION_PERMISSION_CODE);
                         }
                     })
                     .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
@@ -97,7 +97,7 @@ public class PermissionsUtils {
                     .create().show();
         } else {
             ActivityCompat.requestPermissions(mCallingActivity,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN}, LOCATION_PERMISSION_CODE);
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.RECORD_AUDIO}, LOCATION_PERMISSION_CODE);
         }
     }
 

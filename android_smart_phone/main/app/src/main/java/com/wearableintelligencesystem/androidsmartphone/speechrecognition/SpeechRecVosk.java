@@ -2,6 +2,7 @@ package com.wearableintelligencesystem.androidsmartphone.speechrecognition;
 
 //Vosk ASR
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.vosk.LibVosk;
 import org.vosk.LogLevel;
 import org.vosk.Model;
@@ -28,6 +29,10 @@ import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
 
 //queue
 import java.util.concurrent.BlockingQueue;
@@ -81,6 +86,7 @@ public class SpeechRecVosk implements RecognitionListener {
         //receive/send data
         this.dataObservable = dataObservable;
         dataSub = this.dataObservable.subscribe(i -> handleDataStream(i));
+        setupEventBusSubscribers();
 
         //receive audio
         //this.audioObservable = audioObservable;
@@ -107,7 +113,11 @@ public class SpeechRecVosk implements RecognitionListener {
         }, delay);
     }
 
-    private void initModel() {
+    private void setupEventBusSubscribers(){
+            EventBus.getDefault().register(this);
+    }
+
+        private void initModel() {
         Log.d(TAG, "Initing ASR model...");
         StorageService.unpack(mContext, languageModelPath, "model",
                 (model) -> {
@@ -194,7 +204,7 @@ public class SpeechRecVosk implements RecognitionListener {
     public void handleResult(String hypothesis){
         long transcriptTime = System.currentTimeMillis();
         handleTranscript(hypothesis, MessageTypes.FINAL_TRANSCRIPT, transcriptTime);
-        }
+    }
 
     public void handleTranscript(String hypothesis, String transcriptType, long transcriptTime){
         //save transcript then send to other services in app
@@ -254,14 +264,21 @@ public class SpeechRecVosk implements RecognitionListener {
                 if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                     newPhrase = true;
                 }
-
                 transcriptObj.put(MessageTypes.TRANSCRIPT_ID, currPhrase.getId());
                 transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             }
             transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
+            Log.d(TAG, "VOSK SENDING: ");
+            Log.d(TAG, transcriptObj.toString());
             dataObservable.onNext(transcriptObj);
 
             EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));
+
+            //post the event bus event
+
+            if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+                EventBus.getDefault().post(new SpeechRecFinalOutputEvent(transcript, transcriptTime));
+            }
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -288,6 +305,15 @@ public class SpeechRecVosk implements RecognitionListener {
     @Override
     public void onTimeout() {
         Log.d(TAG, "VOSK: timeout");
+    }
+
+    @Subscribe
+    public void onAudioChunkNewEvent(AudioChunkNewEvent receivedEvent){
+        try {
+            audioSenderStreamVosk.put(receivedEvent.thisChunk);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }
