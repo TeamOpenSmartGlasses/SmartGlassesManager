@@ -17,7 +17,7 @@ public class TextLineSG {
         this.text = text;
     }
 
-    public int getFontSize() {
+    public int getFontSizeCode() {
         return fontSize;
     }
 
