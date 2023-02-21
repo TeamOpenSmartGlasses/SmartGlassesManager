@@ -524,15 +524,62 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void stopScrollingTextViewMode() {
+        Log.d(TAG, "STOP SCROLLING TEXT VIEW");
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SCROLLING_TEXT_VIEW_STOP);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
     public void startScrollingTextViewMode(String title){
-        //pass
+        super.startScrollingTextViewMode(title);
+        Log.d(TAG, "START SCROLLING TEXT VIEW");
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SCROLLING_TEXT_VIEW_START);
+            commandResponseObject.put(MessageTypes.SCROLLING_TEXT_VIEW_TITLE, title);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
     public void scrollingTextViewIntermediateText(String text){
-        //pass
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SCROLLING_TEXT_VIEW_INTERMEDIATE);
+            commandResponseObject.put(MessageTypes.SCROLLING_TEXT_VIEW_TEXT, text);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
     }
 
     public void scrollingTextViewFinalText(String text){
-        //pass
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.SCROLLING_TEXT_VIEW_FINAL);
+            commandResponseObject.put(MessageTypes.SCROLLING_TEXT_VIEW_TEXT, text);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 }

@@ -33,6 +33,7 @@ import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioCh
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
 
 //queue
 import java.util.concurrent.BlockingQueue;
@@ -278,6 +279,8 @@ public class SpeechRecVosk implements RecognitionListener {
 
             if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                 EventBus.getDefault().post(new SpeechRecFinalOutputEvent(transcript, transcriptTime));
+            } else {
+                EventBus.getDefault().post(new SpeechRecIntermediateOutputEvent(transcript, transcriptTime));
             }
         } catch (JSONException e){
             e.printStackTrace();

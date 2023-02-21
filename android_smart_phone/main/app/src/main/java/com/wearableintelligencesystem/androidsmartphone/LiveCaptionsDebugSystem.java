@@ -1,26 +1,57 @@
 package com.wearableintelligencesystem.androidsmartphone;
 
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
+import android.util.Log;
+
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.IntermediateScrollingTextEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+//uses scrolling text view to display live captions
 public class LiveCaptionsDebugSystem {
-    private String title = "Live Captions";
+    private  final String TAG = "WearableAi_LiveCaptionsDebugSystem";
 
-    public LiveCaptionsDebugSystem(){
+    private String title;
+    private boolean active;
+
+    public LiveCaptionsDebugSystem() {
+        title = "Live Captions";
+        active = false;
         EventBus.getDefault().register(this);
+    }
 
-        //start the scrolling mode
+    @Subscribe
+    public void onStartLiveCaptionsEvent(StartLiveCaptionsEvent receivedEvent){
+        active = true;
+        //start the mode on the glasses, using scrolling text view
         EventBus.getDefault().post(new ScrollingTextViewStartEvent(title));
     }
 
     @Subscribe
+    public void onStopLiveCaptionsEvent(StopLiveCaptionsEvent receivedEvent){
+        active = false;
+    }
+
+    @Subscribe
     public void onSpeechRecFinalOutputReceived(SpeechRecFinalOutputEvent receivedEvent){
-        EventBus.getDefault().post(new FinalScrollingTextEvent(receivedEvent.text));
+        Log.d(TAG, "onFinalOutputReceived");
+        if (active) {
+            Log.d(TAG, "POSTING IT THO");
+            EventBus.getDefault().post(new FinalScrollingTextEvent(receivedEvent.text));
+        }
+    }
+
+    @Subscribe
+    public void onSpeechRecIntermediateOutputReceived(SpeechRecIntermediateOutputEvent receivedEvent){
+        if (active) {
+            EventBus.getDefault().post(new IntermediateScrollingTextEvent(receivedEvent.text));
+        }
     }
 
     public void destroy(){

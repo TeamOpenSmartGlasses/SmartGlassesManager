@@ -127,19 +127,16 @@ public class AspWebsocketServer extends WebSocketServer {
         //first check if it's a type we should handle
         try{
             String type = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (type.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)){
-//                Log.d(TAG, "AspWebsocketServer got INTERMEDIATE_TRANSCRIPT, sending to ASG");
-                //data.put(MessageTypes.MESSAGE_TYPE_LOCAL, data.getString(MessageTypes.MESSAGE_TYPE_ASG)); //change the type to the type for ASG
-                //data.remove(MessageTypes.MESSAGE_TYPE_ASG);
-                sendJson(data);
-            } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)){
-//                Log.d(TAG, "AspWebsocketServer got FINAL_TRANSCRIPT, sending to ASG");
-                sendJson(data);
-            } else if (type.equals(MessageTypes.VOICE_COMMAND_RESPONSE)){
+//            if (type.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)){
+////                Log.d(TAG, "AspWebsocketServer got INTERMEDIATE_TRANSCRIPT, sending to ASG");
+//                //data.put(MessageTypes.MESSAGE_TYPE_LOCAL, data.getString(MessageTypes.MESSAGE_TYPE_ASG)); //change the type to the type for ASG
+//                //data.remove(MessageTypes.MESSAGE_TYPE_ASG);
+//                sendJson(data);
+//            } else if (type.equals(MessageTypes.FINAL_TRANSCRIPT)){
+////                Log.d(TAG, "AspWebsocketServer got FINAL_TRANSCRIPT, sending to ASG");
+//                sendJson(data);
+            if (type.equals(MessageTypes.VOICE_COMMAND_RESPONSE)){
 //                Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_RESPONSE, sending to ASG");
-                sendJson(data);
-            } else if (type.equals(MessageTypes.SEARCH_ENGINE_RESULT)){
-                Log.d(TAG, "AspWebsocketServer got SEARCH_ENGINE_RESULT, sending to ASG");
                 sendJson(data);
             } else if (type.equals(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW)){
                 Log.d(TAG, "AspWebsocketServer got REFERENCE_CARD_SIMPLE_VIEW, sending to ASG");
@@ -147,11 +144,17 @@ public class AspWebsocketServer extends WebSocketServer {
             } else if (type.equals(MessageTypes.ACTION_SWITCH_MODES)){
                 Log.d(TAG, "AspWebsocketServer got ACTION_SWITCH_MODES, sending to ASG");
                 sendJson(data);
-            }else if (type.equals(MessageTypes.REFERENCE_SELECT_REQUEST)){
-                Log.d(TAG, "AspWebsocketServer got REFERENCE_SELECT_REQUEST, sending to ASG");
+            } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_START)){
+                Log.d(TAG, "AspWebsocketServer sending STV start");
                 sendJson(data);
-            } else if (type.equals(MessageTypes.TRANSLATE_TEXT_RESULT)) {
-                Log.d(TAG, "AspWebsocketServer got TRANSLATE_TEXT_RESULT, sending to ASG");
+            } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_STOP)){
+                Log.d(TAG, "AspWebsocketServer sending STV start");
+                sendJson(data);
+            } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_FINAL)){
+                Log.d(TAG, "AspWebsocketServer sending STV final");
+                sendJson(data);
+            } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_INTERMEDIATE)){
+                Log.d(TAG, "AspWebsocketServer sending STV intermediate");
                 sendJson(data);
             } else if (type.equals(MessageTypes.VOICE_COMMAND_STREAM_EVENT)) {
 //                Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_STREAM_EVENT, sending to ASG");

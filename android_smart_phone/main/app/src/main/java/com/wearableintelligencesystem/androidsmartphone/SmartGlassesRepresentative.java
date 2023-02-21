@@ -10,8 +10,10 @@ import android.util.Log;
 //custom, our code
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.IntermediateScrollingTextEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStopEvent;
 import com.wearableintelligencesystem.androidsmartphone.sensors.AudioChunkCallback;
 import com.wearableintelligencesystem.androidsmartphone.sensors.MicrophoneLocalAndBluetooth;
 import com.wearableintelligencesystem.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
@@ -86,7 +88,9 @@ class SmartGlassesRepresentative {
     public void destroy(){
         Log.d(TAG, "SG rep destroying");
 
-        bluetoothAudio.destroy();
+        if (bluetoothAudio != null) {
+            bluetoothAudio.destroy();
+        }
 
         if (smartGlassesCommunicator != null){
             smartGlassesCommunicator.destroy();
@@ -140,9 +144,24 @@ class SmartGlassesRepresentative {
     }
 
     @Subscribe
+    public void onStopScrollingTextViewEvent(ScrollingTextViewStopEvent receivedEvent){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.stopScrollingTextViewMode();
+        }
+    }
+
+    @Subscribe
     public void onFinalScrollingTextEvent(FinalScrollingTextEvent receivedEvent) {
+        Log.d(TAG, "onFinalScrollingTextEvent");
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.scrollingTextViewFinalText(receivedEvent.text);
+        }
+    }
+
+    @Subscribe
+    public void onIntermediateScrollingTextEvent(IntermediateScrollingTextEvent receivedEvent) {
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.scrollingTextViewIntermediateText(receivedEvent.text);
         }
     }
 }

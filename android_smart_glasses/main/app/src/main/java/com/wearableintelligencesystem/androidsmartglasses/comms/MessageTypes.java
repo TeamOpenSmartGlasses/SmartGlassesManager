@@ -10,6 +10,13 @@ public class MessageTypes {
     public static final String REFERENCE_CARD_SIMPLE_VIEW_TITLE = "REFERENCE_CARD_SIMPLE_VIEW_TITLE";
     public static final String REFERENCE_CARD_SIMPLE_VIEW_BODY = "REFERENCE_CARD_SIMPLE_VIEW_BODY";
 
+    //SCROLLING TEXT VIEW
+    public static final String SCROLLING_TEXT_VIEW_START = "SCROLLING_TEXT_VIEW_START";
+    public static final String SCROLLING_TEXT_VIEW_FINAL = "SCROLLING_TEXT_VIEW_FINAL";
+    public static final String SCROLLING_TEXT_VIEW_INTERMEDIATE = "SCROLLING_TEXT_VIEW_INTERMEDIATE";
+    public static final String SCROLLING_TEXT_VIEW_TEXT = "SCROLLING_TEXT_VIEW_TEXT";
+    public static final String SCROLLING_TEXT_VIEW_STOP = "SCROLLING_TEXT_VIEW_STOP";
+
     //DATA TYPES
     public static final String POV_IMAGE = "POV_IMAGE";
     public static final String JPG_BYTES_BASE64 = "JPG_BYTES_BASE64";

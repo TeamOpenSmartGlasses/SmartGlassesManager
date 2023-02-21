@@ -8,16 +8,31 @@ public class MessageTypes {
     public static final String GLASSES_STATUS_UPDATE = "GLASSES_STATUS_UPDATE";
     public static final String CONNECTION_GLASSES_STATUS_UPDATE = "CONNECTION_GLASSES_STATUS_UPDATE";
 
-    //Reference card view
+    //REFERENCE CARD VIEW
     public static final String REFERENCE_CARD_SIMPLE_VIEW = "REFERENCE_CARD_SIMPLE_VIEW";
     public static final String REFERENCE_CARD_SIMPLE_VIEW_TITLE = "REFERENCE_CARD_SIMPLE_VIEW_TITLE";
     public static final String REFERENCE_CARD_SIMPLE_VIEW_BODY = "REFERENCE_CARD_SIMPLE_VIEW_BODY";
+
+    //SCROLLING TEXT VIEW
+    public static final String SCROLLING_TEXT_VIEW_START = "SCROLLING_TEXT_VIEW_START";
+    public static final String SCROLLING_TEXT_VIEW_FINAL = "SCROLLING_TEXT_VIEW_FINAL";
+    public static final String SCROLLING_TEXT_VIEW_INTERMEDIATE = "SCROLLING_TEXT_VIEW_INTERMEDIATE";
+    public static final String SCROLLING_TEXT_VIEW_TEXT = "SCROLLING_TEXT_VIEW_TEXT";
+    public static final String SCROLLING_TEXT_VIEW_TITLE = "SCROLLING_TEXT_VIEW_TITLE";
+    public static final String SCROLLING_TEXT_VIEW_STOP = "SCROLLING_TEXT_VIEW_STOP";
 
     //GLASSES CONNECTION EVENT/STATE
     public static final int CONNECTED_GLASSES = 2;
     public static final int DISCONNECTED_GLASSES = 0;
     public static final int TRYNA_CONNECT_GLASSES = 1;
     public static final int FAILED_CONNECTING_GLASSES = 3;
+
+
+
+
+
+
+
 
     //DATA TYPES
     public static final String POV_IMAGE = "POV_IMAGE";
