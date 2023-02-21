@@ -451,6 +451,12 @@ public class MainActivity extends AppCompatActivity {
                         //switch to that mode
                         Log.d(TAG, "ACTION_SWITCH_MODES switchMode");
                         switchMode(modeName);
+                    } else if (typeOf.equals(MessageTypes.SCROLLING_TEXT_VIEW_START)){
+                        Log.d(TAG, "GOT SCROLL START, Switching");
+                        switchMode(MessageTypes.MODE_LIVE_LIFE_CAPTIONS);
+                    } else if (typeOf.equals(MessageTypes.SCROLLING_TEXT_VIEW_STOP)){
+                        Log.d(TAG, "GOT SCROLL STOP, Switching");
+                        switchMode(MessageTypes.MODE_HOME);
                     } else if (typeOf.equals(MessageTypes.VOICE_COMMAND_STREAM_EVENT)) {
                         Log.d(TAG, "GOT VOICE COMMAND STREAM EVENT");
                         showVoiceCommandInterface(data);

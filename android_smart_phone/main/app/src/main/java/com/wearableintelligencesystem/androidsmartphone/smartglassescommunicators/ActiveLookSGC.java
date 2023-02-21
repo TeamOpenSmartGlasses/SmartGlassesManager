@@ -38,7 +38,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     ArrayList<String> finalScrollingTextStrings;
     int scrollingTextTitleFontSize = LARGE_FONT;
     int scrollingTextTextFontSize = SMALL_FONT;
-    double marginRatio = 0.3;
+    double marginRatio = 0.1;
 
     public ActiveLookSGC(Context context) {
         super();
@@ -251,7 +251,18 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         connectedGlasses.txt(pixelLoc, Rotation.TOP_LR, (byte) textLine.getFontSizeCode(), (byte) 0x0F, textLine.getText());
     }
 
+    public void stopScrollingTextViewMode() {
+        if (connectedGlasses == null) {
+            return;
+        }
+
+        //clear the screen
+        connectedGlasses.clear();
+    }
+
     public void startScrollingTextViewMode(String title){
+        super.startScrollingTextViewMode(title);
+
         if (connectedGlasses == null) {
             return;
         }
@@ -266,7 +277,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     public void scrollingTextViewIntermediateText(String text){
-
     }
 
     public void scrollingTextViewFinalText(String text){
@@ -278,10 +288,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         finalScrollingTextStrings.add(text);
 
         //get the max number of wraps allows
-        Log.d(TAG, "margin percent of scrolling text is: " + computeMarginPercent(scrollingTextTextFontSize));
-        Log.d(TAG, "margin pixel of scrolling text is: " + percentToPixel(displayHeightPixels, computeMarginPercent(scrollingTextTextFontSize)));
         float allowedTextRows = computeAllowedTextRows(fontToSize.get(scrollingTextTitleFontSize), fontToSize.get(scrollingTextTextFontSize), percentToPixel(displayHeightPixels, computeMarginPercent(scrollingTextTextFontSize)));
-        Log.d(TAG, "ALLOWED TEZT ROWS IS: " + allowedTextRows);
 
         //figure out the maximum we can display
         int totalRows = 0;
@@ -329,10 +336,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     //this works using activelook pixels
     private float computeAllowedTextRows(int titleHeight, int fontHeight, int yMargin){
-        Log.d(TAG, "computeAllowedTExtRowsssssssssssssssssssssss");
-        Log.d(TAG, "th" + titleHeight);
-        Log.d(TAG, "fh" + fontHeight);
-        Log.d(TAG, "ymarg" + yMargin);
         int yBox = displayHeightPixels - titleHeight;
         int lineHeight = fontHeight + yMargin;
 

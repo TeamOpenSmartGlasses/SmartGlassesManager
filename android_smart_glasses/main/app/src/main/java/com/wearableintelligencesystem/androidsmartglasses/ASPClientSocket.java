@@ -471,7 +471,7 @@ public class ASPClientSocket {
             String typeOf = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
 
             //the first bit does a bunch of if statement. The new, better way of doing things is our syncing of data across ASP and ASG with MessageTypes shared class. Now, we just pass a JSON string through to the UI if it's a MessageType that it needs to see, and let the UI deal with how to parse/handle it
-            String [] uiMessages = new String[] {MessageTypes.OBJECT_TRANSLATION_RESULT, MessageTypes.NATURAL_LANGUAGE_QUERY, MessageTypes.SEARCH_ENGINE_RESULT, MessageTypes.REFERENCE_CARD_SIMPLE_VIEW, MessageTypes.VISUAL_SEARCH_RESULT, MessageTypes.TRANSLATE_TEXT_RESULT, MessageTypes.ACTION_SWITCH_MODES, MessageTypes.REFERENCE_SELECT_REQUEST, MessageTypes.VOICE_COMMAND_STREAM_EVENT};
+            String [] uiMessages = new String[] {MessageTypes.NATURAL_LANGUAGE_QUERY, MessageTypes.REFERENCE_CARD_SIMPLE_VIEW, MessageTypes.ACTION_SWITCH_MODES, MessageTypes.VOICE_COMMAND_STREAM_EVENT, MessageTypes.SCROLLING_TEXT_VIEW_START, MessageTypes.SCROLLING_TEXT_VIEW_STOP};
             for (String uiMessage : uiMessages){
                if (typeOf.equals(uiMessage)){
                    final Intent intent = new Intent();
@@ -488,16 +488,17 @@ public class ASPClientSocket {
             }
 
             //manual parsing, kept here until someone updates the ui to handle like above
-            if (typeOf.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
-                String intermediate_transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT);
+            if (typeOf.equals(MessageTypes.SCROLLING_TEXT_VIEW_INTERMEDIATE )) {
+                String intermediate_transcript = data.getString(MessageTypes.SCROLLING_TEXT_VIEW_TEXT);
                 final Intent intent = new Intent();
-                intent.putExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT, intermediate_transcript);
-                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                intent.putExtra(MessageTypes.SCROLLING_TEXT_VIEW_TEXT, intermediate_transcript);
+                intent.setAction(MessageTypes.SCROLLING_TEXT_VIEW_INTERMEDIATE);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
-            } else if (typeOf.equals(MessageTypes.FINAL_TRANSCRIPT)) {
+            } else if (typeOf.equals(MessageTypes.SCROLLING_TEXT_VIEW_FINAL)) {
+                String final_transcript = data.getString(MessageTypes.SCROLLING_TEXT_VIEW_TEXT);
                 final Intent intent = new Intent();
-                intent.putExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT, data.toString());
-                intent.setAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
+                intent.putExtra(MessageTypes.SCROLLING_TEXT_VIEW_TEXT, final_transcript);
+                intent.setAction(MessageTypes.SCROLLING_TEXT_VIEW_FINAL);
                 mContext.sendBroadcast(intent); //eventually, we won't need to use the activity context, as our service will have its own context to send from
             }
         } catch (JSONException e){

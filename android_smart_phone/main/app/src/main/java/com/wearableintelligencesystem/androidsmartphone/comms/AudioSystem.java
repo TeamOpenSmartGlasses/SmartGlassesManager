@@ -6,6 +6,7 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 
+import org.greenrobot.eventbus.EventBus;
 import org.vosk.LibVosk;
 import org.vosk.LogLevel;
 import org.vosk.Model;
@@ -54,6 +55,7 @@ import java.net.InterfaceAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.wearableintelligencesystem.androidsmartphone.utils.AES;
 
 import android.util.Log;
@@ -495,6 +497,9 @@ public class AudioSystem {
             decryptedData.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUDIO_CHUNK_DECRYPTED);
             decryptedData.put(MessageTypes.AUDIO_DATA, encodedPlainData);
             dataObservable.onNext(decryptedData);
+
+            //throw new audio event
+//            EventBus.getDefault().post(new AudioChunkNewEvent(plainData));
         } catch (JSONException e){
             e.printStackTrace();
         }

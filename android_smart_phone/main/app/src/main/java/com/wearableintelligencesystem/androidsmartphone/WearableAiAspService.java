@@ -22,7 +22,10 @@ import com.wearableintelligencesystem.androidsmartphone.comms.TPACommunicator;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
@@ -54,6 +57,9 @@ public class WearableAiAspService extends LifecycleService {
     private final IBinder binder = new LocalBinder();
     public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
+
+    //live captions
+    public LiveCaptionsDebugSystem liveCaptionsDebugSystem;
 
     //our base language
     String baseLanguage = "english";
@@ -93,6 +99,9 @@ public class WearableAiAspService extends LifecycleService {
         //setup room database interfaces
         mPhraseRepository = new PhraseRepository(getApplication());
         mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
+
+        //live captions system
+        liveCaptionsDebugSystem = new LiveCaptionsDebugSystem();
 
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
@@ -211,6 +220,11 @@ public class WearableAiAspService extends LifecycleService {
             smartGlassesRepresentative = null;
         }
 
+        //kill llc program
+        if (liveCaptionsDebugSystem != null){
+            liveCaptionsDebugSystem.destroy();
+        }
+
         //kill data transmitters
         if (dataObservable != null) {
             dataObservable.onComplete();
@@ -238,19 +252,14 @@ public class WearableAiAspService extends LifecycleService {
         Log.d(TAG, "WearableAiAspService destroy complete");
     }
 
-    public void sendTestCard(String title, String content, String img){
+    public void sendTestCard(String title, String body, String img){
         Log.d(TAG, "SENDING TEST CARD FROM WAIService");
-        if (smartGlassesRepresentative != null) {
-            smartGlassesRepresentative.showReferenceCard(title, content);
-        }
+        EventBus.getDefault().post(new StopLiveCaptionsEvent());
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
     }
 
     public void startLiveCaptions(){
-        Log.d(TAG, "SENDING TEST CARD FROM WAIService");
-//        if (smartGlassesRepresentative != null) {
-//            smartGlassesRepresentative.startScrollingTextViewMode();
-//        }
-        LiveCaptionsDebugSystem liveCaptionsDebugSystem = new LiveCaptionsDebugSystem();
+        EventBus.getDefault().post(new StartLiveCaptionsEvent());
     }
 
     public int getSmartGlassesConnectState(){

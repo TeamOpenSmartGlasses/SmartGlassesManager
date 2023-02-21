@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Message;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spanned;
@@ -110,13 +111,17 @@ public class LiveLifeCaptionsUi extends Fragment {
     private BroadcastReceiver llcReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.hasExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT)) {
+            Log.d(TAG, "LLC called");
+            Log.d(TAG, intent.toString());
+            String action = intent.getAction();
+            if (action.equals(MessageTypes.SCROLLING_TEXT_VIEW_FINAL)) {
                 try {
-                    JSONObject transcript_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT));
-//                        JSONObject nlp = transcript_object.getJSONObject("nlp");
-//                        JSONArray nouns = nlp.getJSONArray("nouns");
+                    String transcript = intent.getStringExtra(MessageTypes.SCROLLING_TEXT_VIEW_TEXT);
+//                    JSONObject transcript_object = new JSONObject(intent.getStringExtra(GlboxClientSocket.FINAL_REGULAR_TRANSCRIPT));
+////                        JSONObject nlp = transcript_object.getJSONObject("nlp");
+////                        JSONArray nouns = nlp.getJSONArray("nouns");
                     JSONArray nouns = new JSONArray(); //for now, since we haven't implemented NLP on ASP, we just make this empty
-                    String transcript = transcript_object.getString(MessageTypes.TRANSCRIPT_TEXT);
+//                    String transcript = transcript_object.getString(MessageTypes.SCROLLING_TEXT_VIEW_TEXT);
                     if ((nouns.length() == 0)) {
                         textHolder.add(Html.fromHtml("<p>" + transcript.trim() + "</p>"));
                     } else {
@@ -153,11 +158,11 @@ public class LiveLifeCaptionsUi extends Fragment {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            } else if (intent.hasExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT)) {
+            } else if (action.equals(MessageTypes.SCROLLING_TEXT_VIEW_INTERMEDIATE)) {
                         //only update this transcript if it's been n milliseconds since the last intermediate update
                         if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
                             lastIntermediateMillis = System.currentTimeMillis();
-                            String intermediate_transcript = intent.getStringExtra(GlboxClientSocket.INTERMEDIATE_REGULAR_TRANSCRIPT);
+                            String intermediate_transcript = intent.getStringExtra(MessageTypes.SCROLLING_TEXT_VIEW_TEXT);
                             liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
                         }
             } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
@@ -178,6 +183,8 @@ public class LiveLifeCaptionsUi extends Fragment {
         intentFilter.addAction(ASPClientSocket.ACTION_RECEIVE_MESSAGE);
         intentFilter.addAction(GlboxClientSocket.ACTION_RECEIVE_TEXT);
         intentFilter.addAction(MessageTypes.REFERENCE_SELECT_REQUEST);
+        intentFilter.addAction(MessageTypes.SCROLLING_TEXT_VIEW_FINAL);
+        intentFilter.addAction(MessageTypes.SCROLLING_TEXT_VIEW_INTERMEDIATE);
 
         return intentFilter;
     }

@@ -4,6 +4,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,6 +18,10 @@ import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.Vo
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 
 class SwitchModesVoiceCommand extends VoiceCommand {
@@ -95,10 +100,13 @@ class SwitchModesVoiceCommand extends VoiceCommand {
                 JSONObject objectMessage = new JSONObject();
                 objectMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.START_CONTEXTUAL_SEARCH);
                 vcServer.dataObservable.onNext(objectMessage);
-            }else {
+            } else if (newMode.equals(MessageTypes.MODE_LIVE_LIFE_CAPTIONS)) {
+                EventBus.getDefault().post(new StartLiveCaptionsEvent());
+            } else {
                 modeMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_FOREIGN_LANGUAGE_ASR);
                 modeMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_OBJECT_DETECTION);
                 modeMessage.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.STOP_CONTEXTUAL_SEARCH);
+                EventBus.getDefault().post(new StopLiveCaptionsEvent());
                 vcServer.dataObservable.onNext(modeMessage);
             }
         } catch (JSONException e){
