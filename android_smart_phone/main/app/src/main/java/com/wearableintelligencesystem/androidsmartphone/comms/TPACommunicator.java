@@ -7,7 +7,9 @@ import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.wearableintelligencesystem.androidsmartphone.SGMLib.*;
+import com.teamopensmartglasses.sgmlib.ReceivedIntentEvent;
+import com.teamopensmartglasses.sgmlib.SGMData;
+import com.teamopensmartglasses.sgmlib.SendableIntentEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 

@@ -15,8 +15,8 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
-import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMBroadcastReceiver;
-import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMBroadcastSender;
+import com.teamopensmartglasses.sgmlib.SGMBroadcastReceiver;
+import com.teamopensmartglasses.sgmlib.SGMBroadcastSender;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.comms.TPACommunicator;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
@@ -31,8 +31,6 @@ import com.wearableintelligencesystem.androidsmartphone.speechrecognition.Natura
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
-
-import com.wearableintelligencesystem.androidsmartphone.SGMLib.SGMData;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
