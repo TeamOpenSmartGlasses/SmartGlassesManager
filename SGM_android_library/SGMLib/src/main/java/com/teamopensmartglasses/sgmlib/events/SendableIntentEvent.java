@@ -1,4 +1,4 @@
-package com.teamopensmartglasses.sgmlib;
+package com.teamopensmartglasses.sgmlib.events;
 
 import org.json.JSONObject;
 

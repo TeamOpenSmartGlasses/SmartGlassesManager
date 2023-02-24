@@ -1,8 +1,7 @@
-package com.wearableintelligencesystem.androidsmartphone.voicecommand;
+package com.wearableintelligencesystem.androidsmartphone.commands;
 
 import android.content.Context;
 import android.util.Log;
-import android.util.Pair;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;

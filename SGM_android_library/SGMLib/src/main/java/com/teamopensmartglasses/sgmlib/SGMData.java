@@ -4,6 +4,6 @@ import java.util.ArrayList;
 
 public class SGMData {
     public static final String SGMPkgName = "com.teamopensmartglasses.sgmlib";
-    public static SGMBroadcastSender sgmBroadcastSender;
-    public static ArrayList<TPACommand> commandsToRegister;
+    public static TPABroadcastSender TPABroadcastSender;
+    public static ArrayList<SGMCommand> commandsToRegister;
 }

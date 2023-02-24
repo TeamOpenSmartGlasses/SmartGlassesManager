@@ -10,19 +10,18 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
-import com.teamopensmartglasses.sgmlib.SGMBroadcastReceiver;
-import com.teamopensmartglasses.sgmlib.SGMBroadcastSender;
+import com.teamopensmartglasses.sgmlib.TPABroadcastReceiver;
+import com.teamopensmartglasses.sgmlib.TPABroadcastSender;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.comms.TPACommunicator;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
@@ -30,11 +29,10 @@ import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
-import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommandServer;
+import com.wearableintelligencesystem.androidsmartphone.commands.VoiceCommandServer;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Dictionary;
@@ -45,8 +43,8 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
 public class WearableAiAspService extends LifecycleService {
-    public SGMBroadcastReceiver receiver;
-    public SGMBroadcastSender sender;
+    public TPABroadcastReceiver receiver;
+//    public TPABroadcastSender sender;
     public TPACommunicator tpaCommunicator;
 
     private static final String TAG = "WearableAi_ASP_Service";
@@ -126,8 +124,8 @@ public class WearableAiAspService extends LifecycleService {
 
         //init broadcasters
         tpaCommunicator = new TPACommunicator();
-        sender = new SGMBroadcastSender(getApplicationContext());
-        receiver = new SGMBroadcastReceiver(getApplicationContext());
+//        sender = new TPABroadcastSender(getApplicationContext());
+        receiver = new TPABroadcastReceiver(getApplicationContext());
     }
 
     private void setupEventBusSubscribers(){

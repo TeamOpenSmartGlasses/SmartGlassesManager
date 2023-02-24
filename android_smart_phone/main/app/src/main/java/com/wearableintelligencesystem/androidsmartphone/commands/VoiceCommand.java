@@ -1,11 +1,10 @@
-package com.wearableintelligencesystem.androidsmartphone.voicecommand;
+package com.wearableintelligencesystem.androidsmartphone.commands;
 
 import android.util.Log;
 import java.util.ArrayList;
 import android.content.Context;
 
 import org.json.JSONObject;
-import org.json.JSONArray;
 import org.json.JSONException;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;

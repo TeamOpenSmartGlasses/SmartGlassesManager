@@ -18,7 +18,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.wearableintelligencesystem.androidsmartphone.voicecommand;
+package com.wearableintelligencesystem.androidsmartphone.commands;
 
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
