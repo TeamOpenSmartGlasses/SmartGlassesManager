@@ -9,7 +9,6 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
-import com.wearableintelligencesystem.androidsmartphone.voicecommand.VoiceCommand;
 
 import java.util.List;
 

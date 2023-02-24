@@ -7,11 +7,10 @@ import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.teamopensmartglasses.sgmlib.ReceivedIntentEvent;
+import com.teamopensmartglasses.sgmlib.events.ReceivedIntentEvent;
 import com.teamopensmartglasses.sgmlib.SGMData;
-import com.teamopensmartglasses.sgmlib.SendableIntentEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
+import com.teamopensmartglasses.sgmlib.events.SendableIntentEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 
 public class TPACommunicator {
     private String TAG = "TPACommunicator: ";
@@ -22,7 +21,7 @@ public class TPACommunicator {
     @Subscribe
     public void onSendableTranscriptEvent(SendableIntentEvent sendableIntentEvent)
     {
-        SGMData.sgmBroadcastSender.broadcastData(sendableIntentEvent.data);
+        SGMData.TPABroadcastSender.broadcastData(sendableIntentEvent.data);
     }
 
     @Subscribe

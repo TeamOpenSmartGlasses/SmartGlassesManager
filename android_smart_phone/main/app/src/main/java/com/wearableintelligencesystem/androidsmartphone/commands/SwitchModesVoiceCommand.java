@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartphone.voicecommand;
+package com.wearableintelligencesystem.androidsmartphone.commands;
 
 import android.util.Log;
 import java.util.ArrayList;
@@ -6,20 +6,14 @@ import java.util.Arrays;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
-import org.json.JSONArray;
 import org.json.JSONException;
 
 import android.content.Context;
 
 import android.util.Pair;
 
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandDao;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;

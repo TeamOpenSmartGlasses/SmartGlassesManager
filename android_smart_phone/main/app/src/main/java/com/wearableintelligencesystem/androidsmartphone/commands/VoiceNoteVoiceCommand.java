@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartphone.voicecommand;
+package com.wearableintelligencesystem.androidsmartphone.commands;
 
 import android.util.Log;
 import java.util.ArrayList;
@@ -6,10 +6,7 @@ import java.util.Arrays;
 
 import android.content.Context;
 
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandDao;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandCreator;
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandEntity;
 
 class VoiceNoteVoiceCommand extends VoiceCommand {
     private String TAG = "WearableAi_MxtVoiceCommand";
