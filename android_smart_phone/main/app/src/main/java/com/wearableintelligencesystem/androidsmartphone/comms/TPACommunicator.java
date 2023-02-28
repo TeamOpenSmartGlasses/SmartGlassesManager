@@ -9,8 +9,10 @@ import org.json.JSONObject;
 
 import com.teamopensmartglasses.sgmlib.events.ReceivedIntentEvent;
 import com.teamopensmartglasses.sgmlib.SGMData;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.SendableIntentEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.commands.CommandSystem;
 
 public class TPACommunicator {
     private String TAG = "TPACommunicator: ";
