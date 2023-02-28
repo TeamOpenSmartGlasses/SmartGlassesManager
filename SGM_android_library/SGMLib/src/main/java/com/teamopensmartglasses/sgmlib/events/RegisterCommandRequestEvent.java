@@ -10,4 +10,8 @@ public class RegisterCommandRequestEvent implements Serializable {
     public RegisterCommandRequestEvent(SGMCommand command){
         this.command = command;
     }
+
+    public static String getEventId(){
+        return("registerCommandRequestEvent");
+    }
 }
