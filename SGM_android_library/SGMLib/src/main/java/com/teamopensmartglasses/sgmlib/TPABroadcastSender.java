@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -59,6 +60,12 @@ public class TPABroadcastSender {
         String eventId = receivedEvent.getEventId();
 //        Bundle eventBundle = new Bundle();
 //        eventBundle.putSerializable(EVENT_CLASS, receivedEvent);
+        sendEventToSGM(eventId, receivedEvent);
+    }
+
+    @Subscribe
+    public void onRegisterCommandRequestEvent(RegisterCommandRequestEvent receivedEvent){
+        String eventId = receivedEvent.getEventId();
         sendEventToSGM(eventId, receivedEvent);
     }
 }

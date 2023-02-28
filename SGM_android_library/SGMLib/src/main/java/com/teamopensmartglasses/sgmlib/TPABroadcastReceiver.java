@@ -12,10 +12,12 @@ import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.ReceivedIntentEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 public class TPABroadcastReceiver extends BroadcastReceiver {
     private String filterPkg;
@@ -44,6 +46,19 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
         if (eventId.equals(ReferenceCardSimpleViewRequestEvent.getEventId())){
             Log.d(TAG, "Sending Reference Card event");
             EventBus.getDefault().post((ReferenceCardSimpleViewRequestEvent) serializedEvent);
+        }
+
+        //TODO: find place to subscribe to this
+        if (eventId.equals(RegisterCommandRequestEvent.getEventId()))
+        {
+            Log.d(TAG, "Got register command event");
+            EventBus.getDefault().post((RegisterCommandRequestEvent) serializedEvent);
+        }
+
+        for(SGMCommand command : SGMData.registeredCommands){
+            if(command.getUUID() == UUID.fromString(eventId)){  //TODO: Incoming EVENT_ID should equal a command's UUID.
+              command.getCallback().call();
+            }
         }
     }
 }

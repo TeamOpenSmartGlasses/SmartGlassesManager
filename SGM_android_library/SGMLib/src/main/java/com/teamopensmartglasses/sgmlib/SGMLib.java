@@ -1,10 +1,10 @@
 package com.teamopensmartglasses.sgmlib;
 
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 public class SGMLib {
     public SGMLib(){
@@ -12,7 +12,8 @@ public class SGMLib {
 
     //register a new command
     public void registerCommand(SGMCommand sgmCommand){
-        SGMData.commandsToRegister.add(sgmCommand);
+        SGMData.registeredCommands.add(sgmCommand);
+        EventBus.getDefault().post(new RegisterCommandRequestEvent(sgmCommand));
     }
 
     //register our app with the SGM
