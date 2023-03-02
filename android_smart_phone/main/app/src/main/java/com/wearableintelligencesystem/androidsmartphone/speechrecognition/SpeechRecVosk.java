@@ -24,7 +24,6 @@ import java.io.InputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.teamopensmartglasses.sgmlib.events.SendableIntentEvent;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.Phrase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseCreator;
@@ -271,10 +270,9 @@ public class SpeechRecVosk implements RecognitionListener {
             Log.d(TAG, transcriptObj.toString());
             dataObservable.onNext(transcriptObj);
 
-            EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));
+//            EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));
 
             //post the event bus event
-
             if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                 EventBus.getDefault().post(new SpeechRecFinalOutputEvent(transcript, transcriptTime));
             } else {

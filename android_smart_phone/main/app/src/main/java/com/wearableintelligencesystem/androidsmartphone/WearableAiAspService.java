@@ -14,10 +14,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
-import com.teamopensmartglasses.sgmlib.TPABroadcastReceiver;
-import com.teamopensmartglasses.sgmlib.TPABroadcastSender;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
-import com.wearableintelligencesystem.androidsmartphone.comms.TPACommunicator;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
@@ -43,11 +40,10 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
 public class WearableAiAspService extends LifecycleService {
-    public TPABroadcastReceiver receiver;
-//    public TPABroadcastSender sender;
-    public TPACommunicator tpaCommunicator;
-
     private static final String TAG = "WearableAi_ASP_Service";
+
+    //communicate with the SGMLIb third party apps (TPA/3PA)
+    public TPASystem tpaSystem;
 
     // Service Binder given to clients
     private final IBinder binder = new LocalBinder();
@@ -76,7 +72,7 @@ public class WearableAiAspService extends LifecycleService {
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
-    PublishSubject<byte []> audioObservable;
+    PublishSubject<byte[]> audioObservable;
 
     //database
     private PhraseRepository mPhraseRepository = null;
@@ -123,12 +119,10 @@ public class WearableAiAspService extends LifecycleService {
         setupEventBusSubscribers();
 
         //init broadcasters
-        tpaCommunicator = new TPACommunicator();
-//        sender = new TPABroadcastSender(getApplicationContext());
-        receiver = new TPABroadcastReceiver(getApplicationContext());
+        tpaSystem = new TPASystem();
     }
 
-    private void setupEventBusSubscribers(){
+    private void setupEventBusSubscribers() {
         EventBus.getDefault().register(this);
     }
 
@@ -137,7 +131,7 @@ public class WearableAiAspService extends LifecycleService {
         sendUiUpdate();
     }
 
-    public void connectToSmartGlasses(SmartGlassesDevice device){
+    public void connectToSmartGlasses(SmartGlassesDevice device) {
         //this represents the smart glasses - it handles the connection, sending data to them, etc
         smartGlassesRepresentative = new SmartGlassesRepresentative(this, device, dataObservable);
         smartGlassesRepresentative.connectToSmartGlasses();
@@ -182,7 +176,7 @@ public class WearableAiAspService extends LifecycleService {
 
     @Override
     public IBinder onBind(Intent intent) {
-      super.onBind(intent);
+        super.onBind(intent);
         return binder;
     }
 
@@ -190,7 +184,7 @@ public class WearableAiAspService extends LifecycleService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         Log.d(TAG, "WearableAI Service onStartCommand");
-        if (intent != null){
+        if (intent != null) {
             String action = intent.getAction();
             switch (action) {
                 case ACTION_START_FOREGROUND_SERVICE:
@@ -217,7 +211,7 @@ public class WearableAiAspService extends LifecycleService {
         }
 
         //kill llc program
-        if (liveCaptionsDebugSystem != null){
+        if (liveCaptionsDebugSystem != null) {
             liveCaptionsDebugSystem.destroy();
         }
 
@@ -248,17 +242,17 @@ public class WearableAiAspService extends LifecycleService {
         Log.d(TAG, "WearableAiAspService destroy complete");
     }
 
-    public void sendTestCard(String title, String body, String img){
+    public void sendTestCard(String title, String body, String img) {
         Log.d(TAG, "SENDING TEST CARD FROM WAIService");
         EventBus.getDefault().post(new StopLiveCaptionsEvent());
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
     }
 
-    public void startLiveCaptions(){
+    public void startLiveCaptions() {
         EventBus.getDefault().post(new StartLiveCaptionsEvent());
     }
 
-    public int getSmartGlassesConnectState(){
+    public int getSmartGlassesConnectState() {
         if (smartGlassesRepresentative != null) {
             return smartGlassesRepresentative.getConnectionState();
         } else {
@@ -266,12 +260,12 @@ public class WearableAiAspService extends LifecycleService {
         }
     }
 
-    public void sendUiUpdate(){
+    public void sendUiUpdate() {
         Intent intent = new Intent();
         intent.setAction(MessageTypes.GLASSES_STATUS_UPDATE);
         // Set the optional additional information in extra field.
         int connectionState;
-        if (smartGlassesRepresentative != null){
+        if (smartGlassesRepresentative != null) {
             connectionState = smartGlassesRepresentative.getConnectionState();
         } else {
             connectionState = 0;
