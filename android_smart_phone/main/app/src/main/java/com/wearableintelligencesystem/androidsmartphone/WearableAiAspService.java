@@ -119,7 +119,7 @@ public class WearableAiAspService extends LifecycleService {
         setupEventBusSubscribers();
 
         //init broadcasters
-        tpaSystem = new TPASystem();
+        tpaSystem = new TPASystem(this);
     }
 
     private void setupEventBusSubscribers() {
@@ -208,6 +208,11 @@ public class WearableAiAspService extends LifecycleService {
         if (smartGlassesRepresentative != null) {
             smartGlassesRepresentative.destroy();
             smartGlassesRepresentative = null;
+        }
+
+        //kill intent receiver/connection to TPAs
+        if (tpaSystem != null){
+            tpaSystem.destroy();
         }
 
         //kill llc program

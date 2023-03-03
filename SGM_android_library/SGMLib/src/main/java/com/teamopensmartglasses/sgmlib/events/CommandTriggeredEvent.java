@@ -6,6 +6,7 @@ import java.io.Serializable;
 
 public class CommandTriggeredEvent implements Serializable {
     public SGMCommand command;
+    public static final String eventId = "commandTriggeredEvent";
 
     public CommandTriggeredEvent(SGMCommand command){
         this.command = command;

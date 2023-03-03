@@ -21,9 +21,6 @@ public class SGMLibBroadcastSender {
     public SGMLibBroadcastSender (Context context) {
         this.context = context;
         this.intentPkg = "com.teamopensmartglasses.to3pa";
-
-        //register event bus subscribers
-        EventBus.getDefault().register(this);
     }
 
     public void sendEventToTPAs(String eventId, Serializable eventBundle) {
@@ -41,8 +38,4 @@ public class SGMLibBroadcastSender {
         context.sendBroadcast(intent);
     }
 
-    @Subscribe
-    public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
-        Log.d(TAG, "command was triggered...");
-    }
 }

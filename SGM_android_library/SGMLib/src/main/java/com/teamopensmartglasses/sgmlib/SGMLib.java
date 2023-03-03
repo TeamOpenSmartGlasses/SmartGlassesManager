@@ -1,15 +1,20 @@
 package com.teamopensmartglasses.sgmlib;
 
 import android.content.Context;
+import android.util.Log;
 
+import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 
 public class SGMLib {
+    public String TAG = "SGMLib_SGMLib";
+
     public TPABroadcastReceiver sgmReceiver;
     public TPABroadcastSender sgmSender;
     public Context mContext;
@@ -19,6 +24,10 @@ public class SGMLib {
         this.mContext = context;
         sgmReceiver = new TPABroadcastReceiver(context);
         sgmSender = new TPABroadcastSender(context);
+        registeredCommands = new ArrayList<>();
+
+        //register subscribers on EventBus
+        EventBus.getDefault().register(this);
     }
 
     //register a new command
@@ -34,5 +43,12 @@ public class SGMLib {
     //show a reference card on the smart glasses with title and body text
     public void sendReferenceCard(String title, String body) {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
+    }
+
+    @Subscribe
+    public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
+        Log.d(TAG, "Callback called");
+        SGMCommand command = receivedEvent.command;
+        command.getCallback();
     }
 }

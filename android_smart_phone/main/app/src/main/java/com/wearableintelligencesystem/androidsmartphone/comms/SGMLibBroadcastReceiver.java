@@ -9,7 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-import com.teamopensmartglasses.sgmlib.SGMCommand;
+import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 
@@ -22,38 +22,34 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
     private Context context;
     public String TAG = "WearableAi_SGMLibBroadcastReceiver";
 
-    public SGMLibBroadcastReceiver(Context myContext) {
-        this.context = myContext;
+    public SGMLibBroadcastReceiver(Context context) {
+        this.context = context;
         this.filterPkg = "com.teamopensmartglasses.from3pa";
         IntentFilter intentFilter = new IntentFilter(this.filterPkg);
-        this.context.registerReceiver(this, intentFilter);
+        context.registerReceiver(this, intentFilter);
     }
 
     public void onReceive(Context context, Intent intent) {
         String eventId = intent.getStringExtra(EVENT_ID);
-
-        Log.d(TAG, "GOT EVENT ID: " + eventId);
         Serializable serializedEvent = intent.getSerializableExtra(EVENT_BUNDLE);
+        Log.d(TAG, "GOT EVENT ID: " + eventId);
         Log.i("Broadcastreceiver", "BroadcastReceiver Received");
 
         //map from id to event
-        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.getEventId())){
-            Log.d(TAG, "Sending Reference Card event");
-            EventBus.getDefault().post((ReferenceCardSimpleViewRequestEvent) serializedEvent);
+        switch (eventId) {
+            case ReferenceCardSimpleViewRequestEvent.eventId:
+                Log.d(TAG, "Resending Reference Card event");
+                EventBus.getDefault().post((ReferenceCardSimpleViewRequestEvent) serializedEvent);
+                break;
+            case RegisterCommandRequestEvent.eventId:
+                Log.d(TAG, "Resending register command request event");
+                EventBus.getDefault().post((RegisterCommandRequestEvent) serializedEvent);
+                break;
         }
+    }
 
-        //TODO: find place to subscribe to this
-        if (eventId.equals(RegisterCommandRequestEvent.getEventId()))
-        {
-            Log.d(TAG, "Got register command event");
-            EventBus.getDefault().post((RegisterCommandRequestEvent) serializedEvent);
-        }
-
-//        for(SGMCommand command : sgmData.registeredCommands){
-//            if(command.getUUID() == UUID.fromString(eventId)){
-//              command.getCallback().call();
-//            }
-//        }
+    public void unregister(){
+       context.unregisterReceiver(this);
     }
 }
 
