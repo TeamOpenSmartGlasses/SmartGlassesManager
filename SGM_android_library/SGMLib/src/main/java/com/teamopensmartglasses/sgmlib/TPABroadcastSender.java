@@ -5,7 +5,6 @@ import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_ID;
 
 import android.content.Context;
 import android.content.Intent;
-import android.provider.Settings;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
@@ -44,7 +43,7 @@ public class TPABroadcastSender {
 
     @Subscribe
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
-        String eventId = receivedEvent.getEventId();
+        String eventId = receivedEvent.eventId;
         sendEventToSGM(eventId, receivedEvent);
     }
 

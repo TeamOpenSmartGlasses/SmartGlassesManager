@@ -1,34 +1,52 @@
 package com.wearableintelligencesystem.androidsmartphone;
 
+import android.content.Context;
+import android.util.Log;
+
+import com.teamopensmartglasses.sgmlib.SGMCommand;
+import com.teamopensmartglasses.sgmlib.TPABroadcastReceiver;
+import com.teamopensmartglasses.sgmlib.TPABroadcastSender;
+import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.commands.CommandSystem;
+import com.wearableintelligencesystem.androidsmartphone.comms.SGMLibBroadcastReceiver;
+import com.wearableintelligencesystem.androidsmartphone.comms.SGMLibBroadcastSender;
+
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+
+import java.util.ArrayList;
 
 public class TPASystem {
     private String TAG = "WearableAi_TPACommunicator";
+    private Context mContext;
     private CommandSystem commandSystem;
+    private SGMLibBroadcastSender sgmLibBroadcastSender;
+    private SGMLibBroadcastReceiver sgmLibBroadcastReceiver;
+    public ArrayList<SGMCommand> registeredCommands;
 
-    public TPASystem(){
-        EventBus.getDefault().register(this);
+    public TPASystem(Context context){
+        mContext = context;
         commandSystem = new CommandSystem();
+        sgmLibBroadcastSender = new SGMLibBroadcastSender(mContext);
+        sgmLibBroadcastReceiver = new SGMLibBroadcastReceiver(mContext);
+        registeredCommands = new ArrayList<>();
+
+        EventBus.getDefault().register(this);
     }
 
-    //    @Subscribe
-    //    public void onSendableTranscriptEvent(SendableIntentEvent sendableIntentEvent)
-    //    {
-    ////        SGMData.TPABroadcastSender.broadcastData(sendableIntentEvent.data);
-    //    }
+    @Subscribe
+    public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
+        Log.d(TAG, "command was triggered...");
+    }
 
-    //    @Subscribe
-    //    public void onIntentReceivedEvent(ReceivedIntentEvent receivedIntentEvent) throws JSONException {
-    //        Log.d(TAG, "ReceivedIntentData: " + receivedIntentEvent.data);
-    //        JSONObject receivedObj = new JSONObject(receivedIntentEvent.data);
-    //        String dataType = receivedObj.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-    //        if(dataType.equals(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW))
-    //        {
-    //            String title = receivedObj.getString(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_TITLE);
-    //            String body = receivedObj.getString(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW_BODY);
-    //            //TODO: Once everything is merged, add the call to ActiveLookSGC's displayReferenceCardSimple here
-    //            EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
-    //        }
-    //    }
+    @Subscribe
+    public void onRegisterCommandRequestEvent(RegisterCommandRequestEvent receivedEvent){
+        registeredCommands.add(receivedEvent.command);
+        Log.d(TAG, "Command was registered");
+    }
+
+    public void destroy(){
+        sgmLibBroadcastReceiver.unregister();
+    }
 }

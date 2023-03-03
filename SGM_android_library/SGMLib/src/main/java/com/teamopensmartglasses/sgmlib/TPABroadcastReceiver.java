@@ -9,13 +9,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 public class TPABroadcastReceiver extends BroadcastReceiver {
     private String filterPkg;
@@ -30,6 +28,19 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
     }
 
     public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "received broadcast");
+        String eventId = intent.getStringExtra(EVENT_ID);
+        Serializable serializedEvent = intent.getSerializableExtra(EVENT_BUNDLE);
+        Log.d(TAG, "GOT EVENT ID: " + eventId);
+        Log.i("Broadcastreceiver", "BroadcastReceiver Received");
+
+        //map from id to event
+        switch (eventId) {
+            case CommandTriggeredEvent.eventId:
+                Log.d(TAG, "Resending Command triggered event");
+                EventBus.getDefault().post((CommandTriggeredEvent) serializedEvent);
+                break;
+        }
+
+//        command.getCallback().call();
     }
 }
