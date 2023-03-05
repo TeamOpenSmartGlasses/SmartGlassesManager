@@ -262,4 +262,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void triggerHelloWorldTpa(){
+        if (mService != null){
+            mService.triggerHelloWorldTpa();
+        }
+    }
+
 }

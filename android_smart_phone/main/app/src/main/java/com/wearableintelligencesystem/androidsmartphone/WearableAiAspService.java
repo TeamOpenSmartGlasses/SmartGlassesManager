@@ -14,6 +14,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
+import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
@@ -22,6 +23,7 @@ import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEven
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.TriggerCommandEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
@@ -35,6 +37,7 @@ import org.json.JSONObject;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Locale;
+import java.util.UUID;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -255,6 +258,10 @@ public class WearableAiAspService extends LifecycleService {
 
     public void startLiveCaptions() {
         EventBus.getDefault().post(new StartLiveCaptionsEvent());
+    }
+
+    public void triggerHelloWorldTpa(){
+        EventBus.getDefault().post(new TriggerCommandEvent(UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID)));
     }
 
     public int getSmartGlassesConnectState() {

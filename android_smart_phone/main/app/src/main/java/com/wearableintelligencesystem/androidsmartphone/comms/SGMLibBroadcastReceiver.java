@@ -1,7 +1,7 @@
 package com.wearableintelligencesystem.androidsmartphone.comms;
 
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_BUNDLE;
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_ID;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_BUNDLE;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_ID;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,7 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 
@@ -24,7 +24,7 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
 
     public SGMLibBroadcastReceiver(Context context) {
         this.context = context;
-        this.filterPkg = "com.teamopensmartglasses.from3pa";
+        this.filterPkg = SGMGlobalConstants.FROM_TPA_FILTER;
         IntentFilter intentFilter = new IntentFilter(this.filterPkg);
         context.registerReceiver(this, intentFilter);
     }

@@ -1,15 +1,13 @@
 package com.wearableintelligencesystem.androidsmartphone.comms;
 
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_BUNDLE;
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_ID;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_BUNDLE;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_ID;
 
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
+import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 
 import java.io.Serializable;
 
@@ -20,7 +18,7 @@ public class SGMLibBroadcastSender {
 
     public SGMLibBroadcastSender (Context context) {
         this.context = context;
-        this.intentPkg = "com.teamopensmartglasses.to3pa";
+        this.intentPkg = SGMGlobalConstants.TO_TPA_FILTER;
     }
 
     public void sendEventToTPAs(String eventId, Serializable eventBundle) {

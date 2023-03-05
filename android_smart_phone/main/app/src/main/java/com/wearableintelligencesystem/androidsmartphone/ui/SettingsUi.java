@@ -108,6 +108,14 @@ public class SettingsUi extends Fragment {
                 startLiveCaptions();
             }
         });
+
+        final Button triggerHelloWorldButton = view.findViewById(R.id.trigger_tpa_command);
+        triggerHelloWorldButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Code here executes on main thread after user presses button
+                ((MainActivity)getActivity()).triggerHelloWorldTpa();
+            }
+        });
     }
 
     public void sendTestCard(){
