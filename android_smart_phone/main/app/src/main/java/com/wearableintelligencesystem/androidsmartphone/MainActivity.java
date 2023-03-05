@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mBound = false;
 
         //setup action bar
         Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);

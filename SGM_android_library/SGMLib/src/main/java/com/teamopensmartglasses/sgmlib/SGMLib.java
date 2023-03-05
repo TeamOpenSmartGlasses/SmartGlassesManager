@@ -49,6 +49,8 @@ public class SGMLib {
     public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
         Log.d(TAG, "Callback called");
         SGMCommand command = receivedEvent.command;
-        command.getCallback();
+        Log.d(TAG, " " + command.getId());
+        Log.d(TAG, " " + command.getDescription());
+        command.getCallback().call();
     }
 }
