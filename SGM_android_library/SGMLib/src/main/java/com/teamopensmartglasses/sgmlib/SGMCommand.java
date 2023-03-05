@@ -13,7 +13,7 @@ public class SGMCommand implements Serializable {
     public boolean argRequired = false;
     private ArrayList<String> mPhrases; //list of phrases, queries, questions that trigger this command (artificial limit imposed)
     private String mDescription; //a natural language description of what the command does
-    private Callback callback;
+    private Callback mCallback;
 
     public SGMCommand(String name, UUID id, String[] phrases, String description, Callback callback){
         this.mName = name;
@@ -21,6 +21,7 @@ public class SGMCommand implements Serializable {
         this.mPhrases = new ArrayList<>();
         this.mPhrases.addAll(Arrays.asList(phrases));
         this.mDescription = description;
+        this.mCallback = callback;
     }
 
     public SGMCommand(String name, UUID id, String[] phrases, String description, Callback callback, boolean argRequired){
@@ -33,7 +34,11 @@ public class SGMCommand implements Serializable {
     }
 
     public Callback getCallback() {
-        return callback;
+        return mCallback;
+    }
+
+    public String getDescription() {
+        return mDescription;
     }
 }
 
