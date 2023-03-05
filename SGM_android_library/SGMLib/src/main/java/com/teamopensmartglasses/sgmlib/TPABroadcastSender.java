@@ -1,7 +1,7 @@
 package com.teamopensmartglasses.sgmlib;
 
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_BUNDLE;
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_ID;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_BUNDLE;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_ID;
 
 import android.content.Context;
 import android.content.Intent;
@@ -21,7 +21,7 @@ public class TPABroadcastSender {
 
     public TPABroadcastSender(Context context) {
         this.context = context;
-        this.intentPkg = "com.teamopensmartglasses.from3pa";
+        this.intentPkg = SGMGlobalConstants.FROM_TPA_FILTER;
 
         //register event bus subscribers
         EventBus.getDefault().register(this);

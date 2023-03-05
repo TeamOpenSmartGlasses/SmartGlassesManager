@@ -1,20 +1,16 @@
 package com.teamopensmartglasses.sgmlibdebugapp;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.view.View;
+import java.util.UUID;
 
 import com.teamopensmartglasses.sgmlib.SGMCommand;
+import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.SGMLib;
-import com.teamopensmartglasses.sgmlib.TPABroadcastReceiver;
-import com.teamopensmartglasses.sgmlib.TPABroadcastSender;
-
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     public SGMLib sgmLib;
-    public String helloWorldUuid = "d7e9c6e2-8f50-4c56-8feb-6c826e789d86";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
         sgmLib = new SGMLib(this);
 
         //register a command with the SGM
-        SGMCommand helloWorldCommand = new SGMCommand("Hello World Command Name", UUID.fromString(helloWorldUuid), new String[]{"Hello world"}, "Hello world command desc", this::helloWorldCallback);
+        SGMCommand helloWorldCommand = new SGMCommand("Hello World Command Name", UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID), new String[]{"Hello world"}, "Hello world command desc", this::helloWorldCallback);
         sgmLib.registerCommand(helloWorldCommand);
     }
 

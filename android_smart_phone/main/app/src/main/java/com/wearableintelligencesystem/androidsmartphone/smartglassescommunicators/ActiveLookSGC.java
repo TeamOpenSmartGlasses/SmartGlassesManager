@@ -51,7 +51,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         lastLocScrollingTextView = new Point(0,0);
         finalScrollingTextStrings = new ArrayList<>();
 
-        this.alsdk = Sdk.init(context,
+        alsdk = Sdk.init(context,
                 "",
                 this::onUpdateStart,
                 this::onUpdateAvailableCallback,
@@ -89,7 +89,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     @Override
     public void connectToSmartGlasses(){
         Log.d(TAG, "Activelook scanning, trying to connect...");
-        this.alsdk.startScan(activeLookDiscoveredGlassesI -> {
+        alsdk.startScan(activeLookDiscoveredGlassesI -> {
             discoveredGlasses.add(activeLookDiscoveredGlassesI);
             tryConnectNewGlasses(activeLookDiscoveredGlassesI);
         });
@@ -125,6 +125,9 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     public void destroy(){
        if (connectedGlasses != null){
            connectedGlasses.disconnect();
+       }
+       if (alsdk != null){
+//           alsdk.
        }
     }
 

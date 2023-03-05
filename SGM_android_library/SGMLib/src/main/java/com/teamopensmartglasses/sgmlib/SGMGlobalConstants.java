@@ -1,12 +1,15 @@
 package com.teamopensmartglasses.sgmlib;
 
-public class GlobalStrings {
+public class SGMGlobalConstants {
     //BROADCAST RECEIVER EVENT DATA PACKING STRINGS
     public static final String EVENT_BUNDLE = "EVENT_BUNDLE";
     public static final String EVENT_CLASS = "EVENT_CLASS";
     public static final String EVENT_ID = "EVENT_ID";
 
     public static final String SGMPkgName = "com.teamopensmartglasses.sgmlib";
+    public static final String FROM_TPA_FILTER = "com.teamopensmartglasses.from3pa";
+    public static final String TO_TPA_FILTER = "com.teamopensmartglasses.to3pa";
+    public static final String DEBUG_COMMAND_ID = "d7e9c6e2-8f50-4c56-8feb-6c826e789d86";
 }
 
 

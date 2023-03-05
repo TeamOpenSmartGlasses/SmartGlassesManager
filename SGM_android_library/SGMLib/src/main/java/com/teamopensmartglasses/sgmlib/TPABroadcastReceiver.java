@@ -1,7 +1,7 @@
 package com.teamopensmartglasses.sgmlib;
 
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_BUNDLE;
-import static com.teamopensmartglasses.sgmlib.GlobalStrings.EVENT_ID;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_BUNDLE;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_ID;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -22,7 +22,7 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
 
     public TPABroadcastReceiver(Context myContext) {
         this.context = myContext;
-        this.filterPkg = "com.teamopensmartglasses.from3pa";
+        this.filterPkg = SGMGlobalConstants.TO_TPA_FILTER;
         IntentFilter intentFilter = new IntentFilter(this.filterPkg);
         this.context.registerReceiver(this, intentFilter);
     }
@@ -40,7 +40,5 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
                 EventBus.getDefault().post((CommandTriggeredEvent) serializedEvent);
                 break;
         }
-
-//        command.getCallback().call();
     }
 }

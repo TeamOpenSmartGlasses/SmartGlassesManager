@@ -1,7 +1,5 @@
 package com.teamopensmartglasses.sgmlib;
 
-import android.util.Log;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +28,7 @@ public class SGMCommand implements Serializable {
        this.argRequired = argRequired;
     }
 
-    public UUID getUUID(){
+    public UUID getId(){
         return this.mId;
     }
 
