@@ -21,21 +21,12 @@ This project is being built by TeamOpenSmartGlasses. It was started by Cayden Pi
 3. Transcribe audio
 4. Share transcription with other apps on the same device
 5. Receive data from other apps on the same device, send this data to be displayed on smart glasses
-6. UI, voice command (TBD how this works with everything else)
+6. UI, voice command
 
 ## Fork of the Wearable Intelligence System
 
 This repo is a fork of the [Wearable Intelligence System](https://github.com/emexlabs/WearableIntelligenceSystem). The Wearable Intelligence System was started at [Emex Labs](https://emexwearables.com) by [Cayden Pierce](https://caydenpierce.com/).
 
-The Wearable Intelligence System (WIS) is the homepage for your smart glasses with a host of built-in apps, voice controls, always available HUD information, app launcher, and more. The WIS makes building smart glasses applications easy. There's a number of powerful and fashionable smart glasses being released (2022-24), and the WIS gives you an interface and apps to make those glasses useful. The WIS is like your phone homescreen or your computer desktop combined with a smart assistant.
-
-### Beta Version Video
-
-[![Wearable Intelligence System Beta Release Demo](res/thumbnail_wis_demo_part3_beta_release_play.jpg)](https://www.youtube.com/watch?v=jIWwJxi9bys "Smart Glasses Apps: Wearable Intelligence System Beta Release")
-
-#### Early Alpha Version Video
-[![Wearable Intelligence System alpha version Demo](res/early_demo_thumbnail.png)](http://www.youtube.com/watch?v=O2a6ng9jICE "Wearable Intelligence System Demo - Smart Glasses Apps - Part 1")
- 
 ## How To Use 
 
 You will need two pieces of hardware to run the system:  
@@ -77,22 +68,15 @@ Here's how to launch the system after you've already done the initial setup abov
     
 ## Documentation / Developers
     
-The docs are hosted on this repo's Wiki, [here are the docs](https://github.com/TeamOpenSmartGlasses/SmartGlassesManager/wiki).
+Coming soon. Join the discord below for help in the meantime.
    
 ## Authors
 
-The system is fully Open Source and built by TeamOpenSmartGlasses. We're a team building open source smart glasses technology to enhance user's intelligence in daily life. Join us: https://discord.gg/5ukNvkEAqT
+The system is fully open source and built by TeamOpenSmartGlasses. We're a team building open source smart glasses technology to enhance user's intelligence in daily life. Join us: https://discord.gg/5ukNvkEAqT
 
-The TeamOpenSmartGlasses member who are contributing to this project include:
+The TeamOpenSmartGlasses members who are contributing to this project include:
 
 - Cayden Pierce - [Emex Labs](https://emexwearables.com)
 - Alex Israelov - http://www.alexisraelov.com/
-- Aaditya Vaze - https://thisisvaze.com/
-- Jeremy Stairs - https://github.com/stairs1
-- Add Your Name Here!
 
 We are actively building a community that is building cognitive augmentation technologies together. 
-
-
-
-
