@@ -29,8 +29,8 @@ public class SgmLibDebugAppService extends SmartGlassesAndroidService {
         sgmLib = new SGMLib(getApplicationContext());
 
         //register a command with the SGM
-        SGMCommand helloWorldCommand = new SGMCommand("Hello World Command Name", UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID), new String[]{"Hello world"}, "Hello world command desc", this::helloWorldCallback);
-        sgmLib.registerCommand(helloWorldCommand);
+        SGMCommand helloWorldCommand = new SGMCommand("Hello World Command Name", UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID), new String[]{"Hello world"}, "Hello world command desc");
+        sgmLib.registerCommand(helloWorldCommand, this::helloWorldCallback);
     }
 
     public void helloWorldCallback(){

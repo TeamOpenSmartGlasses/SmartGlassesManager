@@ -11,6 +11,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class SGMLib {
     public String TAG = "SGMLib_SGMLib";
@@ -18,21 +20,21 @@ public class SGMLib {
     public TPABroadcastReceiver sgmReceiver;
     public TPABroadcastSender sgmSender;
     public Context mContext;
-    public ArrayList<SGMCommand> registeredCommands;
+    public HashMap<UUID, SGMCommandWithCallback> registeredCommands;
 
     public SGMLib(Context context){
         this.mContext = context;
         sgmReceiver = new TPABroadcastReceiver(context);
         sgmSender = new TPABroadcastSender(context);
-        registeredCommands = new ArrayList<>();
+        registeredCommands = new HashMap<>();
 
         //register subscribers on EventBus
         EventBus.getDefault().register(this);
     }
 
     //register a new command
-    public void registerCommand(SGMCommand sgmCommand){
-        registeredCommands.add(sgmCommand);
+    public void registerCommand(SGMCommand sgmCommand, Callback callback){
+        registeredCommands.put(sgmCommand.getId(), new SGMCommandWithCallback(sgmCommand, callback));
         EventBus.getDefault().post(new RegisterCommandRequestEvent(sgmCommand));
     }
 
@@ -47,10 +49,11 @@ public class SGMLib {
 
     @Subscribe
     public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
-        Log.d(TAG, "Callback called");
         SGMCommand command = receivedEvent.command;
         Log.d(TAG, " " + command.getId());
         Log.d(TAG, " " + command.getDescription());
-        command.getCallback().call();
+        //call the callback
+        registeredCommands.get(command.getId()).callback.call();
+        Log.d(TAG, "Callback called");
     }
 }

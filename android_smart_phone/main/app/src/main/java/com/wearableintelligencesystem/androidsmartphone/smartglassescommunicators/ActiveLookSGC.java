@@ -127,7 +127,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
            connectedGlasses.disconnect();
        }
        if (alsdk != null){
-//           alsdk.
+//           alsdk.getInstance()
        }
     }
 

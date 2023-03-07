@@ -15,26 +15,21 @@ public class SGMCommand implements Serializable {
     private String mDescription; //a natural language description of what the command does
     private Callback mCallback;
 
-    public SGMCommand(String name, UUID id, String[] phrases, String description, Callback callback){
+    public SGMCommand(String name, UUID id, String[] phrases, String description){
         this.mName = name;
         this.mId = id;
         this.mPhrases = new ArrayList<>();
         this.mPhrases.addAll(Arrays.asList(phrases));
         this.mDescription = description;
-        this.mCallback = callback;
     }
 
-    public SGMCommand(String name, UUID id, String[] phrases, String description, Callback callback, boolean argRequired){
-       this(name, id, phrases, description, callback);
+    public SGMCommand(String name, UUID id, String[] phrases, String description, boolean argRequired){
+       this(name, id, phrases, description);
        this.argRequired = argRequired;
     }
 
     public UUID getId(){
         return this.mId;
-    }
-
-    public Callback getCallback() {
-        return mCallback;
     }
 
     public String getDescription() {
