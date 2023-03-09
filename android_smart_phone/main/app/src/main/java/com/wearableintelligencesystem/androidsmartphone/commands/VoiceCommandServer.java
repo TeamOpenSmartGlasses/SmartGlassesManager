@@ -20,6 +20,8 @@
 
 package com.wearableintelligencesystem.androidsmartphone.commands;
 
+import com.teamopensmartglasses.sgmlib.SGMCommand;
+import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
 import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
@@ -35,6 +37,7 @@ import android.util.Pair;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
@@ -50,10 +53,8 @@ import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 //send updates when wake words, commands, arguments are seen to ASG, so user knows that what they are trying to say has been recognized, and they can see suggestions for next commands, arguments, etc.
 public class VoiceCommandServer {
     private  final String TAG = "WearableAi_VoiceCommand";
-    //one stream to receive transcripts, data, etc.
-    public PublishSubject<JSONObject> dataObservable;
-    private Disposable dataSubscriber;
 
+    //handlers
     private Handler vcHandler;
     private HandlerThread mHandlerThread;
 
@@ -61,7 +62,7 @@ public class VoiceCommandServer {
     private NlpUtils nlpUtils;
 
     //voice command stuff
-    private ArrayList<VoiceCommand> voiceCommands;
+    private ArrayList<SGMCommand> voiceCommands;
     private ArrayList<String> wakeWords;
     private ArrayList<String> endWords;
 
@@ -73,7 +74,7 @@ public class VoiceCommandServer {
     private boolean newTranscriptSinceRun = false; //has a new transcript come in since we last parsed a voice command?
     private boolean currentlyParsing = false; //are we currently parsing? if so, don't try to parse again at the same time
 
-    //the current voice buffer that we are processing, with metadata about the lastest phrase/transcript which makes up that voice buffer
+    //the current voice buffer that we are processing, with metadata about the latest phrase/transcript which makes up that voice buffer
     private String lowPassTranscriptString = "";
     long lowPassTranscriptTime = 0l;
     long lowPassTranscriptId = 0l;
@@ -99,34 +100,27 @@ public class VoiceCommandServer {
     boolean commanded = false;
     String commandGiven = "";
     int commandEndIdx = -1;
-    boolean requiredArged = false;
+    boolean argRequireded = false;
     boolean needArg = false;
     boolean ended = false;
 
-    public VoiceCommandServer(PublishSubject<JSONObject> observable, VoiceCommandRepository voiceCommandRepository, Context context){
+    public VoiceCommandServer(Context context){
+        mContext = context;
+
         //setup nlp
         nlpUtils = NlpUtils.getInstance(context);
-
-        mVoiceCommandRepository = voiceCommandRepository;
-
-        mContext = context;
 
         //setup handler for voice commands
         mHandlerThread = new HandlerThread("VoiceCommandHandler");
         mHandlerThread.start();
         vcHandler = new Handler(mHandlerThread.getLooper());
 
-        dataObservable = observable;
-        dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
+        //setup wake and end words
+        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "aurora", "harken", "vivify"}));
+        endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command", "desist", "terminus", "carriage", "consummate"}));
 
-        //get all voice commands
-        voiceCommands = new ArrayList<VoiceCommand>();
-        voiceCommands.add(new SwitchModesVoiceCommand(context));
-
-        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer"}));
-        endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command"}));
-
-        startSittingCommandHitter(); //keep checking to see if there is a command to be run
+        //keeps checking to see if there is a command to be run
+        startSittingCommandHitter();
     }
 
     private void startSittingCommandHitter(){
@@ -159,19 +153,15 @@ public class VoiceCommandServer {
 
     }
     
-    public void setObservable(PublishSubject observable){
-        dataObservable = observable;
-    }
-
-    private void handleDataStream(JSONObject data){
+    private void handleNewTranscript(String data) {
         try {
             String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
             if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                 throwHandleNewTranscript(data);
-            } else if (dataType.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)){
+            } else if (dataType.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
                 throwHandleNewTranscript(data);
             }
-        } catch (JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
         }
     }
@@ -249,7 +239,6 @@ public class VoiceCommandServer {
     }
 
     private void restartTranscriptBuffer(int partialIdx, Boolean useNext){
-//        lowPassTranscriptString = "";
         partialTranscriptBufferIdx = partialIdx;
         startNewVoiceCliBuffer = true;
         if (useNext != null) {
@@ -257,7 +246,7 @@ public class VoiceCommandServer {
         }
    }
 
-   //run a parsing pass on the current voice transcript buffer. This depends on the current state of the machine w.r.t. what we have already found - wake word, command, arguments, end word, etc.
+    //run a parsing pass on the current voice transcript buffer. This depends on the current state of the machine w.r.t. what we have already found - wake word, command, arguments, end word, etc.
     private void parseVoiceCommmandBuffer(String transcript, boolean run, long transcriptId) {
         //if we have already found a wake word and a command, but the command is not yet finished, then send a stream of the argument text to the ASG
         if (waked && commanded){
@@ -292,26 +281,8 @@ public class VoiceCommandServer {
         long currTime = System.currentTimeMillis();
         lastParseTime = currTime;
 
-
         //loop through all voice commands to see if any of their wake words match
         if (!waked) { //only run this if we haven't already detected a wake word
-//            for (int i = 0; i < voiceCommands.size(); i++) {
-//                Pair<FuzzyMatch, Integer> wakeWordBestMatch = nlpUtils.findBestMatch(transcript, voiceCommands.get(i).getWakeWords(), wakeWordThreshold);
-//                if (wakeWordBestMatch != null) {
-//                    FuzzyMatch wakeWordMatch = wakeWordBestMatch.first;
-//                    int wakeWordMatchIdx = wakeWordBestMatch.second;
-//                    String wakeWordMatchString = voiceCommands.get(i).getWakeWords().get(wakeWordMatchIdx);
-//                    foundWakeWord(wakeWordMatchString, wakeWordMatch.getIndex() + wakeWordMatchString.length());
-//                    //we found a command, now get its arguments and run it
-//                    String preArgs = transcript.substring(0, wakeWordMatch.getIndex());
-//                    String postArgs = transcript.substring(transcript.substring(wakeWordMatch.getIndex()).indexOf(" ") + 1); //start at the wake word location, and remove until the after the next space
-//                    if (run) {
-//                        runCommand(voiceCommands.get(i), preArgs, wakeWordMatchString, wakeWordMatchIdx, postArgs, currTime, transcriptId);
-//                    }
-//                    break;
-//                }
-//            }
-
             //loop through all global wake words to see if any match
             for (int i = 0; i < wakeWords.size(); i++){
                 String currWakeWord = wakeWords.get(i);
@@ -390,7 +361,7 @@ public class VoiceCommandServer {
         int bestMatchIdx = -1;
         int vcIdx = -1;
         for (int i = 0; i < voiceCommands.size(); i++) {
-            Pair<FuzzyMatch, Integer> commandBestMatch = nlpUtils.findBestMatch(rest, voiceCommands.get(i).getCommands(), commandThreshold);
+            Pair<FuzzyMatch, Integer> commandBestMatch = nlpUtils.findBestMatch(rest, voiceCommands.get(i).getPhrases(), commandThreshold);
             if (commandBestMatch != null) {
                 FuzzyMatch commandMatch = commandBestMatch.first;
                 int commandMatchIdx = commandBestMatch.second;
@@ -405,7 +376,7 @@ public class VoiceCommandServer {
             FuzzyMatch commandMatch = bestMatch;
             Log.d(TAG, "BEST MATCH COMMAND: " + bestMatch);
             int commandMatchIdx = bestMatchIdx;
-            String commandMatchString = voiceCommands.get(vcIdx).getCommands().get(commandMatchIdx);
+            String commandMatchString = voiceCommands.get(vcIdx).getPhrases().get(commandMatchIdx);
 
             Log.d(TAG, "3FOUND: " + commandMatchString);
             String postArgs;
@@ -420,22 +391,22 @@ public class VoiceCommandServer {
                 postArgs = postArgs.substring(firstSpace + 1);//string after the commands ends and after the next space
             }
 
-            //check if there is a full word argument yet, if so, then we have gotten our requiredArg
+            //check if there is a full word argument yet, if so, then we have gotten our argRequired
             Log.d(TAG, "POSTARGS: " + postArgs);
             if (postArgs.indexOf(" ") != -1){
                 Log.d(TAG, "POSTARGS RAN THIS BOI");
-                requiredArged = true;
+                argRequireded = true;
             }
 
             //show the user the next menu
             if (commanded) { //if we've already found a command, just check if we are still waiting on a required argument
-                if (voiceCommands.get(vcIdx).requiredArg && needArg && requiredArged){
+                if (voiceCommands.get(vcIdx).argRequired && needArg && argRequireded){
                     needNaturalLanguageArgs(commandMatchString);
                     needArg = false;
                 }
             } else { //else, this is the first time we found a command, and we either prompt for a required argument or send user straight to the natural language query selection
-                if (voiceCommands.get(vcIdx).requiredArg) {
-                    needRequiredArg(voiceCommands.get(vcIdx).requiredArgString, voiceCommands.get(vcIdx).requiredArgOptions);
+                if (voiceCommands.get(vcIdx).argRequired) {
+                    needRequiredArg(voiceCommands.get(vcIdx).argPrompt, voiceCommands.get(vcIdx).argOptions);
                 } else {
                     needNaturalLanguageArgs(commandMatchString);
                 }
@@ -443,7 +414,7 @@ public class VoiceCommandServer {
 
             foundCommand(commandMatchString, wakeWordEndIdx + commandMatch.getIndex() + commandMatchString.length());
 
-            if (run || voiceCommands.get(vcIdx).noArgs) {
+            if (run || !voiceCommands.get(vcIdx).argRequired) {
                 restartTranscriptBuffer(commandEndIdx, true);
                 runCommand(voiceCommands.get(vcIdx), preArgs, wakeWord, commandMatchIdx, postArgs, commandTime, transcriptId);
             }
@@ -530,11 +501,9 @@ public class VoiceCommandServer {
         //generate commandlist for all commands
         JSONArray commandList = new JSONArray();
         voiceCommands.forEach(voiceCommand -> {
-            if (voiceCommand.isPrimary) {
-                voiceCommand.getCommands().forEach(command -> {
-                    commandList.put(command);
-                });
-            }
+            voiceCommand.getPhrases().forEach(command -> {
+                commandList.put(command);
+            });
         });
 
         //tell ASG that we have found this wake word and to display the following command options
@@ -562,15 +531,19 @@ public class VoiceCommandServer {
         this.commandEndIdx = commandEndIdx;
     }
 
-    private void runCommand(VoiceCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime, long transcriptId){
+    private void runCommand(SGMCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime, long transcriptId){
         Log.d(TAG, "running commmand: " + vc.getCommandName());
         //the voice command itself will handle sending the appropriate response to the ASG
         resetVoiceCommand();
-        boolean result = vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
-        if (!result){
-            cancelVoiceCommand();
-        }
-        //sendResultToAsg(success);
+//        boolean result = vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
+
+        //trigger the command
+        EventBus.getDefault().post(new CommandTriggeredEvent(vc, postArgs, commandTime);
+
+        //we should get a result from TPAs and communicate that
+//        if (!result){
+//            cancelVoiceCommand();
+//        }
     }
 
     private void resetVoiceCommand(){
@@ -580,7 +553,7 @@ public class VoiceCommandServer {
         commanded = false;
         this.commandGiven = "";
         ended = false;
-        requiredArged = false;
+        argRequireded = false;
         needArg = false;
     }
 
@@ -615,4 +588,78 @@ public class VoiceCommandServer {
         }
     }
 
+    //helper functions
+    public ArrayList<String> parseKeyValueArgs(String text, String key){
+        ArrayList<String> hits = new ArrayList<String>();
+        int hitLocation = text.indexOf(key);
+
+        if (hitLocation != -1){
+            //find the next spaces
+            int firstSpaceLocation = text.substring(hitLocation).indexOf(" "); //the space after the hit word
+            if (firstSpaceLocation == -1){ //if no space after hit word, then we are at end of string and thus there is no key-value pair
+                return hits;
+            }
+
+            //text after hit
+            String afterText = text.substring(hitLocation + key.length() + 1); //+1 for space after word
+
+            int secondSpaceLocation = afterText.indexOf(" ");
+
+            //word after hit
+            String hit;
+            String restString;
+            if (secondSpaceLocation != -1){
+                hit = afterText.substring(0, secondSpaceLocation);
+                hits.add(hit);
+                restString = afterText.substring(secondSpaceLocation + 1);
+            } else { //if no space, it's the rest of the string
+                hit = afterText;
+                hits.add(hit);
+                return hits;
+            }
+
+            //if more hits, call this function on the rest of the string again
+            int newHitLocation = restString.indexOf(key);
+            if (newHitLocation != -1){
+                hits.addAll(parseKeyValueArgs(restString, key));
+            }
+        }
+
+        return hits;
+    }
+
+    protected String getFirstArg(String toParse){
+        String firstArg = toParse.trim().split("\\s+")[0];
+        return firstArg;
+    }
+
+    public void sendResult(VoiceCommandServer vcServer, boolean success, String commandName, String displayString){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.RESOLVE_EVENT_TYPE);
+            commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
+            commandResponseObject.put(MessageTypes.COMMAND_NAME, commandName);
+            Log.d(TAG, "DISPLAY STRING: " + displayString);
+            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
+            //send the command result
+            vcServer.dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMessage(VoiceCommandServer vcServer, String displayString){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
+            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
+            //send the command result
+            vcServer.dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 }

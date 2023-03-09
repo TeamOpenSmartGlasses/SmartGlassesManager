@@ -33,7 +33,7 @@ public class SgmLibDebugAppService extends SmartGlassesAndroidService {
         sgmLib.registerCommand(helloWorldCommand, this::helloWorldCallback);
     }
 
-    public void helloWorldCallback(){
+    public void helloWorldCallback(String args, long commandTime){
         sgmLib.sendReferenceCard("Hello World!", "The SGM triggered the Hello World command.");
     }
 }

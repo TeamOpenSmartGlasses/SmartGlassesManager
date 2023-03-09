@@ -14,7 +14,7 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
-import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
+import com.wearableintelligencesystem.androidsmartphone.commands.CommandSystem;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.database.WearableAiRoomDatabase;
 import com.wearableintelligencesystem.androidsmartphone.database.phrase.PhraseRepository;
@@ -23,12 +23,10 @@ import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEven
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.TriggerCommandEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.NaturalLanguage;
 import com.wearableintelligencesystem.androidsmartphone.speechrecognition.SpeechRecVosk;
 import com.wearableintelligencesystem.androidsmartphone.supportedglasses.SmartGlassesDevice;
-import com.wearableintelligencesystem.androidsmartphone.commands.VoiceCommandServer;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -37,13 +35,15 @@ import org.json.JSONObject;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Locale;
-import java.util.UUID;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
 public class WearableAiAspService extends LifecycleService {
     private static final String TAG = "WearableAi_ASP_Service";
+
+    //hold and handle commands
+    private CommandSystem commandSystem;
 
     //communicate with the SGMLIb third party apps (TPA/3PA)
     public TPASystem tpaSystem;
@@ -69,9 +69,6 @@ public class WearableAiAspService extends LifecycleService {
 
     //Text to Speech
     //private TextToSpeechSystem textToSpeechSystem;
-
-    //voice command system
-    VoiceCommandServer voiceCommandServer;
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
@@ -115,8 +112,8 @@ public class WearableAiAspService extends LifecycleService {
         //start text to speech
 //        textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, supportedLanguages.get(baseLanguage).getLocale());
 
-        //start voice command server to parse transcript for voice command
-        voiceCommandServer = new VoiceCommandServer(dataObservable, mVoiceCommandRepository, getApplicationContext());
+        //start the command system, which handles registering command and running the launcher
+        commandSystem = new CommandSystem(getApplicationContext());
 
         //setup event bus subscribers
         setupEventBusSubscribers();
@@ -261,7 +258,8 @@ public class WearableAiAspService extends LifecycleService {
     }
 
     public void triggerHelloWorldTpa(){
-        EventBus.getDefault().post(new TriggerCommandEvent(UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID)));
+//        EventBus.getDefault().post(new CommandTriggeredEvent(UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID)));
+//        EventBus.getDefault().post(new CommandTriggeredEvent(
     }
 
     public int getSmartGlassesConnectState() {

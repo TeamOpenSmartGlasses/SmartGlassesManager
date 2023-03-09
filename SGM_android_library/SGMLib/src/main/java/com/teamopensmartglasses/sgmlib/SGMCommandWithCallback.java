@@ -2,9 +2,9 @@ package com.teamopensmartglasses.sgmlib;
 
 public class SGMCommandWithCallback {
     public SGMCommand command;
-    public Callback callback;
+    public SGMCommandCallback callback;
 
-    public SGMCommandWithCallback(SGMCommand command, Callback callback){
+    public SGMCommandWithCallback(SGMCommand command, SGMCommandCallback callback){
         this.command = command;
         this.callback = callback;
     }
