@@ -1,8 +1,8 @@
 package com.wearableintelligencesystem.androidsmartphone.commands;
 
+import android.content.Context;
 import android.util.Log;
 
-import com.teamopensmartglasses.sgmlib.Callback;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 
 import java.util.ArrayList;
@@ -10,11 +10,19 @@ import java.util.UUID;
 
 public class CommandSystem {
     private String TAG = "WearableAi_CommandSystem";
+
+    //hold all registered commands, mostly from TPAs
     ArrayList<SGMCommand> allCommands;
 
-    public CommandSystem(){
+    //voice command system
+    VoiceCommandServer voiceCommandServer;
+
+    public CommandSystem(Context context){
         allCommands = new ArrayList<>();
         loadDefaultCommands();
+
+        //start voice command server to parse transcript for voice command
+        voiceCommandServer = new VoiceCommandServer(context);
     }
 
     private void loadDefaultCommands(){
