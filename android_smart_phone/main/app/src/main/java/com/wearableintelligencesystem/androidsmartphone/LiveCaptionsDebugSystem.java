@@ -40,7 +40,7 @@ public class LiveCaptionsDebugSystem {
 
     @Subscribe
     public void onSpeechRecFinalOutputReceived(SpeechRecFinalOutputEvent receivedEvent){
-        Log.d(TAG, "onFinalOutputReceived");
+//        Log.d(TAG, "onFinalOutputReceived");
         if (active) {
             Log.d(TAG, "POSTING IT THO");
             EventBus.getDefault().post(new FinalScrollingTextEvent(receivedEvent.text));
