@@ -9,6 +9,8 @@ import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 
+import org.greenrobot.eventbus.Subscribe;
+
 import java.io.Serializable;
 
 public class SGMLibBroadcastSender {
@@ -35,5 +37,6 @@ public class SGMLibBroadcastSender {
         intent.putExtra(EVENT_BUNDLE, eventBundle);
         context.sendBroadcast(intent);
     }
+
 
 }
