@@ -7,6 +7,9 @@ import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SubscribeDataStreamRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.commands.CommandSystem;
 import com.wearableintelligencesystem.androidsmartphone.comms.SGMLibBroadcastReceiver;
 import com.wearableintelligencesystem.androidsmartphone.comms.SGMLibBroadcastSender;
@@ -15,7 +18,6 @@ import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.Trigger
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -49,6 +51,24 @@ public class TPASystem {
     }
 
     @Subscribe
+    public void onIntermediateTranscript(SpeechRecIntermediateOutputEvent event){
+        Log.d(TAG, "Intermediate Transcript Sending Event");
+        boolean tpaIsSubscribed = true; //TODO: Hash out implementation
+        if(tpaIsSubscribed){
+            sgmLibBroadcastSender.sendEventToTPAs(SpeechRecIntermediateOutputEvent.eventId, event);
+        }
+    }
+
+    @Subscribe
+    public void onFinalTranscript(SpeechRecFinalOutputEvent event){
+     Log.d(TAG, "Final Transcript Sending Event");
+        boolean tpaIsSubscribed = true; //TODO: Hash out implementation
+        if(tpaIsSubscribed){
+            sgmLibBroadcastSender.sendEventToTPAs(SpeechRecFinalOutputEvent.eventId, event);
+        }
+    }
+
+    @Subscribe
     public void onRegisterCommandRequestEvent(RegisterCommandRequestEvent receivedEvent){
         registeredCommands.put(receivedEvent.command.getId(), receivedEvent.command);
         Log.d(TAG, "Command was registered");
@@ -57,6 +77,16 @@ public class TPASystem {
         if (receivedEvent.command.getId().equals(SGMGlobalConstants.DEBUG_COMMAND_ID)) {
             debugAppRegistered = true;
         }
+    }
+
+    @Subscribe
+    public void onSubscribeDataStreamRequestEvent(SubscribeDataStreamRequestEvent event){
+        Log.d(TAG, "Got a request to subscribe to data stream");
+        /*
+            TODO: Hash out implementation
+            Should data stream subscriptions use an SGMCommand for its callback function,
+            or something else?
+        */
     }
 
     public void destroy(){

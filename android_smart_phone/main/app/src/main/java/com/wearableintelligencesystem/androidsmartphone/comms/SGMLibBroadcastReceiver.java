@@ -12,6 +12,7 @@ import android.util.Log;
 import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.SubscribeDataStreamRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -44,6 +45,10 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
             case RegisterCommandRequestEvent.eventId:
                 Log.d(TAG, "Resending register command request event");
                 EventBus.getDefault().post((RegisterCommandRequestEvent) serializedEvent);
+                break;
+            case SubscribeDataStreamRequestEvent.eventId:
+                Log.d(TAG, "Resending subscribe to data stream request event");
+                EventBus.getDefault().post((SubscribeDataStreamRequestEvent) serializedEvent);
                 break;
         }
     }
