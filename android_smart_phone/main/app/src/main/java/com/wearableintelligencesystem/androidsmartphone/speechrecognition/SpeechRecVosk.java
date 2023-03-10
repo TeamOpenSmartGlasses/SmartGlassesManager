@@ -266,8 +266,8 @@ public class SpeechRecVosk implements RecognitionListener {
                 transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             }
             transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
-            Log.d(TAG, "VOSK SENDING: ");
-            Log.d(TAG, transcriptObj.toString());
+//            Log.d(TAG, "VOSK SENDING: ");
+//            Log.d(TAG, transcriptObj.toString());
             dataObservable.onNext(transcriptObj);
 
 //            EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));

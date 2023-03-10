@@ -10,30 +10,27 @@ import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-import java.util.HashMap;
-import java.util.UUID;
-
 public class SGMLib {
     public String TAG = "SGMLib_SGMLib";
 
-    public TPABroadcastReceiver sgmReceiver;
-    public TPABroadcastSender sgmSender;
-    public Context mContext;
-    public HashMap<UUID, SGMCommandWithCallback> registeredCommands;
+    private TPABroadcastReceiver sgmReceiver;
+    private TPABroadcastSender sgmSender;
+    private Context mContext;
+    private SGMCallbackMapper sgmCallbackMapper;
 
     public SGMLib(Context context){
         this.mContext = context;
+        sgmCallbackMapper = new SGMCallbackMapper();
         sgmReceiver = new TPABroadcastReceiver(context);
         sgmSender = new TPABroadcastSender(context);
-        registeredCommands = new HashMap<>();
 
         //register subscribers on EventBus
         EventBus.getDefault().register(this);
     }
 
     //register a new command
-    public void registerCommand(SGMCommand sgmCommand, SGMCommandCallback callback){
-        registeredCommands.put(sgmCommand.getId(), new SGMCommandWithCallback(sgmCommand, callback));
+    public void registerCommand(SGMCommand sgmCommand, SGMCallback callback){
+        sgmCallbackMapper.putCommandWithCallback(sgmCommand, callback);
         EventBus.getDefault().post(new RegisterCommandRequestEvent(sgmCommand));
     }
 
@@ -55,7 +52,10 @@ public class SGMLib {
         Log.d(TAG, " " + command.getDescription());
 
         //call the callback
-        registeredCommands.get(command.getId()).callback.runCommand(args, commandTriggeredTime);
+        SGMCallback callback = sgmCallbackMapper.getCommandCallback(command);
+        if (callback != null){
+            callback.runCommand(args, commandTriggeredTime);
+        }
         Log.d(TAG, "Callback called");
     }
 }

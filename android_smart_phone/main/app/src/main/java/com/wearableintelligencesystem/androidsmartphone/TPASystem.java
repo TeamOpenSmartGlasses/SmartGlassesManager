@@ -17,42 +17,28 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class TPASystem {
-    private String TAG = "WearableAi_TPACommunicator";
+    private String TAG = "WearableAi_TPASystem";
     private Context mContext;
     private SGMLibBroadcastSender sgmLibBroadcastSender;
     private SGMLibBroadcastReceiver sgmLibBroadcastReceiver;
-    public HashMap<UUID, SGMCommand> registeredCommands;
-    private boolean debugAppRegistered;
 
     public TPASystem(Context context){
         mContext = context;
         sgmLibBroadcastSender = new SGMLibBroadcastSender(mContext);
         sgmLibBroadcastReceiver = new SGMLibBroadcastReceiver(mContext);
-        registeredCommands = new HashMap<>();
-        debugAppRegistered = false;
 
+        //subscribe to event bus events
         EventBus.getDefault().register(this);
     }
 
     @Subscribe
     public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
         Log.d(TAG, "Command was triggered.");
-        SGMCommand command = registeredCommands.get(receivedEvent.command.getId());
+        SGMCommand command = receivedEvent.command;
         String args = receivedEvent.args;
         long commandTriggeredTime = receivedEvent.commandTriggeredTime;
         if (command != null){
             sgmLibBroadcastSender.sendEventToTPAs(CommandTriggeredEvent.eventId, new CommandTriggeredEvent(command, args, commandTriggeredTime));
-        }
-    }
-
-    @Subscribe
-    public void onRegisterCommandRequestEvent(RegisterCommandRequestEvent receivedEvent){
-        registeredCommands.put(receivedEvent.command.getId(), receivedEvent.command);
-        Log.d(TAG, "Command was registered");
-
-        //check if the registered command is the debug command
-        if (receivedEvent.command.getId().equals(SGMGlobalConstants.DEBUG_COMMAND_ID)) {
-            debugAppRegistered = true;
         }
     }
 

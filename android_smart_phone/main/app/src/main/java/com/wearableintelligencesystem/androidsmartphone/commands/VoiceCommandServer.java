@@ -20,33 +20,26 @@
 
 package com.wearableintelligencesystem.androidsmartphone.commands;
 
-import com.teamopensmartglasses.sgmlib.SGMCommand;
-import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
-import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
-
-import com.wearableintelligencesystem.androidsmartphone.database.voicecommand.VoiceCommandRepository;
-
-import java.util.ArrayList;
-
+import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
-import android.content.Context;
 import android.util.Pair;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.subjects.PublishSubject;
-
-import org.greenrobot.eventbus.EventBus;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.json.JSONException;
-
-import java.util.Arrays;
-
-//nlp
+import com.teamopensmartglasses.sgmlib.SGMCommand;
+import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.json.JSONArray;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 //parse, interpret, run commands
 //low pass filter on speech to text so user can say voice command slowly
@@ -77,7 +70,7 @@ public class VoiceCommandServer {
     //the current voice buffer that we are processing, with metadata about the latest phrase/transcript which makes up that voice buffer
     private String lowPassTranscriptString = "";
     long lowPassTranscriptTime = 0l;
-    long lowPassTranscriptId = 0l;
+//    long lowPassTranscriptId = 0l;
 
     boolean startNewVoiceCliBuffer = true;
     boolean useNextTranscriptMetaData = true;
@@ -89,9 +82,6 @@ public class VoiceCommandServer {
     private final double wakeWordThreshold = 0.88;
     private final double commandThreshold = 0.82;
     private final double endWordThreshold = 0.92;
-
-    //database to save voice commmands to
-    public VoiceCommandRepository mVoiceCommandRepository;
 
     //flags to save the current state and info about the currenlty streaming in voice command
     boolean waked = false;
@@ -106,6 +96,7 @@ public class VoiceCommandServer {
 
     public VoiceCommandServer(Context context){
         mContext = context;
+        voiceCommands = new ArrayList<>();
 
         //setup nlp
         nlpUtils = NlpUtils.getInstance(context);
@@ -121,6 +112,13 @@ public class VoiceCommandServer {
 
         //keeps checking to see if there is a command to be run
         startSittingCommandHitter();
+
+        //subscribe to events
+        EventBus.getDefault().register(this);
+    }
+
+    public void updateVoiceCommands(ArrayList<SGMCommand> inputVoiceCommands){
+        this.voiceCommands = inputVoiceCommands;
     }
 
     private void startSittingCommandHitter(){
@@ -132,7 +130,7 @@ public class VoiceCommandServer {
                 long currTime = System.currentTimeMillis();
 
                 if (newTranscriptSinceRun && (((currTime - lastParseTime) > voiceCommandPauseTime)) && ((currTime - lastTranscriptTime) > voiceCommandPauseTime)){
-                    parseVoiceCommmandBuffer(lowPassTranscriptString, true, lowPassTranscriptId);
+                    parseVoiceCommmandBuffer(lowPassTranscriptString, true);
                     restartTranscriptBuffer(0, true);
                     if (waked){ //if we had already woken up, but no command has run, let ASG know to go exit the command
                         cancelVoiceCommand();
@@ -152,89 +150,55 @@ public class VoiceCommandServer {
         }, voiceCommandPauseTime + 10);
 
     }
-    
-    private void handleNewTranscript(String data) {
-        try {
-            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
-                throwHandleNewTranscript(data);
-            } else if (dataType.equals(MessageTypes.INTERMEDIATE_TRANSCRIPT)) {
-                throwHandleNewTranscript(data);
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void throwHandleNewTranscript(JSONObject data){
-        //run on new thread so we don't slow anything down
-        vcHandler.post(new Runnable() {
-            public void run() {
-                handleNewTranscript(data);
-            }
-        });
-    }
 
     //handles timing of transcripts and keeping a proper buffer that is delineated by voice commands
     // allows users to have plenty of time to speak to enter commands
-    private void handleNewTranscript(JSONObject data){ long currTime = System.currentTimeMillis();
-
+    private void handleNewTranscript(String transcript, long timestamp, boolean isFinal){ long currTime = System.currentTimeMillis();
         //set last transcript heard time
         lastTranscriptTime = currTime;
 
-        //parse incoming data object
-        String transcript = "";
-        try{
-            //get basic data about transcript
-            transcript = data.getString(MessageTypes.TRANSCRIPT_TEXT).toLowerCase();
-            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-
-            //if the current partial transcript idx is greater than the current transcript, ignore this transcript
-            if ((partialTranscriptBufferIdx + 1) > transcript.length()){
-                //if it's the final one, reset our idx to 0, because we no longer have a buffer
-                if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
-                    partialTranscriptBufferIdx = 0;
-                }
-                lowPassTranscriptString = "";
-                return;
-            }
-
-            //if there is new transcript to consider AND we have been instructed to start a new voice cli buffer, start a new voice cli buffer, starting from the given partialidx
-            if (startNewVoiceCliBuffer){
-                lowPassTranscriptString = "";
-                startNewVoiceCliBuffer = false;
-            }
-
-            newTranscriptSinceRun = true;
-
-            //get current passed in transcript starting from the start point
-            String partialTranscript = transcript.substring(partialTranscriptBufferIdx);
-
-            //the transcript to parse is the voice buffer plus the latest added in partial transcript
-            String transcriptToParse = lowPassTranscriptString + " " + partialTranscript;
-
-            //should we update the buffer's timestamp and ID at the next transcript?
-            if (useNextTranscriptMetaData){
-                lowPassTranscriptTime = data.getLong(MessageTypes.TIMESTAMP);
-                lowPassTranscriptId = data.getLong(MessageTypes.TRANSCRIPT_ID);
-                useNextTranscriptMetaData = false;
-            }
-
-            //if a FINAL_TRANSCRIPT is getting passed in,
-            if (dataType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
-                lowPassTranscriptString = transcriptToParse;
-
-                //if we are grabbing a partial transcript, but now we've received the final transcript, we can stop parsing the current transcript as a partial transcript on the next incoming transcript
+        transcript = transcript.toLowerCase();
+        //if the current partial transcript idx is greater than the current transcript, ignore this transcript
+        if ((partialTranscriptBufferIdx + 1) > transcript.length()){
+            //if it's the final one, reset our idx to 0, because we no longer have a buffer
+            if (isFinal) {
                 partialTranscriptBufferIdx = 0;
             }
-
-            //parse transcript - but don't run too often
-            if ((System.currentTimeMillis() - lastParseTime) > 50) {
-                parseVoiceCommmandBuffer(transcriptToParse, false, lowPassTranscriptId);
-            }
-        } catch (JSONException e){
-            e.printStackTrace();
+            lowPassTranscriptString = "";
             return;
+        }
+
+        //if there is new transcript to consider AND we have been instructed to start a new voice cli buffer, start a new voice cli buffer, starting from the given partialidx
+        if (startNewVoiceCliBuffer){
+            lowPassTranscriptString = "";
+            startNewVoiceCliBuffer = false;
+        }
+
+        newTranscriptSinceRun = true;
+
+        //get current passed in transcript starting from the start point
+        String partialTranscript = transcript.substring(partialTranscriptBufferIdx);
+
+        //the transcript to parse is the voice buffer plus the latest added in partial transcript
+        String transcriptToParse = lowPassTranscriptString + " " + partialTranscript;
+
+        //should we update the buffer's timestamp and ID at the next transcript?
+        if (useNextTranscriptMetaData){
+            lowPassTranscriptTime = timestamp;
+//                lowPassTranscriptId = data.getLong(MessageTypes.TRANSCRIPT_ID);
+            useNextTranscriptMetaData = false;
+        }
+
+        if (isFinal) {
+            lowPassTranscriptString = transcriptToParse;
+
+            //if we are grabbing a partial transcript, but now we've received the final transcript, we can stop parsing the current transcript as a partial transcript on the next incoming transcript
+            partialTranscriptBufferIdx = 0;
+        }
+
+        //parse transcript - but don't run too often
+        if ((System.currentTimeMillis() - lastParseTime) > 80) {
+            parseVoiceCommmandBuffer(transcriptToParse, false);
         }
     }
 
@@ -247,28 +211,29 @@ public class VoiceCommandServer {
    }
 
     //run a parsing pass on the current voice transcript buffer. This depends on the current state of the machine w.r.t. what we have already found - wake word, command, arguments, end word, etc.
-    private void parseVoiceCommmandBuffer(String transcript, boolean run, long transcriptId) {
+    private void parseVoiceCommmandBuffer(String transcript, boolean run) {
         //if we have already found a wake word and a command, but the command is not yet finished, then send a stream of the argument text to the ASG
         if (waked && commanded){
             if (transcript.length() > commandEndIdx) { //don't send if there's no args
-                try {
-                    JSONObject commandArgsEvent = new JSONObject();
-                    commandArgsEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-                    commandArgsEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_ARGS_EVENT_TYPE);
-                    String subString = transcript.substring(commandEndIdx); //string after the command ends
-                    Log.d(TAG, "substring: " + subString);
-                    String subSubString = "";
-                    int firstSubStringSpace = subString.indexOf(" ");
-                    if (firstSubStringSpace != -1){ //if there is no space, then there is no new word after the command word, and thus nothing to show
-                        subSubString = subString.substring(firstSubStringSpace + 1);//string after the commands ends and after the next space
-                    }
-
-                    Log.d(TAG, "subsubstring: " + subSubString);
-                    commandArgsEvent.put(MessageTypes.INPUT_VOICE_STRING, subSubString); //everything after the wake word and commandEnd //+1 for space
-                    dataObservable.onNext(commandArgsEvent);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("parseVoiceCommandBuffer", transcript));
+//                try {
+//                    JSONObject commandArgsEvent = new JSONObject();
+//                    commandArgsEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//                    commandArgsEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_ARGS_EVENT_TYPE);
+//                    String subString = transcript.substring(commandEndIdx); //string after the command ends
+//                    Log.d(TAG, "substring: " + subString);
+//                    String subSubString = "";
+//                    int firstSubStringSpace = subString.indexOf(" ");
+//                    if (firstSubStringSpace != -1){ //if there is no space, then there is no new word after the command word, and thus nothing to show
+//                        subSubString = subString.substring(firstSubStringSpace + 1);//string after the commands ends and after the next space
+//                    }
+//
+//                    Log.d(TAG, "subsubstring: " + subSubString);
+//                    commandArgsEvent.put(MessageTypes.INPUT_VOICE_STRING, subSubString); //everything after the wake word and commandEnd //+1 for space
+//                    dataObservable.onNext(commandArgsEvent);
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
             }
         }
 
@@ -314,11 +279,11 @@ public class VoiceCommandServer {
             }
 
             //search for a command. If it's found, we'll show the arguments screen and save what command was found
-            parseCommand(preArgs, wakeWordGiven, rest, currTime, transcriptId, run);
+            parseCommand(preArgs, wakeWordGiven, rest, currTime, run);
 
             //if we find an "end command" voice command, execute now
             //loop through all global endwords to see if any match
-            Log.d(TAG, "SEARCH FOR END");
+//            Log.d(TAG, "SEARCH FOR END");
             for (int i = 0; i < endWords.size(); i++) {
                 String currEndWord = endWords.get(i);
                 FuzzyMatch endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
@@ -340,7 +305,7 @@ public class VoiceCommandServer {
 
                     //find the command and run it
                     Log.d(TAG, "RUN PARSE " + preArgs + ",  " + rest);
-                    parseCommand(preArgs, wakeWordGiven, rest, currTime, transcriptId, run);
+                    parseCommand(preArgs, wakeWordGiven, rest, currTime, run);
 
                     //restart voice transcript buffer now that we've run a command
                     restartTranscriptBuffer(partialIdx, null);
@@ -356,10 +321,11 @@ public class VoiceCommandServer {
         currentlyParsing = false;
     }
 
-    private void parseCommand(String preArgs, String wakeWord, String rest, long commandTime, long transcriptId, boolean run){
+    private void parseCommand(String preArgs, String wakeWord, String rest, long commandTime, boolean run){
         FuzzyMatch bestMatch = new FuzzyMatch(-1,0);
         int bestMatchIdx = -1;
         int vcIdx = -1;
+        Log.d(TAG, "" + voiceCommands.get(0).getPhrases());
         for (int i = 0; i < voiceCommands.size(); i++) {
             Pair<FuzzyMatch, Integer> commandBestMatch = nlpUtils.findBestMatch(rest, voiceCommands.get(i).getPhrases(), commandThreshold);
             if (commandBestMatch != null) {
@@ -416,7 +382,7 @@ public class VoiceCommandServer {
 
             if (run || !voiceCommands.get(vcIdx).argRequired) {
                 restartTranscriptBuffer(commandEndIdx, true);
-                runCommand(voiceCommands.get(vcIdx), preArgs, wakeWord, commandMatchIdx, postArgs, commandTime, transcriptId);
+                runCommand(voiceCommands.get(vcIdx), preArgs, wakeWord, commandMatchIdx, postArgs, commandTime);
             }
             currentlyParsing = false;
             return;
@@ -431,60 +397,42 @@ public class VoiceCommandServer {
         }
     }
 
-    private void affectiveSearch(String postArgs){
-        try{
-            postArgs = postArgs.trim();
-            int idxSpace = postArgs.indexOf(' ');
-            String emotion = "";
-            if (idxSpace != -1){
-                emotion = postArgs.trim().substring(0, postArgs.indexOf(' '));
-            } else{
-                emotion = postArgs;
-            }
-            Log.d(TAG, "emotion is: " + emotion);
-            JSONObject affective_search_query = new JSONObject();
-            affective_search_query.put(MessageTypes.MESSAGE_TYPE_LOCAL, "affective_search_query");
-            affective_search_query.put("emotion", emotion);
-            dataObservable.onNext(affective_search_query);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
     private void needRequiredArg(String argName, ArrayList<String> possibleArgs){
         needArg = true;
         //tell ASG that we have found a command but now need a required argument
-        try {
-            //generate args list
-            JSONArray argsList = new JSONArray();
-            possibleArgs.forEach(argPossibility -> {
-                argsList.put(argPossibility);
-            });
-
-            JSONObject wakeWordFoundEvent = new JSONObject();
-            wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.REQUIRED_ARG_EVENT_TYPE);
-            wakeWordFoundEvent.put(MessageTypes.ARG_NAME, argName);
-            wakeWordFoundEvent.put(MessageTypes.ARG_OPTIONS, argsList);
-            dataObservable.onNext(wakeWordFoundEvent);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(argName, possibleArgs.get(0)));
+//        try {
+//            //generate args list
+//            JSONArray argsList = new JSONArray();
+//            possibleArgs.forEach(argPossibility -> {
+//                argsList.put(argPossibility);
+//            });
+//
+//            JSONObject wakeWordFoundEvent = new JSONObject();
+//            wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.REQUIRED_ARG_EVENT_TYPE);
+//            wakeWordFoundEvent.put(MessageTypes.ARG_NAME, argName);
+//            wakeWordFoundEvent.put(MessageTypes.ARG_OPTIONS, argsList);
+//            dataObservable.onNext(wakeWordFoundEvent);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
     }
 
     private void needNaturalLanguageArgs(String command){
         //tell ASG that we have found this command, and what kind of input we need next
-        try {
-            JSONObject commandFoundEvent = new JSONObject();
-            commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-            commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_EVENT_TYPE);
-            commandFoundEvent.put(MessageTypes.INPUT_VOICE_COMMAND_NAME, command);
-            commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, this.wakeWordGiven);
-            commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
-            dataObservable.onNext(commandFoundEvent);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("needNaturalLanguageArgs", command));
+//        try {
+//            JSONObject commandFoundEvent = new JSONObject();
+//            commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//            commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_EVENT_TYPE);
+//            commandFoundEvent.put(MessageTypes.INPUT_VOICE_COMMAND_NAME, command);
+//            commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, this.wakeWordGiven);
+//            commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
+//            dataObservable.onNext(commandFoundEvent);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
     }
 
     private void foundWakeWord(String wakeWord, int wakeWordEndIdx){
@@ -507,16 +455,17 @@ public class VoiceCommandServer {
         });
 
         //tell ASG that we have found this wake word and to display the following command options
-        try {
-            JSONObject wakeWordFoundEvent = new JSONObject();
-            wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.WAKE_WORD_EVENT_TYPE);
-            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_LIST,commandList.toString());
-            wakeWordFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, wakeWord);
-            dataObservable.onNext(wakeWordFoundEvent);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("Wake Word Heard", commandList.toString()));
+//        try {
+//            JSONObject wakeWordFoundEvent = new JSONObject();
+//            wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.WAKE_WORD_EVENT_TYPE);
+//            wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_LIST,commandList.toString());
+//            wakeWordFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, wakeWord);
+//            dataObservable.onNext(wakeWordFoundEvent);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
     }
 
     private void foundCommand(String command, int commandEndIdx){
@@ -531,14 +480,14 @@ public class VoiceCommandServer {
         this.commandEndIdx = commandEndIdx;
     }
 
-    private void runCommand(SGMCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime, long transcriptId){
-        Log.d(TAG, "running commmand: " + vc.getCommandName());
+    private void runCommand(SGMCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime){
+        Log.d(TAG, "running commmand: " + vc.getName());
         //the voice command itself will handle sending the appropriate response to the ASG
         resetVoiceCommand();
-//        boolean result = vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime, transcriptId);
+//        boolean result = vc.runCommand(this, preArgs, wakeWord, commandIdx, postArgs, commandTime);
 
         //trigger the command
-        EventBus.getDefault().post(new CommandTriggeredEvent(vc, postArgs, commandTime);
+        EventBus.getDefault().post(new CommandTriggeredEvent(vc, postArgs, commandTime));
 
         //we should get a result from TPAs and communicate that
 //        if (!result){
@@ -558,34 +507,36 @@ public class VoiceCommandServer {
     }
 
     public void sendResultToAsg(boolean success){
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.RESOLVE_EVENT_TYPE);
-            commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
-
-            //send the command result
-            dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("Command Success", "Command Success"));
+//        try{
+//            //build json object to send command result
+//            JSONObject commandResponseObject = new JSONObject();
+//            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.RESOLVE_EVENT_TYPE);
+//            commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
+//
+//            //send the command result
+//            dataObservable.onNext(commandResponseObject);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
     }
 
     private void cancelVoiceCommand(){
         resetVoiceCommand();
         Log.d(TAG, "CANCEL VOICE COMMAND");
-        try{
-            //build json object to send voice command cancel notification
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.CANCEL_EVENT_TYPE);
-
-            //send the command result
-            dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("Cancel Voice Command", "cancelling"));
+//        try{
+//            //build json object to send voice command cancel notification
+//            JSONObject commandResponseObject = new JSONObject();
+//            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.CANCEL_EVENT_TYPE);
+//
+//            //send the command result
+//            dataObservable.onNext(commandResponseObject);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
     }
 
     //helper functions
@@ -634,32 +585,57 @@ public class VoiceCommandServer {
     }
 
     public void sendResult(VoiceCommandServer vcServer, boolean success, String commandName, String displayString){
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
-            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.RESOLVE_EVENT_TYPE);
-            commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
-            commandResponseObject.put(MessageTypes.COMMAND_NAME, commandName);
-            Log.d(TAG, "DISPLAY STRING: " + displayString);
-            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
-            //send the command result
-            vcServer.dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            e.printStackTrace();
+        if (success) {
+            EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(commandName + " Succeeded", displayString));
+        } else {
+            EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(commandName + " Failed", displayString));
         }
+//        try{
+//            //build json object to send command result
+//            JSONObject commandResponseObject = new JSONObject();
+//            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//            commandResponseObject.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.RESOLVE_EVENT_TYPE);
+//            commandResponseObject.put(MessageTypes.COMMAND_RESULT, success);
+//            commandResponseObject.put(MessageTypes.COMMAND_NAME, commandName);
+//            Log.d(TAG, "DISPLAY STRING: " + displayString);
+//            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
+//            //send the command result
+//            vcServer.dataObservable.onNext(commandResponseObject);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
+    }
+    public void sendMessage(VoiceCommandServer vcServer, String displayString){
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("sendMessage", displayString));
+//        try{
+//            //build json object to send command result
+//            JSONObject commandResponseObject = new JSONObject();
+//            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
+//            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
+//            //send the command result
+//            vcServer.dataObservable.onNext(commandResponseObject);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
     }
 
-    public void sendMessage(VoiceCommandServer vcServer, String displayString){
-        try{
-            //build json object to send command result
-            JSONObject commandResponseObject = new JSONObject();
-            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_RESPONSE);
-            commandResponseObject.put(MessageTypes.COMMAND_RESPONSE_DISPLAY_STRING, displayString);
-            //send the command result
-            vcServer.dataObservable.onNext(commandResponseObject);
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
+    @Subscribe
+    public void onSpeechRecFinalOutputEvent(SpeechRecFinalOutputEvent receivedEvent){
+        throwHandleNewTranscript(receivedEvent.text, receivedEvent.timestamp, true);
     }
+
+    @Subscribe
+    public void onSpeechRecIntermediateOutputEvent(SpeechRecIntermediateOutputEvent receivedEvent){
+        throwHandleNewTranscript(receivedEvent.text, receivedEvent.timestamp, false);
+    }
+
+    private void throwHandleNewTranscript(String transcript, long timestamp, boolean isFinal){
+        //run on new thread so we don't slow anything down
+        vcHandler.post(new Runnable() {
+            public void run() {
+                handleNewTranscript(transcript, timestamp, isFinal);
+            }
+        });
+    }
+
 }
