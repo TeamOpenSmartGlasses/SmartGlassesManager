@@ -7,7 +7,10 @@ import com.teamopensmartglasses.sgmlib.SGMCallbackMapper;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.SGMCallback;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -46,13 +49,22 @@ public class CommandSystem {
         Log.d(TAG, "Default command dummy callback triggered");
     }
 
+    public void launchLiveCaptions(String args, long commandTime){
+        EventBus.getDefault().post(new StartLiveCaptionsEvent());
+    }
+
+    public void launchTestCard(String args, long commandTime){
+        EventBus.getDefault().post(new StopLiveCaptionsEvent());
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("Test Card", "This is a test card triggered by voice command."));
+    }
+
     public void loadDefaultCommands(){
         //live life captions - test scrolling view text
-        registerCommand("Live Captions", UUID.fromString("933b8950-412e-429e-8fb6-430f973cc9dc"), new String[] { "life captions", "live life captions", "captions", "transcription" }, "Starts streaming captions live to the glasses display.", this::dummyCallback);
-//
-//        //test reference card
-//        registerCommand("Test Card", UUID.fromString("f4290426-18d5-431a-aea4-21844b832735"), new String[] { "show me a test card", "test card", "test", "testing", "show test card" }, "Shows a test Reference Card on the glasses display.", this::dummyCallback);
-//
+        registerCommand("Live Captions", UUID.fromString("933b8950-412e-429e-8fb6-430f973cc9dc"), new String[] { "life captions", "live life captions", "captions", "transcription" }, "Starts streaming captions live to the glasses display.", this::launchLiveCaptions);
+
+        //test reference card
+        registerCommand("Test Card", UUID.fromString("f4290426-18d5-431a-aea4-21844b832735"), new String[] { "show me a test card", "test card", "test", "testing", "show test card" }, "Shows a test Reference Card on the glasses display.", this::launchTestCard);
+
 //        //blank screen
 //        registerCommand("Blank Screen", UUID.fromString("93401154-b4ab-4166-9aa3-58b79db41ff0"), new String[] { "turn off display", "blank screen" }, "Makes the smart glasses display turn off or go blank.", this::dummyCallback);
     }

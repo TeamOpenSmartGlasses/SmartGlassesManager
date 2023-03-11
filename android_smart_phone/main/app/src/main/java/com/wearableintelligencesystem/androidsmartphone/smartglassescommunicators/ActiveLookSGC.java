@@ -121,6 +121,12 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                 });
     }
 
+    public void blankScreen(){
+        if (connectedGlasses != null){
+            connectedGlasses.clear();
+        }
+    }
+
     @Override
     public void destroy(){
        if (connectedGlasses != null){

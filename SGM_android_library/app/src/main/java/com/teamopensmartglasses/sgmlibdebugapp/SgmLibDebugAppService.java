@@ -5,6 +5,8 @@ import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.SGMLib;
 import com.teamopensmartglasses.sgmlib.SmartGlassesAndroidService;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class SgmLibDebugAppService extends SmartGlassesAndroidService {
@@ -28,12 +30,21 @@ public class SgmLibDebugAppService extends SmartGlassesAndroidService {
         //setup SGM lib
         sgmLib = new SGMLib(getApplicationContext());
 
-        //register a command with the SGM
+        //register a basic command with the SGM
         SGMCommand helloWorldCommand = new SGMCommand("Hello World Command Name", UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID), new String[]{"Hello world"}, "Hello world command desc");
         sgmLib.registerCommand(helloWorldCommand, this::helloWorldCallback);
+
+        //register a command with args with the SGM
+        ArrayList<String> exampleArgs = new ArrayList<String>(Arrays.asList("dog", "cat", "and other args"));
+        SGMCommand helloWorldWithArgsCommand = new SGMCommand("Hello World With Args", UUID.fromString(SGMGlobalConstants.DEBUG_WITH_ARGS_COMMAND_ID), new String[]{"give me args"}, "Hello world command with args", true, "Give debug args here:", exampleArgs);
+        sgmLib.registerCommand(helloWorldWithArgsCommand, this::helloWorldWithArgsCallback);
     }
 
     public void helloWorldCallback(String args, long commandTime){
-        sgmLib.sendReferenceCard("Hello World!", "The SGM triggered the Hello World command.");
+        sgmLib.sendReferenceCard("Debug Hello No args", "The SGM triggered the Hello World command.");
+    }
+
+    public void helloWorldWithArgsCallback(String args, long commandTime){
+        sgmLib.sendReferenceCard("Debug: Hello With Args ", "The SGM triggered the Hello World With Args command. We received these args: " + args);
     }
 }
