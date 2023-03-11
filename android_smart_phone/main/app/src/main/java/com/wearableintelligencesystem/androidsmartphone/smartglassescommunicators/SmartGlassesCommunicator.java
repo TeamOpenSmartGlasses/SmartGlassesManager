@@ -9,6 +9,7 @@ public abstract class SmartGlassesCommunicator {
     public int mConnectState = 0;
     protected SmartGlassesModes currentMode;
     public abstract void connectToSmartGlasses();
+    public abstract void blankScreen();
     public abstract void destroy();
 
     //reference card

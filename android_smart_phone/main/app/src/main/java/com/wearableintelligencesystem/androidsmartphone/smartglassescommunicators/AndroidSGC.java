@@ -131,6 +131,20 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void blankScreen(){
+//        try{
+//            //build json object to send command result
+//            JSONObject commandResponseObject = new JSONObject();
+//            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.ACTION_SWITCH_MODES);
+//            commandResponseObject.put(MessageTypes.NEW_MODE, MessageTypes.MODE_BLANK);
+//
+//            //send the command result to web socket, to send to asg
+//            dataObservable.onNext(commandResponseObject);
+//        } catch (JSONException e){
+//            e.printStackTrace();
+//        }
+    }
+
     public void startAsgWebSocketConnection(){
         Log.d(TAG, "Starting WebSocket Server");
         //String address = "localhost:8887";

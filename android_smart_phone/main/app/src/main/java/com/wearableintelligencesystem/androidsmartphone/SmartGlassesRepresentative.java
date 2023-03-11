@@ -5,6 +5,8 @@ import android.content.Context;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONObject;
+
+import android.os.Handler;
 import android.util.Log;
 
 //custom, our code
@@ -38,12 +40,20 @@ class SmartGlassesRepresentative {
     SmartGlassesCommunicator smartGlassesCommunicator;
     MicrophoneLocalAndBluetooth bluetoothAudio;
 
+    //timing settings
+    long referenceCardDelayTime = 10000;
+
+    //handler to handle delayed UI events
+    Handler uiHandler;
+
     SmartGlassesRepresentative(Context context, SmartGlassesDevice smartGlassesDevice, PublishSubject<JSONObject> dataObservable){
         this.context = context;
         this.smartGlassesDevice = smartGlassesDevice;
 
         //receive/send data
         this.dataObservable = dataObservable;
+
+        uiHandler = new Handler();
 
         //register event bus subscribers
         EventBus.getDefault().register(this);
@@ -115,7 +125,7 @@ class SmartGlassesRepresentative {
         }
     }
 
-    public void startScrollingTextViewMode(){
+    public void startScrollingTextViewModeTest(){
         //pass for now
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.startScrollingTextViewMode("ScrollingTextView");
@@ -129,10 +139,26 @@ class SmartGlassesRepresentative {
         }
     }
 
+    private void blankUiAfterDelay(long delayTime){
+        uiHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                blankScreen();
+            }
+        }, delayTime);
+    }
+
+    public void blankScreen(){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.blankScreen();
+        }
+    }
+
     @Subscribe
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
+            blankUiAfterDelay(referenceCardDelayTime);
         }
     }
 

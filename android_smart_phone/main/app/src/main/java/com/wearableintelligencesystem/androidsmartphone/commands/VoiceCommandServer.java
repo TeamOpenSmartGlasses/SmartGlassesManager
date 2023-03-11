@@ -373,9 +373,10 @@ public class VoiceCommandServer {
             } else { //else, this is the first time we found a command, and we either prompt for a required argument or send user straight to the natural language query selection
                 if (voiceCommands.get(vcIdx).argRequired) {
                     needRequiredArg(voiceCommands.get(vcIdx).argPrompt, voiceCommands.get(vcIdx).argOptions);
-                } else {
-                    needNaturalLanguageArgs(commandMatchString);
                 }
+//                else {
+//                    needNaturalLanguageArgs(commandMatchString);
+//                }
             }
 
             foundCommand(commandMatchString, wakeWordEndIdx + commandMatch.getIndex() + commandMatchString.length());
@@ -400,7 +401,7 @@ public class VoiceCommandServer {
     private void needRequiredArg(String argName, ArrayList<String> possibleArgs){
         needArg = true;
         //tell ASG that we have found a command but now need a required argument
-        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(argName, possibleArgs.get(0)));
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(argName, possibleArgs.toString()));
 //        try {
 //            //generate args list
 //            JSONArray argsList = new JSONArray();
