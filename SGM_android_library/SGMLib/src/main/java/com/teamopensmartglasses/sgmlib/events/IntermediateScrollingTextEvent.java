@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartphone.eventbusmessages;
+package com.teamopensmartglasses.sgmlib.events;
 
 public class IntermediateScrollingTextEvent {
     public String text;

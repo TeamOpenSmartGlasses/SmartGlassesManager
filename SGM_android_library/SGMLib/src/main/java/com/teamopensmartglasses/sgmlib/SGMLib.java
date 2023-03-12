@@ -4,8 +4,11 @@ import android.content.Context;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -45,6 +48,17 @@ public class SGMLib {
     //show a reference card on the smart glasses with title and body text
     public void sendReferenceCard(String title, String body) {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
+    }
+
+    public void startScrollingText(String title){
+        EventBus.getDefault().post(new ScrollingTextViewStartEvent(title));
+    }
+
+    public void pushScrollingText(String text){
+        EventBus.getDefault().post(new FinalScrollingTextEvent(text));
+    }
+    public void stopScrollingText(){
+        EventBus.getDefault().post(new ScrollingTextViewStopEvent());
     }
 
     @Subscribe
