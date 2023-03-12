@@ -44,7 +44,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
         PendingIntent action = PendingIntent.getActivity(context,
                 0, new Intent(context, mainActivityClass),
-                PendingIntent.FLAG_CANCEL_CURRENT); // Flag indicating that if the described PendingIntent already exists, the current one should be canceled before generating a new one.
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE); // Flag indicating that if the described PendingIntent already exists, the current one should be canceled before generating a new one.
 
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         NotificationCompat.Builder builder;
