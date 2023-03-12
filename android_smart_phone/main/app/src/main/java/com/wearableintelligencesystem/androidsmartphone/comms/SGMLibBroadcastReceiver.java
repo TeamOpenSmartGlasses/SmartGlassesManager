@@ -10,8 +10,11 @@ import android.content.IntentFilter;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
 import com.teamopensmartglasses.sgmlib.events.SubscribeDataStreamRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
@@ -41,6 +44,15 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
             case ReferenceCardSimpleViewRequestEvent.eventId:
                 Log.d(TAG, "Resending Reference Card event");
                 EventBus.getDefault().post((ReferenceCardSimpleViewRequestEvent) serializedEvent);
+                break;
+            case ScrollingTextViewStartEvent.eventId:
+                EventBus.getDefault().post((ScrollingTextViewStartEvent) serializedEvent);
+                break;
+            case ScrollingTextViewStopEvent.eventId:
+                EventBus.getDefault().post((ScrollingTextViewStopEvent) serializedEvent);
+                break;
+            case FinalScrollingTextEvent.eventId:
+                EventBus.getDefault().post((FinalScrollingTextEvent) serializedEvent);
                 break;
             case RegisterCommandRequestEvent.eventId:
                 Log.d(TAG, "Resending register command request event");

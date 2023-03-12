@@ -1,6 +1,7 @@
 package com.teamopensmartglasses.sgmlib;
 
 import android.content.Context;
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
@@ -9,6 +10,8 @@ import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEven
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -25,11 +28,13 @@ public class SGMLib {
     public Context mContext;
     public HashMap<UUID, SGMCommandWithCallback> registeredCommands;
 
+    public HashMap<DataStreamType, TranscriptCallback> subscribedDataStreams;
     public SGMLib(Context context){
         this.mContext = context;
         sgmReceiver = new TPABroadcastReceiver(context);
         sgmSender = new TPABroadcastSender(context);
         registeredCommands = new HashMap<>();
+        subscribedDataStreams = new HashMap<DataStreamType, TranscriptCallback>();
 
         //register subscribers on EventBus
         EventBus.getDefault().register(this);
@@ -39,6 +44,10 @@ public class SGMLib {
     public void registerCommand(SGMCommand sgmCommand, Callback callback){
         registeredCommands.put(sgmCommand.getId(), new SGMCommandWithCallback(sgmCommand, callback));
         EventBus.getDefault().post(new RegisterCommandRequestEvent(sgmCommand));
+    }
+
+    public void subscribe(DataStreamType dataStreamType, TranscriptCallback callback){
+        subscribedDataStreams.put(dataStreamType, callback);
     }
 
     //register our app with the SGM
@@ -69,5 +78,19 @@ public class SGMLib {
         //call the callback
         registeredCommands.get(command.getId()).callback.call();
         Log.d(TAG, "Callback called");
+    }
+
+    @Subscribe
+    public void onIntermediateTranscript(SpeechRecIntermediateOutputEvent event) {
+        String text = event.text;
+        long time = event.timestamp;
+        subscribedDataStreams.get(DataStreamType.TRANSCRIPTION_STREAM).call(text, time, false);
+    }
+
+    @Subscribe
+    public void onFinalTranscript(SpeechRecFinalOutputEvent event) {
+        String text = event.text;
+        long time = event.timestamp;
+        subscribedDataStreams.get(DataStreamType.TRANSCRIPTION_STREAM).call(text, time, true);
     }
 }

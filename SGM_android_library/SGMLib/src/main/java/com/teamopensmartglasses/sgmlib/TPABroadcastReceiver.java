@@ -2,6 +2,7 @@ package com.teamopensmartglasses.sgmlib;
 
 import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_BUNDLE;
 import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_ID;
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.SGMPkgName;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,6 +11,8 @@ import android.content.IntentFilter;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -39,6 +42,13 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
                 Log.d(TAG, "Resending Command triggered event");
                 EventBus.getDefault().post((CommandTriggeredEvent) serializedEvent);
                 break;
+            case SpeechRecIntermediateOutputEvent.eventId:
+                EventBus.getDefault().post((SpeechRecIntermediateOutputEvent) serializedEvent);
+                break;
+            case SpeechRecFinalOutputEvent.eventId:
+                EventBus.getDefault().post((SpeechRecFinalOutputEvent) serializedEvent);
+                break;
         }
+
     }
 }

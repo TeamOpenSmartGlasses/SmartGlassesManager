@@ -327,7 +327,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             for (String finalString : finalTextToDisplay) {
                 TextLineSG tlString = new TextLineSG(finalString, scrollingTextTextFontSize);
                 //write this text at the last location + margin
-                Log.d(TAG, "Writing string: " + tlString.getText());
+                Log.d(TAG, "Writing string: " + tlString.getText() + finalTextToDisplay.size());
                 lastLocScrollingTextView = displayText(tlString, new Point(0, lastLocScrollingTextView.y));
             }
         } else { //if we didn't hit the bottom, and there's room, we can just display the next line

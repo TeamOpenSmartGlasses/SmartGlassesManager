@@ -1,7 +1,10 @@
 package com.teamopensmartglasses.sgmlib.events;
 
-public class FinalScrollingTextEvent {
+import java.io.Serializable;
+
+public class FinalScrollingTextEvent implements Serializable {
     public String text;
+    public static final String eventId = "finalScrollingTextEvent";
 
     public FinalScrollingTextEvent(String text){
         this.text = text;
