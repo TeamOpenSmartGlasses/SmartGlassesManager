@@ -1,4 +1,4 @@
-package com.wearableintelligencesystem.androidsmartphone.eventbusmessages;
+package com.teamopensmartglasses.sgmlib.events;
 
 public class FinalScrollingTextEvent {
     public String text;
