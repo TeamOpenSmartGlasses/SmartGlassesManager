@@ -44,6 +44,15 @@ import java.util.Arrays;
 //parse, interpret, run commands
 //low pass filter on speech to text so user can say voice command slowly
 //send updates when wake words, commands, arguments are seen to ASG, so user knows that what they are trying to say has been recognized, and they can see suggestions for next commands, arguments, etc.
+/*
+HOW THIS WORKS:
+
+The voice command server is a state machine.
+
+1. Maintain a buffer of transcripts, which might span multiple ASR transcript "blocks", and run a voice command parser pass on that buffer whenever new text comes in, or whenever a certain length pause (after previous speaking) has been detected.
+2. Parse and look for wake words. If no wake word is found/has been found, don't do anything.
+2.
+ */
 public class VoiceCommandServer {
     private  final String TAG = "WearableAi_VoiceCommand";
 
@@ -61,41 +70,36 @@ public class VoiceCommandServer {
 
     //timing of voice command system
     private long voiceCommandPauseTime = 8000; //milliseconds //amount of time user must pause speaking before we consider the command to be finished
-    private long lastParseTime = 0; //milliseconds //since last time we parse a command (executing or not)
+    private long lastParseTime = 0; //milliseconds since last time we parse a command (executing or not)
     private long lastTranscriptTime = 0; //milliseconds since we last received a transcript
     private int partialTranscriptBufferIdx = 0; //this is set true when an end word is found, so we don't keep trying to process incoming INTERMEDIATE_TRANSCRIPTs if we have already processing the current buffer - we need to wait for the next transcript
     private boolean newTranscriptSinceRun = false; //has a new transcript come in since we last parsed a voice command?
     private boolean currentlyParsing = false; //are we currently parsing? if so, don't try to parse again at the same time
 
     //the current voice buffer that we are processing, with metadata about the latest phrase/transcript which makes up that voice buffer
-    private String lowPassTranscriptString = "";
+    private String lowPassTranscriptString = "";//we whold our own transcript, instead of using the raw ones from ASR, because ASR splits up final transcripts at a short (~1 second) pause, but we want to be able to run commands with larger pauses, and so we need our own "low passed" transcript buffer that keeps getting appended with new transcripts
     long lowPassTranscriptTime = 0l;
-//    long lowPassTranscriptId = 0l;
 
     boolean startNewVoiceCliBuffer = true;
     boolean useNextTranscriptMetaData = true;
-
-    //private ArrayList<String> voiceCommands;
-    private Context mContext;
 
     //voice command fuzzy search threshold
     private final double wakeWordThreshold = 0.88;
     private final double commandThreshold = 0.82;
     private final double endWordThreshold = 0.92;
 
-    //flags to save the current state and info about the currenlty streaming in voice command
+    //flags to save the current state and info about the currently streaming in voice command
     boolean waked = false;
     String wakeWordGiven = "";
     int wakeWordEndIdx = -1;
     boolean commanded = false;
     String commandGiven = "";
     int commandEndIdx = -1;
-    boolean argRequireded = false;
+    boolean gotArg = false;
     boolean needArg = false;
     boolean ended = false;
 
     public VoiceCommandServer(Context context){
-        mContext = context;
         voiceCommands = new ArrayList<>();
 
         //setup nlp
@@ -151,14 +155,14 @@ public class VoiceCommandServer {
 
     }
 
-    //handles timing of transcripts and keeping a proper buffer that is delineated by voice commands
+    // handles timing of transcripts and keeping a proper buffer that is delineated by voice commands
     // allows users to have plenty of time to speak to enter commands
     private void handleNewTranscript(String transcript, long timestamp, boolean isFinal){ long currTime = System.currentTimeMillis();
         //set last transcript heard time
         lastTranscriptTime = currTime;
 
         transcript = transcript.toLowerCase();
-        //if the current partial transcript idx is greater than the current transcript, ignore this transcript
+        //if the current partial transcript idx is greater than the current transcript, ignore this transcript. This can happen if ASR predicts a word, then pulls it back or changes it to a shorter word. For now, we just don't consider it until the length it greater than before
         if ((partialTranscriptBufferIdx + 1) > transcript.length()){
             //if it's the final one, reset our idx to 0, because we no longer have a buffer
             if (isFinal) {
@@ -185,7 +189,6 @@ public class VoiceCommandServer {
         //should we update the buffer's timestamp and ID at the next transcript?
         if (useNextTranscriptMetaData){
             lowPassTranscriptTime = timestamp;
-//                lowPassTranscriptId = data.getLong(MessageTypes.TRANSCRIPT_ID);
             useNextTranscriptMetaData = false;
         }
 
@@ -197,7 +200,7 @@ public class VoiceCommandServer {
         }
 
         //parse transcript - but don't run too often
-        if ((System.currentTimeMillis() - lastParseTime) > 80) {
+        if ((System.currentTimeMillis() - lastParseTime) > 150) {
             parseVoiceCommmandBuffer(transcriptToParse, false);
         }
     }
@@ -213,9 +216,16 @@ public class VoiceCommandServer {
     //run a parsing pass on the current voice transcript buffer. This depends on the current state of the machine w.r.t. what we have already found - wake word, command, arguments, end word, etc.
     private void parseVoiceCommmandBuffer(String transcript, boolean run) {
         //if we have already found a wake word and a command, but the command is not yet finished, then send a stream of the argument text to the ASG
-        if (waked && commanded){
-            if (transcript.length() > commandEndIdx) { //don't send if there's no args
-                EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("parseVoiceCommandBuffer", transcript));
+//        if (waked && commanded){
+//            if (transcript.length() > commandEndIdx) { //don't send if there's no args
+//                String subString = transcript.substring(commandEndIdx); //string after the command ends
+//                Log.d(TAG, "substring: " + subString);
+//                String subSubString = "";
+//                int firstSubStringSpace = subString.indexOf(" ");
+//                if (firstSubStringSpace != -1) { //if there is no space, then there is no new word after the command word, and thus nothing to show
+//                    subSubString = subString.substring(firstSubStringSpace + 1);//string after the commands ends and after the next space
+//                }
+//                EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("waked and commanded", subSubString));
 //                try {
 //                    JSONObject commandArgsEvent = new JSONObject();
 //                    commandArgsEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
@@ -234,8 +244,8 @@ public class VoiceCommandServer {
 //                } catch (JSONException e) {
 //                    e.printStackTrace();
 //                }
-            }
-        }
+//            }
+//        }
 
         //return if we are currently parsing another string
         if (currentlyParsing) {
@@ -255,13 +265,13 @@ public class VoiceCommandServer {
                 if (wakeWordLocation != null && wakeWordLocation.getIndex() != -1){ //if the substring "wake word" is in the larger string "transcript"
                     //we found a command, now get its arguments and run it
                     foundWakeWord(currWakeWord, wakeWordLocation.getIndex() + currWakeWord.length());
-                    String preArgs = transcript.substring(0, wakeWordLocation.getIndex());
-                    String rest;
-                    try {
-                        rest = transcript.substring(wakeWordLocation.getIndex() + currWakeWord.length());
-                    } catch (StringIndexOutOfBoundsException e){
-                        rest = "";
-                    }
+//                    String preArgs = transcript.substring(0, wakeWordLocation.getIndex());
+//                    String rest;
+//                    try {
+//                        rest = transcript.substring(wakeWordLocation.getIndex() + currWakeWord.length());
+//                    } catch (StringIndexOutOfBoundsException e){
+//                        rest = "";
+//                    }
                     break;
                 }
             }
@@ -283,7 +293,6 @@ public class VoiceCommandServer {
 
             //if we find an "end command" voice command, execute now
             //loop through all global endwords to see if any match
-//            Log.d(TAG, "SEARCH FOR END");
             for (int i = 0; i < endWords.size(); i++) {
                 String currEndWord = endWords.get(i);
                 FuzzyMatch endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
@@ -325,7 +334,6 @@ public class VoiceCommandServer {
         FuzzyMatch bestMatch = new FuzzyMatch(-1,0);
         int bestMatchIdx = -1;
         int vcIdx = -1;
-        Log.d(TAG, "" + voiceCommands.get(0).getPhrases());
         for (int i = 0; i < voiceCommands.size(); i++) {
             Pair<FuzzyMatch, Integer> commandBestMatch = nlpUtils.findBestMatch(rest, voiceCommands.get(i).getPhrases(), commandThreshold);
             if (commandBestMatch != null) {
@@ -344,7 +352,7 @@ public class VoiceCommandServer {
             int commandMatchIdx = bestMatchIdx;
             String commandMatchString = voiceCommands.get(vcIdx).getPhrases().get(commandMatchIdx);
 
-            Log.d(TAG, "3FOUND: " + commandMatchString);
+            Log.d(TAG, "FOUND MATCH: " + commandMatchString);
             String postArgs;
             try {
                 postArgs = rest.substring(commandMatch.getIndex() + commandMatchString.length());
@@ -358,15 +366,15 @@ public class VoiceCommandServer {
             }
 
             //check if there is a full word argument yet, if so, then we have gotten our argRequired
-            Log.d(TAG, "POSTARGS: " + postArgs);
-            if (postArgs.indexOf(" ") != -1){
-                Log.d(TAG, "POSTARGS RAN THIS BOI");
-                argRequireded = true;
-            }
+//            Log.d(TAG, "POSTARGS: " + postArgs);
+//            if (postArgs.indexOf(" ") != -1){
+//                Log.d(TAG, "POSTARGS RAN THIS BOI");
+//                gotArg = true;
+//            }
 
             //show the user the next menu
             if (commanded) { //if we've already found a command, just check if we are still waiting on a required argument
-                if (voiceCommands.get(vcIdx).argRequired && needArg && argRequireded){
+                if (voiceCommands.get(vcIdx).argRequired && needArg && gotArg){
                     needNaturalLanguageArgs(commandMatchString);
                     needArg = false;
                 }
@@ -374,9 +382,9 @@ public class VoiceCommandServer {
                 if (voiceCommands.get(vcIdx).argRequired) {
                     needRequiredArg(voiceCommands.get(vcIdx).argPrompt, voiceCommands.get(vcIdx).argOptions);
                 }
-//                else {
-//                    needNaturalLanguageArgs(commandMatchString);
-//                }
+                else {
+                    needNaturalLanguageArgs(commandMatchString);
+                }
             }
 
             foundCommand(commandMatchString, wakeWordEndIdx + commandMatch.getIndex() + commandMatchString.length());
@@ -447,12 +455,13 @@ public class VoiceCommandServer {
         this.wakeWordGiven = wakeWord;
         this.wakeWordEndIdx = wakeWordEndIdx;
 
-        //generate commandlist for all commands
+        //generate list of each command's top level phrases
         JSONArray commandList = new JSONArray();
         voiceCommands.forEach(voiceCommand -> {
-            voiceCommand.getPhrases().forEach(command -> {
-                commandList.put(command);
-            });
+            commandList.put(voiceCommand.getPhrases().get(0));
+//                    .forEach(command -> {
+//                commandList.put(command);
+//            });
         });
 
         //tell ASG that we have found this wake word and to display the following command options
@@ -503,7 +512,7 @@ public class VoiceCommandServer {
         commanded = false;
         this.commandGiven = "";
         ended = false;
-        argRequireded = false;
+        gotArg = false;
         needArg = false;
     }
 
