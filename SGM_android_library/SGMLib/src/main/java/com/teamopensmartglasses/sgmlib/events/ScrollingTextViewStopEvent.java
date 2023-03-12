@@ -1,4 +1,7 @@
 package com.teamopensmartglasses.sgmlib.events;
 
-public class ScrollingTextViewStopEvent {
+import java.io.Serializable;
+
+public class ScrollingTextViewStopEvent implements Serializable {
+    public static final String eventId = "scrollingTextViewStopEvent";
 }

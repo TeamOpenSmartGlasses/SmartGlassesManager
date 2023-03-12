@@ -7,8 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -43,6 +46,23 @@ public class TPABroadcastSender {
 
     @Subscribe
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
+        String eventId = receivedEvent.eventId;
+        sendEventToSGM(eventId, receivedEvent);
+    }
+
+    @Subscribe
+    public void onStartScrollingTextEvent(ScrollingTextViewStartEvent receivedEvent){
+        String eventId = receivedEvent.eventId;
+        sendEventToSGM(eventId, receivedEvent);
+    }
+
+    @Subscribe
+    public void onFinalScrollingTextEvent(FinalScrollingTextEvent receivedEvent){
+        Log.d("TPASEND", "FINAL SCROLL SEND");
+        String eventId = receivedEvent.eventId;
+        sendEventToSGM(eventId, receivedEvent);
+    }
+    public void onScrollingTextViewStopEvent(ScrollingTextViewStopEvent receivedEvent){
         String eventId = receivedEvent.eventId;
         sendEventToSGM(eventId, receivedEvent);
     }
