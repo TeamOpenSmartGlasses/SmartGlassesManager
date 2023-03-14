@@ -69,7 +69,7 @@ public class VoiceCommandServer {
     private ArrayList<String> endWords;
 
     //timing of voice command system
-    private long voiceCommandPauseTime = 8000; //milliseconds //amount of time user must pause speaking before we consider the command to be finished
+    private long voiceCommandPauseTime = 3000; //milliseconds //amount of time user must pause speaking before we consider the command to be finished
     private long lastParseTime = 0; //milliseconds since last time we parse a command (executing or not)
     private long lastTranscriptTime = 0; //milliseconds since we last received a transcript
     private int partialTranscriptBufferIdx = 0; //this is set true when an end word is found, so we don't keep trying to process incoming INTERMEDIATE_TRANSCRIPTs if we have already processing the current buffer - we need to wait for the next transcript
@@ -84,7 +84,7 @@ public class VoiceCommandServer {
     boolean useNextTranscriptMetaData = true;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.88;
+    private final double wakeWordThreshold = 0.82;
     private final double commandThreshold = 0.82;
     private final double endWordThreshold = 0.92;
 
@@ -93,7 +93,8 @@ public class VoiceCommandServer {
     String wakeWordGiven = "";
     int wakeWordEndIdx = -1;
     boolean commanded = false;
-    String commandGiven = "";
+    SGMCommand commandGiven;
+    long commandGivenTime;
     int commandEndIdx = -1;
     boolean gotArg = false;
     boolean needArg = false;
@@ -111,7 +112,7 @@ public class VoiceCommandServer {
         vcHandler = new Handler(mHandlerThread.getLooper());
 
         //setup wake and end words
-        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "aurora", "harken", "vivify"}));
+        wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "a computer", "aurora", "harken", "vivify"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command", "desist", "terminus", "carriage", "consummate"}));
 
         //keeps checking to see if there is a command to be run
@@ -288,37 +289,86 @@ public class VoiceCommandServer {
                 rest = "";
             }
 
-            //search for a command. If it's found, we'll show the arguments screen and save what command was found
-            parseCommand(preArgs, wakeWordGiven, rest, currTime, run);
+            //FIND COMMAND
+            if (!commanded) {
+                //search for a command. If it's found, we'll save it
+                parseCommand(preArgs, wakeWordGiven, rest, currTime, run);
+            }
 
-            //if we find an "end command" voice command, execute now
-            //loop through all global endwords to see if any match
-            for (int i = 0; i < endWords.size(); i++) {
-                String currEndWord = endWords.get(i);
-                FuzzyMatch endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
-                if (endWordLocation != null && endWordLocation.getIndex() != -1) { //if the substring "end word" is in the larger string "transcript"
-                    //we detected an end word, so act on it if we've been commanded, or cancel if not
-                    Log.d(TAG, "Detected end word");
-                    int partialIdx = partialTranscriptBufferIdx + endWordLocation.getIndex() + currEndWord.length();
-                    if (!commanded){
-                        Log.d(TAG, "Wake word detected with no command input: " + rest);
-                        cancelVoiceCommand();
+            //if we've receive a command, either run it, or get arguments from the user
+            if (commanded) { //if we've already found a command, just check if we are still waiting on a required argument
+                //if we've been commanded, then get the string after the command, which makes up the arguments
+                String postArgs;
+                try {
+                    postArgs = transcript.substring(commandEndIdx);
+                } catch (StringIndexOutOfBoundsException e) {
+                    postArgs = "";
+                }
+
+                int firstSpace = postArgs.indexOf(" ");
+                if (firstSpace != -1) { //if there is no space, then there is no new word after the command word, and thus nothing to show
+                    postArgs = postArgs.substring(firstSpace + 1);//string after the commands ends and after the next space
+                }
+
+                if (!commandGiven.argRequired || (gotArg)) {
+                    restartTranscriptBuffer(commandEndIdx, true);
+                    runCommand(commandGiven, preArgs, wakeWordGiven, "", commandGivenTime);
+                } else if (commandGiven.argRequired) {
+                    needRequiredArg(commandGiven.argPrompt, commandGiven.argOptions);
+                }
+
+//                if (commandGiven.argRequired && needArg && gotArg){
+//                    needNaturalLanguageArgs(commandGiven.getName());
+//                    needArg = false;
+//                }
+//
+//
+//                else { //else, this is the first time we found a command, and we either prompt for a required argument or send user straight to the natural language query selection
+
+//                else {
+//                    needNaturalLanguageArgs(commandGiven.getName());
+//                }
+
+                //if we have received a command and either don't need args or have received the args we need, then run the command
+//                if (commandGiven.argRequired && needArg && gotArg){
+
+//                    restartTranscriptBuffer(commandEndIdx, true);
+//                    runCommand(commandGiven, preArgs, wakeWordGiven, postArgs, commandGivenTime);
+//                }
+
+                //FIND END WORD
+                //if we find an "end command" voice command, execute now
+                //loop through all global endwords to see if any match
+                int partialIdx = partialTranscriptBufferIdx;
+                for (int i = 0; i < endWords.size(); i++) {
+                    String currEndWord = endWords.get(i);
+                    FuzzyMatch endWordLocation = nlpUtils.findNearMatches(transcript, currEndWord, endWordThreshold); //transcript.indexOf(currEndWord);
+                    if (endWordLocation != null && endWordLocation.getIndex() != -1) { //if the substring "end word" is in the larger string "transcript"
+                        //we detected an end word, so act on it if we've been commanded, or cancel if not
+                        Log.d(TAG, "Detected end word");
+                        partialIdx = partialTranscriptBufferIdx + endWordLocation.getIndex() + currEndWord.length();
+                        if (!commanded) {
+                            Log.d(TAG, "Wake word detected with no command input: " + rest);
+                            cancelVoiceCommand();
+                            run = true;
+                            restartTranscriptBuffer(partialIdx, null);
+                            break;
+                        }
+                        String transcriptSansEndWord = transcript.substring(0, endWordLocation.getIndex());
+                        rest = transcriptSansEndWord;
                         run = true;
-                        restartTranscriptBuffer(partialIdx, null);
-                        break;
+                        ended = true;
                     }
-                    String transcriptSansEndWord = transcript.substring(0, endWordLocation.getIndex());
-                    rest = transcriptSansEndWord;
-                    run = true;
-                    ended = true;
+                }
 
+                //if we found an n word, or if we've been instructed to run regardless, then run the command
+                if (ended || run){
                     //find the command and run it
-                    Log.d(TAG, "RUN PARSE " + preArgs + ",  " + rest);
-                    parseCommand(preArgs, wakeWordGiven, rest, currTime, run);
+                    restartTranscriptBuffer(commandEndIdx, true);
+                    runCommand(commandGiven, preArgs, wakeWordGiven, postArgs, commandGivenTime);
 
                     //restart voice transcript buffer now that we've run a command
                     restartTranscriptBuffer(partialIdx, null);
-                    break;
                 }
             }
         }
@@ -353,56 +403,11 @@ public class VoiceCommandServer {
             String commandMatchString = voiceCommands.get(vcIdx).getPhrases().get(commandMatchIdx);
 
             Log.d(TAG, "FOUND MATCH: " + commandMatchString);
-            String postArgs;
-            try {
-                postArgs = rest.substring(commandMatch.getIndex() + commandMatchString.length());
-            } catch (StringIndexOutOfBoundsException e){
-                postArgs = "";
-            }
 
-            int firstSpace = postArgs.indexOf(" ");
-            if (firstSpace != -1){ //if there is no space, then there is no new word after the command word, and thus nothing to show
-                postArgs = postArgs.substring(firstSpace + 1);//string after the commands ends and after the next space
-            }
+            foundCommand(voiceCommands.get(vcIdx), wakeWordEndIdx + commandMatch.getIndex() + commandMatchString.length(), commandTime);
 
-            //check if there is a full word argument yet, if so, then we have gotten our argRequired
-//            Log.d(TAG, "POSTARGS: " + postArgs);
-//            if (postArgs.indexOf(" ") != -1){
-//                Log.d(TAG, "POSTARGS RAN THIS BOI");
-//                gotArg = true;
-//            }
-
-            //show the user the next menu
-            if (commanded) { //if we've already found a command, just check if we are still waiting on a required argument
-                if (voiceCommands.get(vcIdx).argRequired && needArg && gotArg){
-                    needNaturalLanguageArgs(commandMatchString);
-                    needArg = false;
-                }
-            } else { //else, this is the first time we found a command, and we either prompt for a required argument or send user straight to the natural language query selection
-                if (voiceCommands.get(vcIdx).argRequired) {
-                    needRequiredArg(voiceCommands.get(vcIdx).argPrompt, voiceCommands.get(vcIdx).argOptions);
-                }
-                else {
-                    needNaturalLanguageArgs(commandMatchString);
-                }
-            }
-
-            foundCommand(commandMatchString, wakeWordEndIdx + commandMatch.getIndex() + commandMatchString.length());
-
-            if (run || !voiceCommands.get(vcIdx).argRequired) {
-                restartTranscriptBuffer(commandEndIdx, true);
-                runCommand(voiceCommands.get(vcIdx), preArgs, wakeWord, commandMatchIdx, postArgs, commandTime);
-            }
             currentlyParsing = false;
             return;
-        }
-    }
-
-    private void convoTag(boolean start){
-        if (start){
-            Log.d(TAG, "********** starting conversation");
-        } else {
-            Log.d(TAG, "********** stopping conversation");
         }
     }
 
@@ -478,19 +483,20 @@ public class VoiceCommandServer {
 //        }
     }
 
-    private void foundCommand(String command, int commandEndIdx){
+    private void foundCommand(SGMCommand command, int commandEndIdx, long commandTime){
         //don't run if a wake word has already been found in the current voice buffer
         if (commanded){
             return;
         }
-        Log.d(TAG, "FOUND COMMAND: " + command);
+        Log.d(TAG, "FOUND COMMAND: " + command.getName());
 
         commanded = true;
         this.commandGiven = command;
         this.commandEndIdx = commandEndIdx;
+        this.commandGivenTime = commandTime;
     }
 
-    private void runCommand(SGMCommand vc, String preArgs, String wakeWord, int commandIdx, String postArgs, long commandTime){
+    private void runCommand(SGMCommand vc, String preArgs, String wakeWord, String postArgs, long commandTime){
         Log.d(TAG, "running commmand: " + vc.getName());
         //the voice command itself will handle sending the appropriate response to the ASG
         resetVoiceCommand();
@@ -510,7 +516,7 @@ public class VoiceCommandServer {
         waked = false;
         this.wakeWordGiven = "";
         commanded = false;
-        this.commandGiven = "";
+        this.commandGiven = null;
         ended = false;
         gotArg = false;
         needArg = false;
