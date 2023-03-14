@@ -84,8 +84,8 @@ class SmartGlassesRepresentative {
         bluetoothAudio = new MicrophoneLocalAndBluetooth(context, new AudioChunkCallback(){
             @Override
             public void onSuccess(ByteBuffer chunk){
-                                                  receiveChunk(chunk);
-                                                                      }
+                receiveChunk(chunk);
+            }
         });
     }
 

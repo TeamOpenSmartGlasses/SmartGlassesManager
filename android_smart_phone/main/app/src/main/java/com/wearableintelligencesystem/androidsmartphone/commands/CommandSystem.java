@@ -103,4 +103,13 @@ public class CommandSystem {
             }
         }
     }
+
+    public void destroy(){
+        if (voiceCommandServer != null) {
+            voiceCommandServer.destroy();
+        }
+
+        EventBus.getDefault().unregister(this);
+    }
+
 }

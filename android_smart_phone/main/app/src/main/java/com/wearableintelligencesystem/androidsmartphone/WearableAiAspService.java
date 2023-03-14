@@ -204,6 +204,10 @@ public class WearableAiAspService extends LifecycleService {
     public void onDestroy() {
         Log.d(TAG, "WearableAiAspService killing itself and all its children");
 
+        if (commandSystem != null){
+            commandSystem.destroy();
+        }
+
         //kill asg connection
         if (smartGlassesRepresentative != null) {
             smartGlassesRepresentative.destroy();

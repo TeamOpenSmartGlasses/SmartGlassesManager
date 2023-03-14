@@ -69,7 +69,7 @@ public class VoiceCommandServer {
     private ArrayList<String> endWords;
 
     //timing of voice command system
-    private long voiceCommandPauseTime = 3000; //milliseconds //amount of time user must pause speaking before we consider the command to be finished
+    private long voiceCommandPauseTime = 8000; //milliseconds //amount of time user must pause speaking before we consider the command to be finished
     private long lastParseTime = 0; //milliseconds since last time we parse a command (executing or not)
     private long lastTranscriptTime = 0; //milliseconds since we last received a transcript
     private int partialTranscriptBufferIdx = 0; //this is set true when an end word is found, so we don't keep trying to process incoming INTERMEDIATE_TRANSCRIPTs if we have already processing the current buffer - we need to wait for the next transcript
@@ -110,13 +110,14 @@ public class VoiceCommandServer {
         mHandlerThread = new HandlerThread("VoiceCommandHandler");
         mHandlerThread.start();
         vcHandler = new Handler(mHandlerThread.getLooper());
+//        vcHandler = new Handler();
 
         //setup wake and end words
         wakeWords = new ArrayList<>(Arrays.asList(new String [] {"hey computer", "a computer", "aurora", "harken", "vivify"}));
         endWords = new ArrayList<>(Arrays.asList(new String [] {"finish command", "desist", "terminus", "carriage", "consummate"}));
 
         //keeps checking to see if there is a command to be run
-        startSittingCommandHitter();
+//        startSittingCommandHitter();
 
         //subscribe to events
         EventBus.getDefault().register(this);
@@ -135,7 +136,7 @@ public class VoiceCommandServer {
                 long currTime = System.currentTimeMillis();
 
                 if (newTranscriptSinceRun && (((currTime - lastParseTime) > voiceCommandPauseTime)) && ((currTime - lastTranscriptTime) > voiceCommandPauseTime)){
-                    parseVoiceCommmandBuffer(lowPassTranscriptString, true);
+                    parseVoiceCommandBuffer(lowPassTranscriptString, true);
                     restartTranscriptBuffer(0, true);
                     if (waked){ //if we had already woken up, but no command has run, let ASG know to go exit the command
                         cancelVoiceCommand();
@@ -202,7 +203,7 @@ public class VoiceCommandServer {
 
         //parse transcript - but don't run too often
         if ((System.currentTimeMillis() - lastParseTime) > 150) {
-            parseVoiceCommmandBuffer(transcriptToParse, false);
+            parseVoiceCommandBuffer(transcriptToParse, false);
         }
     }
 
@@ -215,7 +216,7 @@ public class VoiceCommandServer {
    }
 
     //run a parsing pass on the current voice transcript buffer. This depends on the current state of the machine w.r.t. what we have already found - wake word, command, arguments, end word, etc.
-    private void parseVoiceCommmandBuffer(String transcript, boolean run) {
+    private void parseVoiceCommandBuffer(String transcript, boolean run) {
         //if we have already found a wake word and a command, but the command is not yet finished, then send a stream of the argument text to the ASG
 //        if (waked && commanded){
 //            if (transcript.length() > commandEndIdx) { //don't send if there's no args
@@ -364,7 +365,6 @@ public class VoiceCommandServer {
                 //if we found an n word, or if we've been instructed to run regardless, then run the command
                 if (ended || run){
                     //find the command and run it
-                    restartTranscriptBuffer(commandEndIdx, true);
                     runCommand(commandGiven, preArgs, wakeWordGiven, postArgs, commandGivenTime);
 
                     //restart voice transcript buffer now that we've run a command
@@ -454,7 +454,7 @@ public class VoiceCommandServer {
         if (waked){
             return;
         }
-        Log.d(TAG, "FOUND WAKE WORD");
+        Log.d(TAG, "FOUND WAKE WORD: " + wakeWord);
 
         waked = true;
         this.wakeWordGiven = wakeWord;
@@ -652,6 +652,10 @@ public class VoiceCommandServer {
                 handleNewTranscript(transcript, timestamp, isFinal);
             }
         });
+    }
+
+    public void destroy(){
+        EventBus.getDefault().unregister(this);
     }
 
 }
