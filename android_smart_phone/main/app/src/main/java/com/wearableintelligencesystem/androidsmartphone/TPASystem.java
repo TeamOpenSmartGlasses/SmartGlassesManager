@@ -3,18 +3,13 @@ package com.wearableintelligencesystem.androidsmartphone;
 import android.content.Context;
 import android.util.Log;
 
-import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
-import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.comms.SGMLibBroadcastReceiver;
 import com.wearableintelligencesystem.androidsmartphone.comms.SGMLibBroadcastSender;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-
-import java.util.HashMap;
-import java.util.UUID;
 
 public class TPASystem {
     private String TAG = "WearableAi_TPASystem";
@@ -44,5 +39,6 @@ public class TPASystem {
 
     public void destroy(){
         sgmLibBroadcastReceiver.unregister();
+        EventBus.getDefault().unregister(this);
     }
 }

@@ -610,4 +610,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             e.printStackTrace();
         }
     }
+
+    public void displayPromptView(String prompt, String [] options){
+
+    }
 }
