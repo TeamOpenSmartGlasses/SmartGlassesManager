@@ -156,6 +156,7 @@ public class SpeechRecVosk implements RecognitionListener {
 
     public void destroy() {
         Log.d(TAG, "Destroying VOSK");
+        EventBus.getDefault().unregister(this);
         if (speechStreamService != null) {
             speechStreamService.stop();
         }

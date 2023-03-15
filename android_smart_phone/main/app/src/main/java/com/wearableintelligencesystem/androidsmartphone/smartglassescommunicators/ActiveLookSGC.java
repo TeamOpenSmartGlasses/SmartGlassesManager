@@ -104,8 +104,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                     connectionEvent(MessageTypes.CONNECTED_GLASSES);
                     // Power on the glasses
                     connectedGlasses.power(true);
-                    // Clear the glasses display
-                    connectedGlasses.clear();
                     //clear any fonts to use just default fonts
                     connectedGlasses.fontDeleteAll();
                     // Set the display luminance level
@@ -121,6 +119,17 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                 });
     }
 
+    public void showHomeScreen(){
+        if (connectedGlasses != null){
+            connectedGlasses.clear();
+            displayCircle(new Point(50, 12), 18, false);
+            displayCircle(new Point(50, 12), 3, true);
+            TextLineSG wakeWordPrompt = new TextLineSG("Say 'hey computer'", MEDIUM_FONT);
+            int xPercentLoc = computeStringCenterInfo(wakeWordPrompt);
+            displayText(wakeWordPrompt, new Point(xPercentLoc,50));
+        }
+    }
+
     public void blankScreen(){
         if (connectedGlasses != null){
             connectedGlasses.clear();
@@ -130,6 +139,8 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     @Override
     public void destroy(){
        if (connectedGlasses != null){
+           connectedGlasses.clear();
+           displayText(new TextLineSG("Glass Disconnected...", MEDIUM_FONT), new Point(0,50)); //Doesn't run ? Must be timing issue
            connectedGlasses.disconnect();
        }
        if (alsdk != null){
@@ -216,8 +227,27 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         return percent;
     }
 
-    //handles text wrapping, returns final position of last line printed
+    //handle displaying a circle with a percentLoc
+    private void displayCircle(Point percentLoc, int radius, boolean full){
+        if (!isConnected()){
+            return;
+        }
+
+        Point pixelLoc = percentScreenToPixelsLocation(percentLoc.x, percentLoc.y);
+        if (full) {
+            connectedGlasses.circf(pixelLoc, (byte) radius);
+        } else {
+            connectedGlasses.circ(pixelLoc, (byte) radius);
+        }
+    }
+
+    //display text not centered
     private Point displayText(TextLineSG textLine, Point percentLoc){
+        return displayText(textLine, percentLoc, false);
+    }
+
+    //handles text wrapping, returns final position of last line printed
+    private Point displayText(TextLineSG textLine, Point percentLoc, boolean centered){
         if (!isConnected()){
             return null;
         }
@@ -253,6 +283,19 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         int numWraps = ((int) Math.floor(((float) textWidth) / displayWidthPixels));
         int wrapLenNumChars = ((int) Math.floor((displayWidthPixels / (float) fontWidth)));
         return new Pair(numWraps, wrapLenNumChars);
+    }
+
+    //only pass this a text line that you know will take up less than the whole display - won't work if the line needs to be wrapped (see displayText if you need wrapping)
+    private int computeStringCenterInfo(TextLineSG textLine){
+        //compute information about how to wrap this line
+        int fontHeight = fontToSize.get(textLine.getFontSizeCode());
+        float fontAspectRatio = fontToRatio.get(textLine.getFontSizeCode()); //this many times as taller than, found by trial and error
+        int fontWidth = (int) (fontHeight / fontAspectRatio);
+        int textWidth = (int) (textLine.getText().length() * fontWidth); //width in pixels
+        float percentFull = ((float) textWidth) / displayWidthPixels;
+        Log.d(TAG, "PerfecentFUll: " + percentFull);
+        int xPercentLoc = (int)(100f * ((1.0 - percentFull) / 2f));
+        return xPercentLoc;
     }
 
     private void sendTextToGlasses(TextLineSG textLine, Point percentLoc){

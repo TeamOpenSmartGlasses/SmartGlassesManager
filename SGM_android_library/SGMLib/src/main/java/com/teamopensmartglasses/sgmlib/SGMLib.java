@@ -58,4 +58,14 @@ public class SGMLib {
         }
         Log.d(TAG, "Callback called");
     }
+
+    public void deinit(){
+        EventBus.getDefault().unregister(this);
+        if (sgmReceiver != null) {
+            sgmReceiver.destroy();
+        }
+        if (sgmSender != null) {
+            sgmSender.destroy();
+        }
+    }
 }

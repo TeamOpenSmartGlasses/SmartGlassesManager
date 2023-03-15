@@ -204,6 +204,8 @@ public class WearableAiAspService extends LifecycleService {
     public void onDestroy() {
         Log.d(TAG, "WearableAiAspService killing itself and all its children");
 
+        EventBus.getDefault().unregister(this);
+
         if (commandSystem != null){
             commandSystem.destroy();
         }

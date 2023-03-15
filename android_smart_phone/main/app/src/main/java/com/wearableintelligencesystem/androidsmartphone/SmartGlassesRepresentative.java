@@ -98,6 +98,8 @@ class SmartGlassesRepresentative {
     public void destroy(){
         Log.d(TAG, "SG rep destroying");
 
+        EventBus.getDefault().unregister(this);
+
         if (bluetoothAudio != null) {
             bluetoothAudio.destroy();
         }
@@ -139,18 +141,18 @@ class SmartGlassesRepresentative {
         }
     }
 
-    private void blankUiAfterDelay(long delayTime){
+    private void homeUiAfterDelay(long delayTime){
         uiHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                blankScreen();
+                homeScreen();
             }
         }, delayTime);
     }
 
-    public void blankScreen(){
+    public void homeScreen(){
         if (smartGlassesCommunicator != null) {
-            smartGlassesCommunicator.blankScreen();
+            smartGlassesCommunicator.showHomeScreen();
         }
     }
 
@@ -158,7 +160,7 @@ class SmartGlassesRepresentative {
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
-            blankUiAfterDelay(referenceCardDelayTime);
+//            homeUiAfterDelay(referenceCardDelayTime);
         }
     }
 
