@@ -118,15 +118,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        //bind to WearableAi service
-        bindWearableAiAspService();
-
         //register receiver that gets data from the service
         registerReceiver(mMainServiceReceiver, makeMainServiceReceiverIntentFilter());
 
-        //ask the service to send us information about the connection
-        if (mService != null) {
-            mService.sendUiUpdate();
+        if (isMyServiceRunning(WearableAiAspService.class)) {
+            //bind to WearableAi service
+            bindWearableAiAspService();
+
+            //ask the service to send us information about the connection
+            if (mService != null) {
+                mService.sendUiUpdate();
+            }
         }
     }
 

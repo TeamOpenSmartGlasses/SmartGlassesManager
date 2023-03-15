@@ -9,7 +9,7 @@
         android:id="@+id/command_list_item_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="14sp"
+        android:textSize="@dimen/smallText"
         android:includeFontPadding="false"
         tools:text = "save speech..."
         android:textColor="@color/hud_text"

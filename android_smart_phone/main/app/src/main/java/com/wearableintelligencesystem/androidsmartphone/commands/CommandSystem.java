@@ -92,7 +92,6 @@ public class CommandSystem {
     }
     @Subscribe
     public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
-        Log.d(TAG, "Command was triggered.");
         SGMCommand command = receivedEvent.command;
         String args = receivedEvent.args;
         long commandTriggeredTime = receivedEvent.commandTriggeredTime;
