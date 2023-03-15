@@ -41,4 +41,8 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
                 break;
         }
     }
+
+    public void destroy(){
+        this.context.unregisterReceiver(this);
+    }
 }

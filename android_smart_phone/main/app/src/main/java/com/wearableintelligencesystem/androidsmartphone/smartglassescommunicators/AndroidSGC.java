@@ -596,4 +596,18 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             e.printStackTrace();
         }
     }
+
+    public void showHomeScreen(){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.ACTION_SWITCH_MODES);
+            commandResponseObject.put(MessageTypes.NEW_MODE, MessageTypes.MODE_HOME);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 }

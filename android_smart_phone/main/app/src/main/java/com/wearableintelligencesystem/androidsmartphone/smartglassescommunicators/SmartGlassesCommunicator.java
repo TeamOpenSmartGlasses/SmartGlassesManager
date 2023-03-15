@@ -22,6 +22,7 @@ public abstract class SmartGlassesCommunicator {
     public abstract void scrollingTextViewIntermediateText(String text);
     public abstract void scrollingTextViewFinalText(String text);
     public abstract void stopScrollingTextViewMode();
+    public abstract void showHomeScreen();
 
     //fonts
     public int LARGE_FONT;
@@ -46,7 +47,9 @@ public abstract class SmartGlassesCommunicator {
     public void connectionEvent(int connectState){
         mConnectState = connectState;
         EventBus.getDefault().post(new SmartGlassesConnectionEvent(mConnectState));
+        showHomeScreen();
     }
+
 
     public void setMode(SmartGlassesModes mode){
         currentMode = mode;
