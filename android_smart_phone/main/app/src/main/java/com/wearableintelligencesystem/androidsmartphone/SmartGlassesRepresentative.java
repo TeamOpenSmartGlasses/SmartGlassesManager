@@ -14,6 +14,7 @@ import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioCh
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.IntermediateScrollingTextEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStopEvent;
 import com.wearableintelligencesystem.androidsmartphone.sensors.AudioChunkCallback;
@@ -190,6 +191,14 @@ class SmartGlassesRepresentative {
     public void onIntermediateScrollingTextEvent(IntermediateScrollingTextEvent receivedEvent) {
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.scrollingTextViewIntermediateText(receivedEvent.text);
+        }
+    }
+
+    @Subscribe
+    public void onPromptViewRequestEvent(PromptViewRequestEvent receivedEvent) {
+        Log.d(TAG, "onPromptViewRequestEvent called");
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayPromptView(receivedEvent.prompt, receivedEvent.options);
         }
     }
 }

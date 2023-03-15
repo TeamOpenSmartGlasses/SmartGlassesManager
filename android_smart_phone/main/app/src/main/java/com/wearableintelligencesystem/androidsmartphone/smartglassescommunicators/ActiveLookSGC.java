@@ -13,6 +13,9 @@ import com.activelook.activelooksdk.types.GlassesUpdate;
 import com.activelook.activelooksdk.types.Rotation;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
+import org.w3c.dom.Text;
+
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -124,9 +127,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             connectedGlasses.clear();
             displayCircle(new Point(50, 12), 18, false);
             displayCircle(new Point(50, 12), 3, true);
-            TextLineSG wakeWordPrompt = new TextLineSG("Say 'hey computer'", MEDIUM_FONT);
-            int xPercentLoc = computeStringCenterInfo(wakeWordPrompt);
-            displayText(wakeWordPrompt, new Point(xPercentLoc,50));
+            displayText(new TextLineSG("Say 'hey computer'...", MEDIUM_FONT), new Point(0, 50), true);
         }
     }
 
@@ -169,6 +170,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     public void displayReferenceCardSimple(String title, String body){
         if (isConnected()) {
+            connectedGlasses.clear();
             ArrayList<Object> stuffToDisplay = new ArrayList<>();
             stuffToDisplay.add(new TextLineSG(title, LARGE_FONT));
             stuffToDisplay.add(new TextLineSG(body, SMALL_FONT));
@@ -178,21 +180,22 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     //takes a list of strings and images and displays them in a line from top of the screen to the bottom
     private void displayLinearStuff(ArrayList<Object> stuffToDisplay){
+       displayLinearStuff(stuffToDisplay, new Point(0, 0), false);
+    }
+
+    private void displayLinearStuff(ArrayList<Object> stuffToDisplay, Point startPoint, boolean centered){
         if (!isConnected()){
             return;
         }
 
-        //make sure our glasses are powered on and cleared
-        connectedGlasses.power(true);
-        connectedGlasses.clear();
-
         //loop through the stuff to display, and display it, moving the next item below the previous item in each loop
-        Point currPercentPoint = new Point(0,0);
+//        Point currPercentPoint = new Point(0,0);
+        Point currPercentPoint = startPoint;
         int yMargin = 5;
         for (Object thing : stuffToDisplay){
             Point endPercentPoint;
             if (thing instanceof TextLineSG) { //could this be done cleaner with polymorphism? https://stackoverflow.com/questions/5579309/is-it-possible-to-use-the-instanceof-operator-in-a-switch-statement
-                endPercentPoint = displayText((TextLineSG) thing, currPercentPoint);
+                endPercentPoint = displayText((TextLineSG) thing, currPercentPoint, centered);
 //            } else if (thing instanceof ImageSG) {
                 //endPoint = displaySomething((ImageSG) thing, currPoint);
             } else { //unsupported type
@@ -267,7 +270,13 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             int endIdx = Math.min(startIdx + wrapLenNumChars, textLine.getText().length());
             String subText = textLine.getText().substring(startIdx, endIdx).trim();
             chunkedText.add(subText);
-            sendTextToGlasses(new TextLineSG(subText, textLine.getFontSizeCode()), textPoint);
+            TextLineSG thisTextLine = new TextLineSG(subText, textLine.getFontSizeCode());
+            if (!centered) {
+                sendTextToGlasses(thisTextLine, textPoint);
+            } else {
+                int xPercentLoc = computeStringCenterInfo(thisTextLine);
+                sendTextToGlasses(thisTextLine, new Point(xPercentLoc, textPoint.y));
+            }
             textPoint = new Point(textPoint.x, textPoint.y + pixelToPercent(displayHeightPixels, fontToSize.get(textLine.getFontSizeCode())) + textMarginY); //lower our text for the next loop
         }
 
@@ -394,5 +403,24 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         float numRows = (float)yBox / lineHeight;
 
         return numRows;
+    }
+
+    public void displayPromptView(String prompt, String [] options){
+        if (!isConnected()){
+            return;
+        }
+
+        connectedGlasses.clear();
+
+        //show the prompt and options, if any
+        ArrayList<Object> promptPageElements = new ArrayList<>();
+        promptPageElements.add(new TextLineSG(prompt, LARGE_FONT));
+        if (options != null) {
+            //make an array list of options
+            for (String s : options){
+               promptPageElements.add(new TextLineSG(s, SMALL_FONT));
+            }
+        }
+        displayLinearStuff(promptPageElements, new Point(0, 0), true);
     }
 }

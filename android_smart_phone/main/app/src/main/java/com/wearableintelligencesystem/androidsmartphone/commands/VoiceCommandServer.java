@@ -29,6 +29,7 @@ import android.util.Pair;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
@@ -97,7 +98,7 @@ public class VoiceCommandServer {
     long commandGivenTime;
     int commandEndIdx = -1;
     boolean gotArg = false;
-    boolean needArg = false;
+    boolean haveRequestedArg = false;
     boolean ended = false;
 
     public VoiceCommandServer(Context context){
@@ -314,7 +315,7 @@ public class VoiceCommandServer {
                 if (!commandGiven.argRequired || (gotArg)) {
                     restartTranscriptBuffer(commandEndIdx, true);
                     runCommand(commandGiven, preArgs, wakeWordGiven, "", commandGivenTime);
-                } else if (commandGiven.argRequired) {
+                } else if (commandGiven.argRequired & !haveRequestedArg) {
                     needRequiredArg(commandGiven.argPrompt, commandGiven.argOptions);
                 }
 
@@ -411,10 +412,13 @@ public class VoiceCommandServer {
         }
     }
 
-    private void needRequiredArg(String argName, ArrayList<String> possibleArgs){
-        needArg = true;
+    private void needRequiredArg(String prompt, ArrayList<String> possibleArgs){
+        haveRequestedArg = true;
+        Log.d(TAG, "needREquiredArg called");
         //tell ASG that we have found a command but now need a required argument
-        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(argName, possibleArgs.toString()));
+//        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(argName, possibleArgs.toString()));
+        String [] possibleArgsSA = possibleArgs.toArray(new String[0]);
+        EventBus.getDefault().post(new PromptViewRequestEvent(prompt, possibleArgsSA));
 //        try {
 //            //generate args list
 //            JSONArray argsList = new JSONArray();
@@ -519,7 +523,7 @@ public class VoiceCommandServer {
         this.commandGiven = null;
         ended = false;
         gotArg = false;
-        needArg = false;
+        haveRequestedArg = false;
     }
 
     public void sendResultToAsg(boolean success){

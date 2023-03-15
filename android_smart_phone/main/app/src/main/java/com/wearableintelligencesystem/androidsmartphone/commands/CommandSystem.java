@@ -99,6 +99,7 @@ public class CommandSystem {
         if (command != null){
             SGMCallback callback = sgmCallbackMapper.getCommandCallback(command);
             if (callback != null){
+                Log.d(TAG, "Running command");
                 callback.runCommand(args, commandTriggeredTime);
             }
         }

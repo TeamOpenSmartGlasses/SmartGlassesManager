@@ -19,9 +19,15 @@ public abstract class SmartGlassesCommunicator {
     public void startScrollingTextViewMode(String title){
         setMode(SmartGlassesModes.SCROLLING_TEXT_VIEW);
     }
+
     public abstract void scrollingTextViewIntermediateText(String text);
     public abstract void scrollingTextViewFinalText(String text);
     public abstract void stopScrollingTextViewMode();
+
+    //prompt view card
+    public abstract void displayPromptView(String title, String [] options);
+
+    //home screen
     public abstract void showHomeScreen();
 
     //fonts
