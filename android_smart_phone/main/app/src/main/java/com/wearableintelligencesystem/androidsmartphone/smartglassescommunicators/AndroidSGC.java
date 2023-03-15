@@ -11,6 +11,7 @@ import com.wearableintelligencesystem.androidsmartphone.comms.AudioSystem;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartphone.utils.NetworkUtils;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -509,13 +510,19 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         //kill this socket
         try {
             Log.i(TAG, "SOCKETTHREAD TRYNA JOIN");
-            SocketThread.join();
+            if (SocketThread != null) {
+                SocketThread.join();
+            }
             Log.i(TAG, "SOCKETTHREAD JOINED");
             Log.i(TAG, "SENDTTHREAD TRYNA JOIN");
-            SendThread.join();
+            if (SendThread != null) {
+                SendThread.join();
+            }
             Log.i(TAG, "SENDTTHREAD JOINED");
             Log.i(TAG, "RECEIVE THREAD TRYNA JOIN");
-            ReceiveThread.join();
+            if (ReceiveThread != null) {
+                ReceiveThread.join();
+            }
             Log.i(TAG, "RECEIVE THREAD JOINED");
         } catch (InterruptedException e){
             e.printStackTrace();
@@ -612,6 +619,54 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     }
 
     public void displayPromptView(String prompt, String [] options){
+        //generate args list
+        if (options != null) {
 
+            //required args
+//            try{
+//                JSONArray argsList = new JSONArray();
+//                for (String s : options) {
+//                    argsList.put(s);
+//                }
+//                JSONObject wakeWordFoundEvent = new JSONObject();
+//                wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//                wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.REQUIRED_ARG_EVENT_TYPE);
+//                wakeWordFoundEvent.put(MessageTypes.ARG_NAME, prompt);
+//                wakeWordFoundEvent.put(MessageTypes.ARG_OPTIONS, argsList);
+//                dataObservable.onNext(wakeWordFoundEvent);
+//            } catch (JSONException e){
+//                e.printStackTrace();
+//            }
+
+
+            //natural language arg
+//            try {
+//                JSONObject commandFoundEvent = new JSONObject();
+//                commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+//                commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_EVENT_TYPE);
+//                commandFoundEvent.put(MessageTypes.INPUT_VOICE_COMMAND_NAME, command);
+//                commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, this.wakeWordGiven);
+//                commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
+//                dataObservable.onNext(commandFoundEvent);
+//            } catch (JSONException e){
+//                e.printStackTrace();
+//            }
+
+            //found wake word
+            JSONArray argsList = new JSONArray();
+            for (String s : options) {
+                argsList.put(s);
+            }
+            try {
+                JSONObject wakeWordFoundEvent = new JSONObject();
+                wakeWordFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+                wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.WAKE_WORD_EVENT_TYPE);
+                wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_LIST, argsList.toString());
+                wakeWordFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, prompt);
+                dataObservable.onNext(wakeWordFoundEvent);
+            } catch (JSONException e){
+                e.printStackTrace();
+            }
+        }
     }
 }

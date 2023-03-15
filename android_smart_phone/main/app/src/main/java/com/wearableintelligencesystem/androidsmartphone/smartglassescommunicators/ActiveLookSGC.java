@@ -78,7 +78,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         fontToSize.put(EXTRA_LARGE_FONT, 49);
 
         fontToRatio = new Hashtable<>();
-        fontToRatio.put(LARGE_FONT, 2.0f);
+        fontToRatio.put(LARGE_FONT, 1.8f);
         fontToRatio.put(MEDIUM_FONT, 2.1f);
         fontToRatio.put(SMALL_FONT, 2.1f);
         fontToRatio.put(EXTRA_LARGE_FONT, 3.0f);
@@ -125,10 +125,14 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     public void showHomeScreen(){
         if (connectedGlasses != null){
             connectedGlasses.clear();
-            displayCircle(new Point(50, 12), 18, false);
-            displayCircle(new Point(50, 12), 3, true);
+            showPromptCircle();
             displayText(new TextLineSG("Say 'hey computer'...", MEDIUM_FONT), new Point(0, 50), true);
         }
+    }
+
+    public void showPromptCircle(){
+        displayCircle(new Point(50, 10), 18, false);
+        displayCircle(new Point(50, 10), 3, true);
     }
 
     public void blankScreen(){
@@ -302,7 +306,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         int fontWidth = (int) (fontHeight / fontAspectRatio);
         int textWidth = (int) (textLine.getText().length() * fontWidth); //width in pixels
         float percentFull = ((float) textWidth) / displayWidthPixels;
-        Log.d(TAG, "PerfecentFUll: " + percentFull);
         int xPercentLoc = (int)(100f * ((1.0 - percentFull) / 2f));
         return xPercentLoc;
     }
@@ -357,7 +360,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         boolean hitBottom = false;
         for (int i = finalScrollingTextStrings.toArray().length - 1; i >= 0; i--){
             String finalText = finalScrollingTextStrings.get(i);
-            Log.d(TAG, finalText);
             //convert to a TextLine type with small font
             TextLineSG tlString = new TextLineSG(finalText, SMALL_FONT);
             //get info about the wrapping of this string
@@ -367,7 +369,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             totalRows += numWraps + 1;
 
             if (totalRows > allowedTextRows){
-                Log.d(TAG, "HIT THE ALLOWED TEXT ROW LIMIT, taking partial string if possible and exiting loop");
                 finalScrollingTextStrings = finalTextToDisplay;
                 lastLocScrollingTextView = belowTitleLocScrollingTextView;
                 //clear the glasses as we hit our limit and need to redraw
@@ -385,7 +386,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             for (String finalString : finalTextToDisplay) {
                 TextLineSG tlString = new TextLineSG(finalString, scrollingTextTextFontSize);
                 //write this text at the last location + margin
-                Log.d(TAG, "Writing string: " + tlString.getText());
                 lastLocScrollingTextView = displayText(tlString, new Point(0, lastLocScrollingTextView.y));
             }
         } else { //if we didn't hit the bottom, and there's room, we can just display the next line
@@ -411,6 +411,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         }
 
         connectedGlasses.clear();
+        showPromptCircle();
 
         //show the prompt and options, if any
         ArrayList<Object> promptPageElements = new ArrayList<>();
@@ -421,6 +422,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                promptPageElements.add(new TextLineSG(s, SMALL_FONT));
             }
         }
-        displayLinearStuff(promptPageElements, new Point(0, 0), true);
+        displayLinearStuff(promptPageElements, new Point(0, 20), true);
     }
 }

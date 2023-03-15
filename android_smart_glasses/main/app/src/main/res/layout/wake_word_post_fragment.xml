@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/post_wake_text"
-        android:textSize="16sp"
+        android:textSize="@dimen/largeText"
         android:textStyle="bold"
         android:textColor="@color/hud_text"
         android:layout_marginTop="5dp"
