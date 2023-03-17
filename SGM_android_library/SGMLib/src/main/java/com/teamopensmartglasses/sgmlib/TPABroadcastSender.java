@@ -72,4 +72,9 @@ public class TPABroadcastSender {
         String eventId = receivedEvent.getEventId();
         sendEventToSGM(eventId, receivedEvent);
     }
+
+    public void destroy(){
+        //unregister event bus subscribers
+        EventBus.getDefault().unregister(this);
+    }
 }

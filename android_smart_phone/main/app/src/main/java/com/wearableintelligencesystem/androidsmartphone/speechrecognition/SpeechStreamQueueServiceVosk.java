@@ -20,6 +20,7 @@ import org.vosk.android.RecognitionListener;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import org.vosk.Recognizer;
 
@@ -56,7 +57,8 @@ public class SpeechStreamQueueServiceVosk {
         this.recognizer = recognizer;
         this.sampleRate = (int) sampleRate;
         this.inputStream = inputStream;
-        this.bufferSize = bufferSize; //Math.round(this.sampleRate * BUFFER_SIZE_SECONDS * 2);
+//        this.bufferSize = bufferSize; //Math.round(this.sampleRate * BUFFER_SIZE_SECONDS * 2);
+        this.bufferSize = Math.round(this.sampleRate * BUFFER_SIZE_SECONDS * 2);
     }
 
     /**
@@ -143,7 +145,7 @@ public class SpeechStreamQueueServiceVosk {
                     && ((timeoutSamples == NO_TIMEOUT) || (remainingSamples > 0))) {
                 try {
                     //int nread = inputStream.read(buffer, 0, buffer.length);
-                    buffer = inputStream.poll(250, TimeUnit.MILLISECONDS); //we poll so that, if we need to kill this thread with an interrupt, we don't block forever on take() and never leave the loop
+                    buffer = inputStream.poll(bufferSize, TimeUnit.MILLISECONDS); //we poll so that, if we need to kill this thread with an interrupt, we don't block forever on take() and never leave the loop
                     if (buffer == null){ //if null, we want to loop again
                         continue;
                     }

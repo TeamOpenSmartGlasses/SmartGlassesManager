@@ -13,6 +13,9 @@ import com.activelook.activelooksdk.types.GlassesUpdate;
 import com.activelook.activelooksdk.types.Rotation;
 import com.wearableintelligencesystem.androidsmartphone.comms.MessageTypes;
 
+import org.w3c.dom.Text;
+
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -75,7 +78,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         fontToSize.put(EXTRA_LARGE_FONT, 49);
 
         fontToRatio = new Hashtable<>();
-        fontToRatio.put(LARGE_FONT, 2.0f);
+        fontToRatio.put(LARGE_FONT, 1.8f);
         fontToRatio.put(MEDIUM_FONT, 2.1f);
         fontToRatio.put(SMALL_FONT, 2.1f);
         fontToRatio.put(EXTRA_LARGE_FONT, 3.0f);
@@ -104,8 +107,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                     connectionEvent(MessageTypes.CONNECTED_GLASSES);
                     // Power on the glasses
                     connectedGlasses.power(true);
-                    // Clear the glasses display
-                    connectedGlasses.clear();
                     //clear any fonts to use just default fonts
                     connectedGlasses.fontDeleteAll();
                     // Set the display luminance level
@@ -121,9 +122,30 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                 });
     }
 
+    public void showHomeScreen(){
+        if (connectedGlasses != null){
+            connectedGlasses.clear();
+            showPromptCircle();
+            displayText(new TextLineSG("Say 'hey computer'...", MEDIUM_FONT), new Point(0, 50), true);
+        }
+    }
+
+    public void showPromptCircle(){
+        displayCircle(new Point(50, 10), 18, false);
+        displayCircle(new Point(50, 10), 3, true);
+    }
+
+    public void blankScreen(){
+        if (connectedGlasses != null){
+            connectedGlasses.clear();
+        }
+    }
+
     @Override
     public void destroy(){
        if (connectedGlasses != null){
+           connectedGlasses.clear();
+           displayText(new TextLineSG("Glass Disconnected...", MEDIUM_FONT), new Point(0,50)); //Doesn't run ? Must be timing issue
            connectedGlasses.disconnect();
        }
        if (alsdk != null){
@@ -152,6 +174,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     public void displayReferenceCardSimple(String title, String body){
         if (isConnected()) {
+            connectedGlasses.clear();
             ArrayList<Object> stuffToDisplay = new ArrayList<>();
             stuffToDisplay.add(new TextLineSG(title, LARGE_FONT));
             stuffToDisplay.add(new TextLineSG(body, SMALL_FONT));
@@ -161,21 +184,22 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     //takes a list of strings and images and displays them in a line from top of the screen to the bottom
     private void displayLinearStuff(ArrayList<Object> stuffToDisplay){
+       displayLinearStuff(stuffToDisplay, new Point(0, 0), false);
+    }
+
+    private void displayLinearStuff(ArrayList<Object> stuffToDisplay, Point startPoint, boolean centered){
         if (!isConnected()){
             return;
         }
 
-        //make sure our glasses are powered on and cleared
-        connectedGlasses.power(true);
-        connectedGlasses.clear();
-
         //loop through the stuff to display, and display it, moving the next item below the previous item in each loop
-        Point currPercentPoint = new Point(0,0);
+//        Point currPercentPoint = new Point(0,0);
+        Point currPercentPoint = startPoint;
         int yMargin = 5;
         for (Object thing : stuffToDisplay){
             Point endPercentPoint;
             if (thing instanceof TextLineSG) { //could this be done cleaner with polymorphism? https://stackoverflow.com/questions/5579309/is-it-possible-to-use-the-instanceof-operator-in-a-switch-statement
-                endPercentPoint = displayText((TextLineSG) thing, currPercentPoint);
+                endPercentPoint = displayText((TextLineSG) thing, currPercentPoint, centered);
 //            } else if (thing instanceof ImageSG) {
                 //endPoint = displaySomething((ImageSG) thing, currPoint);
             } else { //unsupported type
@@ -210,8 +234,27 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         return percent;
     }
 
-    //handles text wrapping, returns final position of last line printed
+    //handle displaying a circle with a percentLoc
+    private void displayCircle(Point percentLoc, int radius, boolean full){
+        if (!isConnected()){
+            return;
+        }
+
+        Point pixelLoc = percentScreenToPixelsLocation(percentLoc.x, percentLoc.y);
+        if (full) {
+            connectedGlasses.circf(pixelLoc, (byte) radius);
+        } else {
+            connectedGlasses.circ(pixelLoc, (byte) radius);
+        }
+    }
+
+    //display text not centered
     private Point displayText(TextLineSG textLine, Point percentLoc){
+        return displayText(textLine, percentLoc, false);
+    }
+
+    //handles text wrapping, returns final position of last line printed
+    private Point displayText(TextLineSG textLine, Point percentLoc, boolean centered){
         if (!isConnected()){
             return null;
         }
@@ -231,7 +274,13 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             int endIdx = Math.min(startIdx + wrapLenNumChars, textLine.getText().length());
             String subText = textLine.getText().substring(startIdx, endIdx).trim();
             chunkedText.add(subText);
-            sendTextToGlasses(new TextLineSG(subText, textLine.getFontSizeCode()), textPoint);
+            TextLineSG thisTextLine = new TextLineSG(subText, textLine.getFontSizeCode());
+            if (!centered) {
+                sendTextToGlasses(thisTextLine, textPoint);
+            } else {
+                int xPercentLoc = computeStringCenterInfo(thisTextLine);
+                sendTextToGlasses(thisTextLine, new Point(xPercentLoc, textPoint.y));
+            }
             textPoint = new Point(textPoint.x, textPoint.y + pixelToPercent(displayHeightPixels, fontToSize.get(textLine.getFontSizeCode())) + textMarginY); //lower our text for the next loop
         }
 
@@ -247,6 +296,18 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         int numWraps = ((int) Math.floor(((float) textWidth) / displayWidthPixels));
         int wrapLenNumChars = ((int) Math.floor((displayWidthPixels / (float) fontWidth)));
         return new Pair(numWraps, wrapLenNumChars);
+    }
+
+    //only pass this a text line that you know will take up less than the whole display - won't work if the line needs to be wrapped (see displayText if you need wrapping)
+    private int computeStringCenterInfo(TextLineSG textLine){
+        //compute information about how to wrap this line
+        int fontHeight = fontToSize.get(textLine.getFontSizeCode());
+        float fontAspectRatio = fontToRatio.get(textLine.getFontSizeCode()); //this many times as taller than, found by trial and error
+        int fontWidth = (int) (fontHeight / fontAspectRatio);
+        int textWidth = (int) (textLine.getText().length() * fontWidth); //width in pixels
+        float percentFull = ((float) textWidth) / displayWidthPixels;
+        int xPercentLoc = (int)(100f * ((1.0 - percentFull) / 2f));
+        return xPercentLoc;
     }
 
     private void sendTextToGlasses(TextLineSG textLine, Point percentLoc){
@@ -299,7 +360,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         boolean hitBottom = false;
         for (int i = finalScrollingTextStrings.toArray().length - 1; i >= 0; i--){
             String finalText = finalScrollingTextStrings.get(i);
-            Log.d(TAG, finalText);
             //convert to a TextLine type with small font
             TextLineSG tlString = new TextLineSG(finalText, SMALL_FONT);
             //get info about the wrapping of this string
@@ -309,7 +369,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             totalRows += numWraps + 1;
 
             if (totalRows > allowedTextRows){
-                Log.d(TAG, "HIT THE ALLOWED TEXT ROW LIMIT, taking partial string if possible and exiting loop");
                 finalScrollingTextStrings = finalTextToDisplay;
                 lastLocScrollingTextView = belowTitleLocScrollingTextView;
                 //clear the glasses as we hit our limit and need to redraw
@@ -345,5 +404,25 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         float numRows = (float)yBox / lineHeight;
 
         return numRows;
+    }
+
+    public void displayPromptView(String prompt, String [] options){
+        if (!isConnected()){
+            return;
+        }
+
+        connectedGlasses.clear();
+        showPromptCircle();
+
+        //show the prompt and options, if any
+        ArrayList<Object> promptPageElements = new ArrayList<>();
+        promptPageElements.add(new TextLineSG(prompt, LARGE_FONT));
+        if (options != null) {
+            //make an array list of options
+            for (String s : options){
+               promptPageElements.add(new TextLineSG(s, SMALL_FONT));
+            }
+        }
+        displayLinearStuff(promptPageElements, new Point(0, 20), true);
     }
 }

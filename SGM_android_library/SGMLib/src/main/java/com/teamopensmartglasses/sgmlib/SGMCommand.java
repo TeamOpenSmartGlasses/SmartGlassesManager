@@ -10,22 +10,32 @@ public class SGMCommand implements Serializable {
 
     private String mName; //name of the command
     private UUID mId; //unique identifier of the command
-    public boolean argRequired = false;
     private ArrayList<String> mPhrases; //list of phrases, queries, questions that trigger this command (artificial limit imposed)
     private String mDescription; //a natural language description of what the command does
-    private Callback mCallback;
+
+    //args info
+    public boolean argRequired;
+    public String argPrompt;
+    public ArrayList argOptions;
 
     public SGMCommand(String name, UUID id, String[] phrases, String description){
+        argRequired = false;
+        setupBaseCommand(name, id, phrases, description);
+    }
+
+    public SGMCommand(String name, UUID id, String[] phrases, String description, boolean argRequired, String argPrompt, ArrayList argOptions){
+        setupBaseCommand(name, id, phrases, description);
+        this.argRequired = argRequired;
+        this.argPrompt = argPrompt;
+        this.argOptions = argOptions;
+    }
+
+    private void setupBaseCommand(String name, UUID id, String[] phrases, String description){
         this.mName = name;
         this.mId = id;
         this.mPhrases = new ArrayList<>();
         this.mPhrases.addAll(Arrays.asList(phrases));
         this.mDescription = description;
-    }
-
-    public SGMCommand(String name, UUID id, String[] phrases, String description, boolean argRequired){
-       this(name, id, phrases, description);
-       this.argRequired = argRequired;
     }
 
     public UUID getId(){
@@ -34,6 +44,14 @@ public class SGMCommand implements Serializable {
 
     public String getDescription() {
         return mDescription;
+    }
+
+    public String getName() {
+        return mName;
+    }
+
+    public ArrayList<String> getPhrases() {
+        return mPhrases;
     }
 }
 

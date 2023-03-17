@@ -5,6 +5,8 @@ import android.content.Context;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONObject;
+
+import android.os.Handler;
 import android.util.Log;
 
 //custom, our code
@@ -12,6 +14,7 @@ import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioCh
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
 import com.wearableintelligencesystem.androidsmartphone.sensors.AudioChunkCallback;
@@ -38,12 +41,20 @@ class SmartGlassesRepresentative {
     SmartGlassesCommunicator smartGlassesCommunicator;
     MicrophoneLocalAndBluetooth bluetoothAudio;
 
+    //timing settings
+    long referenceCardDelayTime = 10000;
+
+    //handler to handle delayed UI events
+    Handler uiHandler;
+
     SmartGlassesRepresentative(Context context, SmartGlassesDevice smartGlassesDevice, PublishSubject<JSONObject> dataObservable){
         this.context = context;
         this.smartGlassesDevice = smartGlassesDevice;
 
         //receive/send data
         this.dataObservable = dataObservable;
+
+        uiHandler = new Handler();
 
         //register event bus subscribers
         EventBus.getDefault().register(this);
@@ -74,8 +85,8 @@ class SmartGlassesRepresentative {
         bluetoothAudio = new MicrophoneLocalAndBluetooth(context, new AudioChunkCallback(){
             @Override
             public void onSuccess(ByteBuffer chunk){
-                                                  receiveChunk(chunk);
-                                                                      }
+                receiveChunk(chunk);
+            }
         });
     }
 
@@ -87,6 +98,8 @@ class SmartGlassesRepresentative {
 
     public void destroy(){
         Log.d(TAG, "SG rep destroying");
+
+        EventBus.getDefault().unregister(this);
 
         if (bluetoothAudio != null) {
             bluetoothAudio.destroy();
@@ -115,7 +128,7 @@ class SmartGlassesRepresentative {
         }
     }
 
-    public void startScrollingTextViewMode(){
+    public void startScrollingTextViewModeTest(){
         //pass for now
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.startScrollingTextViewMode("ScrollingTextView");
@@ -129,10 +142,26 @@ class SmartGlassesRepresentative {
         }
     }
 
+    private void homeUiAfterDelay(long delayTime){
+        uiHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                homeScreen();
+            }
+        }, delayTime);
+    }
+
+    public void homeScreen(){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.showHomeScreen();
+        }
+    }
+
     @Subscribe
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
+//            homeUiAfterDelay(referenceCardDelayTime);
         }
     }
 
@@ -162,6 +191,14 @@ class SmartGlassesRepresentative {
     public void onIntermediateScrollingTextEvent(IntermediateScrollingTextEvent receivedEvent) {
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.scrollingTextViewIntermediateText(receivedEvent.text);
+        }
+    }
+
+    @Subscribe
+    public void onPromptViewRequestEvent(PromptViewRequestEvent receivedEvent) {
+        Log.d(TAG, "onPromptViewRequestEvent called");
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayPromptView(receivedEvent.prompt, receivedEvent.options);
         }
     }
 }

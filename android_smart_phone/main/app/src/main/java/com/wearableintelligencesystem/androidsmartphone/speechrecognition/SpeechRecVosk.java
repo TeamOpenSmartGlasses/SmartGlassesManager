@@ -63,6 +63,7 @@ public class SpeechRecVosk implements RecognitionListener {
     private VoskAudioBytesStream voskAudioBytesStream;
     //private PipedOutputStream audioAdderStreamVosk;
     //private InputStream audioSenderStreamVosk;
+    private int audioSenderStreamVoskSize;
     private BlockingQueue<byte []> audioSenderStreamVosk;
     final Handler main_handler;
 
@@ -91,7 +92,8 @@ public class SpeechRecVosk implements RecognitionListener {
         //audioSub = this.audioObservable.subscribe(i -> handleDataStream(i));
 
         //setup the object which will pass audio bytes to vosk
-        audioSenderStreamVosk = new ArrayBlockingQueue(1024);
+        audioSenderStreamVoskSize = (int) (16000 * 2 * 0.2);
+        audioSenderStreamVosk = new ArrayBlockingQueue(audioSenderStreamVoskSize);
 
         //start vosk ASR
         LibVosk.setLogLevel(LogLevel.INFO);
@@ -154,6 +156,7 @@ public class SpeechRecVosk implements RecognitionListener {
 
     public void destroy() {
         Log.d(TAG, "Destroying VOSK");
+        EventBus.getDefault().unregister(this);
         if (speechStreamService != null) {
             speechStreamService.stop();
         }
@@ -266,8 +269,8 @@ public class SpeechRecVosk implements RecognitionListener {
                 transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             }
             transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
-            Log.d(TAG, "VOSK SENDING: ");
-            Log.d(TAG, transcriptObj.toString());
+//            Log.d(TAG, "VOSK SENDING: ");
+//            Log.d(TAG, transcriptObj.toString());
             dataObservable.onNext(transcriptObj);
 
 //            EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));

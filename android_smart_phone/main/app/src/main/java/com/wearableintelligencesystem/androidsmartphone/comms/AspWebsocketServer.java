@@ -138,22 +138,22 @@ public class AspWebsocketServer extends WebSocketServer {
 //                Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_RESPONSE, sending to ASG");
                 sendJson(data);
             } else if (type.equals(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW)){
-                Log.d(TAG, "AspWebsocketServer got REFERENCE_CARD_SIMPLE_VIEW, sending to ASG");
+//                Log.d(TAG, "AspWebsocketServer got REFERENCE_CARD_SIMPLE_VIEW, sending to ASG");
                 sendJson(data);
             } else if (type.equals(MessageTypes.ACTION_SWITCH_MODES)){
-                Log.d(TAG, "AspWebsocketServer got ACTION_SWITCH_MODES, sending to ASG");
+//                Log.d(TAG, "AspWebsocketServer got ACTION_SWITCH_MODES, sending to ASG");
                 sendJson(data);
             } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_START)){
-                Log.d(TAG, "AspWebsocketServer sending STV start");
+//                Log.d(TAG, "AspWebsocketServer sending STV start");
                 sendJson(data);
             } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_STOP)){
-                Log.d(TAG, "AspWebsocketServer sending STV start");
+//                Log.d(TAG, "AspWebsocketServer sending STV start");
                 sendJson(data);
             } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_FINAL)){
-                Log.d(TAG, "AspWebsocketServer sending STV final");
+//                Log.d(TAG, "AspWebsocketServer sending STV final");
                 sendJson(data);
             } else if (type.equals(MessageTypes.SCROLLING_TEXT_VIEW_INTERMEDIATE)){
-                Log.d(TAG, "AspWebsocketServer sending STV intermediate");
+//                Log.d(TAG, "AspWebsocketServer sending STV intermediate");
                 sendJson(data);
             } else if (type.equals(MessageTypes.VOICE_COMMAND_STREAM_EVENT)) {
 //                Log.d(TAG, "AspWebsocketServer got VOICE_COMMAND_STREAM_EVENT, sending to ASG");
