@@ -161,6 +161,7 @@ public class MessageTypes {
     //control the current mode of the ASG
     public final static String ACTION_SWITCH_MODES = "ACTION_SWITCH_MODES";
     public final static String NEW_MODE = "NEW_MODE";
+    public final static String MODE_HOME = "MODE_HOME";
     public final static String MODE_VISUAL_SEARCH = "MODE_VISUAL_SEARCH";
     public final static String MODE_LIVE_LIFE_CAPTIONS = "MODE_LIVE_LIFE_CAPTIONS";
     public final static String MODE_SOCIAL_MODE = "MODE_SOCIAL_MODE";

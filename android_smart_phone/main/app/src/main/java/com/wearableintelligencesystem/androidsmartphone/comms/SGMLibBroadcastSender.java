@@ -24,8 +24,8 @@ public class SGMLibBroadcastSender {
     }
 
     public void sendEventToTPAs(String eventId, Serializable eventBundle) {
-        Log.d(TAG, this.intentPkg);
-        Log.d(TAG, "Sending event to TPAs");
+//        Log.d(TAG, this.intentPkg);
+//        Log.d(TAG, "Sending event to TPAs");
 
         //setup intent to send
         Intent intent = new Intent();
