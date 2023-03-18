@@ -29,9 +29,9 @@ import android.util.Pair;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
 import com.wearableintelligencesystem.androidsmartphone.nlp.FuzzyMatch;
 import com.wearableintelligencesystem.androidsmartphone.nlp.NlpUtils;
 

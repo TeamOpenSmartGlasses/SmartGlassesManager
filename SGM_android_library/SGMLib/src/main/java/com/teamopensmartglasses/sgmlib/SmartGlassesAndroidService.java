@@ -16,6 +16,10 @@ import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 
+import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
+
+import org.greenrobot.eventbus.Subscribe;
+
 //a service provided for third party apps to extend, that make it easier to create a service in Android that will continually run in the background
 public abstract class SmartGlassesAndroidService extends LifecycleService {
     // Service Binder given to clients
@@ -98,5 +102,14 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             }
         }
         return Service.START_STICKY;
+    }
+
+    @Subscribe
+    public void onKillTpaEvent(KillTpaEvent receivedEvent){
+        //if(receivedEvent.uuid == this.appUUID) //TODO: Figure out implementation here...
+        if(true)
+        {
+            stopSelf();
+        }
     }
 }

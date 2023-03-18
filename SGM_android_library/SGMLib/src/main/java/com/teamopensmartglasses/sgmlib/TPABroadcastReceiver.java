@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 
@@ -41,6 +42,9 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
             case CommandTriggeredEvent.eventId:
                 Log.d(TAG, "Resending Command triggered event");
                 EventBus.getDefault().post((CommandTriggeredEvent) serializedEvent);
+                break;
+            case KillTpaEvent.eventId:
+                EventBus.getDefault().post((KillTpaEvent) serializedEvent);
                 break;
             case SpeechRecIntermediateOutputEvent.eventId:
                 EventBus.getDefault().post((SpeechRecIntermediateOutputEvent) serializedEvent);

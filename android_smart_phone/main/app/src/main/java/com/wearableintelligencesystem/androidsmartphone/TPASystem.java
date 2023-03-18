@@ -4,7 +4,9 @@ import android.content.Context;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.SGMCommand;
+import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
@@ -47,6 +49,12 @@ public class TPASystem {
     }
 
     @Subscribe
+    public void onKillTpaEvent(KillTpaEvent killTpaEvent)
+    {
+        sgmLibBroadcastSender.sendEventToTPAs(KillTpaEvent.eventId, killTpaEvent);
+    }
+
+    @Subscribe
     public void onIntermediateTranscript(SpeechRecIntermediateOutputEvent event){
         Log.d(TAG, "Intermediate Transcript Sending Event");
         boolean tpaIsSubscribed = true; //TODO: Hash out implementation
@@ -61,17 +69,6 @@ public class TPASystem {
         boolean tpaIsSubscribed = true; //TODO: Hash out implementation
         if(tpaIsSubscribed){
             sgmLibBroadcastSender.sendEventToTPAs(SpeechRecFinalOutputEvent.eventId, event);
-        }
-    }
-
-    @Subscribe
-    public void onRegisterCommandRequestEvent(RegisterCommandRequestEvent receivedEvent){
-        registeredCommands.put(receivedEvent.command.getId(), receivedEvent.command);
-        Log.d(TAG, "Command was registered");
-
-        //check if the registered command is the debug command
-        if (receivedEvent.command.getId().equals(SGMGlobalConstants.DEBUG_COMMAND_ID)) {
-            debugAppRegistered = true;
         }
     }
 
