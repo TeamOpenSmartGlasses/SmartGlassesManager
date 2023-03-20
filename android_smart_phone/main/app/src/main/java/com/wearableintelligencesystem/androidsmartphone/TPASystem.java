@@ -1,6 +1,8 @@
 package com.wearableintelligencesystem.androidsmartphone;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.SGMCommand;

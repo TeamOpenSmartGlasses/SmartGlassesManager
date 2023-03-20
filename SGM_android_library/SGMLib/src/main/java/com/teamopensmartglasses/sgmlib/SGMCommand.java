@@ -18,6 +18,9 @@ public class SGMCommand implements Serializable {
     public String argPrompt;
     public ArrayList argOptions;
 
+    public String packageName = "";
+    public String serviceName = "";
+
     public SGMCommand(String name, UUID id, String[] phrases, String description){
         argRequired = false;
         setupBaseCommand(name, id, phrases, description);
@@ -52,6 +55,14 @@ public class SGMCommand implements Serializable {
 
     public ArrayList<String> getPhrases() {
         return mPhrases;
+    }
+
+    public String getPackageName(){
+        return packageName;
+    }
+
+    public String getServiceName(){
+        return serviceName;
     }
 }
 

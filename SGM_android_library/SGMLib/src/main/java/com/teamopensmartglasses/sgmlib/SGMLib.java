@@ -44,6 +44,9 @@ public class SGMLib {
 
     //register a new command
     public void registerCommand(SGMCommand sgmCommand, SGMCallback callback){
+        sgmCommand.packageName = mContext.getPackageName();
+        sgmCommand.serviceName = mContext.getClass().getName();
+
         sgmCallbackMapper.putCommandWithCallback(sgmCommand, callback);
         EventBus.getDefault().post(new RegisterCommandRequestEvent(sgmCommand));
     }
