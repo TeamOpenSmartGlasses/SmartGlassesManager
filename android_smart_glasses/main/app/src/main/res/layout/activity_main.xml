@@ -21,8 +21,7 @@ android:background="@color/hud_bg"
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
-
+        android:layout_height="@dimen/headerHeight"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -38,29 +37,34 @@ android:background="@color/hud_bg"
             app:layout_constraintStart_toStartOf="parent"
             app:srcCompat="@drawable/ic_mic_listening"
             app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
             android:id="@+id/mode_hud"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:paddingLeft="2dp"
+            android:text="Live Captions"
             android:textColor="#FFFFFF"
             android:textSize="@dimen/mediumText"
             android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/clock_text_view"
+            app:layout_constraintHorizontal_bias="0.012"
             app:layout_constraintStart_toEndOf="@id/voice_prompt"
-            app:layout_constraintTop_toTopOf="parent"
-            android:text="Live Captions" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/battery_percentage_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="25%"
-            android:layout_marginTop="0dp"
             android:padding="1dp"
-            android:textAlignment="viewEnd"
             android:textColor="@color/white"
             android:textSize="@dimen/mediumText"
+            android:gravity="center"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView

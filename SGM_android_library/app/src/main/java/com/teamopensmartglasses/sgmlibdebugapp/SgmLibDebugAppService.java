@@ -36,15 +36,23 @@ public class SgmLibDebugAppService extends SmartGlassesAndroidService {
 
         //register a command with args with the SGM
         ArrayList<String> exampleArgs = new ArrayList<String>(Arrays.asList("dog", "cat", "and other args"));
-        SGMCommand helloWorldWithArgsCommand = new SGMCommand("Debug With Args", UUID.fromString(SGMGlobalConstants.DEBUG_WITH_ARGS_COMMAND_ID), new String[]{"give me args"}, "Hello world command with args", true, "Debug args:", exampleArgs);
+        SGMCommand helloWorldWithArgsCommand = new SGMCommand("Debug With Args", UUID.fromString(SGMGlobalConstants.DEBUG_WITH_ARGS_COMMAND_ID), new String[]{"give me arguments"}, "Hello world command with args", true, "Debug args:", exampleArgs);
         sgmLib.registerCommand(helloWorldWithArgsCommand, this::helloWorldWithArgsCallback);
+
+        //register a command with args with the SGM
+        SGMCommand helloWorldWithNaturalLanguageCommand = new SGMCommand("Debug With NL", UUID.fromString(SGMGlobalConstants.DEBUG_WITH_NATURAL_LANGUAGE_COMMAND_ID), new String[]{"give me natural language"}, "Hello world command with natural language", true, "Say anything you want:", null);
+        sgmLib.registerCommand(helloWorldWithNaturalLanguageCommand, this::helloWorldWithNaturalLanguageCallback);
     }
 
     public void helloWorldCallback(String args, long commandTime){
-        sgmLib.sendReferenceCard("Debug Hello No args", "The SGM triggered the Hello World command.");
+        sgmLib.sendReferenceCard("Debug Hello No args", "SGM triggered Hello World command.");
     }
 
     public void helloWorldWithArgsCallback(String args, long commandTime){
-        sgmLib.sendReferenceCard("Debug: Hello With Args ", "The SGM triggered the Hello World With Args command. We received these args: " + args);
+        sgmLib.sendReferenceCard("Debug: Hello With Args ", "SGM triggered Hello World With Args command. Received args: " + args);
+    }
+
+    public void helloWorldWithNaturalLanguageCallback(String args, long commandTime){
+        sgmLib.sendReferenceCard("Debug: Hello Natural Language", "SGM triggered he Hello World Natural Language command. Received natural language args: " + args);
     }
 }

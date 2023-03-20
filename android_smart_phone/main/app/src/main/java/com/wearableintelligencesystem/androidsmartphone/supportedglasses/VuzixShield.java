@@ -5,7 +5,7 @@ public class VuzixShield extends SmartGlassesDevice {
         deviceModelName = "Vuzix Shield";
         deviceIconName = "vuzix_shield";
         anySupport = true;
-        fullSupport = false;
+        fullSupport = true;
         glassesOs = SmartGlassesOperatingSystem.ANDROID_OS_GLASSES;
         hasDisplay = true;
         hasSpeakers = true;

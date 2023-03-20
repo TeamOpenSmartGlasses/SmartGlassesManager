@@ -16,7 +16,7 @@
         android:scrollbars="vertical"
         android:textColor="@color/white"
         android:textSize="@dimen/smallText"
-        android:layout_marginBottom="-75dp"
+        android:layout_marginBottom="@dimen/llcMarginBottom"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"

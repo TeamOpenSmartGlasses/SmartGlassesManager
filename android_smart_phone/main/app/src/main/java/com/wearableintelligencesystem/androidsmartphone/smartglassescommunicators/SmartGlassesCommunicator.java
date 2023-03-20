@@ -11,9 +11,15 @@ public abstract class SmartGlassesCommunicator {
     public abstract void connectToSmartGlasses();
     public abstract void blankScreen();
     public abstract void destroy();
+    public final String commandNaturalLanguageString = "Command: ";
+    public final String finishNaturalLanguageString = "'finish command' when done";
 
     //reference card
     public abstract void displayReferenceCardSimple(String title, String body);
+
+    //voice command UI
+    public abstract void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs);
+    public abstract void updateNaturalLanguageCommandScreen(String naturalLanguageArgs);
 
     //scrolling text view
     public void startScrollingTextViewMode(String title){
@@ -53,7 +59,9 @@ public abstract class SmartGlassesCommunicator {
     public void connectionEvent(int connectState){
         mConnectState = connectState;
         EventBus.getDefault().post(new SmartGlassesConnectionEvent(mConnectState));
-        showHomeScreen();
+        if (isConnected()) {
+            showHomeScreen();
+        }
     }
 
 

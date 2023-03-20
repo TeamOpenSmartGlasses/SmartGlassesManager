@@ -40,7 +40,7 @@ dependencies {
 
     //fragments
     def fragment_version = "1.2.0"
-    def fragment_nav_version = "2.0.0"
+    def fragment_nav_version = "2.2.0"
     implementation "androidx.fragment:fragment:$fragment_version"
     implementation "androidx.navigation:navigation-fragment:$fragment_nav_version"
     implementation "androidx.navigation:navigation-ui:$fragment_nav_version"
