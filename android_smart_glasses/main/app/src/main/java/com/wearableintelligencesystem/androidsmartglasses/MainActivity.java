@@ -491,6 +491,12 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    //disable the back button
+    @Override
+    public void onBackPressed() {
+        //do nothing
+    }
+
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection connection = new ServiceConnection() {
 

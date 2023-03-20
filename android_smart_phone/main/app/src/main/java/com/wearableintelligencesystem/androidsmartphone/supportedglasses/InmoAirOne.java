@@ -1,11 +1,12 @@
 package com.wearableintelligencesystem.androidsmartphone.supportedglasses;
 
+// these glasses are pretty bad. There's no home button/gesture... the text/font size is all off android specs. Arms are big. The company has zero customer support. We might drop support for these - cayden
 public class InmoAirOne extends SmartGlassesDevice {
     public InmoAirOne() {
         deviceModelName = "Inmo Air 1";
         deviceIconName = "inmo_air";
         anySupport = true;
-        fullSupport = true;
+        fullSupport = false;
         glassesOs = SmartGlassesOperatingSystem.ANDROID_OS_GLASSES;
         hasDisplay = true;
         hasSpeakers = true;

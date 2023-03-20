@@ -669,4 +669,30 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             }
         }
     }
+
+    public void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs){
+        try {
+            JSONObject commandFoundEvent = new JSONObject();
+            commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+            commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_EVENT_TYPE);
+            commandFoundEvent.put(MessageTypes.INPUT_VOICE_COMMAND_NAME, "myCommand");
+            commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, "myWakeWord");
+            commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
+            dataObservable.onNext(commandFoundEvent);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void updateNaturalLanguageCommandScreen(String naturalLanguageArgs){
+        try {
+                JSONObject commandFoundEvent = new JSONObject();
+                commandFoundEvent.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.VOICE_COMMAND_STREAM_EVENT);
+                commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_ARGS_EVENT_TYPE);
+                commandFoundEvent.put(MessageTypes.INPUT_VOICE_STRING, naturalLanguageArgs);
+                dataObservable.onNext(commandFoundEvent);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 }

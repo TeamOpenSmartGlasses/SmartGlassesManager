@@ -14,6 +14,8 @@ import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.AudioCh
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.IntermediateScrollingTextEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewRequestEvent;
+import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewUpdateRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStopEvent;
@@ -199,6 +201,22 @@ class SmartGlassesRepresentative {
         Log.d(TAG, "onPromptViewRequestEvent called");
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayPromptView(receivedEvent.prompt, receivedEvent.options);
+        }
+    }
+
+    @Subscribe
+    public void onNaturalLanguageArgsCommandViewRequestEvent(NaturalLanguageArgsCommandViewRequestEvent receivedEvent) {
+        Log.d(TAG, "onPromptViewRequestEvent called");
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.showNaturalLanguageCommandScreen(receivedEvent.prompt, receivedEvent.naturalLanguageInput);
+        }
+    }
+
+    @Subscribe
+    public void onNaturalLanguageArgsCommandViewUpdateRequestEvent(NaturalLanguageArgsCommandViewUpdateRequestEvent receivedEvent) {
+        Log.d(TAG, "onPromptViewRequestEvent called");
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.updateNaturalLanguageCommandScreen(receivedEvent.naturalLanguageInput);
         }
     }
 }

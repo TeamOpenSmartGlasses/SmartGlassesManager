@@ -2,6 +2,7 @@ package com.wearableintelligencesystem.androidsmartphone.smartglassescommunicato
 
 import android.content.Context;
 import android.graphics.Point;
+import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.ArrayAdapter;
@@ -43,6 +44,12 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     int scrollingTextTextFontSize = SMALL_FONT;
     double marginRatio = 0.1;
 
+    //natural language scrolling text view state
+    Point lastLocNaturalLanguageArgsTextView; //where was the end of our last natural language args text view?
+
+    //handler to disconnect
+    Handler killHandler;
+
     public ActiveLookSGC(Context context) {
         super();
         //hold all glasses we find
@@ -53,6 +60,8 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         belowTitleLocScrollingTextView = new Point(0,0);
         lastLocScrollingTextView = new Point(0,0);
         finalScrollingTextStrings = new ArrayList<>();
+
+        killHandler = new Handler();
 
         alsdk = Sdk.init(context,
                 "",
@@ -131,8 +140,36 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     public void showPromptCircle(){
-        displayCircle(new Point(50, 10), 18, false);
-        displayCircle(new Point(50, 10), 3, true);
+        displayCircle(new Point(50, 6), 12, false);
+        displayCircle(new Point(50, 6), 3, true);
+    }
+
+    public void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageInput){
+        int boxDelta = 3;
+
+        if (connectedGlasses != null) {
+            connectedGlasses.clear();
+            showPromptCircle();
+
+            //show the prompt
+            lastLocNaturalLanguageArgsTextView = displayText(new TextLineSG(prompt, SMALL_FONT), new Point(0, 11), true);
+            lastLocNaturalLanguageArgsTextView = new Point(lastLocNaturalLanguageArgsTextView.x, lastLocNaturalLanguageArgsTextView.y + boxDelta); //margin down a tad
+
+            //show the final "finish command" prompt
+            int finishY = 90;
+            displayLine(new Point(0, finishY), new Point(100, finishY));
+            displayText(new TextLineSG(finishNaturalLanguageString, SMALL_FONT), new Point(0, finishY + 2), true);
+
+            //show the natural language args in a scroll box
+//            ArrayList<TextLineSG> nli = new ArrayList<>();
+//            nli.add(new TextLineSG(naturalLanguageInput, SMALL_FONT));
+//            lastLocNaturalLanguageArgsTextView = scrollTextShow(nli, startScrollBoxY.y + boxDelta, finishY - boxDelta);
+        }
+    }
+
+    public void updateNaturalLanguageCommandScreen(String naturalLanguageArgs){
+        Log.d(TAG, "Displaynig: " + naturalLanguageArgs);
+        displayText(new TextLineSG(naturalLanguageArgs, SMALL_FONT), new Point(0, lastLocNaturalLanguageArgsTextView.y));
     }
 
     public void blankScreen(){
@@ -145,9 +182,18 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     public void destroy(){
        if (connectedGlasses != null){
            connectedGlasses.clear();
-           displayText(new TextLineSG("Glass Disconnected...", MEDIUM_FONT), new Point(0,50)); //Doesn't run ? Must be timing issue
-           connectedGlasses.disconnect();
+           displayText(new TextLineSG("Glasses Disconnected.", MEDIUM_FONT), new Point(0,50), true);
+
+           //disconnect after slight delay, so our above text gets a chance to show up
+           killHandler.postDelayed(new Runnable() {
+               @Override
+               public void run() {
+                   connectedGlasses.disconnect();
+               }
+           }, 100);
+
        }
+
        if (alsdk != null){
 //           alsdk.getInstance()
        }
@@ -187,15 +233,15 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
        displayLinearStuff(stuffToDisplay, new Point(0, 0), false);
     }
 
-    private void displayLinearStuff(ArrayList<Object> stuffToDisplay, Point startPoint, boolean centered){
+    private Point displayLinearStuff(ArrayList<Object> stuffToDisplay, Point startPoint, boolean centered){
         if (!isConnected()){
-            return;
+            return null;
         }
 
         //loop through the stuff to display, and display it, moving the next item below the previous item in each loop
 //        Point currPercentPoint = new Point(0,0);
         Point currPercentPoint = startPoint;
-        int yMargin = 5;
+        int yMargin = 3;
         for (Object thing : stuffToDisplay){
             Point endPercentPoint;
             if (thing instanceof TextLineSG) { //could this be done cleaner with polymorphism? https://stackoverflow.com/questions/5579309/is-it-possible-to-use-the-instanceof-operator-in-a-switch-statement
@@ -207,6 +253,8 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
             }
             currPercentPoint = new Point(0, endPercentPoint.y + yMargin); //move the next thing to display down below the previous thing
         }
+
+        return currPercentPoint;
     }
 
     //this inverts things because that's what activelook does
@@ -248,6 +296,17 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         }
     }
 
+    //handle displaying a line with a percentLoc
+    private void displayLine(Point percentLocStart, Point percentLocStop){
+        if (!isConnected()){
+            return;
+        }
+
+        Point pixelLocStart = percentScreenToPixelsLocation(percentLocStart.x, percentLocStart.y);
+        Point pixelLocStop = percentScreenToPixelsLocation(percentLocStop.x, percentLocStop.y);
+        connectedGlasses.line(pixelLocStart, pixelLocStop);
+    }
+
     //display text not centered
     private Point displayText(TextLineSG textLine, Point percentLoc){
         return displayText(textLine, percentLoc, false);
@@ -267,7 +326,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         //loop through the text, writing out individual lines to the glasses
         ArrayList<String> chunkedText = new ArrayList<>();
         Point textPoint = percentLoc;
-//        int textMarginY = pixelsToPercentScreen(new Point((int)(, 0)).x;
         int textMarginY = computeMarginPercent(textLine.getFontSizeCode()); //(fontToSize.get(textLine.getFontSize()) * 1.3)
         for (int i = 0; i <= numWraps; i++){
             int startIdx = wrapLenNumChars * i;
@@ -395,9 +453,63 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
 
     }
 
+    public Point scrollTextShow(ArrayList<TextLineSG> textToScrollPrint, int percentYStart, int percentYStop){
+        if (!isConnected()){
+            return null;
+        }
+
+        Point lastPoint = null;
+
+        //get the max number of wraps allows
+        float allowedTextRows = computeAllowedTextRows(percentYStart, percentYStart, fontToSize.get(scrollingTextTextFontSize), percentToPixel(displayHeightPixels, computeMarginPercent(scrollingTextTextFontSize)));
+
+        //figure out the maximum we can display
+        int totalRows = 0;
+        ArrayList<TextLineSG> finalTextToDisplay = new ArrayList<>();
+        boolean hitBottom = false;
+        for (int i = textToScrollPrint.toArray().length - 1; i >= 0; i--){
+            TextLineSG tlString = textToScrollPrint.get(i);
+            //get info about the wrapping of this string
+            Pair wrapInfo = computeStringWrapInfo(tlString);
+            int numWraps = (int)wrapInfo.first;
+            int wrapLenNumChars = (int)wrapInfo.second;
+            totalRows += numWraps + 1;
+
+            if (totalRows > allowedTextRows){ //if we hit the limit and need to scroll up and delete the first lines
+                //clear the scroll box of the glasses as we hit our limit and need to redraw
+                connectedGlasses.color((byte)0x00);
+                connectedGlasses.rectf(percentScreenToPixelsLocation(0, percentYStart), percentScreenToPixelsLocation(100, percentYStop));
+                //stop looping, as we've ran out of room
+                hitBottom = true;
+            } else {
+                finalTextToDisplay.add(0, tlString);
+            }
+        }
+
+        //display all of the text that we can
+//        if (hitBottom) { //if we ran out of room, we need to redraw all the text
+        if (true) { //if we ran out of room, we need to redraw all the text
+            for (TextLineSG finalString : finalTextToDisplay) {
+//                TextLineSG tlString = new TextLineSG(finalString, scrollingTextTextFontSize);
+                //write this text at the last location + margin
+                lastPoint = displayText(finalString, new Point(0, percentYStart));
+            }
+        } else { //if we didn't hit the bottom, and there's room, we can just display the next line
+            TextLineSG tlString = new TextLineSG("duh", SMALL_FONT);
+            displayText(tlString, new Point(0, lastLocScrollingTextView.y));
+        }
+
+        return lastPoint;
+    }
+
+
     //this works using activelook pixels
-    private float computeAllowedTextRows(int titleHeight, int fontHeight, int yMargin){
-        int yBox = displayHeightPixels - titleHeight;
+    private float computeAllowedTextRows(int titleHeight, int fontHeight, int yMargin) {
+        return computeAllowedTextRows(titleHeight, 100, fontHeight, yMargin);
+    }
+
+    private float computeAllowedTextRows(int yPercentStart, int yPercentStop, int fontHeight, int yMargin){
+        int yBox = displayHeightPixels - yPercentStart - (100 - yPercentStop); //compute the height of the scrolling text box
         int lineHeight = fontHeight + yMargin;
 
         float numRows = (float)yBox / lineHeight;
@@ -422,6 +534,6 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
                promptPageElements.add(new TextLineSG(s, SMALL_FONT));
             }
         }
-        displayLinearStuff(promptPageElements, new Point(0, 20), true);
+        displayLinearStuff(promptPageElements, new Point(0, 11), true);
     }
 }
