@@ -2,11 +2,11 @@ package com.wearableintelligencesystem.androidsmartphone;
 
 import android.util.Log;
 
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.FinalScrollingTextEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.IntermediateScrollingTextEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.ScrollingTextViewStartEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
-import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
+import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.wearableintelligencesystem.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 

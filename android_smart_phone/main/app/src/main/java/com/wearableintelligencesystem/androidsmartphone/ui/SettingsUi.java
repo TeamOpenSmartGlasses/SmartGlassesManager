@@ -17,6 +17,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import android.content.ComponentName;
 
+import com.teamopensmartglasses.sgmlib.SmartGlassesAndroidService;
 import com.wearableintelligencesystem.androidsmartphone.MainActivity;
 
 //import res
@@ -112,8 +113,14 @@ public class SettingsUi extends Fragment {
         final Button triggerHelloWorldButton = view.findViewById(R.id.trigger_tpa_command);
         triggerHelloWorldButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Code here executes on main thread after user presses button
-                ((MainActivity)getActivity()).triggerHelloWorldTpa();
+                //((MainActivity)getActivity()).triggerHelloWorldTpa();
+
+                String tpaPackageName = "com.google.mlkit.samples.nl.translate";
+                String tpaServiceName = ".java.TranslationService";
+                Intent i = new Intent();
+                i.setAction(SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
+                i.setComponent(new ComponentName(tpaPackageName, tpaPackageName+tpaServiceName));
+                ComponentName c = ((MainActivity)getActivity()).startForegroundService(i);
             }
         });
     }
