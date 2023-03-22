@@ -23,7 +23,7 @@
                 android:id="@+id/imageView2"
                 android:layout_width="70dp"
                 android:layout_height="35dp"
-                android:src="@drawable/wis_app_icon_transparent_bg_white_text"
+                android:src="@drawable/sgm_app_transparent_bg_white_text_icon"
                 android:background="@android:color/transparent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

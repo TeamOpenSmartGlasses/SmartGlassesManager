@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.wearableintelligencesystem.androidsmartphone">
+    package="com.smartglassesmanager.androidsmartphone">
 
   <uses-sdk
       android:minSdkVersion="28"
@@ -33,15 +33,15 @@
 
   <application
       android:allowBackup="true"
-      android:icon="@mipmap/wis_launcher"
-      android:label="Wearable Intelligence System ASP"
-      android:roundIcon="@mipmap/wis_launcher"
+      android:icon="@mipmap/sgm_launcher"
+      android:label="Smart Glasses Manager"
+      android:roundIcon="@mipmap/sgm_launcher"
       android:usesCleartextTraffic="true"
       android:supportsRtl="true"
       android:theme="@style/AppTheme"
       >
       <activity
-          android:name=".MainActivity"
+          android:name="com.smartglassesmanager.androidsmartphone.MainActivity"
           android:exported="true"
           android:screenOrientation="portrait">
           <intent-filter>
@@ -50,7 +50,7 @@
           </intent-filter>
       </activity>
 
-          <service android:name=".WearableAiAspService" />
+          <service android:name="com.smartglassesmanager.androidsmartphone.WearableAiAspService" />
 
       <provider
           android:name="androidx.core.content.FileProvider"
@@ -62,7 +62,7 @@
               android:resource="@xml/file_provider" />
       </provider>
 
-        <receiver android:name="SGMLib.SGMBroadcastReceiver"
+        <receiver android:name="com.smartglassesmanager.androidsmartphone.comms.SGMLibBroadcastReceiver"
           android:enabled="true"
           android:exported="true"
           >
