@@ -28,6 +28,7 @@ public class SGMLib {
     public HashMap<DataStreamType, TranscriptCallback> subscribedDataStreams;
 
     private SmartGlassesAndroidService smartGlassesAndroidService;
+
     public SGMLib(Context context){
         this.mContext = context;
         sgmCallbackMapper = new SGMCallbackMapper();
@@ -68,6 +69,7 @@ public class SGMLib {
     public void pushScrollingText(String text){
         EventBus.getDefault().post(new FinalScrollingTextEvent(text));
     }
+
     public void stopScrollingText(){
         EventBus.getDefault().post(new ScrollingTextViewStopEvent());
     }

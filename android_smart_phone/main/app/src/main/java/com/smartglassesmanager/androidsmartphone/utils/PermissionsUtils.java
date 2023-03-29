@@ -29,7 +29,7 @@ public class PermissionsUtils {
 
     //location permissions
     //private int LOCATION_PERMISSION_CODE = 1;
-    private int LOCATION_PERMISSION_CODE = 0;
+    private int REQUEST_PERMISSION_CODE = 0;
     private int BACKGROUND_LOCATION_PERMISSION_CODE = 2;
 
     //handle permissions
@@ -84,7 +84,7 @@ public class PermissionsUtils {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             ActivityCompat.requestPermissions(mCallingActivity,
-                                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.RECORD_AUDIO}, LOCATION_PERMISSION_CODE);
+                                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.RECORD_AUDIO}, REQUEST_PERMISSION_CODE);
                         }
                     })
                     .setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
@@ -96,7 +96,7 @@ public class PermissionsUtils {
                     .create().show();
         } else {
             ActivityCompat.requestPermissions(mCallingActivity,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.RECORD_AUDIO}, LOCATION_PERMISSION_CODE);
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.RECORD_AUDIO}, REQUEST_PERMISSION_CODE);
         }
     }
 
@@ -127,7 +127,7 @@ public class PermissionsUtils {
     }
 
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == LOCATION_PERMISSION_CODE) {
+        if (requestCode == REQUEST_PERMISSION_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // User granted location permission
                 // Now check if android version >= 11, if >= 11 check for Background Location Permission
@@ -150,5 +150,10 @@ public class PermissionsUtils {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             }
         }
+    }
+
+    public void getSomePermissions(){
+        ActivityCompat.requestPermissions(mCallingActivity,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.RECORD_AUDIO}, REQUEST_PERMISSION_CODE);
     }
 }

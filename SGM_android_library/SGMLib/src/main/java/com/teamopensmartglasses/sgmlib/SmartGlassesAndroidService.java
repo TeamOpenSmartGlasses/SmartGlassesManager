@@ -24,8 +24,8 @@ import org.greenrobot.eventbus.Subscribe;
 public abstract class SmartGlassesAndroidService extends LifecycleService {
     // Service Binder given to clients
     private final IBinder binder = new LocalBinder();
-    public static final String ACTION_START_FOREGROUND_SERVICE = "ACTION_START_FOREGROUND_SERVICE";
-    public static final String ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE";
+    public static final String ACTION_START_FOREGROUND_SERVICE = "SGMLIB_ACTION_START_FOREGROUND_SERVICE";
+    public static final String ACTION_STOP_FOREGROUND_SERVICE = "SGMLIB_ACTION_STOP_FOREGROUND_SERVICE";
     private int myNotificationId;
     private Class mainActivityClass;
     private String myChannelId;

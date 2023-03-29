@@ -7,7 +7,7 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }
     }
 }
-rootProject.name = "Wearable Intelligence System ASP"
+rootProject.name = "Smart Glasses Manager"
 include ':app'
 
 include ':SGMLib'
