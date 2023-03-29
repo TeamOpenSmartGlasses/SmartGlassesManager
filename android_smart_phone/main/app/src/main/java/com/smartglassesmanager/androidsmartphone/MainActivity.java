@@ -73,15 +73,16 @@ public class MainActivity extends AppCompatActivity {
 
         //get permissions
         permissionsUtils = new PermissionsUtils(this, TAG);
-        permissionsUtils.checkPermission();
+        permissionsUtils.getSomePermissions();
+//        permissionsUtils.checkPermission();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d(TAG, "run onRequestPermissionsResult");
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        permissionsUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+//        Log.d(TAG, "run onRequestPermissionsResult");
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//        permissionsUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//    }
 
     private static IntentFilter makeMainServiceReceiverIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();

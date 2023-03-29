@@ -158,7 +158,7 @@ public class WearableAiAspService extends LifecycleService {
         builder = new NotificationCompat.Builder(this, CHANNEL_ID);
 
         return builder.setContentIntent(action)
-                .setContentTitle("Wearable Intelligence System - Wearable AI Service")
+                .setContentTitle("Smart Glasses Manager")
                 .setContentText("Communicating with Smart Glasses")
                 .setSmallIcon(R.mipmap.sgm_launcher)
                 .setTicker("...")
