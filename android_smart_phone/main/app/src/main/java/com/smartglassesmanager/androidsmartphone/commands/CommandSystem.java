@@ -1,6 +1,8 @@
 package com.smartglassesmanager.androidsmartphone.commands;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.util.Base64;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.SGMCallbackMapper;
@@ -15,6 +17,12 @@ import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptio
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Map;
 import java.util.UUID;
 
 public class CommandSystem {
@@ -22,12 +30,17 @@ public class CommandSystem {
 
     //hold all registered commands, mostly from TPAs
     public SGMCallbackMapper sgmCallbackMapper;
-//    private boolean debugAppRegistered;
 
     //voice command system
     VoiceCommandServer voiceCommandServer;
 
+    Context mContext;
+
+    final String commandStartString = "command--";
+
     public CommandSystem(Context context){
+        mContext = context;
+
         sgmCallbackMapper = new SGMCallbackMapper();
 
         loadDefaultCommands();
@@ -36,15 +49,11 @@ public class CommandSystem {
         voiceCommandServer = new VoiceCommandServer(context);
         updateInterfaceCommands();
 
-//        debugAppRegistered = false;
+        //load the commands we saved to storage
+        loadCommands();
 
         //subscribe to event bus events
         EventBus.getDefault().register(this);
-    }
-
-    //TODO: remove this once we have real functionality for default commands
-    public void dummyCallback(String args, long commandTime){
-        Log.d(TAG, "Default command dummy callback triggered");
     }
 
     public void launchLiveCaptions(String args, long commandTime){
@@ -73,20 +82,78 @@ public class CommandSystem {
         sgmCallbackMapper.putCommandWithCallback(newCommand, callback);
     }
 
+    public void saveCommand(SGMCommand command) {
+        //save command to memory
+        sgmCallbackMapper.putCommandWithCallback(command, null);
+
+        //save command to storage
+        // Get a reference to the SharedPreferences object
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences("SGMPrefs", Context.MODE_PRIVATE);
+
+        // Add command to the SharedPreferences
+        String commandSerialized = serializeObject(command);
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        String commandId = commandStartString + command.getName();
+        editor.remove(commandId);
+        editor.putString(commandStartString + command.getName(), commandSerialized);
+        editor.apply();
+    }
+
+    public void loadCommands(){
+        // Get a reference to the SharedPreferences object
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences("SGMPrefs", Context.MODE_PRIVATE);
+
+        // Retrieve values from the SharedPreferences
+        Map<String, ?> allEntries = sharedPreferences.getAll();
+        for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith(commandStartString)) {
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    SGMCommand command = (SGMCommand) deserializeObject((String) value);
+                    sgmCallbackMapper.putCommandWithCallback(command, null);
+                    Log.d(TAG, "Key: " + key + ", Value: " + command.getName());
+                }
+            }
+        }
+
+        updateInterfaceCommands();
+    }
+
+    public String serializeObject(Object object) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream outputStream = new ObjectOutputStream(out);
+            outputStream.writeObject(object);
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Base64.encodeToString(out.toByteArray(), Base64.DEFAULT);
+    }
+
+    public static Object deserializeObject(String serialized) {
+        byte[] bytes = Base64.decode(serialized, Base64.DEFAULT);
+        Object object = null;
+        try {
+            ObjectInputStream inputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
+            object = inputStream.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return object;
+    }
+
     private void updateInterfaceCommands(){
         voiceCommandServer.updateVoiceCommands(sgmCallbackMapper.getCommandsList());
     }
 
     @Subscribe
     public void onRegisterCommandRequestEvent(RegisterCommandRequestEvent receivedEvent){
-        sgmCallbackMapper.putCommandWithCallback(receivedEvent.command, null);
+        saveCommand(receivedEvent.command); //save the command to be loaded later
         Log.d(TAG, "Command was registered");
         updateInterfaceCommands();
-
-//        //check if the registered command is the debug command
-//        if (receivedEvent.command.getId().equals(SGMGlobalConstants.DEBUG_COMMAND_ID)) {
-//            debugAppRegistered = true;
-//        }
     }
     @Subscribe
     public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
