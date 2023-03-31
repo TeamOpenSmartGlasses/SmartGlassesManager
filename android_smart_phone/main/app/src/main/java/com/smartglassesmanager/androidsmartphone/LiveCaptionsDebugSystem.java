@@ -2,9 +2,9 @@ package com.smartglassesmanager.androidsmartphone;
 
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
-import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
-import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 
@@ -28,7 +28,7 @@ public class LiveCaptionsDebugSystem {
     public void onStartLiveCaptionsEvent(StartLiveCaptionsEvent receivedEvent){
         active = true;
         //start the mode on the glasses, using scrolling text view
-        EventBus.getDefault().post(new ScrollingTextViewStartEvent(title));
+        EventBus.getDefault().post(new ScrollingTextViewStartRequestEvent(title));
     }
 
     @Subscribe
@@ -39,14 +39,14 @@ public class LiveCaptionsDebugSystem {
     @Subscribe
     public void onSpeechRecFinalOutputReceived(SpeechRecFinalOutputEvent receivedEvent){
         if (active) {
-            EventBus.getDefault().post(new FinalScrollingTextEvent(receivedEvent.text));
+            EventBus.getDefault().post(new FinalScrollingTextRequestEvent(receivedEvent.text));
         }
     }
 
     @Subscribe
     public void onSpeechRecIntermediateOutputReceived(SpeechRecIntermediateOutputEvent receivedEvent){
         if (active) {
-            EventBus.getDefault().post(new IntermediateScrollingTextEvent(receivedEvent.text));
+            EventBus.getDefault().post(new IntermediateScrollingTextRequestEvent(receivedEvent.text));
         }
     }
 
