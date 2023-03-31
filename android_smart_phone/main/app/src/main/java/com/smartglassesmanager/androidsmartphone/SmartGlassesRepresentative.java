@@ -11,14 +11,15 @@ import android.util.Log;
 
 //custom, our code
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
-import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
-import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewUpdateRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
 import com.smartglassesmanager.androidsmartphone.sensors.AudioChunkCallback;
 import com.smartglassesmanager.androidsmartphone.sensors.MicrophoneLocalAndBluetooth;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
@@ -160,6 +161,11 @@ class SmartGlassesRepresentative {
     }
 
     @Subscribe
+    public void onHomeScreenEvent(HomeScreenEvent receivedEvent){
+        homeScreen();
+    }
+
+    @Subscribe
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
@@ -168,21 +174,21 @@ class SmartGlassesRepresentative {
     }
 
     @Subscribe
-    public void onStartScrollingTextViewEvent(ScrollingTextViewStartEvent receivedEvent){
+    public void onStartScrollingTextViewEvent(ScrollingTextViewStartRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.startScrollingTextViewMode(receivedEvent.title);
         }
     }
 
     @Subscribe
-    public void onStopScrollingTextViewEvent(ScrollingTextViewStopEvent receivedEvent){
+    public void onStopScrollingTextViewEvent(ScrollingTextViewStopRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.stopScrollingTextViewMode();
         }
     }
 
     @Subscribe
-    public void onFinalScrollingTextEvent(FinalScrollingTextEvent receivedEvent) {
+    public void onFinalScrollingTextEvent(FinalScrollingTextRequestEvent receivedEvent) {
         Log.d(TAG, "onFinalScrollingTextEvent");
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.scrollingTextViewFinalText(receivedEvent.text);
@@ -190,7 +196,7 @@ class SmartGlassesRepresentative {
     }
 
     @Subscribe
-    public void onIntermediateScrollingTextEvent(IntermediateScrollingTextEvent receivedEvent) {
+    public void onIntermediateScrollingTextEvent(IntermediateScrollingTextRequestEvent receivedEvent) {
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.scrollingTextViewIntermediateText(receivedEvent.text);
         }

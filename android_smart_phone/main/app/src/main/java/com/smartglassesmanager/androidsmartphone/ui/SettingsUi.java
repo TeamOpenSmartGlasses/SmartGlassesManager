@@ -102,27 +102,27 @@ public class SettingsUi extends Fragment {
         });
 
         //setup live captions launcher
-        final Button startLiveCaptionsButton = view.findViewById(R.id.start_live_captions);
-        startLiveCaptionsButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Code here executes on main thread after user presses button
-                startLiveCaptions();
-            }
-        });
-
-        final Button triggerHelloWorldButton = view.findViewById(R.id.trigger_tpa_command);
-        triggerHelloWorldButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                //((MainActivity)getActivity()).triggerHelloWorldTpa();
-
-                String tpaPackageName = "com.google.mlkit.samples.nl.translate";
-                String tpaServiceName = ".java.TranslationService";
-                Intent i = new Intent();
-                i.setAction(SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
-                i.setComponent(new ComponentName(tpaPackageName, tpaPackageName+tpaServiceName));
-                ComponentName c = ((MainActivity)getActivity()).startForegroundService(i);
-            }
-        });
+//        final Button startLiveCaptionsButton = view.findViewById(R.id.start_live_captions);
+//        startLiveCaptionsButton.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//                // Code here executes on main thread after user presses button
+//                startLiveCaptions();
+//            }
+//        });
+//
+//        final Button triggerHelloWorldButton = view.findViewById(R.id.trigger_tpa_command);
+//        triggerHelloWorldButton.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//                //((MainActivity)getActivity()).triggerHelloWorldTpa();
+//
+//                String tpaPackageName = "com.google.mlkit.samples.nl.translate";
+//                String tpaServiceName = ".java.TranslationService";
+//                Intent i = new Intent();
+//                i.setAction(SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
+//                i.setComponent(new ComponentName(tpaPackageName, tpaPackageName+tpaServiceName));
+//                ComponentName c = ((MainActivity)getActivity()).startForegroundService(i);
+//            }
+//        });
     }
 
     public void sendTestCard(){

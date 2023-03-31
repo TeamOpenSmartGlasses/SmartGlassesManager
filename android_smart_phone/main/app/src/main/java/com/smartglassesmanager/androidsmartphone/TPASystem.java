@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusRevokedEvent;
 import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
@@ -53,6 +54,11 @@ public class TPASystem {
         if(tpaIsSubscribed){
             sgmLibBroadcastSender.sendEventToTPAs(SpeechRecIntermediateOutputEvent.eventId, event);
         }
+    }
+
+    @Subscribe
+    public void onFocusRevoked(FocusRevokedEvent receivedEvent) {
+        sgmLibBroadcastSender.sendEventToTPAs(FocusRevokedEvent.eventId, receivedEvent);
     }
 
     @Subscribe

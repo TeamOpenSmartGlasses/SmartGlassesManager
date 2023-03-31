@@ -2,10 +2,10 @@ package com.teamopensmartglasses.sgmlib.events;
 
 import java.io.Serializable;
 
-public class ScrollingTextViewStartEvent implements Serializable {
+public class ScrollingTextViewStartRequestEvent implements Serializable {
     public String title;
     public static final String eventId = "scrollingTextViewStartEvent";
-    public ScrollingTextViewStartEvent(String title){
+    public ScrollingTextViewStartRequestEvent(String title){
         this.title = title;
     }
 }

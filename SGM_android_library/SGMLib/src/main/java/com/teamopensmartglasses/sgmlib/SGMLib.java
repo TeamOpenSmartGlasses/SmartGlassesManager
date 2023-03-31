@@ -4,11 +4,11 @@ import android.content.Context;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
-import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 
@@ -63,15 +63,15 @@ public class SGMLib {
     }
 
     public void startScrollingText(String title){
-        EventBus.getDefault().post(new ScrollingTextViewStartEvent(title));
+        EventBus.getDefault().post(new ScrollingTextViewStartRequestEvent(title));
     }
 
     public void pushScrollingText(String text){
-        EventBus.getDefault().post(new FinalScrollingTextEvent(text));
+        EventBus.getDefault().post(new FinalScrollingTextRequestEvent(text));
     }
 
     public void stopScrollingText(){
-        EventBus.getDefault().post(new ScrollingTextViewStopEvent());
+        EventBus.getDefault().post(new ScrollingTextViewStopRequestEvent());
     }
 
     @Subscribe

@@ -18,8 +18,8 @@ public class SGMCommand implements Serializable {
     public String argPrompt;
     public ArrayList argOptions;
 
-    public String packageName = "";
-    public String serviceName = "";
+    public String packageName; //the name of the package that made and owns this command
+    public String serviceName;
 
     public SGMCommand(String name, UUID id, String[] phrases, String description){
         argRequired = false;

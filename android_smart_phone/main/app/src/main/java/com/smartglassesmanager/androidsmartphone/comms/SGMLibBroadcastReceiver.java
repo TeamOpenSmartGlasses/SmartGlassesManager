@@ -1,20 +1,23 @@
 package com.smartglassesmanager.androidsmartphone.comms;
 
+import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.APP_PKG_NAME;
 import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_BUNDLE;
 import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_ID;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.TPARequestEvent;
 import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
-import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextEvent;
+import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.SubscribeDataStreamRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
@@ -39,28 +42,20 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
 
     public void onReceive(Context context, Intent intent) {
         String eventId = intent.getStringExtra(EVENT_ID);
+        String sendingPackage = intent.getStringExtra(APP_PKG_NAME);
         Serializable serializedEvent = intent.getSerializableExtra(EVENT_BUNDLE);
         Log.d(TAG, "GOT EVENT ID: " + eventId);
-        Log.i("Broadcastreceiver", "BroadcastReceiver Received");
 
         //map from id to event
         switch (eventId) {
+            //if it's a request to run something on glasses or anything else having to do with commands, pipe this through the command system
             case ReferenceCardSimpleViewRequestEvent.eventId:
-                Log.d(TAG, "Resending Reference Card event");
-                EventBus.getDefault().post((ReferenceCardSimpleViewRequestEvent) serializedEvent);
-                break;
-            case ScrollingTextViewStartEvent.eventId:
-                EventBus.getDefault().post((ScrollingTextViewStartEvent) serializedEvent);
-                break;
-            case ScrollingTextViewStopEvent.eventId:
-                EventBus.getDefault().post((ScrollingTextViewStopEvent) serializedEvent);
-                break;
-            case FinalScrollingTextEvent.eventId:
-                EventBus.getDefault().post((FinalScrollingTextEvent) serializedEvent);
-                break;
+            case ScrollingTextViewStartRequestEvent.eventId:
+            case ScrollingTextViewStopRequestEvent.eventId:
+            case FinalScrollingTextRequestEvent.eventId:
             case RegisterCommandRequestEvent.eventId:
-                Log.d(TAG, "Resending register command request event");
-                EventBus.getDefault().post((RegisterCommandRequestEvent) serializedEvent);
+                Log.d(TAG, "Piping command event to CommandSystem for verification before broadcast.");
+                EventBus.getDefault().post(new TPARequestEvent(eventId, serializedEvent, sendingPackage));
                 break;
             case SubscribeDataStreamRequestEvent.eventId:
                 Log.d(TAG, "Resending subscribe to data stream request event");
