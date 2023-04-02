@@ -5,6 +5,8 @@ import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
@@ -24,6 +26,7 @@ public class SGMLib {
     private TPABroadcastSender sgmSender;
     private Context mContext;
     private SGMCallbackMapper sgmCallbackMapper;
+    private FocusCallback focusCallback;
 
     public HashMap<DataStreamType, TranscriptCallback> subscribedDataStreams;
 
@@ -51,6 +54,12 @@ public class SGMLib {
 
     public void subscribe(DataStreamType dataStreamType, TranscriptCallback callback){
         subscribedDataStreams.put(dataStreamType, callback);
+    }
+
+    //TPA request to be the app in focus - SGM has to grant this request
+    public void requestFocus(FocusCallback callback){
+        focusCallback = callback;
+        EventBus.getDefault().post(new FocusRequestEvent(true));
     }
 
     //register our app with the SGM
@@ -105,6 +114,13 @@ public class SGMLib {
         long time = event.timestamp;
         if (subscribedDataStreams.containsKey(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM)) {
             subscribedDataStreams.get(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM).call(text, time, true);
+        }
+    }
+
+    @Subscribe
+    public void onFocusChange(FocusChangedEvent event) {
+        if (focusCallback != null){
+            focusCallback.runFocusChange(event.focusState);
         }
     }
 

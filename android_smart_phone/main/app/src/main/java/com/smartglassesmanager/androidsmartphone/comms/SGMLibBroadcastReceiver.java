@@ -14,6 +14,8 @@ import android.util.Log;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.TPARequestEvent;
 import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
@@ -54,6 +56,7 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
             case ScrollingTextViewStopRequestEvent.eventId:
             case FinalScrollingTextRequestEvent.eventId:
             case RegisterCommandRequestEvent.eventId:
+            case FocusRequestEvent.eventId:
                 Log.d(TAG, "Piping command event to CommandSystem for verification before broadcast.");
                 EventBus.getDefault().post(new TPARequestEvent(eventId, serializedEvent, sendingPackage));
                 break;

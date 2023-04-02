@@ -2,17 +2,21 @@ package com.smartglassesmanager.androidsmartphone.commands;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
 
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SGMStealFocus;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.TPARequestEvent;
+import com.teamopensmartglasses.sgmlib.FocusStates;
 import com.teamopensmartglasses.sgmlib.SGMCallbackMapper;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.SGMCallback;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.FocusRevokedEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
@@ -53,12 +57,17 @@ public class CommandSystem {
     }
 
     private AppPrivilegeTimeout appPrivilegeTimeout;
-    private String focusedAppPackage; //if an app was triggered and took focus by starting a mode, then this will tell us which app is currently in focus
+    private FocusedApp focusedApp; //if an app was triggered and took focus by starting a mode, then this will tell us which app is currently in focus
 
     Context mContext;
 
     final String commandStartString = "command--";
     final int commandResponseWindowTime = 2000; //how long a TPA has to send a response request event
+    final int suspendFocusTime = 8000; //how long we allow an out of focus app to display before switching back to in-focus app
+    public final long NO_UNSUSPEND_DELAY = 0;
+
+    //handler for suspension focus changes
+    Handler focusHandler;
 
     public CommandSystem(Context context) {
         mContext = context;
@@ -70,6 +79,9 @@ public class CommandSystem {
         //start voice command server to parse transcript for voice command
         voiceCommandServer = new VoiceCommandServer(context);
         updateInterfaceCommands();
+
+        //setup a handler to handle suspension focus changes
+        focusHandler = new Handler();
 
         //load the commands we saved to storage
         loadCommands();
@@ -88,9 +100,8 @@ public class CommandSystem {
     }
 
     public void goHome(String args, long commandTime) {
-        focusedAppPackage = null;
+        clearFocusedApp();
         EventBus.getDefault().post(new HomeScreenEvent());
-        EventBus.getDefault().post(new FocusRevokedEvent());
     }
 
     public void loadDefaultCommands() {
@@ -98,18 +109,21 @@ public class CommandSystem {
 //        registerCommand("Live Captions", UUID.fromString("933b8950-412e-429e-8fb6-430f973cc9dc"), new String[]{"live captions", "live life captions", "captions", "transcription"}, "Starts streaming captions live to the glasses display.", this::launchLiveCaptions);
 
         //test reference card
-        registerCommand("Test", UUID.fromString("f4290426-18d5-431a-aea4-21844b832735"), new String[]{"show me a test card", "test card", "test", "testing", "show test card"}, "Shows a test Reference Card on the glasses display.", this::launchTestCard);
+        registerLocalCommand("Test", UUID.fromString("f4290426-18d5-431a-aea4-21844b832735"), new String[]{"Test", "test", "show me a test card", "test card", "testing", "show test card"}, "Shows a test Reference Card on the glasses display.", this::launchTestCard);
 
         //go home
-        registerCommand("Go Home", UUID.fromString("07111c55-b8e0-41d2-a6dd-d994ab946d1e"), new String[]{"go home", "quit", "stop"}, "Exits current mode and goes back to the home screen.", this::goHome);
+        registerLocalCommand("Go Home", UUID.fromString("07111c55-b8e0-41d2-a6dd-d994ab946d1e"), new String[]{"Home", "go home", "quit", "stop"}, "Exits current mode and goes back to the home screen.", this::goHome);
 
 //        //blank screen
 //        registerCommand("Blank Screen", UUID.fromString("93401154-b4ab-4166-9aa3-58b79db41ff0"), new String[] { "turn off display", "blank screen" }, "Makes the smart glasses display turn off or go blank.", this::dummyCallback);
     }
 
-    public void registerCommand(String name, UUID id, String[] phrases, String description, SGMCallback callback) {
+    public void registerLocalCommand(String name, UUID id, String[] phrases, String description, SGMCallback callback) {
         //add a new command
         SGMCommand newCommand = new SGMCommand(name, id, phrases, description);
+        newCommand.packageName = mContext.getPackageName();
+        newCommand.serviceName = mContext.getClass().getName();
+
         sgmCallbackMapper.putCommandWithCallback(newCommand, callback);
     }
 
@@ -144,7 +158,6 @@ public class CommandSystem {
                 if (value instanceof String) {
                     SGMCommand command = (SGMCommand) deserializeObject((String) value);
                     sgmCallbackMapper.putCommandWithCallback(command, null);
-                    Log.d(TAG, "Key: " + key + ", Value: " + command.getName());
                 }
             }
         }
@@ -189,8 +202,6 @@ public class CommandSystem {
 
     @Subscribe
     public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent) {
-        focusedAppPackage = null; //clear the focused app
-
         SGMCommand command = receivedEvent.command;
         String args = receivedEvent.args;
         long commandTriggeredTime = receivedEvent.commandTriggeredTime;
@@ -203,8 +214,19 @@ public class CommandSystem {
             SGMCallback callback = sgmCallbackMapper.getCommandCallback(command);
             if (callback != null) {
                 Log.d(TAG, "Running command");
+                suspendFocusIfNotFocused(mContext.getPackageName());
                 callback.runCommand(args, commandTriggeredTime);
             }
+        }
+    }
+
+
+    @Subscribe
+    public void onSGMStealFocus(SGMStealFocus receivedEvent) {
+        if (receivedEvent.inFocus == true){
+            suspendFocusedApp(NO_UNSUSPEND_DELAY);
+        } else {
+            unsuspendFocusedApp();
         }
     }
 
@@ -217,13 +239,15 @@ public class CommandSystem {
 
     //check is an app making a request should be granted that specific request right now
     private boolean checkAppHasPrivilege(String eventId, String sendingPackage){
+        Log.d(TAG, "event requesting privilege: " + eventId);
+
         //check if app has focus - if so, it can do whatever it wants
-        if (sendingPackage.equals(focusedAppPackage)){
+        if (isInActiveFocus(sendingPackage)){
             return true;
         }
 
         //if the app doesn't have focus, then we have to check if its been recently triggered and thus allowed to do something
-        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId)) {
+        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId) | eventId.equals(FocusRequestEvent.eventId)) {
             //if the app took too long to respond, don't allow it to run anything
             if (appPrivilegeTimeout == null) {
                 return false;
@@ -239,6 +263,36 @@ public class CommandSystem {
 
         //if not focused and not recently triggered, the app does not have permission to run anything
         return false;
+    }
+
+    //if package asked for focus, give it to them (should always run checkPrivileges before running this
+    public void focusRequested(String sendingAppPackage, boolean focusRequest){
+        Log.d(TAG, "Focus being requested by: " + sendingAppPackage);
+        //if package asked to drop focus
+        if (!focusRequest){
+            if (focusedApp.getAppPackage().equals(sendingAppPackage)){
+                clearFocusedApp();
+            }
+        }
+
+        setFocusedApp(sendingAppPackage);
+    }
+
+    //if a package that isn't in focus requests and event, and it's granted, we need to suspend focus for some time so the unfocused app has time to display before returning to the focused app
+    public void suspendFocusIfNotFocused(String sendingAppPackage){
+        Log.d(TAG, "Suspend focus if not focused: " + sendingAppPackage);
+        //if no app is in focus, do nothing
+        if (focusedApp == null){
+            return;
+        }
+
+        //if the app is in focus already, no need to suspend
+        if (sendingAppPackage.equals(focusedApp.getAppPackage())){
+            return;
+        }
+
+        //if the app isn't in focus, suspend the current app for certain amount of time
+        suspendFocusedApp(suspendFocusTime);
     }
 
     //respond and approve events below
@@ -260,24 +314,94 @@ public class CommandSystem {
             //map from id to event for all events that need permissions
             switch (receivedEvent.eventId) {
                 case ReferenceCardSimpleViewRequestEvent.eventId:
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((ReferenceCardSimpleViewRequestEvent) receivedEvent.serializedEvent);
                     break;
                 case ScrollingTextViewStartRequestEvent.eventId: //mode start command - gives app focus
-                    focusedAppPackage = receivedEvent.sendingPackage;
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((ScrollingTextViewStartRequestEvent) receivedEvent.serializedEvent);
                     break;
                 case ScrollingTextViewStopRequestEvent.eventId:
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((ScrollingTextViewStopRequestEvent) receivedEvent.serializedEvent);
                     break;
                 case FinalScrollingTextRequestEvent.eventId:
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((FinalScrollingTextRequestEvent) receivedEvent.serializedEvent);
                     break;
                 case IntermediateScrollingTextRequestEvent.eventId:
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((IntermediateScrollingTextRequestEvent) receivedEvent.serializedEvent);
+                    break;
+                case FocusRequestEvent.eventId:
+                    focusRequested(receivedEvent.sendingPackage, ((FocusRequestEvent) receivedEvent.serializedEvent).focusRequest);
                     break;
             }
         } else {
             Log.d(TAG, "Denied event requested by: " + receivedEvent.sendingPackage);
+        }
+    }
+
+    private void setFocusedApp(String sendingAppPackage){
+        Log.d(TAG, "Focusing app: " + sendingAppPackage);
+        focusedApp = new FocusedApp(FocusStates.IN_FOCUS, sendingAppPackage);
+
+        //send out event of which app is now in focus
+        EventBus.getDefault().post(new FocusChangedEvent(FocusStates.IN_FOCUS, sendingAppPackage));
+    }
+
+    private void clearFocusedApp(){
+        Log.d(TAG, "Clearing focused app.");
+        //send out event to the app which has been revoked focus
+        if (focusedApp == null){
+            return;
+        }
+
+        EventBus.getDefault().post(new FocusChangedEvent(FocusStates.OUT_FOCUS, focusedApp.getAppPackage()));
+
+        //clear current focus
+        focusHandler.removeCallbacksAndMessages(null);
+        focusedApp = null; //clear the focused app
+    }
+
+    private boolean isInActiveFocus(String sendingAppPackage){
+        if (focusedApp != null){
+            if (focusedApp.getAppPackage().equals(sendingAppPackage)){
+                if (focusedApp.getFocusState().equals(FocusStates.IN_FOCUS)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void unsuspendFocusedApp(){
+        if (focusedApp != null) {
+            Log.d(TAG, "Unsuspending focused app: " + focusedApp.getAppPackage());
+            setFocusedApp(focusedApp.getAppPackage());
+        }
+    }
+
+    private void suspendFocusedApp(long timeout){
+        if (focusedApp == null){
+            return;
+        }
+
+        Log.d(TAG, "Suspending focused app: " + focusedApp.getAppPackage());
+
+        focusedApp.setFocusState(FocusStates.IN_FOCUS_SUSPENDED);
+
+        //send out event to the app which has been revoked focus
+        EventBus.getDefault().post(new FocusChangedEvent(FocusStates.IN_FOCUS_SUSPENDED, focusedApp.getAppPackage()));
+
+        //setup a handler to return focus in time, if there is any delay at all
+        if (timeout > 0) {
+            focusHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    unsuspendFocusedApp();
+                }
+            }, timeout);
         }
     }
 

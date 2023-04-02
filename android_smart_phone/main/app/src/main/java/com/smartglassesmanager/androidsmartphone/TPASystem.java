@@ -5,7 +5,7 @@ import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
-import com.teamopensmartglasses.sgmlib.events.FocusRevokedEvent;
+import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
@@ -33,12 +33,14 @@ public class TPASystem {
 
     @Subscribe
     public void onCommandTriggeredEvent(CommandTriggeredEvent receivedEvent){
-        Log.d(TAG, "Command was triggered.");
+        Log.d(TAG, "Command was triggered: " + receivedEvent.command.getName());
         SGMCommand command = receivedEvent.command;
         String args = receivedEvent.args;
         long commandTriggeredTime = receivedEvent.commandTriggeredTime;
-        if (command != null){
-            sgmLibBroadcastSender.sendEventToTPAs(CommandTriggeredEvent.eventId, new CommandTriggeredEvent(command, args, commandTriggeredTime));
+        if (command != null) {
+            if (command.packageName != null){
+                sgmLibBroadcastSender.sendEventToTPAs(CommandTriggeredEvent.eventId, new CommandTriggeredEvent(command, args, commandTriggeredTime));
+            }
         }
     }
 
@@ -57,8 +59,8 @@ public class TPASystem {
     }
 
     @Subscribe
-    public void onFocusRevoked(FocusRevokedEvent receivedEvent) {
-        sgmLibBroadcastSender.sendEventToTPAs(FocusRevokedEvent.eventId, receivedEvent);
+    public void onFocusChanged(FocusChangedEvent receivedEvent) {
+        sgmLibBroadcastSender.sendEventToTPAs(FocusChangedEvent.eventId, receivedEvent, receivedEvent.appPackage);
     }
 
     @Subscribe
