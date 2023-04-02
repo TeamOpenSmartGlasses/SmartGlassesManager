@@ -26,6 +26,7 @@ import android.os.HandlerThread;
 import android.util.Log;
 import android.util.Pair;
 
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SGMStealFocus;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
@@ -402,6 +403,9 @@ public class VoiceCommandServer {
 
         Log.d(TAG, "FOUND WAKE WORD: " + wakeWord);
 
+        //steal focus
+        EventBus.getDefault().post(new SGMStealFocus(true));
+
         waked = true;
         this.wakeWordGiven = wakeWord;
         this.wakeWordEndIdx = wakeWordEndIdx;
@@ -433,6 +437,9 @@ public class VoiceCommandServer {
     private void runCommand(SGMCommand vc, String preArgs, String wakeWord, String postArgs, long commandTime){
         //the voice command itself will handle sending the appropriate response to the ASG
         resetVoiceCommand();
+
+        //drop our stolen focus
+//        EventBus.getDefault().post(new SGMStealFocus(false));
 
         //trigger the command
         EventBus.getDefault().post(new CommandTriggeredEvent(vc, postArgs, commandTime));
@@ -475,6 +482,7 @@ public class VoiceCommandServer {
         resetVoiceCommand();
         Log.d(TAG, "CANCEL VOICE COMMAND");
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent("Cancel Voice Command", "Cancelling voice command input."));
+        EventBus.getDefault().post(new SGMStealFocus(false));
     }
 
     //helper functions

@@ -26,6 +26,9 @@ public class SGMLibBroadcastSender {
     }
 
     public void sendEventToTPAs(String eventId, Serializable eventBundle) {
+        sendEventToTPAs(eventId, eventBundle, null);
+    }
+    public void sendEventToTPAs(String eventId, Serializable eventBundle, String tpaPackageName) {
         //If we're triggering a command, make sure the command's respective service is running
         if(eventId == CommandTriggeredEvent.eventId){
             SGMCommand cmd = ((CommandTriggeredEvent)eventBundle).command;
@@ -35,6 +38,9 @@ public class SGMLibBroadcastSender {
         //setup intent to send
         Intent intent = new Intent();
         intent.setAction(intentPkg);
+        if (tpaPackageName != null) {
+            intent.setPackage(tpaPackageName);
+        }
         intent.setFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
 
         //load in and send data
