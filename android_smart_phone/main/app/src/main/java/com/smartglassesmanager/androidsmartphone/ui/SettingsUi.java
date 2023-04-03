@@ -98,6 +98,19 @@ public class SettingsUi extends Fragment {
             public void onClick(View v) {
                 // Code here executes on main thread after user presses button
                 sendTestCard();
+
+                /*
+                //String tpaPackageName = "com.teamopensmartglasses.translate";
+                //String tpaServiceName = ".TranslationService";
+                String tpaPackageName = "com.teamopensmartglasses.searchengine";
+                String tpaServiceName = ".SearchEngineService";
+                Intent i = new Intent();
+                i.setAction("SGM_COMMAND_INTENT");
+                i.putExtra(SmartGlassesAndroidService.TPA_ACTION, SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
+
+                i.setComponent(new ComponentName(tpaPackageName, tpaPackageName+tpaServiceName));
+                ComponentName c = ((MainActivity)getActivity()).startForegroundService(i);
+                */
             }
         });
 

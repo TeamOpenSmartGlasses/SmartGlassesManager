@@ -58,7 +58,8 @@ public class SGMLibBroadcastSender {
         if(sgmCommand.getPackageName() == "" || sgmCommand.getServiceName() == "") return;
 
         Intent i = new Intent();
-        i.setAction(SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
+        i.setAction("SGM_COMMAND_INTENT");
+        i.putExtra(SmartGlassesAndroidService.TPA_ACTION, SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
         i.setComponent(new ComponentName(sgmCommand.packageName, sgmCommand.serviceName));
         ComponentName c = context.startForegroundService(i);
     }

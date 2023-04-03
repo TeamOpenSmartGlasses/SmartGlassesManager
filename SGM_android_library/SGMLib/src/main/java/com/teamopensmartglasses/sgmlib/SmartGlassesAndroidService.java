@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -24,6 +25,8 @@ import org.greenrobot.eventbus.Subscribe;
 public abstract class SmartGlassesAndroidService extends LifecycleService {
     // Service Binder given to clients
     private final IBinder binder = new LocalBinder();
+
+    public static final String TPA_ACTION = "tpaAction";
     public static final String ACTION_START_FOREGROUND_SERVICE = "SGMLIB_ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "SGMLIB_ACTION_STOP_FOREGROUND_SERVICE";
     private int myNotificationId;
@@ -88,17 +91,20 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         if (intent != null) {
-            String action = intent.getAction();
-            switch (action) {
-                case ACTION_START_FOREGROUND_SERVICE:
-                    // start the service in the foreground
-                    Log.d("TEST", "starting foreground");
-                    startForeground(myNotificationId, updateNotification());
-                    break;
-                case ACTION_STOP_FOREGROUND_SERVICE:
-                    stopForeground(true);
-                    stopSelf();
-                    break;
+            Bundle extras = intent.getExtras();
+            if (extras != null){
+                String action = (String) extras.get(TPA_ACTION);
+                switch (action) {
+                    case ACTION_START_FOREGROUND_SERVICE:
+                        // start the service in the foreground
+                        Log.d("TEST", "starting foreground");
+                        startForeground(myNotificationId, updateNotification());
+                        break;
+                    case ACTION_STOP_FOREGROUND_SERVICE:
+                        stopForeground(true);
+                        stopSelf();
+                        break;
+                }
             }
         }
         return Service.START_STICKY;
