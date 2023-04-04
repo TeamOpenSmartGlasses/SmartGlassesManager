@@ -28,7 +28,7 @@ public class SgmLibDebugAppService extends SmartGlassesAndroidService {
     public void onCreate() {
         super.onCreate();
         //setup SGM lib
-        sgmLib = new SGMLib(getApplicationContext());
+        sgmLib = new SGMLib(this);
 
         //register a basic command with the SGM
         SGMCommand helloWorldCommand = new SGMCommand("Debug One Shot", UUID.fromString(SGMGlobalConstants.DEBUG_COMMAND_ID), new String[]{"Hello world"}, "Hello world command desc");

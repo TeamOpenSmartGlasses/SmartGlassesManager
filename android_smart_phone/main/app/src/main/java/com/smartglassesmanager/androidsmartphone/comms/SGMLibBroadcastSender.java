@@ -33,6 +33,13 @@ public class SGMLibBroadcastSender {
         if(eventId == CommandTriggeredEvent.eventId){
             SGMCommand cmd = ((CommandTriggeredEvent)eventBundle).command;
             startSgmCommandService(cmd);
+            //delay a short time so the service can start before we send it the data
+            try {
+                Thread.sleep(350);
+            } catch (InterruptedException e){
+                e.printStackTrace();
+                Log.d(TAG, "Interrupted while waiting for TPA service to start.");
+            }
         }
 
         //setup intent to send
@@ -53,9 +60,12 @@ public class SGMLibBroadcastSender {
     public void startSgmCommandService(SGMCommand sgmCommand){
         //tpaPackageName = "com.google.mlkit.samples.nl.translate";
         //tpaServiceName = ".java.TranslationService";
-        Log.d(TAG, "Starting command service: " + sgmCommand.packageName);
+        Log.d(TAG, "Starting command package: " + sgmCommand.packageName);
+        Log.d(TAG, "Starting command service: " + sgmCommand.serviceName);
 
-        if(sgmCommand.getPackageName() == "" || sgmCommand.getServiceName() == "") return;
+        if(sgmCommand.getPackageName() == "" || sgmCommand.getServiceName() == ""){
+            return;
+        }
 
         Intent i = new Intent();
         i.setAction(SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
