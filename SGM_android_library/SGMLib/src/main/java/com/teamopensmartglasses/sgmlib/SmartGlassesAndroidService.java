@@ -92,7 +92,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             switch (action) {
                 case ACTION_START_FOREGROUND_SERVICE:
                     // start the service in the foreground
-                    Log.d("TEST", "starting foreground");
                     startForeground(myNotificationId, updateNotification());
                     break;
                 case ACTION_STOP_FOREGROUND_SERVICE:
