@@ -1,8 +1,42 @@
 # SmartGlassesManager
 
-The *Smart Glasses Manager* (name TBD) is an application that solves a major problem of smart glasses. Namely, we want multiple different apps to run on our phone, and all of them to display on our smart glasses. However, only 1 app can connect to the glasses at any 1 time using bluetooth, and something has to manage the UI, which app is displaying, etc. The Smart Glasses Manager is that 1 app that connects to the glasses, handles the UI, and displays information from various third party apps on your smart glasses. This has the handy side-effect that one can write 1 app, and it will work on any pair of smart glasses that the Smart Glassses Manager supports.
+<p align="center">
+    <b>The most important app for smart glasses.</b>
+</p>
 
-This project is being built by TeamOpenSmartGlasses. It was started by Cayden Pierce at Emex Labs as the WearableIntelligenceSystem (WIS). We are taking the WIS and stripping it down to fulfill only the things we discuss in this document.
+<p align="center">
+    <img src="./res/SGM_app_icon_google_play.png" width="25%">
+</p>
+
+### Users
+The SmartGlassesManager gives you access to a huge number of applications for your smart glasses. This includes search engine, language translation, ChatGPT conversations, note-taking, intelligent assistants, etc. applications not available anywhere else.
+
+### Developers
+Building apps that run on a smart phone and stream data to smart glasses is hard, but it’s how today’s lightweight smart glasses work. We handle the connection, UI, data streaming, and transcription, allowing you to rapidly develop smart glasses applications that run on any pair of smart glasses.
+
+### Industry
+Your smart glasses won’t see massive consumer adoption if third party developers can’t make awesome apps for your hardware. The SmartGlassesManager is a middleware which already supports many apps and makes it easy for developers to build more. That means, if you add support to your hardware for a single application – the SmartGlassesManager – your glasses will instantly support a plethora of consumer-facing applications.
+
+<p align="center">
+    <img src="./res/SmartGlassesManager_Screenshots_20230405.png" width="80%" margin-left="auto" margin-right="auto">
+</p>
+
+### How?
+
+The Smart Glasses Manager is an app that solves some major problems in the smart glasses industry.
+
+The problems:
+
+- it's hard to write smart glasses applications
+- we want multiple different apps to run on our phone, and all of them to display on our smart glasses.
+- only 1 app can connect to the glasses at any 1 time
+- something has to manage connecting to the glasses, the UI, which app is displaying, voice commands, streaming data back and forth, etc.
+ 
+The solution:
+
+The Smart Glasses Manager is that 1 app. It connects to the glasses, handles the UI, and displays information from various third-party apps directly on your smart glasses. This enables developers to write 1 app that will automagically work on any pair of smart glasses that the SmartGlasssesManager supports.
+
+This project is being built by [TeamOpenSmartGlasses](https://teamopensmartglasses.com).
 
 ## Architecture
 
