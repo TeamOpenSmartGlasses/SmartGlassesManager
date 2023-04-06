@@ -117,4 +117,9 @@ public class MainActivity extends AppCompatActivity {
             mService.sgmLib.sendReferenceCard("TPA Button Clicked", "Button was clicked. This is the content body of a card that was sent from a TPA using the SGMLib.");
         }
     }
+
+    public void killServiceClicked(View v) {
+        Log.d(TAG, "Pressed 'Killed Service' button.");
+        stopSgmLibService();
+    }
 }

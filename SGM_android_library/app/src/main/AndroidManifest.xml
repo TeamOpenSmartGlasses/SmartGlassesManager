@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.teamopensmartglasses.sgmlibdebugapp"
-    android:versionCode="1"
-    android:versionName="v1">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--SERVICE-->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>

@@ -3,12 +3,13 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
+    namespace 'com.teamopensmartglasses.sgmlibdebugapp'
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.teamopensmartglasses.sgmlibdebugapp"
         minSdk 28
-        targetSdk 31
+        targetSdk 32
         versionCode 1
         versionName "1.0"
 
@@ -35,15 +36,11 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0'
-//    implementation 'androidx.navigation:navigation-fragment:2.5.3'
-//    implementation 'androidx.navigation:navigation-ui:2.5.3'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     // Lifecycle components
-//    implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.archLifecycleVersion"
-//    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$rootProject.archLifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     annotationProcessor "androidx.lifecycle:lifecycle-compiler:2.2.0"
     implementation "com.google.guava:guava:27.1-android"
