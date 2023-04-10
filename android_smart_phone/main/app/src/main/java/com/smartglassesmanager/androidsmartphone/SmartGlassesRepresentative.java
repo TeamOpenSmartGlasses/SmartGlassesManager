@@ -12,6 +12,7 @@ import android.util.Log;
 //custom, our code
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
+import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AudioWearableSGC;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
@@ -71,6 +72,9 @@ class SmartGlassesRepresentative {
                 break;
             case ACTIVELOOK_OS_GLASSES:
                 smartGlassesCommunicator = new ActiveLookSGC(context);
+                break;
+            case AUDIO_WEARABLE_GLASSES:
+                smartGlassesCommunicator = new AudioWearableSGC(context);
                 break;
         }
 

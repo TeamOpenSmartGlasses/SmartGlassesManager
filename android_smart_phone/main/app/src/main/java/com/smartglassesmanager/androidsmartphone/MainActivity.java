@@ -19,6 +19,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.supportedglasses.AudioWearable;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.EngoTwo;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.InmoAirOne;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         //setup the available smart glasses we support
-        smartGlassesDevices = new SmartGlassesDevice[]{new VuzixShield(), new EngoTwo(), new InmoAirOne(), new TCLRayNeoXTwo(), new VuzixUltralite()};
+        smartGlassesDevices = new SmartGlassesDevice[]{new VuzixShield(), new EngoTwo(), new InmoAirOne(), new TCLRayNeoXTwo(), new VuzixUltralite(), new AudioWearable()};
 
         //setup the nav bar
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
