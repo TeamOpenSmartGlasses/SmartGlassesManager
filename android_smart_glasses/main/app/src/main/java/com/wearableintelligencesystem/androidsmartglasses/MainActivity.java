@@ -330,14 +330,14 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case MessageTypes.MODE_LIVE_LIFE_CAPTIONS:
                 navController.navigate(R.id.nav_live_life_captions);
-                modeDisplayName = "LiveCaption";
+                modeDisplayName = "ScrollingText";
                 break;
             case MessageTypes.MODE_CONVERSATION_MODE:
                 navController.navigate(R.id.nav_convo_mode);
                 modeDisplayName = "Convo";
                 break;
             case MessageTypes.MODE_SEARCH_ENGINE_RESULT:
-                modeDisplayName = "SearchResult";
+                modeDisplayName = "Card";
             break;
         }
 
