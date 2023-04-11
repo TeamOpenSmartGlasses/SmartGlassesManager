@@ -59,50 +59,54 @@ This project is being built by [TeamOpenSmartGlasses](https://teamopensmartglass
 
 ## Fork of the Wearable Intelligence System
 
-This repo is a fork of the [Wearable Intelligence System](https://github.com/emexlabs/WearableIntelligenceSystem). The Wearable Intelligence System was started at [Emex Labs](https://emexwearables.com) by [Cayden Pierce](https://caydenpierce.com/).
+This repo is a fork of the [Wearable Intelligence System](https://github.com/emexlabs/WearableIntelligenceSystem). The Wearable Intelligence System was started at [Emex Labs](https://emexwearables.com) by [Cayden Pierce](https://caydenpierce.com/). This repo has a lot of the history cleaned to make it easier to manage, see the WIS repo for full history.
 
 ## How To Use 
 
 You will need two pieces of hardware to run the system:  
 
-- ASP - Android Smart Phone
-- ASG - Android Smart Glasses (Android or microcontroller based)
+1. ASP - Android Smart Phone
+2. Smart Glasses or similiar wearable. This can include:
+    - ASG - Android Smart Glasses (Android or microcontroller based)
+    - Activelook glasses
+    - Audio glasses (WIP)
+    - Bluetooth earpiece/earbuds (WIP)
 
 ## Install / Use
 
-### First Time Setup
+### Install
 
-1. On your Android smart phone, download the "Wearable Intelligence System" app:
-    - (RECCOMENDED) Play Store: Coming soon
-    - [Github latest release](https://github.com/emexlabs/WearableIntelligenceSystem/releases)
-2. On your smart glasses, download the "Wearable Intelligence System" app:
-    - (RECCOMENDED) Vuzix Store: Coming soon
-    - [Github latest release](https://github.com/emexlabs/WearableIntelligenceSystem/releases)
+1. On your Android smart phone, flash the ASP app from Android Studio, the releases page, or from Google Play.
+    - Play Store: Coming soon
+    - [Github latest release](https://github.com/TeamOpenSmartGlasses/SmartGlassesManager/releases)
+2. If using Android Smart Glasses, then on your smart glasses, download or flash the ASG client app:
+    - [Github latest release](https://github.com/TeamOpenSmartGlasses/SmartGlassesManager/releases)
 3. 
-    * Launch the "Wearable Intelligence System" app on your smart phone
+    * Launch the "Smart Glasses Manager" app on your smart phone
     * Accept permissions.
-    * Tap "Start Wifi Hotspot", turn on (configure password if necessary) your wifi hotspot, then go "Back" to return
-4. Connect smart glasses WiFi to the smart phone WiFi hotspot
-5. Enable mobile data (or wifi sharing) on Android smart phone
-6. Start "Wearable Intelligence System" application on smart glasses
-7. 
-    * The phone connection icon will be green if the glasses are connected to your phone. If you speak, you'll see a live transcript on the smart glasses screen.
-    * On the Android smart phone, got to "Memory Tools" -> "Memory Stream" and you will see live transcripts
-8. Setup complete.
+    * If using Android Smart Glasses -> Tap "Start Wifi Hotspot", turn on (configure password if necessary) your wifi hotspot, then go "Back" to return
+        - Connect smart glasses WiFi to the smart phone WiFi hotspot
+        - Enable mobile data (or wifi sharing) on Android smart phone
+        - Start ASG application on smart glasses
+        - The phone connection icon will be green if the glasses are connected to your phone. If you speak, you'll see a live transcript on the smart glasses screen.
+    * If using Bluetooth Smart Glasses -> Turn on Bluetooth on phone.
+3. Tap "Connect Smart Glasses" and choose your glasses.
+4. Setup complete.
 
 ### Normal Use
     
 Here's how to launch the system after you've already done the initial setup above:  
 
-1. Launch "WIS" app on smart phone
+1. Launch "Smart Glasses Manager" app on smart phone
 2. Enable mobile hotspot on smart phone with the "Start WiFi Hotspot" button
 3. Connect Android smart glasses to Android smart phone WiFi hotspot.
 4. Launch "WIS" app on smart glasses.
 5. Verify system is running by the "Smart Glasses Conection Indicator" icon turning white on the smart glasses HUD.
     
 ## Documentation / Developers
-    
-Coming soon. Join the discord below for help in the meantime.
+
+(WIP)
+Here are the docs: https://github.com/TeamOpenSmartGlasses/SmartGlassesManager/wiki
    
 ## Authors
 
@@ -113,4 +117,4 @@ The TeamOpenSmartGlasses members who are contributing to this project include:
 - Cayden Pierce - [Emex Labs](https://emexwearables.com)
 - Alex Israelov - http://www.alexisraelov.com/
 
-We are actively building a community that is building cognitive augmentation technologies together. 
+We are building a community that is building cognitive augmentation technologies together. 
