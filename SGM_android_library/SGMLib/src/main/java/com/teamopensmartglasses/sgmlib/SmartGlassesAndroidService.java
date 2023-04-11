@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -24,6 +25,8 @@ import org.greenrobot.eventbus.Subscribe;
 public abstract class SmartGlassesAndroidService extends LifecycleService {
     // Service Binder given to clients
     private final IBinder binder = new LocalBinder();
+    public static final String INTENT_ACTION = "SGM_COMMAND_INTENT";
+    public static final String TPA_ACTION = "tpaAction";
     public static final String ACTION_START_FOREGROUND_SERVICE = "SGMLIB_ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "SGMLIB_ACTION_STOP_FOREGROUND_SERVICE";
     private int myNotificationId;
@@ -89,9 +92,17 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         super.onStartCommand(intent, flags, startId);
         if (intent != null) {
             String action = intent.getAction();
+            Bundle extras = intent.getExtras();
+           
+            //True when service is started from SGM
+            if(action == INTENT_ACTION && extras != null){
+                action = (String) extras.get(TPA_ACTION);
+            }
+
             switch (action) {
                 case ACTION_START_FOREGROUND_SERVICE:
                     // start the service in the foreground
+                    Log.d("TEST", "starting foreground");
                     startForeground(myNotificationId, updateNotification());
                     break;
                 case ACTION_STOP_FOREGROUND_SERVICE:
