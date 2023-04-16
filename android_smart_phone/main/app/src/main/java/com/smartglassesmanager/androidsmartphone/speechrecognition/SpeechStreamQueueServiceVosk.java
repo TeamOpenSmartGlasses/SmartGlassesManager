@@ -42,7 +42,7 @@ public class SpeechStreamQueueServiceVosk {
     private final Recognizer recognizer;
     private final BlockingQueue<byte []> inputStream;
     private final int sampleRate;
-    private final static float BUFFER_SIZE_SECONDS = 0.2f;
+    private final static float BUFFER_SIZE_SECONDS = 0.1f;
     private final int bufferSize;
 
     private Thread recognizerThread;
@@ -52,7 +52,7 @@ public class SpeechStreamQueueServiceVosk {
     /**
      * Creates speech service.
      **/
-    public SpeechStreamQueueServiceVosk(Recognizer recognizer, BlockingQueue inputStream, float sampleRate, int bufferSize) {
+    public SpeechStreamQueueServiceVosk(Recognizer recognizer, BlockingQueue inputStream, float sampleRate) {
         this.recognizer = recognizer;
         this.sampleRate = (int) sampleRate;
         this.inputStream = inputStream;

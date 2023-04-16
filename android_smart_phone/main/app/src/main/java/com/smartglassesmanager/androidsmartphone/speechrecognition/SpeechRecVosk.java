@@ -92,7 +92,7 @@ public class SpeechRecVosk implements RecognitionListener {
         //audioSub = this.audioObservable.subscribe(i -> handleDataStream(i));
 
         //setup the object which will pass audio bytes to vosk
-        audioSenderStreamVoskSize = (int) (16000 * 2 * 0.2);
+        audioSenderStreamVoskSize = (int) (16000 * 2 * 0.1);
         audioSenderStreamVosk = new ArrayBlockingQueue(audioSenderStreamVoskSize);
 
         //start vosk ASR
@@ -141,7 +141,7 @@ public class SpeechRecVosk implements RecognitionListener {
             Log.d(TAG, "VOSK MAKE SPEECH SERVICE");
             //speechService = new SpeechService(rec, 16000.0f);
             //6416 is hard coded - same as chunk_len - size of buffer used on ASG
-            speechStreamService = new SpeechStreamQueueServiceVosk(rec, audioSenderStreamVosk, 16000.0f, 6416);
+            speechStreamService = new SpeechStreamQueueServiceVosk(rec, audioSenderStreamVosk, 16000.0f);
             Log.d(TAG, "VOSK START LISTENING");
             //speechService.startListening(rec);
             speechStreamService.start(this);

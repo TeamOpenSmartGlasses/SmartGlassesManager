@@ -2,10 +2,13 @@ package com.smartglassesmanager.androidsmartphone.sensors;
 
 //thanks to https://github.com/aahlenst/android-audiorecord-sample/blob/master/src/main/java/com/example/audiorecord/BluetoothRecordActivity.java
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -16,6 +19,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -23,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class MicrophoneLocalAndBluetooth {
 
-    private static final String TAG = "WearableAi_" + MicrophoneLocalAndBluetooth.class.getCanonicalName();
+    private static final String TAG = "WearableAi_MicrophoneLocalAndBluetooth";
 
     private static final int SAMPLING_RATE_IN_HZ = 16000;
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
@@ -34,7 +38,7 @@ public class MicrophoneLocalAndBluetooth {
      * size is determined by {@link AudioRecord#getMinBufferSize(int, int, int)} and depends on the
      * recording settings.
      */
-    private final static float BUFFER_SIZE_SECONDS = 0.2f;
+    private final static float BUFFER_SIZE_SECONDS = 0.1f;
     private static final int BUFFER_SIZE_FACTOR = 2;
     private final int bufferSize;
     private boolean bluetoothAudio = false; //are we using local audio or bluetooth audio?
@@ -158,20 +162,20 @@ public class MicrophoneLocalAndBluetooth {
         mHandler = new Handler();
 
         //listen for bluetooth HFP events
-//        audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-//        mContext.registerReceiver(bluetoothStateReceiver, new IntentFilter(
-//                AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
-//        mContext.registerReceiver(bluetoothStateReceiver,
-//                new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED));
-//        mContext.registerReceiver(bluetoothStateReceiver,
-//                new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED));
+        audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mContext.registerReceiver(bluetoothStateReceiver, new IntentFilter(
+                AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
+        mContext.registerReceiver(bluetoothStateReceiver,
+                new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED));
+        mContext.registerReceiver(bluetoothStateReceiver,
+                new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED));
 
         //first, start recording on local microphone
         bluetoothAudio = false;
         startRecording();
         //the, immediately try to startup the SCO connection
-//        mIsCountDownOn = true;
-//        mCountDown.start();
+        mIsCountDownOn = true;
+        mCountDown.start();
     }
 
     private void startRecording() {
@@ -187,6 +191,28 @@ public class MicrophoneLocalAndBluetooth {
 
         // Depending on the device one might has to change the AudioSource, e.g. to DEFAULT
         // or VOICE_COMMUNICATION
+
+//        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+//        Set<BluetoothDevice> devices = bluetoothAdapter.getBondedDevices();
+//        for (BluetoothDevice device : devices) {
+//            Log.d(TAG, "" + device.getBluetoothClass().getDeviceClass());
+//            Log.d(TAG, "" + device.getBondState());
+//            Log.d(TAG, "" + device.getName());
+//            Log.d(TAG, "\n");
+//            if (device.getBluetoothClass().getDeviceClass() == BluetoothClass.Device.AUDIO_VIDEO_MICROPHONE) {
+//                // Bluetooth microphone is connected, use it for recording
+//                // Set up the recorder to use the Bluetooth microphone
+//                break;
+//            }
+//        }
+
+//        for (BluetoothDevice device : devices) {
+//            if (device.getBluetoothClass().getDeviceClass() == BluetoothClass.Device.AUDIO_VIDEO_MICROPHONE) {
+//                recorder.setAudioSource(MediaRecorder.AudioSource.MIC); // Set to MIC to prevent crash if no Bluetooth device found
+//                recorder.setAudioSource(device.getAddress());
+//                break;
+//            }
+//        }
 
         recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
                 SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize * 2);
