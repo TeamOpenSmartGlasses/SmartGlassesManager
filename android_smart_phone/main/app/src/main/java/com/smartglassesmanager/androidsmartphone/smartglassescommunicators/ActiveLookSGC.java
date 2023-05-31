@@ -192,7 +192,11 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
        }
 
        if (alsdk != null){
-//           alsdk.getInstance()
+           try{
+               alsdk.getContext().unregisterReceiver(alsdk.getBroadcastReceiver());
+           } catch(IllegalArgumentException e) {
+               e.printStackTrace();
+           }
        }
     }
 

@@ -128,8 +128,9 @@ dependencies {
     implementation("org.greenrobot:eventbus:3.3.1")
 
     //activelook SDK
-    implementation 'com.github.activelook:android-sdk:v4.4.0'
-    
+    //implementation 'com.github.activelook:android-sdk:v4.4.0'
+    implementation project(path: ':ActiveLookSDK')
+
     //Json (de/)serialization
     implementation 'com.google.code.gson:gson:2.10.1'
 
