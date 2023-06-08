@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.smartglassesmanager.androidsmartphone.speechrecognition;
+package com.smartglassesmanager.androidsmartphone.speechrecognition.vosk;
 
 import org.vosk.android.RecognitionListener;
 

@@ -1,4 +1,4 @@
-package com.smartglassesmanager.androidsmartphone.speechrecognition;
+package com.smartglassesmanager.androidsmartphone.speechrecognition.vosk;
 
 //Vosk ASR
 import org.greenrobot.eventbus.EventBus;
@@ -24,6 +24,8 @@ import java.io.InputStream;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.VoskAudioChunkNewEvent;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecFramework;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 import com.smartglassesmanager.androidsmartphone.database.phrase.Phrase;
@@ -33,6 +35,9 @@ import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 
 //queue
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -41,7 +46,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
-public class SpeechRecVosk implements RecognitionListener {
+public class SpeechRecVosk extends SpeechRecFramework implements RecognitionListener {
     public String TAG = "WearableAi_SpeechRecVosk";
 
     private String languageModelPath;
@@ -58,14 +63,14 @@ public class SpeechRecVosk implements RecognitionListener {
     //private SpeechService speechService;
     //private SpeechStreamService speechStreamService;
     private SpeechStreamQueueServiceVosk speechStreamService;
-    private PhraseRepository mPhraseRepository = null;
+//    private PhraseRepository mPhraseRepository = null;
 
     private VoskAudioBytesStream voskAudioBytesStream;
     //private PipedOutputStream audioAdderStreamVosk;
     //private InputStream audioSenderStreamVosk;
     private int audioSenderStreamVoskSize;
     private BlockingQueue<byte []> audioSenderStreamVosk;
-    final Handler main_handler;
+    private Handler main_handler;
 
     //receive/send data stream
     PublishSubject<JSONObject> dataObservable;
@@ -74,27 +79,43 @@ public class SpeechRecVosk implements RecognitionListener {
     PublishSubject<byte []> audioObservable;
     Disposable audioSub;
 
-    public SpeechRecVosk(String languageModelPath, boolean isBaseLanguage, Context context, PublishSubject<byte []> audioObservable, PublishSubject<JSONObject> dataObservable, PhraseRepository mPhraseRepository){
+    //languages
+    String baseLanguage = "english";
+    public static Dictionary<String, NaturalLanguage> supportedLanguages = new Hashtable<String, NaturalLanguage>();
+
+    public SpeechRecVosk(Context context){
         mContext = context;
-        this.languageModelPath = languageModelPath;
-        this.isBaseLanguage = isBaseLanguage;
+        this.isBaseLanguage = true;// isBaseLanguage;
+
+        //setup languages
+        supportedLanguages.put("english", new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
+        this.languageModelPath = supportedLanguages.get(baseLanguage).getModelLocation(); //languageModelPath;
+//        supportedLanguages.put("french", new NaturalLanguage("french", "fr", "model-fr-small", Locale.FRENCH)); //french
+        //supportedLanguages.add(new NaturalLanguage("chinese", "zh", "model-cn-small", Locale.CHINESE)); //chinese
+        //supportedLanguages.add(new NaturalLanguage("italian", "it", "model-it-small", Locale.ITALIAN)); //italian
+        //supportedLanguages.add(new NaturalLanguage("japanese", "ja", "model-jp-small", Locale.JAPANESE)); //japanese
 
         //to save trancript
-        this.mPhraseRepository = mPhraseRepository;
+//        this.mPhraseRepository = mPhraseRepository;
 
         //receive/send data
-        this.dataObservable = dataObservable;
-        dataSub = this.dataObservable.subscribe(i -> handleDataStream(i));
-        setupEventBusSubscribers();
+//        this.dataObservable = dataObservable;
+//        dataSub = this.dataObservable.subscribe(i -> handleDataStream(i));
+//        setupEventBusSubscribers();
 
         //receive audio
         //this.audioObservable = audioObservable;
         //audioSub = this.audioObservable.subscribe(i -> handleDataStream(i));
 
         //setup the object which will pass audio bytes to vosk
-        audioSenderStreamVoskSize = (int) (16000 * 2 * 0.1);
+//        audioSenderStreamVoskSize = (int) (16000 * 2 * 0.2);
+        audioSenderStreamVoskSize = (int) (16000 * 2 * 0.192);
+//        audioSenderStreamVoskSize = (int) (16000 * 2 * 0.064);
         audioSenderStreamVosk = new ArrayBlockingQueue(audioSenderStreamVoskSize);
+    }
 
+    @Override
+    public void start(){
         //start vosk ASR
         LibVosk.setLogLevel(LogLevel.INFO);
         initModel();
@@ -162,7 +183,6 @@ public class SpeechRecVosk implements RecognitionListener {
         }
     }
 
-
     //receive audio and send to vosk
     private void handleDataStream(JSONObject data){
         try {
@@ -219,7 +239,6 @@ public class SpeechRecVosk implements RecognitionListener {
             JSONObject transcriptObj = new JSONObject();
             //different message types depending on whether or not this is the base language or a foreign language
 
-
             if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)){
                 transcript = voskResponse.getString("text");
                 //set event bus type
@@ -254,28 +273,29 @@ public class SpeechRecVosk implements RecognitionListener {
 
             if (isBaseLanguage) {
                 if (newPhrase) {
-                    currPhrase = PhraseCreator.init("transcript_ASG", mContext, mPhraseRepository);
+//                    currPhrase = PhraseCreator.init("transcript_ASG", mContext, mPhraseRepository);
                     newPhrase = false;
                 }
 
                 //update the current phrase
-                PhraseCreator.create(currPhrase, transcript, mContext, mPhraseRepository);
+//                PhraseCreator.create(currPhrase, transcript, mContext, mPhraseRepository);
 
                 //save transcript if final
                 if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                     newPhrase = true;
                 }
-                transcriptObj.put(MessageTypes.TRANSCRIPT_ID, currPhrase.getId());
-                transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
+//                transcriptObj.put(MessageTypes.TRANSCRIPT_ID, currPhrase.getId());
+//                transcriptObj.put(MessageTypes.TIMESTAMP, transcriptTime);
             }
-            transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
+//            transcriptObj.put(MessageTypes.TRANSCRIPT_TEXT, transcript);
 //            Log.d(TAG, "VOSK SENDING: ");
 //            Log.d(TAG, transcriptObj.toString());
-            dataObservable.onNext(transcriptObj);
+//            dataObservable.onNext(transcriptObj);
 
 //            EventBus.getDefault().post(new SendableIntentEvent(transcriptObj));
 
             //post the event bus event
+            Log.d(TAG, "Got final: " + transcript);
             if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
                 EventBus.getDefault().post(new SpeechRecFinalOutputEvent(transcript, transcriptTime));
             } else {
@@ -309,13 +329,22 @@ public class SpeechRecVosk implements RecognitionListener {
         Log.d(TAG, "VOSK: timeout");
     }
 
-    @Subscribe
-    public void onAudioChunkNewEvent(AudioChunkNewEvent receivedEvent){
+//    @Subscribe
+//    public void onVoskAudioChunkNewEvent(VoskAudioChunkNewEvent receivedEvent){
+//        try {
+//            audioSenderStreamVosk.put(receivedEvent.thisChunk);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    @Override
+    public void ingestAudioChunk(byte[] audioChunk) {
+//        Log.d(TAG, "Got chunk Vosk");
         try {
-            audioSenderStreamVosk.put(receivedEvent.thisChunk);
+            audioSenderStreamVosk.put(audioChunk);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
-
 }
