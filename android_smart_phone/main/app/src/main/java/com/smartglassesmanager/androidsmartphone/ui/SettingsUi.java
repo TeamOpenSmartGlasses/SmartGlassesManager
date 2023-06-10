@@ -1,11 +1,16 @@
 package com.smartglassesmanager.androidsmartphone.ui;
 
+import android.text.Html;
+import android.text.InputType;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -16,6 +21,11 @@ import android.content.Intent;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import android.content.ComponentName;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Switch;
+import android.widget.TextView;
 
 import com.teamopensmartglasses.sgmlib.SmartGlassesAndroidService;
 import com.smartglassesmanager.androidsmartphone.MainActivity;
@@ -101,6 +111,21 @@ public class SettingsUi extends Fragment {
             }
         });
 
+        final Button setGoogleApiKeyButton = view.findViewById(R.id.google_api_change);
+        final Switch switchGoogleAsr = view.findViewById(R.id.google_asr_switch);
+        setGoogleApiKeyButton.setEnabled(setGoogleApiKeyButton.isActivated());
+        setGoogleApiKeyButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                showAPIKeyDialog();
+            }
+        });
+
+        switchGoogleAsr.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                setGoogleApiKeyButton.setEnabled(isChecked);
+            }
+        });
+
         //setup live captions launcher
 //        final Button startLiveCaptionsButton = view.findViewById(R.id.start_live_captions);
 //        startLiveCaptionsButton.setOnClickListener(new View.OnClickListener() {
@@ -145,5 +170,26 @@ public class SettingsUi extends Fragment {
         startActivity( intent);
     }
 
+    /** The API won't work without a valid API key. This prompts the user to enter one. */
+    private void showAPIKeyDialog() {
+        LinearLayout contentLayout =
+                (LinearLayout) getLayoutInflater().inflate(R.layout.api_key_message, null);
+        TextView linkView = contentLayout.findViewById(R.id.api_key_link_view);
+        linkView.setText(Html.fromHtml(getString(R.string.api_key_doc_link)));
+        linkView.setMovementMethod(LinkMovementMethod.getInstance());
+        EditText keyInput = contentLayout.findViewById(R.id.api_key_input);
+        keyInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        keyInput.setText(((MainActivity)getActivity()).getApiKey(this.getContext()));
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(this.getContext());
+        builder
+                .setTitle(getString(R.string.api_key_message))
+                .setView(contentLayout)
+                .setPositiveButton(
+                        getString(android.R.string.ok),
+                        (dialog, which) -> {
+                            ((MainActivity)getActivity()).saveApiKey(this.getContext(), keyInput.getText().toString().trim());
+                        })
+                .show();
+    }
 }

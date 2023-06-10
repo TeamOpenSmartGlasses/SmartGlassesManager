@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
@@ -271,4 +272,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** Gets the API key from shared preference. */
+    public static String getApiKey(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_KEY), "");
+    }
+
+    /** Saves the API Key in user shared preference. */
+    public static void saveApiKey(Context context, String key) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
+                .apply();
+    }
 }

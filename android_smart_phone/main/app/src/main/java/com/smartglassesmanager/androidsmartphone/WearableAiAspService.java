@@ -90,8 +90,8 @@ public class WearableAiAspService extends LifecycleService {
 
         //start speech rec
         speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
-        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
-//        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+//        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
 
         //live captions system
         liveCaptionsDebugSystem = new LiveCaptionsDebugSystem();
