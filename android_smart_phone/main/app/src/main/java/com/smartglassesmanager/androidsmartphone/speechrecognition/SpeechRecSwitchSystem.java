@@ -21,12 +21,11 @@ public class SpeechRecSwitchSystem {
 
     public SpeechRecSwitchSystem(Context mContext) {
         this.mContext = mContext;
-
-        EventBus.getDefault().register(this);
     }
 
     public void startAsrFramework(ASR_FRAMEWORKS asrFramework) {
         //kill old asr
+        EventBus.getDefault().unregister(this);
         if (speechRecFramework != null){
             speechRecFramework.destroy();
         }
@@ -34,32 +33,28 @@ public class SpeechRecSwitchSystem {
         //set new asr
         this.asrFramework = asrFramework;
 
-        //start new asr
+        //create new asr
         if (this.asrFramework == ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK){
            speechRecFramework = new SpeechRecVosk(mContext);
         } else if (this.asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK){
             speechRecFramework = new SpeechRecGoogle(mContext);
         }
+
+        //start asr
         speechRecFramework.start();
+        EventBus.getDefault().register(this);
     }
 
     @Subscribe
     public void onAudioChunkNewEvent(AudioChunkNewEvent receivedEvent){
-//        Log.d(TAG, "Got chunk");
         //redirect audio to the currently in use ASR framework
         speechRecFramework.ingestAudioChunk(receivedEvent.thisChunk);
-//        if (asrFramework == ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK){
-////            EventBus.getDefault().post(new VoskAudioChunkNewEvent(receivedEvent.thisChunk));
-//        } else if (asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK){
-//            EventBus.getDefault().post(new GoogleAudioChunkNewEvent(receivedEvent.thisChunk));
-//        }
     }
 
     public void destroy(){
         if (speechRecFramework != null){
             speechRecFramework.destroy();
         }
-        EventBus.getDefault().unregister(this);
     }
 }
 

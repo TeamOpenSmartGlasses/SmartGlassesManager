@@ -20,6 +20,7 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.AudioWearable;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.EngoTwo;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.InmoAirOne;
@@ -272,16 +273,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** Gets the API key from shared preference. */
-    public static String getApiKey(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_KEY), "");
-    }
-
-    /** Saves the API Key in user shared preference. */
-    public static void saveApiKey(Context context, String key) {
-        PreferenceManager.getDefaultSharedPreferences(context)
-                .edit()
-                .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
-                .apply();
+    public void changeAsrFramework(ASR_FRAMEWORKS asrFramework){
+        if (mService != null){
+            mService.changeChosenAsrFramework(asrFramework);
+        }
     }
 }

@@ -23,4 +23,6 @@
     <string name="say_something">Say something!</string>
     <!-- Internal code use. -->
     <string name="SHARED_PREF_KEY">api_key</string>
+
+    <string name="SHARED_PREF_ASR_KEY">shared_pref_api_key</string>
 </resources>

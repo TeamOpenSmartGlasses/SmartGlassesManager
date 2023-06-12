@@ -13,6 +13,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
+import androidx.preference.PreferenceManager;
 
 import com.smartglassesmanager.androidsmartphone.commands.CommandSystem;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
@@ -90,8 +91,8 @@ public class WearableAiAspService extends LifecycleService {
 
         //start speech rec
         speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
-//        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
-        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+//        speechRecSwitchSystem.startAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
 
         //live captions system
         liveCaptionsDebugSystem = new LiveCaptionsDebugSystem();
@@ -272,5 +273,39 @@ public class WearableAiAspService extends LifecycleService {
         }
         intent.putExtra(MessageTypes.CONNECTION_GLASSES_STATUS_UPDATE, connectionState);
         sendBroadcast(intent);
+    }
+
+    /** Saves the chosen ASR framework in user shared preference. */
+    public static void saveChosenAsrFramework(Context context, ASR_FRAMEWORKS asrFramework) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), asrFramework.name())
+                .apply();
+    }
+
+    /** Gets the chosen ASR framework from shared preference. */
+    public static ASR_FRAMEWORKS getChosenAsrFramework(Context context) {
+        String asrString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), "");
+        return ASR_FRAMEWORKS.valueOf(asrString);
+    }
+
+    public void changeChosenAsrFramework(ASR_FRAMEWORKS asrFramework){
+        saveChosenAsrFramework(getApplicationContext(), asrFramework);
+        if (speechRecSwitchSystem != null) {
+            speechRecSwitchSystem.startAsrFramework(asrFramework);
+        }
+    }
+
+    /** Gets the API key from shared preference. */
+    public static String getApiKey(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_KEY), "");
+    }
+
+    /** Saves the API Key in user shared preference. */
+    public static void saveApiKey(Context context, String key) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
+                .apply();
     }
 }

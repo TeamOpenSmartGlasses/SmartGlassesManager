@@ -12,6 +12,8 @@ import com.google.audio.asr.CloudSpeechSessionParams;
 import com.google.audio.asr.CloudSpeechStreamObserverParams;
 import com.google.audio.asr.SpeechRecognitionModelOptions;
 import com.google.audio.asr.TranscriptionResultFormatterOptions;
+import com.smartglassesmanager.androidsmartphone.WearableAiAspService;
+import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecFramework;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.RepeatingRecognitionSession;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.SafeTranscriptionResultFormatter;
@@ -19,6 +21,8 @@ import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.Tr
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.asrhelpers.NetworkConnectionChecker;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.gcloudspeech.CloudSpeechSessionFactory;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.vad.VadGateSpeechPolicy;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -71,8 +75,12 @@ public class SpeechRecGoogle extends SpeechRecFramework {
 
     private final TranscriptionResultUpdatePublisher transcriptUpdater =
             (formattedTranscript, updateType) -> {
+                //post the event bus event
                 if (updateType == TranscriptionResultUpdatePublisher.UpdateType.TRANSCRIPT_FINALIZED){
                     Log.d(TAG, "GOT FINAL TRANSCRIPT: " + formattedTranscript.toString());
+                    EventBus.getDefault().post(new SpeechRecFinalOutputEvent(formattedTranscript.toString(), System.currentTimeMillis()));
+                } else {
+                    EventBus.getDefault().post(new SpeechRecIntermediateOutputEvent(formattedTranscript.toString(), System.currentTimeMillis()));
                 }
             };
 
@@ -111,9 +119,7 @@ public class SpeechRecGoogle extends SpeechRecFramework {
                         .build();
         RepeatingRecognitionSession.Builder recognizerBuilder =
                 RepeatingRecognitionSession.newBuilder()
-//                        .setSpeechSessionFactory(new CloudSpeechSessionFactory(cloudParams, getApiKey(this)))
-//                        .setSpeechSessionFactory(new CloudSpeechSessionFactory(cloudParams, apiKey))
-                        .setSpeechSessionFactory(new CloudSpeechSessionFactory(cloudParams, "myAPIkeyhere"))
+                        .setSpeechSessionFactory(new CloudSpeechSessionFactory(cloudParams, WearableAiAspService.getApiKey(mContext)))
                         .setSampleRateHz(16000)
                         .setTranscriptionResultFormatter(new SafeTranscriptionResultFormatter(formatterOptions))
                         .setSpeechRecognitionModelOptions(options)
