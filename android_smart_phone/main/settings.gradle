@@ -12,3 +12,7 @@ include ':app'
 
 include ':SGMLib'
 project(':SGMLib').projectDir = new File(rootProject.projectDir, '../../SGM_android_library/SGMLib')
+
+include ':internal'
+include ':ActiveLookSDK'
+project(':ActiveLookSDK').projectDir = new File(rootProject.projectDir, "../../android-sdk/ActiveLookSDK")
