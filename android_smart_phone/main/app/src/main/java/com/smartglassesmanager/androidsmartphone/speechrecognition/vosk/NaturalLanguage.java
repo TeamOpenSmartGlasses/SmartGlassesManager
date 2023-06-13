@@ -1,4 +1,4 @@
-package com.smartglassesmanager.androidsmartphone.speechrecognition;
+package com.smartglassesmanager.androidsmartphone.speechrecognition.vosk;
 
 import java.util.Locale;
 

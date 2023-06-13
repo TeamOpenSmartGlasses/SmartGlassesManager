@@ -13,19 +13,22 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
+import androidx.preference.PreferenceManager;
 
 import com.smartglassesmanager.androidsmartphone.commands.CommandSystem;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
 import com.smartglassesmanager.androidsmartphone.database.WearableAiRoomDatabase;
 import com.smartglassesmanager.androidsmartphone.database.phrase.PhraseRepository;
 import com.smartglassesmanager.androidsmartphone.database.voicecommand.VoiceCommandRepository;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecSwitchSystem;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 import com.smartglassesmanager.androidsmartphone.nlp.NlpUtils;
-import com.smartglassesmanager.androidsmartphone.speechrecognition.NaturalLanguage;
-import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecVosk;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.vosk.NaturalLanguage;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.vosk.SpeechRecVosk;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
 
 import org.greenrobot.eventbus.EventBus;
@@ -56,23 +59,14 @@ public class WearableAiAspService extends LifecycleService {
     //live captions
     public LiveCaptionsDebugSystem liveCaptionsDebugSystem;
 
-    //our base language
-    String baseLanguage = "english";
-
     //tools for doing NLP, used for voice command system
     NlpUtils nlpUtils;
-    public static Dictionary<String, NaturalLanguage> supportedLanguages = new Hashtable<String, NaturalLanguage>();
-
-    //speech recognition
-    private SpeechRecVosk speechRecVosk;
-    private SpeechRecVosk speechRecVoskForeignLanguage;
 
     //Text to Speech
     //private TextToSpeechSystem textToSpeechSystem;
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
-    PublishSubject<byte[]> audioObservable;
 
     //database
     private PhraseRepository mPhraseRepository = null;
@@ -80,6 +74,9 @@ public class WearableAiAspService extends LifecycleService {
 
     //representatives of the other pieces of the system
     SmartGlassesRepresentative smartGlassesRepresentative;
+
+    //speech rec
+    SpeechRecSwitchSystem speechRecSwitchSystem;
 
     @Override
     public void onCreate() {
@@ -92,22 +89,16 @@ public class WearableAiAspService extends LifecycleService {
         mPhraseRepository = new PhraseRepository(getApplication());
         mVoiceCommandRepository = new VoiceCommandRepository(getApplication());
 
+        //start speech rec
+        speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
+        ASR_FRAMEWORKS asrFramework = getChosenAsrFramework(this.getApplicationContext());
+        speechRecSwitchSystem.startAsrFramework(asrFramework);
+
         //live captions system
         liveCaptionsDebugSystem = new LiveCaptionsDebugSystem();
 
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
-        audioObservable = PublishSubject.create();
-
-        //setup languages
-        supportedLanguages.put("english", new NaturalLanguage("english", "en", "model-en-us", Locale.ENGLISH)); //english
-        supportedLanguages.put("french", new NaturalLanguage("french", "fr", "model-fr-small", Locale.FRENCH)); //french
-        //supportedLanguages.add(new NaturalLanguage("chinese", "zh", "model-cn-small", Locale.CHINESE)); //chinese
-        //supportedLanguages.add(new NaturalLanguage("italian", "it", "model-it-small", Locale.ITALIAN)); //italian
-        //supportedLanguages.add(new NaturalLanguage("japanese", "ja", "model-jp-small", Locale.JAPANESE)); //japanese
-
-        //start vosk
-        speechRecVosk = new SpeechRecVosk(supportedLanguages.get(baseLanguage).getModelLocation(), true, this, audioObservable, dataObservable, mPhraseRepository);
 
         //start text to speech
 //        textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, supportedLanguages.get(baseLanguage).getLocale());
@@ -230,20 +221,14 @@ public class WearableAiAspService extends LifecycleService {
         if (dataObservable != null) {
             dataObservable.onComplete();
         }
-        if (audioObservable != null) {
-            audioObservable.onComplete();
+
+        //kill speech rec
+        if (speechRecSwitchSystem != null){
+            speechRecSwitchSystem.destroy();
         }
 
         //kill textToSpeech
 //        textToSpeechSystem.destroy();
-
-        //kill vosk
-        if (speechRecVosk != null) {
-            speechRecVosk.destroy();
-            if (speechRecVoskForeignLanguage != null) {
-                speechRecVoskForeignLanguage.destroy();
-            }
-        }
 
         //close room database(s)
         WearableAiRoomDatabase.destroy();
@@ -288,5 +273,39 @@ public class WearableAiAspService extends LifecycleService {
         }
         intent.putExtra(MessageTypes.CONNECTION_GLASSES_STATUS_UPDATE, connectionState);
         sendBroadcast(intent);
+    }
+
+    /** Saves the chosen ASR framework in user shared preference. */
+    public static void saveChosenAsrFramework(Context context, ASR_FRAMEWORKS asrFramework) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), asrFramework.name())
+                .apply();
+    }
+
+    /** Gets the chosen ASR framework from shared preference. */
+    public static ASR_FRAMEWORKS getChosenAsrFramework(Context context) {
+        String asrString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), "");
+        return ASR_FRAMEWORKS.valueOf(asrString);
+    }
+
+    public void changeChosenAsrFramework(ASR_FRAMEWORKS asrFramework){
+        saveChosenAsrFramework(getApplicationContext(), asrFramework);
+        if (speechRecSwitchSystem != null) {
+            speechRecSwitchSystem.startAsrFramework(asrFramework);
+        }
+    }
+
+    /** Gets the API key from shared preference. */
+    public static String getApiKey(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_KEY), "");
+    }
+
+    /** Saves the API Key in user shared preference. */
+    public static void saveApiKey(Context context, String key) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
+                .apply();
     }
 }

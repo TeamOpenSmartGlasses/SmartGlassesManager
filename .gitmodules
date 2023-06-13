@@ -5,5 +5,5 @@
 	path = android_smart_glasses/main/android-hidden-camera
 	url = git@github.com:CaydenPierce/android-hidden-camera.git
 [submodule "android-sdk"]
-	path = android-sdk
+	path = activelook-sdk
 	url = https://github.com/ActiveLook/android-sdk.git

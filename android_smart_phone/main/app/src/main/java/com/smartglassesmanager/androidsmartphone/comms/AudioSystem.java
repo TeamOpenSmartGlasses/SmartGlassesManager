@@ -9,6 +9,7 @@ import io.reactivex.rxjava3.subjects.PublishSubject;
 
 import java.io.IOException;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
 import org.json.JSONException;
 
@@ -28,6 +29,7 @@ import java.io.DataInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.smartglassesmanager.androidsmartphone.utils.AES;
 
 import android.util.Log;
@@ -411,6 +413,7 @@ public class AudioSystem {
                     int chunk_len = 6416; //until we use a better protocol to specify start and end of packet, we need to to match the number in asg
                     byte [] raw_data = new byte[chunk_len];
                     input.readFully(raw_data, 0, chunk_len); // read the body
+                    EventBus.getDefault().post(new AudioChunkNewEvent(raw_data));
                     //byte [] plain_audio_bytes = decryptBytes(raw_data);
                     //dataObservable.onNext(plain_audio_bytes);
                 } catch (IOException e) {
@@ -448,8 +451,12 @@ public class AudioSystem {
     private void handleDataStream(JSONObject data){
         try {
             String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (dataType.equals(MessageTypes.AUDIO_CHUNK_ENCRYPTED)){
+            if (dataType.equals(MessageTypes.AUDIO_CHUNK_ENCRYPTED)) {
                 handleEncryptedData(data);
+            } else if (dataType.equals(MessageTypes.AUDIO_CHUNK_DECRYPTED)){
+                String encodedPlainData = data.getString(MessageTypes.AUDIO_DATA);
+                byte [] decodedPlainData = Base64.decode(encodedPlainData, Base64.DEFAULT);
+                EventBus.getDefault().post(new AudioChunkNewEvent(decodedPlainData));
             }
         } catch (JSONException e){
             e.printStackTrace();
@@ -465,13 +472,13 @@ public class AudioSystem {
             String encodedPlainData = Base64.encodeToString(plainData, Base64.DEFAULT);
 
             //make new object and send as decrypted data
-            JSONObject decryptedData = new JSONObject();
-            decryptedData.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUDIO_CHUNK_DECRYPTED);
-            decryptedData.put(MessageTypes.AUDIO_DATA, encodedPlainData);
-            dataObservable.onNext(decryptedData);
+//            JSONObject decryptedData = new JSONObject();
+//            decryptedData.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.AUDIO_CHUNK_DECRYPTED);
+//            decryptedData.put(MessageTypes.AUDIO_DATA, encodedPlainData);
+//            dataObservable.onNext(decryptedData);
 
             //throw new audio event
-//            EventBus.getDefault().post(new AudioChunkNewEvent(plainData));
+            EventBus.getDefault().post(new AudioChunkNewEvent(plainData));
         } catch (JSONException e){
             e.printStackTrace();
         }

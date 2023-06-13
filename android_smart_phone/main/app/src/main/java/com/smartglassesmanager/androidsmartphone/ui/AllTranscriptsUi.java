@@ -188,13 +188,14 @@ public class AllTranscriptsUi extends Fragment implements ItemClickListenerPhras
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.name_cache:
-//                nameCache();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
+//        switch (item.getItemId()) {
+//            case R.id.name_cache:
+////                nameCache();
+//                return true;
+//            default:
+//                return super.onOptionsItemSelected(item);
+//        }
+        return false;
     }
 
 }

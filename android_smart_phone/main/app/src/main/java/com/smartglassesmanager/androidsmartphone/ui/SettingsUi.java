@@ -1,11 +1,18 @@
 package com.smartglassesmanager.androidsmartphone.ui;
 
+import android.content.Context;
+import android.content.DialogInterface;
+import android.text.Html;
+import android.text.InputType;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -16,7 +23,14 @@ import android.content.Intent;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import android.content.ComponentName;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Switch;
+import android.widget.TextView;
 
+import com.smartglassesmanager.androidsmartphone.WearableAiAspService;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.teamopensmartglasses.sgmlib.SmartGlassesAndroidService;
 import com.smartglassesmanager.androidsmartphone.MainActivity;
 
@@ -53,8 +67,7 @@ public class SettingsUi extends Fragment {
         UiUtils.setupTitle(getActivity(), fragmentLabel);
 
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
-
-
+        Context mContext = this.getContext();
 
         final Button killServiceButton = view.findViewById(R.id.kill_wearableai_service);
 //        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
@@ -73,6 +86,15 @@ public class SettingsUi extends Fragment {
             connectSmartGlassesButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button
+                //check to first make sure that user isn't trying to enable google without providing API key
+                if (WearableAiAspService.getChosenAsrFramework(mContext) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
+                    String apiKey = WearableAiAspService.getApiKey(mContext);
+                    if (apiKey == null || apiKey == "") {
+                        showNoGoogleAsrDialog();
+                        return;
+                    }
+                }
+
                 ((MainActivity)getActivity()).startWearableAiService();
                 navController.navigate(R.id.nav_select_smart_glasses);
             }
@@ -98,6 +120,34 @@ public class SettingsUi extends Fragment {
             public void onClick(View v) {
                 // Code here executes on main thread after user presses button
                 sendTestCard();
+            }
+        });
+
+        final Button setGoogleApiKeyButton = view.findViewById(R.id.google_api_change);
+        final Switch switchGoogleAsr = view.findViewById(R.id.google_asr_switch);
+
+        //find out the current ASR state, remember it
+        ASR_FRAMEWORKS asrFramework = WearableAiAspService.getChosenAsrFramework(mContext);
+        switchGoogleAsr.setChecked(asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+
+        setGoogleApiKeyButton.setEnabled(switchGoogleAsr.isChecked());
+        setGoogleApiKeyButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                showAPIKeyDialog();
+            }
+        });
+
+        switchGoogleAsr.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                setGoogleApiKeyButton.setEnabled(isChecked);
+                //save explicitly as well as force change in case the service is down, we want this to be saved either way
+                if (isChecked) {
+                    WearableAiAspService.saveChosenAsrFramework(mContext, ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+                    ((MainActivity)getActivity()).changeAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+                } else {
+                    WearableAiAspService.saveChosenAsrFramework(mContext, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+                    ((MainActivity)getActivity()).changeAsrFramework(ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+                }
             }
         });
 
@@ -145,5 +195,38 @@ public class SettingsUi extends Fragment {
         startActivity( intent);
     }
 
+    /** The API won't work without a valid API key. This prompts the user to enter one. */
+    private void showAPIKeyDialog() {
+        LinearLayout contentLayout =
+                (LinearLayout) getLayoutInflater().inflate(R.layout.api_key_message, null);
+        TextView linkView = contentLayout.findViewById(R.id.api_key_link_view);
+        linkView.setText(Html.fromHtml(getString(R.string.api_key_doc_link)));
+        linkView.setMovementMethod(LinkMovementMethod.getInstance());
+        EditText keyInput = contentLayout.findViewById(R.id.api_key_input);
+        keyInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        keyInput.setText(WearableAiAspService.getApiKey(this.getContext()));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this.getContext());
+        builder
+                .setTitle(getString(R.string.api_key_message))
+                .setView(contentLayout)
+                .setPositiveButton(
+                        getString(android.R.string.ok),
+                        (dialog, which) -> {
+                            WearableAiAspService.saveApiKey(this.getContext(), keyInput.getText().toString().trim());
+                        })
+                .show();
+    }
+
+    public void showNoGoogleAsrDialog(){
+        new android.app.AlertDialog.Builder(this.getContext()) .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("No Google API Key Provided")
+                .setMessage("You have Google ASR enabled without an API key. Please turn off Google ASR or enter a valid API key.")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).show();
+    }
 
 }

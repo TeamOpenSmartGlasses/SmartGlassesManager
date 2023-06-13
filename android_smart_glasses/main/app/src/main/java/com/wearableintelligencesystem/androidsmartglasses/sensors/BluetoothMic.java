@@ -39,7 +39,8 @@ public class BluetoothMic {
      * size is determined by {@link AudioRecord#getMinBufferSize(int, int, int)} and depends on the
      * recording settings.
      */
-    private final static float BUFFER_SIZE_SECONDS = 0.2f;
+//    private final static float BUFFER_SIZE_SECONDS = 0.2f;
+    private final static float BUFFER_SIZE_SECONDS = 0.192f;
     private static final int BUFFER_SIZE_FACTOR = 2;
     private final int bufferSize;
 

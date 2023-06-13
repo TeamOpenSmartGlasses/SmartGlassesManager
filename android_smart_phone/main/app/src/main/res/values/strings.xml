@@ -12,4 +12,17 @@
         <item>Ideas</item>
         <item>Personal</item>
     </string-array>
+
+
+    <!-- Entering API key message. -->
+    <string name="api_key_message">Enter G-Cloud API key</string>
+    <!-- API key document link. -->
+    <string name="api_key_doc_link">See &lt;a href="https://cloud.google.com/docs/authentication/api-keys">here&lt;/a> for more details.</string>
+    <!-- Selecting language message. -->
+    <string name="select_language_message">Select language. See  &lt;a href="https://cloud.google.com/speech-to-text/docs/languages">here&lt;/a> for more details.</string>
+    <string name="say_something">Say something!</string>
+    <!-- Internal code use. -->
+    <string name="SHARED_PREF_KEY">api_key</string>
+
+    <string name="SHARED_PREF_ASR_KEY">shared_pref_api_key</string>
 </resources>

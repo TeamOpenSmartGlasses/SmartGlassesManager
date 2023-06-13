@@ -1,9 +1,15 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        jcenter() // Warning: this repository is going to shut down soon
         maven { url 'https://jitpack.io' }
     }
 }
@@ -15,4 +21,4 @@ project(':SGMLib').projectDir = new File(rootProject.projectDir, '../../SGM_andr
 
 include ':internal'
 include ':ActiveLookSDK'
-project(':ActiveLookSDK').projectDir = new File(rootProject.projectDir, "../../android-sdk/ActiveLookSDK")
+project(':ActiveLookSDK').projectDir = new File(rootProject.projectDir, "../../activelook-sdk/ActiveLookSDK")

@@ -38,7 +38,9 @@ public class MicrophoneLocalAndBluetooth {
      * size is determined by {@link AudioRecord#getMinBufferSize(int, int, int)} and depends on the
      * recording settings.
      */
-    private final static float BUFFER_SIZE_SECONDS = 0.1f;
+//    private final static float BUFFER_SIZE_SECONDS = 0.2f;
+    private final static float BUFFER_SIZE_SECONDS = 0.192f; // gives us 1024*3 = 3072 samples
+//    private final static float BUFFER_SIZE_SECONDS = 0.064f;
     private static final int BUFFER_SIZE_FACTOR = 2;
     private final int bufferSize;
     private boolean bluetoothAudio = false; //are we using local audio or bluetooth audio?
@@ -214,7 +216,7 @@ public class MicrophoneLocalAndBluetooth {
 //            }
 //        }
 
-        recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
+        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
                 SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize * 2);
 
         recorder.startRecording();
@@ -321,7 +323,7 @@ public class MicrophoneLocalAndBluetooth {
     /**
      * Try to connect to audio headset in onTick.
      */
-    private CountDownTimer mCountDown = new CountDownTimer(30000, 10000)
+    private CountDownTimer mCountDown = new CountDownTimer(1000, 5000)
     {
 
         @SuppressWarnings("synthetic-access")
@@ -352,7 +354,11 @@ public class MicrophoneLocalAndBluetooth {
 
     public void destroy(){
         stopRecording();
-//        mContext.unregisterReceiver(bluetoothStateReceiver);
+
+        if (mContext != null) {
+            mContext.unregisterReceiver(bluetoothStateReceiver);
+        }
+
         mIsCountDownOn = false;
         mCountDown.cancel();
     }

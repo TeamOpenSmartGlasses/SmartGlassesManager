@@ -16,9 +16,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.AudioWearable;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.EngoTwo;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.InmoAirOne;
@@ -271,4 +273,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void changeAsrFramework(ASR_FRAMEWORKS asrFramework){
+        if (mService != null){
+            mService.changeChosenAsrFramework(asrFramework);
+        }
+    }
 }
