@@ -109,10 +109,10 @@ public class CommandSystem {
 //        registerCommand("Live Captions", UUID.fromString("933b8950-412e-429e-8fb6-430f973cc9dc"), new String[]{"live captions", "live life captions", "captions", "transcription"}, "Starts streaming captions live to the glasses display.", this::launchLiveCaptions);
 
         //test reference card
-        registerLocalCommand("Test", UUID.fromString("f4290426-18d5-431a-aea4-21844b832735"), new String[]{"Test", "test", "show me a test card", "test card", "testing", "show test card"}, "Shows a test Reference Card on the glasses display.", this::launchTestCard);
+        registerLocalCommand("Test", UUID.fromString("f4290426-18d5-431a-aea4-21844b832735"), new String[]{"test", "test", "show me a test card", "test card", "testing", "show test card"}, "Shows a test Reference Card on the glasses display.", this::launchTestCard);
 
         //go home
-        registerLocalCommand("Go Home", UUID.fromString("07111c55-b8e0-41d2-a6dd-d994ab946d1e"), new String[]{"Home", "go home", "quit", "stop"}, "Exits current mode and goes back to the home screen.", this::goHome);
+        registerLocalCommand("Go Home", UUID.fromString("07111c55-b8e0-41d2-a6dd-d994ab946d1e"), new String[]{"home", "go home", "quit", "stop"}, "Exits current mode and goes back to the home screen.", this::goHome);
 
 //        //blank screen
 //        registerCommand("Blank Screen", UUID.fromString("93401154-b4ab-4166-9aa3-58b79db41ff0"), new String[] { "turn off display", "blank screen" }, "Makes the smart glasses display turn off or go blank.", this::dummyCallback);

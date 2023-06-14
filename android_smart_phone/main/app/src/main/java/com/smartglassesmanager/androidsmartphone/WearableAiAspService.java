@@ -30,6 +30,7 @@ import com.smartglassesmanager.androidsmartphone.nlp.NlpUtils;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.vosk.NaturalLanguage;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.vosk.SpeechRecVosk;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
+import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -111,6 +112,14 @@ public class WearableAiAspService extends LifecycleService {
 
         //init broadcasters
         tpaSystem = new TPASystem(this);
+
+        //start our default app
+        if (getDefaultCommandSet(getApplicationContext())){
+            String defaultCommandString = getDefaultCommand(this);
+            String commandString = "hey computer " + defaultCommandString + " finish command";
+            //For now, using the final transcript event is a hack to get it going, the default apps should eventually be picked from a list of registered commands properly
+            EventBus.getDefault().post(new SpeechRecFinalOutputEvent(commandString, System.currentTimeMillis()));
+        }
     }
 
     private void setupEventBusSubscribers() {
@@ -286,6 +295,10 @@ public class WearableAiAspService extends LifecycleService {
     /** Gets the chosen ASR framework from shared preference. */
     public static ASR_FRAMEWORKS getChosenAsrFramework(Context context) {
         String asrString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), "");
+        if (asrString.equals("")){
+            saveChosenAsrFramework(context, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+            asrString = ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK.name();
+        }
         return ASR_FRAMEWORKS.valueOf(asrString);
     }
 
@@ -306,6 +319,33 @@ public class WearableAiAspService extends LifecycleService {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit()
                 .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
+                .apply();
+    }
+
+
+    /** Gets the default command from shared preference. */
+    public static String getDefaultCommand(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.DEFAULT_COMMAND_SHARED_PREF_KEY), "");
+    }
+
+    /** Saves the default command in user shared preference. */
+    public static void saveDefaultCommand(Context context, String key) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.DEFAULT_COMMAND_SHARED_PREF_KEY), key)
+                .apply();
+    }
+
+    /** Gets the default command from shared preference. */
+    public static boolean getDefaultCommandSet(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getResources().getString(R.string.DEFAULT_COMMAND_SET_SHARED_PREF_KEY), false);
+    }
+
+    /** Saves the default command in user shared preference. */
+    public static void saveDefaultCommandSet(Context context, boolean value) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putBoolean(context.getResources().getString(R.string.DEFAULT_COMMAND_SET_SHARED_PREF_KEY), value)
                 .apply();
     }
 }

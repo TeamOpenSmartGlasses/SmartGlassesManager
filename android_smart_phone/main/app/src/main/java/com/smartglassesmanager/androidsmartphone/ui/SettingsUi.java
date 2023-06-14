@@ -89,7 +89,7 @@ public class SettingsUi extends Fragment {
                 //check to first make sure that user isn't trying to enable google without providing API key
                 if (WearableAiAspService.getChosenAsrFramework(mContext) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
                     String apiKey = WearableAiAspService.getApiKey(mContext);
-                    if (apiKey == null || apiKey == "") {
+                    if (apiKey == null || apiKey.equals("")) {
                         showNoGoogleAsrDialog();
                         return;
                     }
@@ -147,6 +147,31 @@ public class SettingsUi extends Fragment {
                 } else {
                     WearableAiAspService.saveChosenAsrFramework(mContext, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
                     ((MainActivity)getActivity()).changeAsrFramework(ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+                }
+            }
+        });
+
+        //find out the current default app state, remember it
+        final Button setDefaultAppButton = view.findViewById(R.id.default_app_change);
+        final Switch switchDefaultApp = view.findViewById(R.id.default_app_switch);
+        boolean defaultAppSet = WearableAiAspService.getDefaultCommandSet(this.getContext());
+        switchDefaultApp.setChecked(defaultAppSet);
+
+        setDefaultAppButton.setEnabled(switchDefaultApp.isChecked());
+        setDefaultAppButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                showDefaultAppDialog();
+            }
+        });
+
+        switchDefaultApp.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                setDefaultAppButton.setEnabled(isChecked);
+                //save explicitly as well as force change in case the service is down, we want this to be saved either way
+                if (isChecked) {
+                    WearableAiAspService.saveDefaultCommandSet(mContext, true);
+                } else {
+                    WearableAiAspService.saveDefaultCommandSet(mContext, false);
                 }
             }
         });
@@ -214,6 +239,26 @@ public class SettingsUi extends Fragment {
                         getString(android.R.string.ok),
                         (dialog, which) -> {
                             WearableAiAspService.saveApiKey(this.getContext(), keyInput.getText().toString().trim());
+                        })
+                .show();
+    }
+
+    /** The API won't work without a valid API key. This prompts the user to enter one. */
+    private void showDefaultAppDialog() {
+        LinearLayout contentLayout =
+                (LinearLayout) getLayoutInflater().inflate(R.layout.default_app_dialog, null);
+        EditText keyInput = contentLayout.findViewById(R.id.default_app_input);
+        keyInput.setInputType(InputType.TYPE_CLASS_TEXT);
+        keyInput.setText(WearableAiAspService.getDefaultCommand(this.getContext()));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this.getContext());
+        builder
+                .setTitle("Enter command to run on launch.")
+                .setView(contentLayout)
+                .setPositiveButton(
+                        getString(android.R.string.ok),
+                        (dialog, which) -> {
+                            WearableAiAspService.saveDefaultCommand(this.getContext(), keyInput.getText().toString().trim());
                         })
                 .show();
     }

@@ -413,7 +413,7 @@ public class VoiceCommandServer {
         //generate list of each command's top level phrases
         ArrayList<Object> commandList = new ArrayList();
         voiceCommands.forEach(voiceCommand -> {
-            commandList.add(voiceCommand.getPhrases().get(0));
+            commandList.add(voiceCommand.getPhrases().get(0).toLowerCase());
         });
 
         //tell ASG that we have found this wake word and to display the following command options
@@ -567,6 +567,7 @@ public class VoiceCommandServer {
 
     @Subscribe
     public void onSpeechRecFinalOutputEvent(SpeechRecFinalOutputEvent receivedEvent){
+        Log.d(TAG, "PARSING SPEECH NOW: " + receivedEvent.text);
         throwHandleNewTranscript(receivedEvent.text, receivedEvent.timestamp, true);
     }
 
