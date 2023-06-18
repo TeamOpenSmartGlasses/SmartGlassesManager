@@ -36,6 +36,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     private String notificationDescription;
     private int notificationDrawable;
 
+    public FocusStates focusState;
+
     public SmartGlassesAndroidService(Class mainActivityClass, String myChannelId, int myNotificationId, String notificationAppName, String notificationDescription, int notificationDrawable){
         this.myNotificationId = myNotificationId;
         this.mainActivityClass = mainActivityClass;
@@ -43,6 +45,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         this.notificationAppName = notificationAppName;
         this.notificationDescription = notificationDescription;
         this.notificationDrawable = notificationDrawable;
+
+        this.focusState = FocusStates.OUT_FOCUS;
     }
 
     //service stuff
