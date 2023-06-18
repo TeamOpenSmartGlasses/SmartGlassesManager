@@ -670,6 +670,9 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void displayTextLine(String text){
+    }
+
     public void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs){
         try {
             JSONObject commandFoundEvent = new JSONObject();

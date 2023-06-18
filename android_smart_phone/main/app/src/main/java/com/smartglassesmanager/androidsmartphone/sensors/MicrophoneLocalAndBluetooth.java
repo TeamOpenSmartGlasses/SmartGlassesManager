@@ -17,6 +17,11 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
 
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ScoStartEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
+
+import org.greenrobot.eventbus.EventBus;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Set;
@@ -83,7 +88,7 @@ public class MicrophoneLocalAndBluetooth {
                         handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
                     case AudioManager.SCO_AUDIO_STATE_DISCONNECTED:
                         Log.i(TAG, "Bluetooth HFP Headset is disconnected");
-                        //handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
+                        handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
                         // Always receive SCO_AUDIO_STATE_DISCONNECTED on call to startBluetooth()
                         // which at that stage we do not want to do anything. Thus the if condition.
                         break;
@@ -149,6 +154,11 @@ public class MicrophoneLocalAndBluetooth {
 
     private AudioChunkCallback mChunkCallback;
 
+    public MicrophoneLocalAndBluetooth(Context context, boolean useBluetoothSco, AudioChunkCallback chunkCallback) {
+        this(context, chunkCallback);
+        useBluetoothMic(useBluetoothSco);
+    }
+
     public MicrophoneLocalAndBluetooth(Context context, AudioChunkCallback chunkCallback) {
         bufferSize = Math.round(SAMPLING_RATE_IN_HZ * BUFFER_SIZE_SECONDS);
 
@@ -163,6 +173,25 @@ public class MicrophoneLocalAndBluetooth {
         //setup handler
         mHandler = new Handler();
 
+        //first, start recording on local microphone
+        startRecording();
+    }
+
+    private void useBluetoothMic(boolean shouldUseBluetoothSco){
+        bluetoothAudio = shouldUseBluetoothSco;
+
+        if (shouldUseBluetoothSco){
+            startBluetoothSco();
+        } else {
+            stopBluetoothSco();
+        }
+
+        if (recordingInProgress.get()) {
+            startRecording();
+        }
+    }
+
+    private void startBluetoothSco(){
         //listen for bluetooth HFP events
         audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mContext.registerReceiver(bluetoothStateReceiver, new IntentFilter(
@@ -172,51 +201,31 @@ public class MicrophoneLocalAndBluetooth {
         mContext.registerReceiver(bluetoothStateReceiver,
                 new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED));
 
-        //first, start recording on local microphone
-        bluetoothAudio = false;
-        startRecording();
         //the, immediately try to startup the SCO connection
         mIsCountDownOn = true;
         mCountDown.start();
     }
 
+    private void stopBluetoothSco(){
+        mIsCountDownOn = false;
+        mCountDown.cancel();
+        mContext.unregisterReceiver(bluetoothStateReceiver);
+    }
+
     private void startRecording() {
-        //if alraedy recording, stop previous and start a new one
+        //if already recording, stop previous and start a new one
         if (recorder != null) {
             stopRecording();
         }
         if (bluetoothAudio) {
             Log.d(TAG, "Starting recording on Bluetooth Microphone");
+            EventBus.getDefault().post(new ScoStartEvent(true));
         } else {
             Log.d(TAG, "Starting recording on local microphone");
+            EventBus.getDefault().post(new ScoStartEvent(false));
         }
 
-        // Depending on the device one might has to change the AudioSource, e.g. to DEFAULT
-        // or VOICE_COMMUNICATION
-
-//        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-//        Set<BluetoothDevice> devices = bluetoothAdapter.getBondedDevices();
-//        for (BluetoothDevice device : devices) {
-//            Log.d(TAG, "" + device.getBluetoothClass().getDeviceClass());
-//            Log.d(TAG, "" + device.getBondState());
-//            Log.d(TAG, "" + device.getName());
-//            Log.d(TAG, "\n");
-//            if (device.getBluetoothClass().getDeviceClass() == BluetoothClass.Device.AUDIO_VIDEO_MICROPHONE) {
-//                // Bluetooth microphone is connected, use it for recording
-//                // Set up the recorder to use the Bluetooth microphone
-//                break;
-//            }
-//        }
-
-//        for (BluetoothDevice device : devices) {
-//            if (device.getBluetoothClass().getDeviceClass() == BluetoothClass.Device.AUDIO_VIDEO_MICROPHONE) {
-//                recorder.setAudioSource(MediaRecorder.AudioSource.MIC); // Set to MIC to prevent crash if no Bluetooth device found
-//                recorder.setAudioSource(device.getAddress());
-//                break;
-//            }
-//        }
-
-        recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
+        recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
                 SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize * 2);
 
         recorder.startRecording();
@@ -323,7 +332,7 @@ public class MicrophoneLocalAndBluetooth {
     /**
      * Try to connect to audio headset in onTick.
      */
-    private CountDownTimer mCountDown = new CountDownTimer(1000, 5000)
+    private CountDownTimer mCountDown = new CountDownTimer(3001, 1000)
     {
 
         @SuppressWarnings("synthetic-access")
@@ -346,9 +355,10 @@ public class MicrophoneLocalAndBluetooth {
             audioManager.setMode(AudioManager.MODE_NORMAL);
 
             //if it fails after n tries, then we should start recording with local microphone
+            bluetoothAudio = false;
             startRecording();
 
-            Log.d(TAG, "\nonFinish fail to connect to headset audio"); //$NON-NLS-1$
+            Log.d(TAG, "onFinish fail to connect to headset audio"); //$NON-NLS-1$
         }
     };
 

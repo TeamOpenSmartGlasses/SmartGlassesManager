@@ -4,7 +4,7 @@
     package="com.smartglassesmanager.androidsmartphone">
 
   <uses-sdk
-      android:minSdkVersion="28"
+      android:minSdkVersion="29"
       android:targetSdkVersion="30" />
 
 <!--    STORAGE-->
@@ -57,7 +57,9 @@
           </intent-filter>
       </activity>
 
-          <service android:name="com.smartglassesmanager.androidsmartphone.WearableAiAspService" />
+          <service android:name="com.smartglassesmanager.androidsmartphone.WearableAiAspService"
+              android:foregroundServiceType="microphone"
+          />
 
       <provider
           android:name="androidx.core.content.FileProvider"
@@ -80,4 +82,10 @@
       </receiver>
 
   </application>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
 </manifest>

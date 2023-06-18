@@ -21,6 +21,7 @@ import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.SubscribeDataStreamRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -56,6 +57,7 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
             case ScrollingTextViewStopRequestEvent.eventId:
             case FinalScrollingTextRequestEvent.eventId:
             case RegisterCommandRequestEvent.eventId:
+            case TextLineViewRequestEvent.eventId:
             case FocusRequestEvent.eventId:
                 Log.d(TAG, "Piping command event to CommandSystem for verification before broadcast.");
                 EventBus.getDefault().post(new TPARequestEvent(eventId, serializedEvent, sendingPackage));

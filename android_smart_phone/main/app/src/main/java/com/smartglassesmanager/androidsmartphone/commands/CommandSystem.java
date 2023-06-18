@@ -9,6 +9,7 @@ import android.util.Log;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.SGMStealFocus;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.TPARequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.TextToSpeechEvent;
 import com.teamopensmartglasses.sgmlib.FocusStates;
 import com.teamopensmartglasses.sgmlib.SGMCallbackMapper;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
@@ -24,6 +25,7 @@ import com.smartglassesmanager.androidsmartphone.eventbusmessages.StartLiveCapti
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -62,7 +64,7 @@ public class CommandSystem {
     Context mContext;
 
     final String commandStartString = "command--";
-    final int commandResponseWindowTime = 2000; //how long a TPA has to send a response request event
+    final int commandResponseWindowTime = 20000; //how long a TPA has to send a response request event
     final int suspendFocusTime = 8000; //how long we allow an out of focus app to display before switching back to in-focus app
     public final long NO_UNSUSPEND_DELAY = 0;
 
@@ -247,7 +249,7 @@ public class CommandSystem {
         }
 
         //if the app doesn't have focus, then we have to check if its been recently triggered and thus allowed to do something
-        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId) | eventId.equals(FocusRequestEvent.eventId)) {
+        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(TextLineViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId) | eventId.equals(FocusRequestEvent.eventId)) {
             //if the app took too long to respond, don't allow it to run anything
             if (appPrivilegeTimeout == null) {
                 return false;
@@ -332,6 +334,10 @@ public class CommandSystem {
                 case IntermediateScrollingTextRequestEvent.eventId:
                     suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((IntermediateScrollingTextRequestEvent) receivedEvent.serializedEvent);
+                    break;
+                case TextLineViewRequestEvent.eventId:
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
+                    EventBus.getDefault().post((TextLineViewRequestEvent) receivedEvent.serializedEvent);
                     break;
                 case FocusRequestEvent.eventId:
                     focusRequested(receivedEvent.sendingPackage, ((FocusRequestEvent) receivedEvent.serializedEvent).focusRequest);

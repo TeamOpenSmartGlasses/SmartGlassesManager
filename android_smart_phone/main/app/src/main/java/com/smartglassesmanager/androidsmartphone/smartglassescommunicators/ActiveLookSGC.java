@@ -136,6 +136,9 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void displayTextLine(String text){
+    }
+
     public void showPromptCircle(){
         displayCircle(new Point(50, 6), 12, false);
         displayCircle(new Point(50, 6), 3, true);

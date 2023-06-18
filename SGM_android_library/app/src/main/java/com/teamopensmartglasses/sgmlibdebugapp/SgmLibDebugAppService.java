@@ -45,11 +45,13 @@ public class SgmLibDebugAppService extends SmartGlassesAndroidService {
     }
 
     public void helloWorldCallback(String args, long commandTime){
-        sgmLib.sendReferenceCard("Debug Hello No args", "SGM triggered Hello World command.");
+        sgmLib.sendTextLine("testing the SGM text to speech");
+//        sgmLib.sendReferenceCard("Debug Hello No args", "SGM triggered Hello World command.");
     }
 
     public void helloWorldWithArgsCallback(String args, long commandTime){
         sgmLib.sendReferenceCard("Debug: Hello With Args ", "SGM triggered Hello World With Args command. Received args: " + args);
+        sgmLib.sendTextLine("testing the SGM text to speech");
     }
 
     public void helloWorldWithNaturalLanguageCallback(String args, long commandTime){

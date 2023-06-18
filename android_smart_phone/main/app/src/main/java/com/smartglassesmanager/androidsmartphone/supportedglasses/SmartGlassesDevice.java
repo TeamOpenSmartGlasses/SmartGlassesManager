@@ -1,6 +1,8 @@
 package com.smartglassesmanager.androidsmartphone.supportedglasses;
 
-public class SmartGlassesDevice {
+import java.io.Serializable;
+
+public class SmartGlassesDevice implements Serializable {
     public String deviceModelName;
     public String deviceIconName;
     public boolean anySupport;
@@ -11,6 +13,7 @@ public class SmartGlassesDevice {
     public boolean hasCamera;
     public boolean hasInMic;
     public boolean hasOutMic;
+    public boolean hasScoMic;
     public double weight;
 
     public int connectionState = -1; //0 is not connected, 1 is trying to connect, 2 is connected

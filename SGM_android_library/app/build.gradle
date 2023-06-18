@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.teamopensmartglasses.sgmlibdebugapp"
-        minSdk 28
+        minSdk 29
         targetSdk 32
         versionCode 1
         versionName "1.0"

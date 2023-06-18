@@ -47,6 +47,9 @@ public class GlassesConnectedFragment extends Fragment {
 
         //get the selected device
         SmartGlassesDevice device = ((MainActivity)getActivity()).selectedDevice;
+        if (device == null){
+            return;
+        }
 
         //setup the image view
         ImageView connectedImageIv = (ImageView) view.findViewById(R.id.connected_glasses_image);

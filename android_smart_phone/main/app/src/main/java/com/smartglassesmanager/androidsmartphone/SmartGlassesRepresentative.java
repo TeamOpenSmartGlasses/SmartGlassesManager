@@ -27,6 +27,7 @@ import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.Activ
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AndroidSGC;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.SmartGlassesCommunicator;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
+import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
 
 //rxjava
 import java.nio.ByteBuffer;
@@ -41,7 +42,7 @@ class SmartGlassesRepresentative {
 
     Context context;
 
-    SmartGlassesDevice smartGlassesDevice;
+    public SmartGlassesDevice smartGlassesDevice;
     SmartGlassesCommunicator smartGlassesCommunicator;
     MicrophoneLocalAndBluetooth bluetoothAudio;
 
@@ -81,15 +82,17 @@ class SmartGlassesRepresentative {
         smartGlassesCommunicator.connectToSmartGlasses();
 
         //if the glasses don't support a microphone, this Representative handles local microphone
-        if (!smartGlassesDevice.getHasInMic() && !smartGlassesDevice.getHasOutMic()) {
-            connectAndStreamLocalMicrophone();
+        if (smartGlassesDevice.hasScoMic) {
+            connectAndStreamLocalMicrophone(true);
+        } else if (!smartGlassesDevice.getHasInMic() && !smartGlassesDevice.getHasOutMic()) {
+            connectAndStreamLocalMicrophone(false);
         }
     }
 
-    private void connectAndStreamLocalMicrophone(){
+    private void connectAndStreamLocalMicrophone(boolean useBluetoothSco){
         //follow this order for speed
         //start audio from bluetooth headset
-        bluetoothAudio = new MicrophoneLocalAndBluetooth(context, new AudioChunkCallback(){
+        bluetoothAudio = new MicrophoneLocalAndBluetooth(context, useBluetoothSco, new AudioChunkCallback(){
             @Override
             public void onSuccess(ByteBuffer chunk){
                 receiveChunk(chunk);
@@ -174,6 +177,14 @@ class SmartGlassesRepresentative {
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
 //            homeUiAfterDelay(referenceCardDelayTime);
+        }
+    }
+
+    @Subscribe
+    public void onTextLineViewRequestEvent(TextLineViewRequestEvent receivedEvent){
+        Log.d(TAG, "Got text line event: " + receivedEvent.text);
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayTextLine(receivedEvent.text);
         }
     }
 

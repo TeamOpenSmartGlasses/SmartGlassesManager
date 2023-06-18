@@ -100,12 +100,14 @@ public class MainActivity extends AppCompatActivity {
             final String action = intent.getAction();
             if (MessageTypes.GLASSES_STATUS_UPDATE.equals(action)) {
                 int glassesConnectionState = intent.getIntExtra(MessageTypes.CONNECTION_GLASSES_STATUS_UPDATE, -1);
-                updateGlassesConnectionState(glassesConnectionState);
+                SmartGlassesDevice smartGlassesDevice = (SmartGlassesDevice) intent.getSerializableExtra(MessageTypes.CONNECTION_GLASSES_GLASSES_OBJECT);
+                updateGlassesConnectionState(glassesConnectionState, smartGlassesDevice);
             }
         }
     };
 
-    public void updateGlassesConnectionState(int glassesConnectionState){
+    public void updateGlassesConnectionState(int glassesConnectionState, SmartGlassesDevice smartGlassesDevice){
+        selectedDevice = smartGlassesDevice;
         if (selectedDevice != null) {
             selectedDevice.setConnectionState(glassesConnectionState);
         }

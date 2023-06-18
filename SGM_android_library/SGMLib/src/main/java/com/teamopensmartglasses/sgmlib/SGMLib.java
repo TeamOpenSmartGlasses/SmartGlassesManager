@@ -13,6 +13,7 @@ import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
+import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -81,6 +82,10 @@ public class SGMLib {
 
     public void stopScrollingText(){
         EventBus.getDefault().post(new ScrollingTextViewStopRequestEvent());
+    }
+
+    public void sendTextLine(String text) {
+        EventBus.getDefault().post(new TextLineViewRequestEvent(text));
     }
 
     @Subscribe

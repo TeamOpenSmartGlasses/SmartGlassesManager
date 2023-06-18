@@ -1,111 +1,93 @@
 package com.smartglassesmanager.androidsmartphone.texttospeech;
 
 import android.content.Context;
-import android.os.Handler;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
-import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ScoStartEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.TextToSpeechEvent;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.Locale;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.subjects.PublishSubject;
-
 public class TextToSpeechSystem {
+    private  final String TAG = "WearableAi_TextToSpeechSystem";
 
     private Context mContext;
-
     public boolean isLoaded = false;
     private TextToSpeech ttsModel;
-    private PublishSubject<JSONObject> dataObservable;
-    public Locale language = Locale.ENGLISH;
-    private Disposable dataSubscriber;
-    final Handler main_handler;
+    private boolean sco;
 
-    public TextToSpeechSystem(Context context, PublishSubject<JSONObject> dataObservable, Locale language){
+    public TextToSpeechSystem(Context context){
         this.mContext = context;
-        this.language = language;
-        this.setup(language);
-        main_handler = new Handler();
-        this.dataObservable = dataObservable;
-        this.dataSubscriber = dataObservable.subscribe(i -> handleDataStream(i));
-
+        this.sco = false;
+        EventBus.getDefault().register(this);
     }
 
-    public void setup(Locale language){
+    public void useSco(boolean useSco){
+        this.sco = useSco;
+    }
+
+//    public void setup(Locale language){
+    public void setup(){
+        Locale language = Locale.ENGLISH;
         ttsModel = new TextToSpeech(mContext, status -> {
-            if (status != -1) {
+            if (status == TextToSpeech.SUCCESS) {
                 ttsModel.setLanguage(language);
-                Log.d("TextToSpeech","TTL Model initialized");
+                ttsModel.setSpeechRate(1.6f);
+                ttsModel.setPitch(0.8f);
+                ttsModel.setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build());
+                Log.d("TextToSpeech","TTS Model initialized");
                 this.isLoaded = true;
+                Log.d(TAG, ttsModel.getVoices().toString());
+                Log.d(TAG, ttsModel.getDefaultEngine());
+            } else {
+                Log.d(TAG, "TTS failed with code: " + status);
             }
         });
     }
 
-    public void speak(String text, Locale locale){
-        if(this.isLoaded){
-            if(locale != language){
-                ttsModel.setLanguage(locale);
-                ttsModel.speak(text,TextToSpeech.QUEUE_FLUSH, null ,null);
-                ttsModel.setLanguage(language);
-                Log.d("TextToSpeech",text + " spoken");
+    public void speak(String text){
+        Log.d(TAG, "Speaking TTS: " + text);
+        if (this.isLoaded){
+            // TTS engine is initialized successfully
+            if (sco) {
+                Bundle ttsParams = new Bundle();
+                ttsParams.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_VOICE_CALL);
+                ttsParams.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
+                ttsModel.speak(text, TextToSpeech.QUEUE_FLUSH, ttsParams, null);
             } else {
-                ttsModel.speak(text,TextToSpeech.QUEUE_FLUSH, null ,null);
+                ttsModel.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
             }
+        } else {
+            Log.d(TAG, "TTS failed because not loaded.");
         }
     }
-
-    private void handleDataStream(JSONObject data){
-        try {
-            String dataType = data.getString(MessageTypes.MESSAGE_TYPE_LOCAL);
-            if (dataType.equals(MessageTypes.TEXT_TO_SPEECH_SPEAK)) {
-//                handleNewTextToSpeak(data);
-            }
-        } catch (JSONException e){
-            e.printStackTrace();
-        }
-    }
-
-//    private void handleNewTextToSpeak(JSONObject data){
-//        String toSpeak;
-//        String languageCodeFromData;
-//
-//        try {
-//            //extract text to speak
-//            toSpeak = data.getString(MessageTypes.TEXT_TO_SPEECH_SPEAK_DATA);
-//            //extract the target language accent
-//            Locale newLocale;
-//            if (data.has(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE)) {
-//                languageCodeFromData = data.getString(MessageTypes.TEXT_TO_SPEECH_TARGET_LANGUAGE_CODE);
-//
-//                //get the local from the code
-//                newLocale = WearableAiAspService.getLanguageFromCode(languageCodeFromData).getLocale();
-//            } else {
-//                newLocale = language;
-//            }
-//
-//            // now say it
-//            main_handler.post(new Runnable() {
-//                public void run() {
-//                    speak(toSpeak, newLocale);
-//                }
-//            });
-//        }
-//        catch (JSONException e){
-//            e.printStackTrace();
-//        }
-//    }
 
     public void destroy(){
-        ttsModel.shutdown();
+        EventBus.getDefault().unregister(this);
+        if (ttsModel != null) {
+            ttsModel.shutdown();
+        }
         Log.d("TextToSpeech","TTS destroyed");
     }
 
 
+    @Subscribe
+    public void handleTtsEvent(TextToSpeechEvent event) {
+        speak(event.text);
+    }
 
-
+    @Subscribe
+    public void handleScoEvent(ScoStartEvent event) {
+        useSco(event.scoStart);
+    }
 }

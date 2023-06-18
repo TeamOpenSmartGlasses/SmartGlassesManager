@@ -9,8 +9,11 @@ import android.util.Log;
 import com.smartglassesmanager.androidsmartphone.comms.AspWebsocketServer;
 import com.smartglassesmanager.androidsmartphone.comms.AudioSystem;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.TextToSpeechEvent;
 import com.smartglassesmanager.androidsmartphone.utils.NetworkUtils;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -77,6 +80,11 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
     }
 
     public void displayPromptView(String prompt, String [] options){
+    }
+
+    public void displayTextLine(String text){
+        Log.d(TAG, "displayTextLine: " + text);
+        EventBus.getDefault().post(new TextToSpeechEvent(text));
     }
 
     public void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs){

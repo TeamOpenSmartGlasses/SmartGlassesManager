@@ -14,6 +14,7 @@ import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEven
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -51,6 +52,12 @@ public class TPABroadcastSender {
 
     @Subscribe
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
+        String eventId = receivedEvent.eventId;
+        sendEventToSGM(eventId, receivedEvent);
+    }
+
+    @Subscribe
+    public void onTextLineViewEvent(TextLineViewRequestEvent receivedEvent){
         String eventId = receivedEvent.eventId;
         sendEventToSGM(eventId, receivedEvent);
     }

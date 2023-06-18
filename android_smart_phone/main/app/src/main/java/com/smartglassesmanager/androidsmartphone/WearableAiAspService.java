@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
@@ -22,6 +23,7 @@ import com.smartglassesmanager.androidsmartphone.database.phrase.PhraseRepositor
 import com.smartglassesmanager.androidsmartphone.database.voicecommand.VoiceCommandRepository;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecSwitchSystem;
+import com.smartglassesmanager.androidsmartphone.texttospeech.TextToSpeechSystem;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
@@ -64,7 +66,7 @@ public class WearableAiAspService extends LifecycleService {
     NlpUtils nlpUtils;
 
     //Text to Speech
-    //private TextToSpeechSystem textToSpeechSystem;
+    private TextToSpeechSystem textToSpeechSystem;
 
     //observables to send data around app
     PublishSubject<JSONObject> dataObservable;
@@ -102,7 +104,8 @@ public class WearableAiAspService extends LifecycleService {
         dataObservable = PublishSubject.create();
 
         //start text to speech
-//        textToSpeechSystem = new TextToSpeechSystem(this, dataObservable, supportedLanguages.get(baseLanguage).getLocale());
+        textToSpeechSystem = new TextToSpeechSystem(this);
+        textToSpeechSystem.setup();
 
         //start the command system, which handles registering command and running the launcher
         commandSystem = new CommandSystem(getApplicationContext());
@@ -189,7 +192,7 @@ public class WearableAiAspService extends LifecycleService {
             switch (action) {
                 case ACTION_START_FOREGROUND_SERVICE:
                     // start the service in the foreground
-                    startForeground(1234, updateNotification());
+                    startForeground(1234, updateNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
                     break;
                 case ACTION_STOP_FOREGROUND_SERVICE:
                     stopForeground(true);
@@ -237,7 +240,7 @@ public class WearableAiAspService extends LifecycleService {
         }
 
         //kill textToSpeech
-//        textToSpeechSystem.destroy();
+        textToSpeechSystem.destroy();
 
         //close room database(s)
         WearableAiRoomDatabase.destroy();
@@ -277,6 +280,7 @@ public class WearableAiAspService extends LifecycleService {
         int connectionState;
         if (smartGlassesRepresentative != null) {
             connectionState = smartGlassesRepresentative.getConnectionState();
+            intent.putExtra(MessageTypes.CONNECTION_GLASSES_GLASSES_OBJECT, smartGlassesRepresentative.smartGlassesDevice);
         } else {
             connectionState = 0;
         }

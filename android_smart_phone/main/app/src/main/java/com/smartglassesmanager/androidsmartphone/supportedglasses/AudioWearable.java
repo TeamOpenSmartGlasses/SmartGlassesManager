@@ -12,6 +12,7 @@ public class AudioWearable extends SmartGlassesDevice {
         hasCamera = false;
         hasInMic = false; //set as false because we want to do this from ASP
         hasOutMic = false;
+        hasScoMic = true;
         weight = 14;
     }
 }

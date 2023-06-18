@@ -122,4 +122,11 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Pressed 'Killed Service' button.");
         stopSgmLibService();
     }
+
+    public void ttsTestClicked(View v) {
+        Log.d(TAG, "Pressed 'Test TTS' button.");
+        if (sgmLibServiceConnection != null) {
+            mService.sgmLib.sendTextLine("this is a test of SGM TTS");
+        }
+    }
 }

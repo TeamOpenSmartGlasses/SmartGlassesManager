@@ -33,6 +33,9 @@ public abstract class SmartGlassesCommunicator {
     //prompt view card
     public abstract void displayPromptView(String title, String [] options);
 
+    //display text line
+    public abstract void displayTextLine(String text);
+
     //home screen
     public abstract void showHomeScreen();
 
