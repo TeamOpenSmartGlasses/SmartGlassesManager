@@ -125,7 +125,6 @@ public class MicrophoneLocalAndBluetooth {
             // Calling startBluetoothSco() always returns faIL here,
             // that why a count down timer is implemented to call
             // startBluetoothSco() in the onTick.
-            audioManager.setMode(AudioManager.MODE_IN_CALL);
             mIsCountDownOn = true;
             mCountDown.start();
         }
@@ -168,6 +167,9 @@ public class MicrophoneLocalAndBluetooth {
         //setup context
         mContext = context;
 
+        //setup audio manager
+        audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+
         mChunkCallback = chunkCallback;
 
         //setup handler
@@ -193,7 +195,6 @@ public class MicrophoneLocalAndBluetooth {
 
     private void startBluetoothSco(){
         //listen for bluetooth HFP events
-        audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mContext.registerReceiver(bluetoothStateReceiver, new IntentFilter(
                 AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
         mContext.registerReceiver(bluetoothStateReceiver,
@@ -219,9 +220,11 @@ public class MicrophoneLocalAndBluetooth {
         }
         if (bluetoothAudio) {
             Log.d(TAG, "Starting recording on Bluetooth Microphone");
+            audioManager.setMode(AudioManager.MODE_IN_CALL);
             EventBus.getDefault().post(new ScoStartEvent(true));
         } else {
             Log.d(TAG, "Starting recording on local microphone");
+            audioManager.setMode(AudioManager.MODE_NORMAL);
             EventBus.getDefault().post(new ScoStartEvent(false));
         }
 
@@ -332,7 +335,7 @@ public class MicrophoneLocalAndBluetooth {
     /**
      * Try to connect to audio headset in onTick.
      */
-    private CountDownTimer mCountDown = new CountDownTimer(3001, 1000)
+    private CountDownTimer mCountDown = new CountDownTimer(4201, 1400)
     {
 
         @SuppressWarnings("synthetic-access")
@@ -352,7 +355,6 @@ public class MicrophoneLocalAndBluetooth {
             // Calls to startBluetoothSco() in onStick are not successful.
             // Should implement something to inform user of this failure
             mIsCountDownOn = false;
-            audioManager.setMode(AudioManager.MODE_NORMAL);
 
             //if it fails after n tries, then we should start recording with local microphone
             bluetoothAudio = false;

@@ -41,10 +41,10 @@ public class TextToSpeechSystem {
                 ttsModel.setLanguage(language);
                 ttsModel.setSpeechRate(1.6f);
                 ttsModel.setPitch(0.8f);
-                ttsModel.setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .build());
+//                ttsModel.setAudioAttributes(new AudioAttributes.Builder()
+//                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+//                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+//                        .build());
                 Log.d("TextToSpeech","TTS Model initialized");
                 this.isLoaded = true;
                 Log.d(TAG, ttsModel.getVoices().toString());
