@@ -55,6 +55,7 @@ public class SpeechRecSwitchSystem {
         if (speechRecFramework != null){
             speechRecFramework.destroy();
         }
+        EventBus.getDefault().unregister(this);
     }
 }
 

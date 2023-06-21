@@ -77,6 +77,7 @@ public class TextToSpeechSystem {
         if (ttsModel != null) {
             ttsModel.shutdown();
         }
+
         Log.d("TextToSpeech","TTS destroyed");
     }
 

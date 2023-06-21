@@ -1,4 +1,4 @@
-package com.smartglassesmanager.androidsmartphone.sensors;
+package com.smartglassesmanager.androidsmartphone.hci;
 
 import java.nio.ByteBuffer;
 

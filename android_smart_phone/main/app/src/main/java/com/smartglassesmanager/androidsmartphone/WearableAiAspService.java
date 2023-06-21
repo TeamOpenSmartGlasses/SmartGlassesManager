@@ -21,6 +21,7 @@ import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
 import com.smartglassesmanager.androidsmartphone.database.WearableAiRoomDatabase;
 import com.smartglassesmanager.androidsmartphone.database.phrase.PhraseRepository;
 import com.smartglassesmanager.androidsmartphone.database.voicecommand.VoiceCommandRepository;
+import com.smartglassesmanager.androidsmartphone.hci.SmartRingBLE;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecSwitchSystem;
 import com.smartglassesmanager.androidsmartphone.texttospeech.TextToSpeechSystem;
@@ -109,6 +110,10 @@ public class WearableAiAspService extends LifecycleService {
 
         //start the command system, which handles registering command and running the launcher
         commandSystem = new CommandSystem(getApplicationContext());
+
+        //connect smart ring
+        SmartRingBLE tclRing = new SmartRingBLE(this);
+        tclRing.start();
 
         //setup event bus subscribers
         setupEventBusSubscribers();

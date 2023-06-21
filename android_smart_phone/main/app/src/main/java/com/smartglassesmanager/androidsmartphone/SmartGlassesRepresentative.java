@@ -21,8 +21,8 @@ import com.smartglassesmanager.androidsmartphone.eventbusmessages.NaturalLanguag
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
-import com.smartglassesmanager.androidsmartphone.sensors.AudioChunkCallback;
-import com.smartglassesmanager.androidsmartphone.sensors.MicrophoneLocalAndBluetooth;
+import com.smartglassesmanager.androidsmartphone.hci.AudioChunkCallback;
+import com.smartglassesmanager.androidsmartphone.hci.MicrophoneLocalAndBluetooth;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AndroidSGC;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.SmartGlassesCommunicator;

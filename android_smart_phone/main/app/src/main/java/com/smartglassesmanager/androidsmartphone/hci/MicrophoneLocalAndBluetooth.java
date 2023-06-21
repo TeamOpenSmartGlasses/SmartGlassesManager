@@ -1,9 +1,7 @@
-package com.smartglassesmanager.androidsmartphone.sensors;
+package com.smartglassesmanager.androidsmartphone.hci;
 
 //thanks to https://github.com/aahlenst/android-audiorecord-sample/blob/master/src/main/java/com/example/audiorecord/BluetoothRecordActivity.java
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,13 +16,11 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.ScoStartEvent;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -367,11 +363,13 @@ public class MicrophoneLocalAndBluetooth {
     public void destroy(){
         stopRecording();
 
+        //cleanup bluetooth
+        mIsCountDownOn = false;
+        mCountDown.cancel();
+        deactivateBluetoothSco();
+        audioManager.setMode(AudioManager.MODE_NORMAL);
         if (mContext != null) {
             mContext.unregisterReceiver(bluetoothStateReceiver);
         }
-
-        mIsCountDownOn = false;
-        mCountDown.cancel();
     }
 }
