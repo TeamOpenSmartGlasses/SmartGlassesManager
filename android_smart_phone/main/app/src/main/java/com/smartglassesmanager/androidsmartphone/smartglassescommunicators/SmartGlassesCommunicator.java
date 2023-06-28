@@ -36,6 +36,9 @@ public abstract class SmartGlassesCommunicator {
     //display text line
     public abstract void displayTextLine(String text);
 
+    //display centered text
+    public abstract void displayCenteredText(String text);
+
     //home screen
     public abstract void showHomeScreen();
 

@@ -137,6 +137,14 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     public void displayTextLine(String text){
+        displayReferenceCardSimple("", text);
+    }
+
+    public void displayCenteredText(String text){
+        connectedGlasses.clear();
+        TextLineSG textLineSG = new TextLineSG(text, SMALL_FONT);
+        Point point = new Point(0, 11);
+        displayText(textLineSG, point, true);
     }
 
     public void showPromptCircle(){

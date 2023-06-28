@@ -13,6 +13,7 @@ import android.util.Log;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AudioWearableSGC;
+import com.teamopensmartglasses.sgmlib.events.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
@@ -185,6 +186,13 @@ class SmartGlassesRepresentative {
         Log.d(TAG, "Got text line event: " + receivedEvent.text);
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayTextLine(receivedEvent.text);
+        }
+    }
+
+    @Subscribe
+    public void onDisplayCenteredTextRequestEvent(CenteredTextViewRequestEvent receivedEvent){
+        if(smartGlassesCommunicator != null){
+            smartGlassesCommunicator.displayCenteredText(receivedEvent.text);
         }
     }
 
