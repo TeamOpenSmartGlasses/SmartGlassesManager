@@ -7,6 +7,7 @@ import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
+import com.teamopensmartglasses.sgmlib.events.SmartRingButtonOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SubscribeDataStreamRequestEvent;
@@ -68,6 +69,14 @@ public class TPASystem {
         boolean tpaIsSubscribed = true; //TODO: Hash out implementation
         if(tpaIsSubscribed){
             sgmLibBroadcastSender.sendEventToTPAs(SpeechRecFinalOutputEvent.eventId, event);
+        }
+    }
+
+    @Subscribe
+    public void onSmartRingButtonEvent(SmartRingButtonOutputEvent event){
+        boolean tpaIsSubscribed = true; //TODO: Hash out implementation
+        if(tpaIsSubscribed){
+            sgmLibBroadcastSender.sendEventToTPAs(SmartRingButtonOutputEvent.eventId, event);
         }
     }
 

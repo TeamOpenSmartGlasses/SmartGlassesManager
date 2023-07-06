@@ -30,6 +30,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
+import com.teamopensmartglasses.sgmlib.events.SmartRingButtonOutputEvent;
+
+import org.greenrobot.eventbus.EventBus;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +46,10 @@ public class SmartRingBLE {
     private final static String TAG = "WearableIntelligence_SmartRingBLE";
 
     public static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    public static final UUID TCL_STREAM_SERVICE = UUID.fromString("0000fff0-0000-1000-8000-00805f9b34fb");
+    public static final UUID TCL_PRESET_CHARACTERISTIC = UUID.fromString("0000ae02-0000-1000-8000-00805f9b34fb");
+    public static final UUID TCL_STREAM_CHARACTERISTIC = UUID.fromString("0000fff1-0000-1000-8000-00805f9b34fb");
+//    public String tclMouseStreamCharId = "273e0001-4c4d-454d-96be-f03bac821358"; //write preset to this
 
     private boolean mScanning;
     private Handler mHandler;
@@ -69,18 +77,21 @@ public class SmartRingBLE {
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
-    //list of chars we want to write to
-    //sample are received in this order : 44, 41, 38, 32, 35
-    public String tclMouseStreamCharId = "273e0001-4c4d-454d-96be-f03bac821358"; //write preset to this
-
     public Boolean lock = false; //check if bluetooth writer/reader is locked before trying to read/write
     public int attempts = 0; //number of attempts to keep retrying connection to bluetooth
     public Boolean tryStill = false; //should we keep retrying to connect, this option is for "Croc'ing" - reconnecting on disconnec
     private NotificationManager mNotificationManager; //manage notifications...
     private Context mContext;
 
+    //state of the ring
+    private boolean screenTouched;
+    private boolean screenPressed;
+
     public SmartRingBLE(Context mContext) {
         this.mContext = mContext;
+
+        screenTouched = false;
+        screenPressed = false;
     }
 
     public void destroy(){
@@ -102,17 +113,15 @@ public class SmartRingBLE {
                 intentAction = ACTION_GATT_CONNECTED;
                 mConnectionState = STATE_CONNECTED;
                 //broadcastUpdate(intentAction);
-                Log.i("UUID", "Connected to GATT server.");
+                Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
-                Log.i("UUID", "Attempting to start service discovery:" +
+                Log.i(TAG, "Attempting to start service discovery:" +
                         mBluetoothGatt.discoverServices());
-                //Attempts to setup TCL ring
-                tclRing();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.i(TAG, "Disconnected from TCL Smart Ring.");
                 attempts++;
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
-                Log.i("UUID", "Disconnected from GATT server.");
                 if (tryStill.equals(true)) {
                     oldConn(mBluetoothDeviceAddress);
                     //broadcastUpdate(intentAction);
@@ -123,7 +132,14 @@ public class SmartRingBLE {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-//                broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+                Log.d(TAG, "onServicesDiscovered received: " + status);
+                //Attempts to setup TCL ring
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        tclRing();
+                    }
+                }, 50);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -140,7 +156,7 @@ public class SmartRingBLE {
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status){
-            Log.d("UUID", "Char write success");
+            Log.d(TAG, "Char write success");
             lock = false;
         }
 
@@ -149,15 +165,58 @@ public class SmartRingBLE {
             lock = false;
         }
 
+        public String byteArrayToHex(byte[] a) {
+            StringBuilder sb = new StringBuilder(a.length * 2);
+            for(byte b: a)
+                sb.append(String.format("%02x", b));
+            return sb.toString();
+        }
+
+        public void parseButtonStream(byte [] values){
+            int buttonByte = 13;
+            int SCREEN_TOUCHED_MASK = 0x20;
+            int SCREEN_PRESSED_MASK = 0x01;
+
+            int pos = 0;
+            for (byte b : values){
+                pos++;
+                if (pos == buttonByte){
+                    boolean currScreenTouched = (b & SCREEN_TOUCHED_MASK) != 0;
+                    boolean currScreenPressed = (b & SCREEN_PRESSED_MASK) != 0;
+
+                    if (screenTouched != currScreenTouched){
+                        throwScreenTouchedEvent(currScreenTouched);
+                        screenTouched = currScreenTouched;
+                    }
+
+                    if (screenPressed != currScreenPressed){
+                        throwScreenPressedEvent(currScreenPressed);
+                        screenPressed = currScreenPressed;
+                    }
+                }
+            }
+        }
+
+        private void throwScreenTouchedEvent(boolean touched){
+            Log.d(TAG, "Screen touch is: " + touched);
+            EventBus.getDefault().post(new SmartRingButtonOutputEvent(0, System.currentTimeMillis(), touched));
+        }
+
+        private void throwScreenPressedEvent(boolean pressed){
+            Log.d(TAG, "Screen press is: " + pressed);
+            EventBus.getDefault().post(new SmartRingButtonOutputEvent(1, System.currentTimeMillis(), pressed));
+        }
+
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-//            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-            byte [] values = characteristic.getValue();
-            String currUuid = characteristic.getUuid().toString();
-            Log.d(TAG, values.toString());
+            //if this is a stream from the button, parse it
+            if (characteristic.getUuid().equals(TCL_STREAM_CHARACTERISTIC)) {
+                byte[] values = characteristic.getValue();
+                parseButtonStream(values);
+//                Log.d(TAG, byteArrayToHex(values));
+            }
         }
-
     };
 
     public boolean start() {
@@ -293,19 +352,21 @@ public class SmartRingBLE {
         Log.d(TAG, "services available: " + getSupportedGattServices());
         for (int i = 0; i < serve.size(); i++){
             BluetoothGattService currServe = (BluetoothGattService) serve.get(i);
-            discoverCharacteristics(currServe);
             ArrayList chars = giveCharacteristics(currServe);
-            Log.d(TAG, "Found chars: " + chars.toString());
+
+            //subscribe to preset and streaming characteristics
             for (int j = 0; j < chars.size(); j++){
                 BluetoothGattCharacteristic currChar = (BluetoothGattCharacteristic) chars.get(j);
-                if (currChar.equals(tclMouseStreamCharId)) {
+                Log.d(TAG, "Checking: " + currChar.getUuid().toString());
+                if ((currChar.getUuid().equals(TCL_PRESET_CHARACTERISTIC)) || (currChar.getUuid().equals(TCL_STREAM_CHARACTERISTIC))) {
+                    Log.d(TAG, "Subscribing to TCL Ring streaming characteristic...");
                     mBluetoothGatt.setCharacteristicNotification(currChar, true); //enable on android
                     BluetoothGattDescriptor descriptor = currChar.getDescriptor(CONFIG_DESCRIPTOR);
                     while (lock == true) {
                         //spinning block
                     }
-                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                     lock = true;
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                     Log.d(TAG, "subscribe result: " + Boolean.toString(mBluetoothGatt.writeDescriptor(descriptor))); //enable on TCL
                     Log.d(TAG, "subscribed to: " + currChar.getUuid().toString());
                 }
@@ -389,14 +450,14 @@ public class SmartRingBLE {
 
     private void discoverCharacteristics(BluetoothGattService service) {
         for (BluetoothGattCharacteristic gattCharacteristic : service.getCharacteristics()) {
-            Log.d(TAG, "Discovered UUID: " + gattCharacteristic.getUuid());
+//            Log.d(TAG, "Discovered UUID: " + gattCharacteristic.getUuid());
         }
-
     }
+
     private ArrayList<BluetoothGattCharacteristic> giveCharacteristics(BluetoothGattService service) {
         ArrayList<BluetoothGattCharacteristic> chars = new ArrayList<BluetoothGattCharacteristic>();
         for (BluetoothGattCharacteristic gattCharacteristic : service.getCharacteristics()) {
-            Log.d(TAG, "Discovered UUID: " + gattCharacteristic.getUuid());
+//            Log.d(TAG, "Discovered UUID: " + gattCharacteristic.getUuid());
             chars.add(gattCharacteristic);
         }
 

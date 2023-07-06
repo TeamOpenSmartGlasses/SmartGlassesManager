@@ -11,6 +11,7 @@ import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEven
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.SmartRingButtonOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
@@ -29,7 +30,7 @@ public class SGMLib {
     private SGMCallbackMapper sgmCallbackMapper;
     private FocusCallback focusCallback;
 
-    public HashMap<DataStreamType, TranscriptCallback> subscribedDataStreams;
+    public HashMap<DataStreamType, SubscriptionCallback> subscribedDataStreams;
 
     private SmartGlassesAndroidService smartGlassesAndroidService;
 
@@ -38,7 +39,7 @@ public class SGMLib {
         sgmCallbackMapper = new SGMCallbackMapper();
         sgmReceiver = new TPABroadcastReceiver(context);
         sgmSender = new TPABroadcastSender(context);
-        subscribedDataStreams = new HashMap<DataStreamType, TranscriptCallback>();
+        subscribedDataStreams = new HashMap<DataStreamType, SubscriptionCallback>();
 
         //register subscribers on EventBus
         EventBus.getDefault().register(this);
@@ -54,6 +55,10 @@ public class SGMLib {
     }
 
     public void subscribe(DataStreamType dataStreamType, TranscriptCallback callback){
+        subscribedDataStreams.put(dataStreamType, callback);
+    }
+
+    public void subscribe(DataStreamType dataStreamType, ButtonCallback callback){
         subscribedDataStreams.put(dataStreamType, callback);
     }
 
@@ -109,7 +114,7 @@ public class SGMLib {
         String text = event.text;
         long time = event.timestamp;
         if (subscribedDataStreams.containsKey(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM)) {
-            subscribedDataStreams.get(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM).call(text, time, false);
+            ((TranscriptCallback)subscribedDataStreams.get(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM)).call(text, time, false);
         }
     }
 
@@ -118,7 +123,16 @@ public class SGMLib {
         String text = event.text;
         long time = event.timestamp;
         if (subscribedDataStreams.containsKey(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM)) {
-            subscribedDataStreams.get(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM).call(text, time, true);
+            ((TranscriptCallback)subscribedDataStreams.get(DataStreamType.TRANSCRIPTION_ENGLISH_STREAM)).call(text, time, true);
+        }
+    }
+
+    @Subscribe
+    public void onSmartRingButtonEvent(SmartRingButtonOutputEvent event) {
+        int buttonId = event.buttonId;
+        long time = event.timestamp;
+        if (subscribedDataStreams.containsKey(DataStreamType.SMART_RING_BUTTON)) {
+            ((ButtonCallback)subscribedDataStreams.get(DataStreamType.SMART_RING_BUTTON)).call(buttonId, time, event.isDown);
         }
     }
 

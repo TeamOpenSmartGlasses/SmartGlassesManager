@@ -35,7 +35,7 @@ public class SGMLibBroadcastSender {
             startSgmCommandService(cmd);
             //delay a short time so the service can start before we send it the data
             try {
-                Thread.sleep(350);
+                Thread.sleep(450);
             } catch (InterruptedException e){
                 e.printStackTrace();
                 Log.d(TAG, "Interrupted while waiting for TPA service to start.");

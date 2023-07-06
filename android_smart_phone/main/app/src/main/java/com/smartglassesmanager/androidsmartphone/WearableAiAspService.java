@@ -82,6 +82,9 @@ public class WearableAiAspService extends LifecycleService {
     //speech rec
     SpeechRecSwitchSystem speechRecSwitchSystem;
 
+    //HCI
+    public SmartRingBLE tclRing;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -112,7 +115,7 @@ public class WearableAiAspService extends LifecycleService {
         commandSystem = new CommandSystem(getApplicationContext());
 
         //connect smart ring
-        SmartRingBLE tclRing = new SmartRingBLE(this);
+        tclRing = new SmartRingBLE(this);
         tclRing.start();
 
         //setup event bus subscribers
@@ -120,7 +123,9 @@ public class WearableAiAspService extends LifecycleService {
 
         //init broadcasters
         tpaSystem = new TPASystem(this);
+    }
 
+    private void startDefaultCommand(){
         //start our default app
         if (getDefaultCommandSet(getApplicationContext())){
             String defaultCommandString = getDefaultCommand(this);
@@ -143,6 +148,8 @@ public class WearableAiAspService extends LifecycleService {
         //this represents the smart glasses - it handles the connection, sending data to them, etc
         smartGlassesRepresentative = new SmartGlassesRepresentative(this, device, dataObservable);
         smartGlassesRepresentative.connectToSmartGlasses();
+
+        startDefaultCommand();
     }
 
     //service stuff
@@ -227,6 +234,11 @@ public class WearableAiAspService extends LifecycleService {
         //kill intent receiver/connection to TPAs
         if (tpaSystem != null){
             tpaSystem.destroy();
+        }
+
+        //kill ring connection
+        if (tclRing != null){
+            tclRing.destroy();
         }
 
         //kill llc program

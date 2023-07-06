@@ -94,14 +94,14 @@ public class VadGateSpeechPolicy implements SpeechDetectionPolicy {
                 @Override
                 public void onSpeechDetected() {
                     //speech detected!
-                    Log.d(TAG, "Speech detected.");
+//                    Log.d(TAG, "Speech detected.");
                     isCurrentlySpeech = true;
                 }
 
                 @Override
                 public void onNoiseDetected() {
                     //noise detected!
-                    Log.d(TAG, "Noise detected!");
+//                    Log.d(TAG, "Noise detected!");
                     isCurrentlySpeech = false;
                 }
             });
