@@ -7,6 +7,7 @@ import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
@@ -75,6 +76,10 @@ public class SGMLib {
     //show a reference card on the smart glasses with title and body text
     public void sendReferenceCard(String title, String body) {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
+    }
+
+    public void sendReferenceCard(String title, String body, String imgUrl) {
+        EventBus.getDefault().post(new ReferenceCardImageViewRequestEvent(title, body, imgUrl));
     }
 
     public void startScrollingText(String title){

@@ -62,6 +62,13 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body){
+        Log.d(TAG, "TTS reference card");
+        EventBus.getDefault().post(new TextToSpeechEvent(title + ", " + body));
+    }
+
+    public void displayReferenceCardImage(String title, String body, String imgUrl){
+        Log.d(TAG, "TTS reference card");
+        EventBus.getDefault().post(new TextToSpeechEvent(title + ", " + body));
     }
 
     public void stopScrollingTextViewMode() {

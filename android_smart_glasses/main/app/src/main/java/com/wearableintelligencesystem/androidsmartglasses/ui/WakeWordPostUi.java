@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartglasses.ui.adapters.CommandListRecyclerViewAdapter;
 

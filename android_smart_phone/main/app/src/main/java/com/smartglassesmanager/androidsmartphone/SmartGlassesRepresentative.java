@@ -15,6 +15,7 @@ import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEven
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AudioWearableSGC;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewUpdateRequestEvent;
@@ -176,6 +177,15 @@ class SmartGlassesRepresentative {
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
+//            homeUiAfterDelay(referenceCardDelayTime);
+        }
+    }
+
+    @Subscribe
+    public void onReferenceCardImageViewEvent(ReferenceCardImageViewRequestEvent receivedEvent){
+        Log.d(TAG, "sending reference card image view event");
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayReferenceCardImage(receivedEvent.title, receivedEvent.body, receivedEvent.imgUrl);
 //            homeUiAfterDelay(referenceCardDelayTime);
         }
     }

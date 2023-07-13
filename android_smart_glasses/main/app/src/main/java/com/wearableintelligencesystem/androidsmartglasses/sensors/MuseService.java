@@ -44,7 +44,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.wearableintelligencesystem.androidsmartglasses.MainActivity;
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 
 import java.net.DatagramSocket;
 import java.util.ArrayList;

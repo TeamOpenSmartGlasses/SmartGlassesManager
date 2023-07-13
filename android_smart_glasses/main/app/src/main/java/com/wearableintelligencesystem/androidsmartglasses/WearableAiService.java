@@ -22,7 +22,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartglasses.comms.WifiStatusCallback;
@@ -332,8 +332,8 @@ public class WearableAiService extends Service {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
             int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
             batteryPercentage = level * 100 / (float)scale;
-            Log.d(TAG, "BATTERY PERCENTAGE IS: " + batteryPercentage);
-            Log.d(TAG, "BATTERY IS charging: " + batteryIsCharging);
+//            Log.d(TAG, "BATTERY PERCENTAGE IS: " + batteryPercentage);
+//            Log.d(TAG, "BATTERY IS charging: " + batteryIsCharging);
             updateUi();
         }
     };

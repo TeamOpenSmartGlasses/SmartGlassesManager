@@ -545,6 +545,22 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void displayReferenceCardImage(String title, String body, String imgUrl){
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.REFERENCE_CARD_IMAGE_VIEW);
+            commandResponseObject.put(MessageTypes.REFERENCE_CARD_IMAGE_VIEW_TITLE, title);
+            commandResponseObject.put(MessageTypes.REFERENCE_CARD_IMAGE_VIEW_BODY, body);
+            commandResponseObject.put(MessageTypes.REFERENCE_CARD_IMAGE_VIEW_IMG_URL, imgUrl);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
     public void stopScrollingTextViewMode() {
         Log.d(TAG, "STOP SCROLLING TEXT VIEW");
         try{

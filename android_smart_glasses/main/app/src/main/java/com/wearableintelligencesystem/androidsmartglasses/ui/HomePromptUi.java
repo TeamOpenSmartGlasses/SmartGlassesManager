@@ -10,7 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 
 public class HomePromptUi extends Fragment {
     private  final String TAG = "WearableAi_HomePromptUIFragment";

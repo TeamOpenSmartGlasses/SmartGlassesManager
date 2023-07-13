@@ -1,9 +1,6 @@
 package com.wearableintelligencesystem.androidsmartglasses;
 
-/**
- * Created by sigit on 26/01/16.
- */
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 

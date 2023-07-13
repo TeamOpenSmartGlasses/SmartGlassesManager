@@ -16,6 +16,7 @@ public abstract class SmartGlassesCommunicator {
 
     //reference card
     public abstract void displayReferenceCardSimple(String title, String body);
+    public abstract void displayReferenceCardImage(String title, String body, String imgUrl);
 
     //voice command UI
     public abstract void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs);

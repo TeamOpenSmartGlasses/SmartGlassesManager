@@ -19,6 +19,7 @@ import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
@@ -249,7 +250,7 @@ public class CommandSystem {
         }
 
         //if the app doesn't have focus, then we have to check if its been recently triggered and thus allowed to do something
-        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(TextLineViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId) | eventId.equals(FocusRequestEvent.eventId)) {
+        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(ReferenceCardImageViewRequestEvent.eventId) | eventId.equals(TextLineViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId) | eventId.equals(FocusRequestEvent.eventId)) {
             //if the app took too long to respond, don't allow it to run anything
             if (appPrivilegeTimeout == null) {
                 return false;
@@ -312,12 +313,16 @@ public class CommandSystem {
 
         //check if the app making the request has privilege, only run it if it does have privilege
         if (checkAppHasPrivilege(receivedEvent.eventId, receivedEvent.sendingPackage)) {
-            Log.d(TAG, "Allowing and resending event requested by: " + receivedEvent.sendingPackage);
+            Log.d(TAG, "Allowing and resending event: ," + receivedEvent.eventId + "requested by: " + receivedEvent.sendingPackage);
             //map from id to event for all events that need permissions
             switch (receivedEvent.eventId) {
                 case ReferenceCardSimpleViewRequestEvent.eventId:
                     suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((ReferenceCardSimpleViewRequestEvent) receivedEvent.serializedEvent);
+                    break;
+                case ReferenceCardImageViewRequestEvent.eventId:
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
+                    EventBus.getDefault().post((ReferenceCardImageViewRequestEvent) receivedEvent.serializedEvent);
                     break;
                 case ScrollingTextViewStartRequestEvent.eventId: //mode start command - gives app focus
                     suspendFocusIfNotFocused(receivedEvent.sendingPackage);

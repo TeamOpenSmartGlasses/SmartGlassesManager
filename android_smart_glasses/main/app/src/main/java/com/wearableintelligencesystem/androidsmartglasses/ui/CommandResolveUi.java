@@ -14,7 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 import com.wearableintelligencesystem.androidsmartglasses.ASPClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.MainActivity;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;

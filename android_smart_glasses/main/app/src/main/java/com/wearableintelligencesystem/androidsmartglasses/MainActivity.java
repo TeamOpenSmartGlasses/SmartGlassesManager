@@ -30,8 +30,8 @@ import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.wearableintelligencesystemandroidsmartglasses.BuildConfig;
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.BuildConfig;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 import com.github.mikephil.charting.charts.PieChart;
 import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSocket;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean binding = false; //should we be binding to the service?
 
     public long commandResolveTime = 8000;
-    public long searchEngineResultTimeout = 16000;
+    public long searchEngineResultTimeout = 12000;
 
     //local ID strings for UI updating
     public final static String ACTION_UI_UPDATE = "com.example.wearableaidisplaymoverio.UI_UPDATE";
@@ -445,6 +445,9 @@ public class MainActivity extends AppCompatActivity {
                         showSearchEngineResults(data);
                     } else if (typeOf.equals(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW)){
                         showReferenceCardSimpleView(data);
+                    } else if (typeOf.equals(MessageTypes.REFERENCE_CARD_IMAGE_VIEW)){
+                        Log.d(TAG, "GOT IMAGE REFERENCE VIEW REQUEST");
+                        showReferenceCardImageView(data);
                     } else if (typeOf.equals(MessageTypes.ACTION_SWITCH_MODES)){
                         //parse out the name of the mode
                         String modeName = data.getString(MessageTypes.NEW_MODE);
@@ -465,7 +468,7 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                 }
             } else if (ACTION_UI_UPDATE.equals(action)) {
-                Log.d(TAG, "GOT ACTION_UI_UPDATE");
+//                Log.d(TAG, "GOT ACTION_UI_UPDATE");
                 if (intent.hasExtra(PHONE_CONN_STATUS_UPDATE)) {
                     phoneConnected = intent.getBooleanExtra(PHONE_CONN_STATUS_UPDATE, false);
                     updatePhoneHud();
@@ -625,6 +628,23 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, body);
             switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
             showReferenceCard(title, body, null, searchEngineResultTimeout);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+    }
+
+    private void showReferenceCardImageView(JSONObject data) {
+        try {
+            //get content
+            String title = data.getString(MessageTypes.REFERENCE_CARD_IMAGE_VIEW_TITLE);
+            String body = data.getString(MessageTypes.REFERENCE_CARD_IMAGE_VIEW_BODY);
+            String imgUrl = data.getString(MessageTypes.REFERENCE_CARD_IMAGE_VIEW_IMG_URL);
+
+            Log.d(TAG, "Running reference card image view");
+            Log.d(TAG, title);
+            Log.d(TAG, body);
+            switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
+            showReferenceCard(title, body, imgUrl, searchEngineResultTimeout);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }

@@ -16,7 +16,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
@@ -101,6 +101,7 @@ public class ReferenceUi extends ASGFragment {
                     builder.downloader(new OkHttp3Downloader(getActivity()));
                     builder.build()
                             .load(imgUrl.trim())
+                            .resize(400,0)
                             .into(referenceCardResultImage, new Callback() {
 
                                 @Override

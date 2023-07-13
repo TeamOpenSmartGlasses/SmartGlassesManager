@@ -21,7 +21,7 @@ import android.util.Log;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.AudioChunkCallback;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothMic;
 import com.wearableintelligencesystem.androidsmartglasses.utils.AES;
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 
 import java.io.DataOutputStream;
 import java.io.IOException;

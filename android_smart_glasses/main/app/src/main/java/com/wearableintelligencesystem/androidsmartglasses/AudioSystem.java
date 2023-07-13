@@ -12,7 +12,7 @@ import android.util.Log;
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.AudioChunkCallback;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothMic;
-import com.example.wearableintelligencesystemandroidsmartglasses.R;
+import com.wearableintelligencesystem.androidsmartglasses.R;
 import com.wearableintelligencesystem.androidsmartglasses.utils.AES;
 
 import org.json.JSONException;

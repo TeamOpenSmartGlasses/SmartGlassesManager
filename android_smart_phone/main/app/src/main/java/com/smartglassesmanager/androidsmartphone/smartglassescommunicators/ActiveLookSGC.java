@@ -232,6 +232,11 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         }
     }
 
+    //don't show images on activelook (screen is too low res)
+    public void displayReferenceCardImage(String title, String body, String imgUrl){
+        displayReferenceCardSimple(title, body);
+    }
+
     //takes a list of strings and images and displays them in a line from top of the screen to the bottom
     private void displayLinearStuff(ArrayList<Object> stuffToDisplay){
        displayLinearStuff(stuffToDisplay, new Point(0, 0), false);

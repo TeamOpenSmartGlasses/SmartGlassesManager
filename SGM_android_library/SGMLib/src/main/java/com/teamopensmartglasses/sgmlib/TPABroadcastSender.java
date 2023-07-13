@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
@@ -52,6 +53,11 @@ public class TPABroadcastSender {
 
     @Subscribe
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
+        String eventId = receivedEvent.eventId;
+        sendEventToSGM(eventId, receivedEvent);
+    }
+    @Subscribe
+    public void onReferenceCardImageViewEvent(ReferenceCardImageViewRequestEvent receivedEvent){
         String eventId = receivedEvent.eventId;
         sendEventToSGM(eventId, receivedEvent);
     }

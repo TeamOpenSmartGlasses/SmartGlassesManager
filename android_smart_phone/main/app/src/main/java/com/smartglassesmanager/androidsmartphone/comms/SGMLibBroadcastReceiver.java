@@ -16,6 +16,7 @@ import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
@@ -53,6 +54,7 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
         switch (eventId) {
             //if it's a request to run something on glasses or anything else having to do with commands, pipe this through the command system
             case ReferenceCardSimpleViewRequestEvent.eventId:
+            case ReferenceCardImageViewRequestEvent.eventId:
             case ScrollingTextViewStartRequestEvent.eventId:
             case ScrollingTextViewStopRequestEvent.eventId:
             case FinalScrollingTextRequestEvent.eventId:
