@@ -3,6 +3,7 @@ package com.teamopensmartglasses.sgmlib;
 import android.content.Context;
 import android.util.Log;
 
+import com.teamopensmartglasses.sgmlib.events.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
@@ -96,6 +97,10 @@ public class SGMLib {
 
     public void sendTextLine(String text) {
         EventBus.getDefault().post(new TextLineViewRequestEvent(text));
+    }
+
+    public void sendCenteredText(String text){
+        EventBus.getDefault().post(new CenteredTextViewRequestEvent(text));
     }
 
     @Subscribe

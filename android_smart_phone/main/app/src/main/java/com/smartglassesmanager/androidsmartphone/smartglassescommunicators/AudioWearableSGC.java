@@ -1,6 +1,7 @@
 package com.smartglassesmanager.androidsmartphone.smartglassescommunicators;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.StrictMode;
@@ -93,6 +94,12 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
         Log.d(TAG, "displayTextLine: " + text);
         EventBus.getDefault().post(new TextToSpeechEvent(text));
     }
+
+    public void displayCenteredText(String text){
+        //TODO: Find a way to add (optional) pauses between lines?
+        displayTextLine(text);
+    }
+
 
     public void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs){
     }
