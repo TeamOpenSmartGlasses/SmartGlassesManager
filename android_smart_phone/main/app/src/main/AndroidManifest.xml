@@ -3,9 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.smartglassesmanager.androidsmartphone">
 
-  <uses-sdk
-      android:minSdkVersion="29"
-      android:targetSdkVersion="30" />
+  <uses-sdk android:minSdkVersion="30"
+      android:targetSdkVersion="30"
+      />
 
 <!--    STORAGE-->
 <!--    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->

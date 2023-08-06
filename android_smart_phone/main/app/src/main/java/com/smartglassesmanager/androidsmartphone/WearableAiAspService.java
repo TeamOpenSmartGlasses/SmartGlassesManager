@@ -13,7 +13,10 @@ import android.os.IBinder;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LifecycleService;
+import androidx.lifecycle.OnLifecycleEvent;
 import androidx.preference.PreferenceManager;
 
 import com.smartglassesmanager.androidsmartphone.commands.CommandSystem;
@@ -146,7 +149,7 @@ public class WearableAiAspService extends LifecycleService {
 
     public void connectToSmartGlasses(SmartGlassesDevice device) {
         //this represents the smart glasses - it handles the connection, sending data to them, etc
-        smartGlassesRepresentative = new SmartGlassesRepresentative(this, device, dataObservable);
+        smartGlassesRepresentative = new SmartGlassesRepresentative(this, device, this, dataObservable);
         smartGlassesRepresentative.connectToSmartGlasses();
 
         startDefaultCommand();

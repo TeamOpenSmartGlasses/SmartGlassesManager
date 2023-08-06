@@ -10,9 +10,13 @@ import android.os.Handler;
 import android.util.Log;
 
 //custom, our code
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AudioWearableSGC;
+import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.UltraliteSGC;
 import com.teamopensmartglasses.sgmlib.events.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
@@ -51,12 +55,15 @@ class SmartGlassesRepresentative {
     //timing settings
     long referenceCardDelayTime = 10000;
 
+    LifecycleOwner lifecycleOwner;
+
     //handler to handle delayed UI events
     Handler uiHandler;
 
-    SmartGlassesRepresentative(Context context, SmartGlassesDevice smartGlassesDevice, PublishSubject<JSONObject> dataObservable){
+    SmartGlassesRepresentative(Context context, SmartGlassesDevice smartGlassesDevice, LifecycleOwner lifecycleOwner, PublishSubject<JSONObject> dataObservable){
         this.context = context;
         this.smartGlassesDevice = smartGlassesDevice;
+        this.lifecycleOwner = lifecycleOwner;
 
         //receive/send data
         this.dataObservable = dataObservable;
@@ -70,7 +77,6 @@ class SmartGlassesRepresentative {
     public void connectToSmartGlasses(){
         switch (smartGlassesDevice.getGlassesOs()){
             case ANDROID_OS_GLASSES:
-                Log.d(TAG, "MAKING ANDROID SGC");
                 smartGlassesCommunicator = new AndroidSGC(context, dataObservable);
                 break;
             case ACTIVELOOK_OS_GLASSES:
@@ -78,6 +84,9 @@ class SmartGlassesRepresentative {
                 break;
             case AUDIO_WEARABLE_GLASSES:
                 smartGlassesCommunicator = new AudioWearableSGC(context);
+                break;
+            case ULTRALITE_MCU_OS_GLASSES:
+                smartGlassesCommunicator = new UltraliteSGC(context, lifecycleOwner);
                 break;
         }
 
@@ -87,7 +96,7 @@ class SmartGlassesRepresentative {
         if (smartGlassesDevice.hasScoMic) {
             connectAndStreamLocalMicrophone(true);
         } else if (!smartGlassesDevice.getHasInMic() && !smartGlassesDevice.getHasOutMic()) {
-            connectAndStreamLocalMicrophone(false);
+//            connectAndStreamLocalMicrophone(false);
         }
     }
 

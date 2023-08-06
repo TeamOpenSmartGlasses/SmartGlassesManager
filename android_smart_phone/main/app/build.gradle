@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId "com.smartglassesmanager.androidsmartphone"
-        minSdk 29
+        minSdk 30
         targetSdk 32
         versionCode 3
         versionName "0.1"
@@ -165,6 +165,9 @@ dependencies {
     //for VAD (using Silero DNN)
     implementation 'com.github.gkonovalov:android-vad:2.0.1'
     implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.15.0'
+
+    //Vuzix Ultralite OEM Platform
+    implementation 'com.vuzix:ultralite-sdk-android:0.4.1'
 
     //our custom SGMLib library
     implementation project (":SGMLib")
