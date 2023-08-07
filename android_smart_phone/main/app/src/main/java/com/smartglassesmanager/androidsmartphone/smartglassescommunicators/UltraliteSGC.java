@@ -155,7 +155,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
                public void run() {
                    ultraliteSdk.releaseControl();
                }
-           }, 600);
+           }, 800);
 
        }
     }
@@ -168,7 +168,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void changeUltraliteLayout(Layout chosenLayout) {
-        ultraliteSdk.setLayout(chosenLayout, 0, false);
+        ultraliteSdk.setLayout(chosenLayout, 0, true);
     }
 
     public void startScrollingTextViewMode(String title){
@@ -183,18 +183,37 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         drawTextOnUltralite(title);
     }
 
+    public String addNewlineEveryNWords(String input, int n) {
+        String[] words = input.split("\\s+");
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < words.length; i++) {
+            result.append(words[i]);
+            if ((i + 1) % n == 0 && i != words.length - 1) {
+                result.append("\n");
+            } else if (i != words.length - 1) {
+                result.append(" ");
+            }
+        }
+
+        return result.toString();
+    }
+
     public void drawTextOnUltralite(String text){
+        //edit the text to add new lines to it because ultralite wrapping doesn't work
+        String wrappedText = addNewlineEveryNWords(text, 6);
+
         //display the title at the top of the screen
         UltraliteColor ultraliteColor = UltraliteColor.WHITE;
         Anchor ultraliteAnchor = Anchor.TOP_LEFT;
         TextAlignment ultraliteAlignment = TextAlignment.LEFT;
         changeUltraliteLayout(Layout.CANVAS);
         ultraliteCanvas.clear();
+        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
 //        ultraliteCanvas.createText(text, ultraliteAlignment, ultraliteColor, ultraliteAnchor, true);
-        ultraliteCanvas.createText(text, ultraliteAlignment, ultraliteColor, ultraliteAnchor, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.createText(text, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_RIGHT, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//        ultraliteCanvas.createText(text, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, 0, 0, -1, 80, TextWrapMode.WRAP, true);
+        ultraliteCanvas.createText(wrappedText, ultraliteAlignment, ultraliteColor, ultraliteAnchor, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.commitText();
-        ultraliteCanvas.clearBackground(UltraliteColor.WHITE);
     }
 
     public Bitmap getBitmapFromDrawable(Resources res) {
@@ -206,11 +225,11 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             Log.d(TAG, "Sending text to Ultralite SDK: " + title + "     " + body);
 //            ultraliteSdk.sendText("hello world"); //this is BROKEN in Vuzix ultralite 0.4.2 SDK - crashes Vuzix OEM Platform android app
 
-//            changeUltraliteLayout(Layout.DEFAULT);
-//            ultraliteSdk.sendNotification(title, body);
+            changeUltraliteLayout(Layout.DEFAULT);
+            ultraliteSdk.sendNotification(title, body);
 
-            String newBody = "Lorem ipsum dolor sit amet, \n consectetur adipiscing elit. Morbi \n suscipit vitae libero sit amet finibus.";
-            drawTextOnUltralite(newBody);
+//            String newBody = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi suscipit vitae libero sit amet finibus.";
+//            drawTextOnUltralite(newBody + newBody + newBody + newBody+ newBody);
 
             //send image on ultralite
 //            Anchor ultraliteAnchor = Anchor.TOP_LEFT;
