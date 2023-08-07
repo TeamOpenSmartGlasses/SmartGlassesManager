@@ -13,7 +13,7 @@ public class SmartGlassesDevice implements Serializable {
     public boolean hasCamera;
     public boolean hasInMic;
     public boolean hasOutMic;
-    public boolean hasScoMic;
+    public boolean useScoMic;
     public double weight;
 
     public int connectionState = -1; //0 is not connected, 1 is trying to connect, 2 is connected

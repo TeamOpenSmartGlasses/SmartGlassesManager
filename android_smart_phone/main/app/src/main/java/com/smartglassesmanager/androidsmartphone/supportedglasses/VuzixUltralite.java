@@ -12,7 +12,7 @@ public class VuzixUltralite extends SmartGlassesDevice {
         hasCamera = false;
         hasInMic = false;
         hasOutMic = false;
-        hasScoMic = false;
+        useScoMic = true;
         weight = 38;
     }
 }

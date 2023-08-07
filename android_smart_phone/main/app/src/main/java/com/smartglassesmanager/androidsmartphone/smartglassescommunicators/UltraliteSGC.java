@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.Log;
 
@@ -13,11 +14,12 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 
 import com.smartglassesmanager.androidsmartphone.R;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 import com.vuzix.ultralite.Anchor;
 import com.vuzix.ultralite.LVGLImage;
 import com.vuzix.ultralite.Layout;
 import com.vuzix.ultralite.TextAlignment;
-import com.vuzix.ultralite.TextWrapMode;
 import com.vuzix.ultralite.UltraliteColor;
 import com.vuzix.ultralite.UltraliteSDK;
 
@@ -30,6 +32,9 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     UltraliteSDK.Canvas ultraliteCanvas;
     LifecycleOwner lifecycleOwner;
     Context context;
+
+    //handler to turn off screen
+    Handler goHomeHandler;
 
     //handler to disconnect
     Handler killHandler;
@@ -60,17 +65,25 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         //state information
         mConnectState = 0;
 
+        goHomeHandler = new Handler();
         killHandler = new Handler();
     }
 
     private void onUltraliteConnectedChange(boolean isConnected) {
-        Log.d(TAG, "Ultralite connected: " + isConnected);
-        if (isConnected && (mConnectState != 2)) {
+        if (isConnected) {
+            Log.d(TAG, "Ultralite connected! aaa");
             mConnectState = 2;
-            connectionEvent(2);
+            Log.d(TAG, "Ultralite requesting control...");
             boolean isControlled = ultraliteSdk.requestControl();
+            if (isControlled){
+                setupUltraliteCanvas();
+            } else {
+                return;
+            }
             Log.d(TAG, "Ultralite control request: " + isControlled);
+            connectionEvent(2);
         } else {
+            Log.d(TAG, "Ultralite not connected.");
             connectionEvent(0);
         }
     }
@@ -161,9 +174,12 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void showHomeScreen(){
+        changeUltraliteLayout(Layout.CANVAS);
+        ultraliteCanvas.clear();
     }
 
     public void setupUltraliteCanvas(){
+        Log.d(TAG, "Setting up ultralite canvas");
         ultraliteCanvas = ultraliteSdk.getCanvas();
     }
 
@@ -225,11 +241,29 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             Log.d(TAG, "Sending text to Ultralite SDK: " + title + "     " + body);
 //            ultraliteSdk.sendText("hello world"); //this is BROKEN in Vuzix ultralite 0.4.2 SDK - crashes Vuzix OEM Platform android app
 
-            changeUltraliteLayout(Layout.DEFAULT);
-            ultraliteSdk.sendNotification(title, body);
+//            changeUltraliteLayout(Layout.DEFAULT);
+//            ultraliteSdk.sendNotification(title, body);
 
 //            String newBody = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi suscipit vitae libero sit amet finibus.";
 //            drawTextOnUltralite(newBody + newBody + newBody + newBody+ newBody);
+//            drawOnUltralite(title, body);
+
+        //edit the text to add new lines to it because ultralite wrapping doesn't work
+        String titleWrapped = addNewlineEveryNWords(title, 6);
+        String bodyWrapped = addNewlineEveryNWords(body, 6);
+
+        //display the title at the top of the screen
+        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+        changeUltraliteLayout(Layout.CANVAS);
+        ultraliteCanvas.clear();
+//        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
+        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.commitText();
+
+        homeScreenInNSeconds(14);
 
             //send image on ultralite
 //            Anchor ultraliteAnchor = Anchor.TOP_LEFT;
@@ -239,9 +273,78 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void homeScreenInNSeconds(int n){
+        //disconnect after slight delay, so our above text gets a chance to show up
+           goHomeHandler.postDelayed(new Runnable() {
+               @Override
+               public void run() {
+                   showHomeScreen();
+               }
+           }, n * 1000);
+    }
+
     //don't show images on activelook (screen is too low res)
     public void displayReferenceCardImage(String title, String body, String imgUrl){
-        displayReferenceCardSimple(title, body);
+        changeUltraliteLayout(Layout.CANVAS);
+        ultraliteCanvas.clear();
+
+        //make image
+        //below works, but only for very, very low res/size images
+//        Anchor ultraliteImageAnchor = Anchor.CENTER;
+//        Picasso.get()
+//                .load(imgUrl)
+//                .into(new Target() {
+//                    @Override
+//                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+//                        // Use the bitmap
+////                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(getBitmapFromDrawable(context.getResources()), CF_INDEXED_2_BIT);
+////                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(bitmap, CF_INDEXED_2_BIT);
+//                        changeUltraliteLayout(Layout.CANVAS);
+//                        Log.d(TAG, "Sending image to Ultralite");
+////                        ultraliteCanvas.createImage(ultraliteImage, ultraliteImageAnchor, 0, 0, true);
+//                        ultraliteCanvas.drawBackground(bitmap, 0, 0);
+//
+//                        //edit the text to add new lines to it because ultralite wrapping doesn't work
+////                        String titleWrapped = addNewlineEveryNWords(title, 6);
+////                        String bodyWrapped = addNewlineEveryNWords(body, 6);
+////
+////                        //display the title at the top of the screen
+////                        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+////                        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+////                //        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
+////                        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+////                        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+////                        ultraliteCanvas.commitText();
+//
+//                        homeScreenInNSeconds(14);
+//                    }
+//
+//                    @Override
+//                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+//                        // Handle the error
+//                        Log.d(TAG, "Bitmap failed");
+//                        e.printStackTrace();
+//                    }
+//
+//                    @Override
+//                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+//                        // Called before the image is loaded. You can set a placeholder if needed.
+//                    }
+//                });
+
+        //edit the text to add new lines to it because ultralite wrapping doesn't work
+        String titleWrapped = addNewlineEveryNWords(title, 6);
+        String bodyWrapped = addNewlineEveryNWords(body, 6);
+
+        //display the title at the top of the screen
+        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+        //ultraliteCanvas.clearBackground(UltraliteColor.DIM);
+        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.commitText();
+
+        homeScreenInNSeconds(14);
     }
 
     //handles text wrapping, returns final position of last line printed

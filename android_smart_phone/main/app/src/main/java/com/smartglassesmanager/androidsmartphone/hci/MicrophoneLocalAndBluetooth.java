@@ -331,7 +331,7 @@ public class MicrophoneLocalAndBluetooth {
     /**
      * Try to connect to audio headset in onTick.
      */
-    private CountDownTimer mCountDown = new CountDownTimer(4201, 1400)
+    private CountDownTimer mCountDown = new CountDownTimer(751, 250)
     {
 
         @SuppressWarnings("synthetic-access")

@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.util.Log;
 
 //custom, our code
-import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
@@ -93,10 +92,10 @@ class SmartGlassesRepresentative {
         smartGlassesCommunicator.connectToSmartGlasses();
 
         //if the glasses don't support a microphone, this Representative handles local microphone
-        if (smartGlassesDevice.hasScoMic) {
+        if (smartGlassesDevice.useScoMic) {
             connectAndStreamLocalMicrophone(true);
         } else if (!smartGlassesDevice.getHasInMic() && !smartGlassesDevice.getHasOutMic()) {
-//            connectAndStreamLocalMicrophone(false);
+            connectAndStreamLocalMicrophone(false);
         }
     }
 
