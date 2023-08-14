@@ -198,6 +198,16 @@ public class SettingsUi extends Fragment {
 //                ComponentName c = ((MainActivity)getActivity()).startForegroundService(i);
 //            }
 //        });
+
+
+        // setup run default app button
+        final Button runDefaultAppButton = view.findViewById(R.id.default_app_run);
+        runDefaultAppButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Code here executes on main thread after user presses button
+                ((MainActivity)getActivity()).runDefaultApp();
+            }
+        });
     }
 
     public void sendTestCard(){

@@ -9,14 +9,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LifecycleService;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.preference.PreferenceManager;
 
 import com.smartglassesmanager.androidsmartphone.commands.CommandSystem;
@@ -33,18 +31,12 @@ import com.smartglassesmanager.androidsmartphone.eventbusmessages.SmartGlassesCo
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
 import com.smartglassesmanager.androidsmartphone.nlp.NlpUtils;
-import com.smartglassesmanager.androidsmartphone.speechrecognition.vosk.NaturalLanguage;
-import com.smartglassesmanager.androidsmartphone.speechrecognition.vosk.SpeechRecVosk;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONObject;
-
-import java.util.Dictionary;
-import java.util.Hashtable;
-import java.util.Locale;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -88,9 +80,15 @@ public class WearableAiAspService extends LifecycleService {
     //HCI
     public SmartRingBLE tclRing;
 
+    //connection handler
+    public Handler connectHandler;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+        //setup connection handler
+        connectHandler = new Handler();
 
         //setup NLP utils
         nlpUtils = NlpUtils.getInstance(this);
@@ -128,7 +126,7 @@ public class WearableAiAspService extends LifecycleService {
         tpaSystem = new TPASystem(this);
     }
 
-    private void startDefaultCommand(){
+    public void runDefaultCommand(){
         //start our default app
         if (getDefaultCommandSet(getApplicationContext())){
             String defaultCommandString = getDefaultCommand(this);
@@ -149,10 +147,19 @@ public class WearableAiAspService extends LifecycleService {
 
     public void connectToSmartGlasses(SmartGlassesDevice device) {
         //this represents the smart glasses - it handles the connection, sending data to them, etc
-        smartGlassesRepresentative = new SmartGlassesRepresentative(this, device, this, dataObservable);
-        smartGlassesRepresentative.connectToSmartGlasses();
+        LifecycleService currContext = this;
+        connectHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                 Log.d(TAG, "CONNECTING TO SMART GLASSES");
+                smartGlassesRepresentative = new SmartGlassesRepresentative(currContext, device, currContext, dataObservable);
+                smartGlassesRepresentative.connectToSmartGlasses();
 
-        startDefaultCommand();
+                Log.d(TAG, "RUNNING DEFAULT COMMAND");
+                runDefaultCommand();
+                Log.d(TAG, "DONE");
+            }
+        });
     }
 
     //service stuff

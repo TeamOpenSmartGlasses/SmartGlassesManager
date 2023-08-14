@@ -58,6 +58,7 @@ class SmartGlassesRepresentative {
 
     //handler to handle delayed UI events
     Handler uiHandler;
+    Handler micHandler;
 
     SmartGlassesRepresentative(Context context, SmartGlassesDevice smartGlassesDevice, LifecycleOwner lifecycleOwner, PublishSubject<JSONObject> dataObservable){
         this.context = context;
@@ -68,6 +69,7 @@ class SmartGlassesRepresentative {
         this.dataObservable = dataObservable;
 
         uiHandler = new Handler();
+        micHandler = new Handler();
 
         //register event bus subscribers
         EventBus.getDefault().register(this);
@@ -102,10 +104,15 @@ class SmartGlassesRepresentative {
     private void connectAndStreamLocalMicrophone(boolean useBluetoothSco){
         //follow this order for speed
         //start audio from bluetooth headset
-        bluetoothAudio = new MicrophoneLocalAndBluetooth(context, useBluetoothSco, new AudioChunkCallback(){
+        uiHandler.post(new Runnable() {
             @Override
-            public void onSuccess(ByteBuffer chunk){
-                receiveChunk(chunk);
+            public void run() {
+                bluetoothAudio = new MicrophoneLocalAndBluetooth(context, useBluetoothSco, new AudioChunkCallback(){
+                    @Override
+                    public void onSuccess(ByteBuffer chunk){
+                        receiveChunk(chunk);
+                    }
+                });
             }
         });
     }

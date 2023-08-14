@@ -275,6 +275,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void runDefaultApp() {
+        if (mService != null) {
+            mService.runDefaultCommand();
+        }
+    }
+
     public void changeAsrFramework(ASR_FRAMEWORKS asrFramework){
         if (mService != null){
             mService.changeChosenAsrFramework(asrFramework);

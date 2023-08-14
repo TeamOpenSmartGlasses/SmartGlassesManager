@@ -7,6 +7,7 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.media.metrics.Event;
 import android.os.Handler;
 import android.util.Log;
 
@@ -17,9 +18,11 @@ import com.smartglassesmanager.androidsmartphone.R;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import com.vuzix.ultralite.Anchor;
+import com.vuzix.ultralite.EventListener;
 import com.vuzix.ultralite.LVGLImage;
 import com.vuzix.ultralite.Layout;
 import com.vuzix.ultralite.TextAlignment;
+import com.vuzix.ultralite.TextWrapMode;
 import com.vuzix.ultralite.UltraliteColor;
 import com.vuzix.ultralite.UltraliteSDK;
 
@@ -39,13 +42,43 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     //handler to disconnect
     Handler killHandler;
 
+    boolean hasUltraliteControl;
+    boolean screenIsClear;
+
+    public class UltraliteListener implements EventListener{
+        @Override
+        public void onTap(int tapCount) {
+            Log.d(TAG, "Ultralite go tap n times: " + tapCount);
+        }
+
+        @Override
+        public void onDisplayTimeout() {
+            Log.d(TAG, "Ultralite display timeout.");
+        }
+
+        @Override
+        public void onPowerButtonPress(boolean turningOn) {
+            Log.d(TAG, "Ultralites power button pressed: " + turningOn);
+            if (screenIsClear) {
+                displayReferenceCardSimple("SGM Connected.", "Waiting for data...", 2);
+            }
+        }
+    }
+
     public UltraliteSGC(Context context, LifecycleOwner lifecycleOwner) {
         super();
         this.lifecycleOwner = lifecycleOwner;
         this.context = context;
 
+        mConnectState = 0;
+        hasUltraliteControl = false;
+        screenIsClear = true;
+        goHomeHandler = new Handler();
+        killHandler = new Handler();
+
         ultraliteSdk = UltraliteSDK.get(context);
-//        ultraliteSdk.addEventListener(lifecycleOwner);
+        ultraliteSdk.addEventListener(new UltraliteListener());
+
         LiveData<Boolean> ultraliteConnectedLive = ultraliteSdk.getConnected();
         ultraliteConnectedLive.observe(lifecycleOwner, isConnected -> {
             onUltraliteConnectedChange(isConnected);
@@ -61,26 +94,19 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        } else {
 //            Log.d(TAG, "Ultralite SDK is NOT available.");
 //        }
-
-        //state information
-        mConnectState = 0;
-
-        goHomeHandler = new Handler();
-        killHandler = new Handler();
     }
 
     private void onUltraliteConnectedChange(boolean isConnected) {
+        Log.d(TAG, "Ultralite CONNECT changed to: " + isConnected);
         if (isConnected) {
-            Log.d(TAG, "Ultralite connected! aaa");
-            mConnectState = 2;
             Log.d(TAG, "Ultralite requesting control...");
             boolean isControlled = ultraliteSdk.requestControl();
-            if (isControlled){
-                setupUltraliteCanvas();
-            } else {
-                return;
-            }
-            Log.d(TAG, "Ultralite control request: " + isControlled);
+//            if (isControlled){
+//                setupUltraliteCanvas();
+//            } else {
+//                return;
+//            }
+            Log.d(TAG, "Ultralite RESULT control request: " + isControlled);
             connectionEvent(2);
         } else {
             Log.d(TAG, "Ultralite not connected.");
@@ -89,9 +115,14 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     private void onUltraliteControlChanged(boolean isControlledByMe) {
-        Log.d(TAG, "Ultralite controlled by me: " + isControlledByMe);
+        Log.d(TAG, "Ultralite CONTROL changed to: " + isControlledByMe);
         if(isControlledByMe) {
+            hasUltraliteControl = true;
             setupUltraliteCanvas();
+            connectionEvent(2);
+            displayReferenceCardSimple("Connected to SGM.", "Authors: TeamOpenSmartGlasses", 3);
+        } else {
+            hasUltraliteControl = false;
         }
 //        mUltraliteControlledByMe = isControlledByMe;
     }
@@ -103,17 +134,22 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     @Override
     public void connectToSmartGlasses(){
         Log.d(TAG, "connectToSmartGlasses running...");
-//        while (mConnectState != 2){
-//            Log.d(TAG, "Don't have Ultralite yet, let's wait for it...");
+//        int mCount = 10;
+//        while ((mConnectState != 2) && (!hasUltraliteControl) && (mCount > 0)){
+//            mCount--;
 //            try {
+//                Log.d(TAG, "Don't have Ultralite yet, let's wait for it...");
 //                Thread.sleep(200);
 //            } catch (InterruptedException e) {
 //                e.printStackTrace();
 //            }
 //        }
 //        Log.d(TAG, "Connected to Ultralites.");
+//        Log.d(TAG, "mCOnnectestate: " + mConnectState);
+//        Log.d(TAG, "mCOunt: " + mCount);
+//        displayReferenceCardSimple("Connected to SGM.", "Authors: TeamOpenSmartGlasses");
 //        connectionEvent(mConnectState);
-        Log.d(TAG, "connectToSmartGlasses run");
+        Log.d(TAG, "connectToSmartGlasses finished");
     }
 
     public void displayTextLine(String text){
@@ -160,22 +196,23 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     @Override
     public void destroy(){
        if (ultraliteSdk != null){
-           displayReferenceCardSimple("Disconnecting...", "Disconnecting Smart Glasses from SGM");
-
-           //disconnect after slight delay, so our above text gets a chance to show up
-           killHandler.postDelayed(new Runnable() {
-               @Override
-               public void run() {
-                   ultraliteSdk.releaseControl();
-               }
-           }, 800);
-
+//           displayReferenceCardSimple("Disconnecting...", "Disconnecting Smart Glasses from SGM");
+//
+//           //disconnect after slight delay, so our above text gets a chance to show up
+//           killHandler.postDelayed(new Runnable() {
+//               @Override
+//               public void run() {
+//                   ultraliteSdk.releaseControl();
+//               }
+//           }, 800);
+           ultraliteSdk.releaseControl();
        }
     }
 
     public void showHomeScreen(){
         changeUltraliteLayout(Layout.CANVAS);
         ultraliteCanvas.clear();
+        screenIsClear = true;
     }
 
     public void setupUltraliteCanvas(){
@@ -230,6 +267,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        ultraliteCanvas.createText(text, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, 0, 0, -1, 80, TextWrapMode.WRAP, true);
         ultraliteCanvas.createText(wrappedText, ultraliteAlignment, ultraliteColor, ultraliteAnchor, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.commitText();
+        screenIsClear = false;
     }
 
     public Bitmap getBitmapFromDrawable(Resources res) {
@@ -237,7 +275,15 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body){
-        if (isConnected()) {
+       displayReferenceCardSimple(title, body, 14);
+    }
+
+    public void displayReferenceCardSimple(String title, String body, int lingerTime){
+        if (!isConnected()) {
+            Log.d(TAG, "Not showing reference card because not connected to Ultralites...");
+            return;
+        }
+
             Log.d(TAG, "Sending text to Ultralite SDK: " + title + "     " + body);
 //            ultraliteSdk.sendText("hello world"); //this is BROKEN in Vuzix ultralite 0.4.2 SDK - crashes Vuzix OEM Platform android app
 
@@ -259,28 +305,33 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         changeUltraliteLayout(Layout.CANVAS);
         ultraliteCanvas.clear();
 //        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
-        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//        ultraliteCanvas.createText("This is a canvas with really long text that should wrap when it becomes longer than the screen. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam gravida, leo id ultrices tempor, purus mi ultrices augue, eu varius odio libero bibendum nisi. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Etiam quis ante aliquet est tempus suscipit eget sed est. Proin ultrices interdum congue. Sed pellentesque pulvinar ipsum, vel pharetra turpis lacinia id. In at mauris pulvinar elit pulvinar sagittis a sodales tellus. Morbi id ante dignissim, pellentesque dui nec, molestie dui. Cras id nunc porta, dignissim urna id, rutrum lorem. Aliquam porta ac justo ac congue. ", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_CENTER, 0, 0, 640, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 120, 640, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.commitText();
+        screenIsClear = false;
 
-        homeScreenInNSeconds(14);
+        homeScreenInNSeconds(lingerTime);
 
             //send image on ultralite
 //            Anchor ultraliteAnchor = Anchor.TOP_LEFT;
 //            LVGLImage ultraliteImage = LVGLImage.fromBitmap(getBitmapFromDrawable(context.getResources()), CF_INDEXED_2_BIT);
 //            changeUltraliteLayout(Layout.CANVAS);
 //            ultraliteCanvas.createImage(ultraliteImage, ultraliteAnchor, 0, 0, true);
-        }
+//        }
     }
 
     public void homeScreenInNSeconds(int n){
-        //disconnect after slight delay, so our above text gets a chance to show up
-           goHomeHandler.postDelayed(new Runnable() {
-               @Override
-               public void run() {
-                   showHomeScreen();
-               }
-           }, n * 1000);
+       //disconnect after slight delay, so our above text gets a chance to show up
+       goHomeHandler.removeCallbacksAndMessages(this);
+       goHomeHandler.postDelayed(new Runnable() {
+           @Override
+           public void run() {
+                           showHomeScreen();
+                                            }
+       }, n * 1000);
     }
 
     //don't show images on activelook (screen is too low res)
@@ -290,61 +341,60 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
         //make image
         //below works, but only for very, very low res/size images
-//        Anchor ultraliteImageAnchor = Anchor.CENTER;
-//        Picasso.get()
-//                .load(imgUrl)
-//                .into(new Target() {
-//                    @Override
-//                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-//                        // Use the bitmap
-////                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(getBitmapFromDrawable(context.getResources()), CF_INDEXED_2_BIT);
-////                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(bitmap, CF_INDEXED_2_BIT);
-//                        changeUltraliteLayout(Layout.CANVAS);
-//                        Log.d(TAG, "Sending image to Ultralite");
-////                        ultraliteCanvas.createImage(ultraliteImage, ultraliteImageAnchor, 0, 0, true);
-//                        ultraliteCanvas.drawBackground(bitmap, 0, 0);
-//
-//                        //edit the text to add new lines to it because ultralite wrapping doesn't work
-////                        String titleWrapped = addNewlineEveryNWords(title, 6);
-////                        String bodyWrapped = addNewlineEveryNWords(body, 6);
-////
-////                        //display the title at the top of the screen
-////                        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
-////                        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
-////                //        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
-////                        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-////                        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-////                        ultraliteCanvas.commitText();
-//
-//                        homeScreenInNSeconds(14);
-//                    }
-//
-//                    @Override
-//                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-//                        // Handle the error
-//                        Log.d(TAG, "Bitmap failed");
-//                        e.printStackTrace();
-//                    }
-//
-//                    @Override
-//                    public void onPrepareLoad(Drawable placeHolderDrawable) {
-//                        // Called before the image is loaded. You can set a placeholder if needed.
-//                    }
-//                });
+        Anchor ultraliteImageAnchor = Anchor.CENTER;
+        Picasso.get()
+                .load(imgUrl)
+                .into(new Target() {
+                    @Override
+                    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                        // Use the bitmap
+//                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(getBitmapFromDrawable(context.getResources()), CF_INDEXED_2_BIT);
+//                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(bitmap, CF_INDEXED_2_BIT);
+                        changeUltraliteLayout(Layout.CANVAS);
+                        Log.d(TAG, "Sending image to Ultralite");
+//                        ultraliteCanvas.createImage(ultraliteImage, ultraliteImageAnchor, 0, 0, true);
+                        ultraliteCanvas.drawBackground(bitmap, 0, 0);
 
-        //edit the text to add new lines to it because ultralite wrapping doesn't work
-        String titleWrapped = addNewlineEveryNWords(title, 6);
-        String bodyWrapped = addNewlineEveryNWords(body, 6);
+                        //edit the text to add new lines to it because ultralite wrapping doesn't work
+//                        String titleWrapped = addNewlineEveryNWords(title, 6);
+//                        String bodyWrapped = addNewlineEveryNWords(body, 6);
+//
+//                        //display the title at the top of the screen
+//                        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+//                        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+//                //        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
+//                        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//                        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//                        ultraliteCanvas.commitText();
 
-        //display the title at the top of the screen
-        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
-        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
-        //ultraliteCanvas.clearBackground(UltraliteColor.DIM);
-        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.commitText();
+                        homeScreenInNSeconds(14);
+                    }
 
-        homeScreenInNSeconds(14);
+                    @Override
+                    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                        // Handle the error
+                        Log.d(TAG, "Bitmap failed");
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onPrepareLoad(Drawable placeHolderDrawable) {
+                        // Called before the image is loaded. You can set a placeholder if needed.
+                    }
+                });
+
+            //edit the text to add new lines to it because ultralite wrapping doesn't work
+            String titleWrapped = addNewlineEveryNWords(title, 6);
+            String bodyWrapped = addNewlineEveryNWords(body, 6);
+
+            //display the title at the top of the screen
+            UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+            TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+            //ultraliteCanvas.clearBackground(UltraliteColor.DIM);
+            ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+            ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+            ultraliteCanvas.commitText();
+            screenIsClear = false;
     }
 
     //handles text wrapping, returns final position of last line printed
@@ -450,6 +500,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             return;
         }
 
+//        ultraliteCanvas.clear();
 //        connectedGlasses.clear();
 //        showPromptCircle();
 //
