@@ -168,8 +168,8 @@ public class MainActivity extends AppCompatActivity {
    public void startWearableAiService() {
        Log.d(TAG, "Starting wearableAiService");
         if (isMyServiceRunning(WearableAiAspService.class)){
-            Log.i(TAG, "WAI Service already running...");
-            return;
+            Log.i(TAG, "WAI Service already running, stopping...");
+            stopWearableAiService();
         }
 
         Intent startIntent = new Intent(this, WearableAiAspService.class);
