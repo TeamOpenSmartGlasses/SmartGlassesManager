@@ -1,5 +1,8 @@
 package com.teamopensmartglasses.sgmlibdebugapp;
 
+import android.util.Log;
+
+import com.teamopensmartglasses.sgmlib.DataStreamType;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
 import com.teamopensmartglasses.sgmlib.SGMLib;
@@ -42,10 +45,20 @@ public class SgmLibDebugAppService extends SmartGlassesAndroidService {
         //register a command with args with the SGM
         SGMCommand helloWorldWithNaturalLanguageCommand = new SGMCommand("Debug With NL", UUID.fromString(SGMGlobalConstants.DEBUG_WITH_NATURAL_LANGUAGE_COMMAND_ID), new String[]{"give me natural language"}, "Hello world command with natural language", true, "Say anything you want:", null);
         sgmLib.registerCommand(helloWorldWithNaturalLanguageCommand, this::helloWorldWithNaturalLanguageCallback);
+
+        sgmLib.subscribe(DataStreamType.GLASSES_SIDE_TAP, this::tapCallback);
+    }
+
+    public void tapCallback(int numTaps, boolean sideOfGlasses, long timestamp){
+        Log.d(TAG, "TPA GOT TAPS, num=" + numTaps);
+        String [] strArr = {"bullet 1", "tpa bullet 2 this is a long one, what will happen?", "tpa bullet 3", "wise guy 4"};
+        sgmLib.sendBulletPointList("Bullet point TPA test", strArr);
     }
 
     public void helloWorldCallback(String args, long commandTime){
-        sgmLib.sendTextLine("testing the SGM text to speech");
+//        sgmLib.sendTextLine("testing the SGM text to speech");
+        String [] strArr = {"bullet 1", "tpa bullet 2 this is a long one, what will happen?", "tpa bullet 3", "wise guy 4"};
+        sgmLib.sendBulletPointList("Bullet point TPA test", strArr);
 //        sgmLib.sendReferenceCard("Debug Hello No args", "SGM triggered Hello World command.");
     }
 

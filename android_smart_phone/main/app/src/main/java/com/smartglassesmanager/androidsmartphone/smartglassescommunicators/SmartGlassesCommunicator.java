@@ -1,6 +1,7 @@
 package com.smartglassesmanager.androidsmartphone.smartglassescommunicators;
 
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
+import com.teamopensmartglasses.sgmlib.events.GlassesTapOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -17,6 +18,7 @@ public abstract class SmartGlassesCommunicator {
     //reference card
     public abstract void displayReferenceCardSimple(String title, String body);
     public abstract void displayReferenceCardImage(String title, String body, String imgUrl);
+    public abstract void displayBulletList(String title, String [] bullets);
 
     //voice command UI
     public abstract void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs);
@@ -71,6 +73,9 @@ public abstract class SmartGlassesCommunicator {
         }
     }
 
+    public void tapEvent(int num){
+        EventBus.getDefault().post(new GlassesTapOutputEvent(num, false, System.currentTimeMillis()));
+    }
 
     public void setMode(SmartGlassesModes mode){
         currentMode = mode;

@@ -16,6 +16,7 @@ import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewE
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AudioWearableSGC;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.UltraliteSGC;
+import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
@@ -193,6 +194,14 @@ class SmartGlassesRepresentative {
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
+//            homeUiAfterDelay(referenceCardDelayTime);
+        }
+    }
+
+    @Subscribe
+    public void onBulletPointListViewEvent(BulletPointListViewRequestEvent receivedEvent){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayBulletList(receivedEvent.title, receivedEvent.bullets);
 //            homeUiAfterDelay(referenceCardDelayTime);
         }
     }

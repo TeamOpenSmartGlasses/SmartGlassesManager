@@ -114,7 +114,9 @@ public class MainActivity extends AppCompatActivity {
     public void broadcastTestClicked(View v) {
         Log.d(TAG, "Pressed 'Test Broadcast' button.");
         if (mService != null) {
-            mService.sgmLib.sendReferenceCard("TPA Button Clicked", "Button was clicked. This is the content body of a card that was sent from a TPA using the SGMLib.");
+//            mService.sgmLib.sendReferenceCard("TPA Button Clicked", "Button was clicked. This is the content body of a card that was sent from a TPA using the SGMLib.");
+            String [] strArr = {"bullet 1", "tpa bullet 2 this is a long one, what will happen?", "tpa bullet 3", "wise guy 4"};
+            mService.sgmLib.sendBulletPointList("Bullet point TPA test", strArr);
         }
     }
 

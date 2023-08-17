@@ -72,6 +72,15 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
         EventBus.getDefault().post(new TextToSpeechEvent(title + ", " + body));
     }
 
+    public void displayBulletList(String title, String [] bullets){
+        displayBulletList(title, bullets, 0);
+    }
+
+    public void displayBulletList(String title, String [] bullets, int lingerTime){
+
+    }
+
+
     public void stopScrollingTextViewMode() {
     }
 

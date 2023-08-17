@@ -562,6 +562,14 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void displayBulletList(String title, String [] bullets){
+        displayBulletList(title, bullets, 0);
+    }
+
+    public void displayBulletList(String title, String [] bullets, int lingerTime){
+
+    }
+
     public void stopScrollingTextViewMode() {
         Log.d(TAG, "STOP SCROLLING TEXT VIEW");
         try{

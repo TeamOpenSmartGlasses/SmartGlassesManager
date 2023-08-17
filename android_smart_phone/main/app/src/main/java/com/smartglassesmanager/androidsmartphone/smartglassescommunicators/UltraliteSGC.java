@@ -49,6 +49,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         @Override
         public void onTap(int tapCount) {
             Log.d(TAG, "Ultralite go tap n times: " + tapCount);
+            tapEvent(tapCount);
         }
 
         @Override
@@ -217,11 +218,19 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
     public void setupUltraliteCanvas(){
         Log.d(TAG, "Setting up ultralite canvas");
-        ultraliteCanvas = ultraliteSdk.getCanvas();
+        if (ultraliteSdk != null) {
+            ultraliteCanvas = ultraliteSdk.getCanvas();
+        }
     }
 
     public void changeUltraliteLayout(Layout chosenLayout) {
         ultraliteSdk.setLayout(chosenLayout, 0, true);
+
+        if (chosenLayout.equals(Layout.CANVAS)){
+            if (ultraliteCanvas == null){
+                setupUltraliteCanvas();
+            }
+        }
     }
 
     public void startScrollingTextViewMode(String title){
@@ -284,19 +293,15 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             return;
         }
 
+//        String [] bulletPoints = {"first one", "second one", "dogs and cats"};
+//        displayBulletList("Cool Bullets:", bulletPoints, 15);
+
             Log.d(TAG, "Sending text to Ultralite SDK: " + title + "     " + body);
 //            ultraliteSdk.sendText("hello world"); //this is BROKEN in Vuzix ultralite 0.4.2 SDK - crashes Vuzix OEM Platform android app
 
-//            changeUltraliteLayout(Layout.DEFAULT);
-//            ultraliteSdk.sendNotification(title, body);
-
-//            String newBody = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi suscipit vitae libero sit amet finibus.";
-//            drawTextOnUltralite(newBody + newBody + newBody + newBody+ newBody);
-//            drawOnUltralite(title, body);
-
         //edit the text to add new lines to it because ultralite wrapping doesn't work
-        String titleWrapped = addNewlineEveryNWords(title, 6);
-        String bodyWrapped = addNewlineEveryNWords(body, 6);
+//        String titleWrapped = addNewlineEveryNWords(title, 6);
+//        String bodyWrapped = addNewlineEveryNWords(body, 6);
 
         //display the title at the top of the screen
         UltraliteColor ultraliteColor = UltraliteColor.WHITE;
@@ -304,23 +309,47 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         TextAlignment ultraliteAlignment = TextAlignment.LEFT;
         changeUltraliteLayout(Layout.CANVAS);
         ultraliteCanvas.clear();
-//        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
-//        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-//        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-//        ultraliteCanvas.createText("This is a canvas with really long text that should wrap when it becomes longer than the screen. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam gravida, leo id ultrices tempor, purus mi ultrices augue, eu varius odio libero bibendum nisi. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Etiam quis ante aliquet est tempus suscipit eget sed est. Proin ultrices interdum congue. Sed pellentesque pulvinar ipsum, vel pharetra turpis lacinia id. In at mauris pulvinar elit pulvinar sagittis a sodales tellus. Morbi id ante dignissim, pellentesque dui nec, molestie dui. Cras id nunc porta, dignissim urna id, rutrum lorem. Aliquam porta ac justo ac congue. ", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_CENTER, 0, 0, 640, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 120, 640, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.commitText();
         screenIsClear = false;
 
         homeScreenInNSeconds(lingerTime);
+    }
 
-            //send image on ultralite
-//            Anchor ultraliteAnchor = Anchor.TOP_LEFT;
-//            LVGLImage ultraliteImage = LVGLImage.fromBitmap(getBitmapFromDrawable(context.getResources()), CF_INDEXED_2_BIT);
-//            changeUltraliteLayout(Layout.CANVAS);
-//            ultraliteCanvas.createImage(ultraliteImage, ultraliteAnchor, 0, 0, true);
-//        }
+    public void displayBulletList(String title, String [] bullets){
+        displayBulletList(title, bullets, 14);
+    }
+
+    public void displayBulletList(String title, String [] bullets, int lingerTime){
+        if (!isConnected()) {
+            Log.d(TAG, "Not showing bullet point list because not connected to Ultralites...");
+            return;
+        }
+
+        Log.d(TAG, "Sending bullets to Ultralite SDK: " + title);
+
+        //display the title at the top of the screen
+        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+        changeUltraliteLayout(Layout.CANVAS);
+        ultraliteCanvas.clear();
+
+        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
+        int displaceY = 80;
+        int displaceX = 35;
+        for (String bullet : bullets){
+            ultraliteCanvas.createText("⬤ " + bullet, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, displaceX, displaceY, 640, -1, TextWrapMode.WRAP, true);
+            displaceY += 80;
+        }
+
+        ultraliteCanvas.commitText();
+        screenIsClear = false;
+
+        if (lingerTime > 0){
+            homeScreenInNSeconds(lingerTime);
+        }
     }
 
     public void homeScreenInNSeconds(int n){
@@ -351,14 +380,22 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(getBitmapFromDrawable(context.getResources()), CF_INDEXED_2_BIT);
 //                        LVGLImage ultraliteImage = LVGLImage.fromBitmap(bitmap, CF_INDEXED_2_BIT);
                         changeUltraliteLayout(Layout.CANVAS);
+
+                        //send text first, cuz this is fast
+                        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
+                        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
+                        ultraliteCanvas.commitText();
+                        screenIsClear = false;
+
                         Log.d(TAG, "Sending image to Ultralite");
 //                        ultraliteCanvas.createImage(ultraliteImage, ultraliteImageAnchor, 0, 0, true);
-                        ultraliteCanvas.drawBackground(bitmap, 0, 0);
+                        ultraliteCanvas.drawBackground(bitmap, 50, 80);
 
-                        //edit the text to add new lines to it because ultralite wrapping doesn't work
-//                        String titleWrapped = addNewlineEveryNWords(title, 6);
-//                        String bodyWrapped = addNewlineEveryNWords(body, 6);
-//
+                        //sending text again to ultralite in case image overwrote it
+//                        ultraliteCanvas.createText(title + "2", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
+//                        ultraliteCanvas.createText(body + "2", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
+//                        ultraliteCanvas.commitText();
+
 //                        //display the title at the top of the screen
 //                        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
 //                        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
@@ -366,6 +403,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //                        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
 //                        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
 //                        ultraliteCanvas.commitText();
+
+
 
                         homeScreenInNSeconds(14);
                     }
@@ -384,17 +423,17 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
                 });
 
             //edit the text to add new lines to it because ultralite wrapping doesn't work
-            String titleWrapped = addNewlineEveryNWords(title, 6);
-            String bodyWrapped = addNewlineEveryNWords(body, 6);
-
-            //display the title at the top of the screen
-            UltraliteColor ultraliteColor = UltraliteColor.WHITE;
-            TextAlignment ultraliteAlignment = TextAlignment.LEFT;
-            //ultraliteCanvas.clearBackground(UltraliteColor.DIM);
-            ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-            ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-            ultraliteCanvas.commitText();
-            screenIsClear = false;
+//            String titleWrapped = addNewlineEveryNWords(title, 6);
+//            String bodyWrapped = addNewlineEveryNWords(body, 6);
+//
+//            //display the title at the top of the screen
+//            UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+//            TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+//            //ultraliteCanvas.clearBackground(UltraliteColor.DIM);
+//            ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//            ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
+//            ultraliteCanvas.commitText();
+//            screenIsClear = false;
     }
 
     //handles text wrapping, returns final position of last line printed

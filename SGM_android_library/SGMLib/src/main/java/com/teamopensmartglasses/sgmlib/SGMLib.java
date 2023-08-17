@@ -3,11 +3,13 @@ package com.teamopensmartglasses.sgmlib;
 import android.content.Context;
 import android.util.Log;
 
+import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.GlassesTapOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
@@ -64,6 +66,10 @@ public class SGMLib {
         subscribedDataStreams.put(dataStreamType, callback);
     }
 
+    public void subscribe(DataStreamType dataStreamType, TapCallback callback){
+        subscribedDataStreams.put(dataStreamType, callback);
+    }
+
     //TPA request to be the app in focus - SGM has to grant this request
     public void requestFocus(FocusCallback callback){
         focusCallback = callback;
@@ -77,6 +83,11 @@ public class SGMLib {
     //show a reference card on the smart glasses with title and body text
     public void sendReferenceCard(String title, String body) {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
+    }
+
+    //show a bullet point list card on the smart glasses with title and bullet points
+    public void sendBulletPointList(String title, String [] bullets) {
+        EventBus.getDefault().post(new BulletPointListViewRequestEvent(title, bullets));
     }
 
     public void sendReferenceCard(String title, String body, String imgUrl) {
@@ -143,6 +154,16 @@ public class SGMLib {
         long time = event.timestamp;
         if (subscribedDataStreams.containsKey(DataStreamType.SMART_RING_BUTTON)) {
             ((ButtonCallback)subscribedDataStreams.get(DataStreamType.SMART_RING_BUTTON)).call(buttonId, time, event.isDown);
+        }
+    }
+
+    @Subscribe
+    public void onGlassesTapSideEvent(GlassesTapOutputEvent event) {
+        int numTaps = event.numTaps;
+        boolean sideOfGlasses = event.sideOfGlasses;
+        long time = event.timestamp;
+        if (subscribedDataStreams.containsKey(DataStreamType.GLASSES_SIDE_TAP)) {
+            ((TapCallback)subscribedDataStreams.get(DataStreamType.GLASSES_SIDE_TAP)).call(numTaps, sideOfGlasses, time);
         }
     }
 

@@ -240,6 +240,15 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void displayBulletList(String title, String [] bullets){
+        displayBulletList(title, bullets, 0);
+    }
+
+    public void displayBulletList(String title, String [] bullets, int lingerTime){
+
+    }
+
+
     //don't show images on activelook (screen is too low res)
     public void displayReferenceCardImage(String title, String body, String imgUrl){
         displayReferenceCardSimple(title, body);

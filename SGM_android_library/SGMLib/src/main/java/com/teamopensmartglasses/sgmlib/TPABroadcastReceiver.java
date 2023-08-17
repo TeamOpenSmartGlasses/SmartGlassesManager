@@ -13,6 +13,7 @@ import android.util.Log;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.GlassesTapOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
 import com.teamopensmartglasses.sgmlib.events.SmartRingButtonOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
@@ -54,6 +55,9 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
                 break;
             case SmartRingButtonOutputEvent.eventId:
                 EventBus.getDefault().post((SmartRingButtonOutputEvent) serializedEvent);
+                break;
+            case GlassesTapOutputEvent.eventId:
+                EventBus.getDefault().post((GlassesTapOutputEvent) serializedEvent);
                 break;
             case FocusChangedEvent.eventId:
                 EventBus.getDefault().post((FocusChangedEvent) serializedEvent);

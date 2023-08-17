@@ -13,6 +13,7 @@ import android.util.Log;
 
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.TPARequestEvent;
 import com.teamopensmartglasses.sgmlib.SGMGlobalConstants;
+import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
@@ -55,6 +56,7 @@ public class SGMLibBroadcastReceiver extends BroadcastReceiver {
             //if it's a request to run something on glasses or anything else having to do with commands, pipe this through the command system
             case ReferenceCardSimpleViewRequestEvent.eventId:
             case ReferenceCardImageViewRequestEvent.eventId:
+            case BulletPointListViewRequestEvent.eventId:
             case ScrollingTextViewStartRequestEvent.eventId:
             case ScrollingTextViewStopRequestEvent.eventId:
             case FinalScrollingTextRequestEvent.eventId:

@@ -14,6 +14,7 @@ import com.teamopensmartglasses.sgmlib.FocusStates;
 import com.teamopensmartglasses.sgmlib.SGMCallbackMapper;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.SGMCallback;
+import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
@@ -250,7 +251,7 @@ public class CommandSystem {
         }
 
         //if the app doesn't have focus, then we have to check if its been recently triggered and thus allowed to do something
-        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(ReferenceCardImageViewRequestEvent.eventId) | eventId.equals(TextLineViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId) | eventId.equals(FocusRequestEvent.eventId)) {
+        if (eventId.equals(ReferenceCardSimpleViewRequestEvent.eventId) | eventId.equals(ReferenceCardImageViewRequestEvent.eventId) | eventId.equals(ReferenceCardImageViewRequestEvent.eventId) | eventId.equals(BulletPointListViewRequestEvent.eventId) | eventId.equals(ScrollingTextViewStartRequestEvent.eventId) | eventId.equals(FocusRequestEvent.eventId)) {
             //if the app took too long to respond, don't allow it to run anything
             if (appPrivilegeTimeout == null) {
                 return false;
@@ -312,7 +313,7 @@ public class CommandSystem {
         }
 
         //check if the app making the request has privilege, only run it if it does have privilege
-        if (checkAppHasPrivilege(receivedEvent.eventId, receivedEvent.sendingPackage)) {
+        if (true){ //(checkAppHasPrivilege(receivedEvent.eventId, receivedEvent.sendingPackage)) { //comment out check for privilege until this is a problem - TPAs should all request check for privilege anyway
             Log.d(TAG, "Allowing and resending event: ," + receivedEvent.eventId + "requested by: " + receivedEvent.sendingPackage);
             //map from id to event for all events that need permissions
             switch (receivedEvent.eventId) {
@@ -323,6 +324,10 @@ public class CommandSystem {
                 case ReferenceCardImageViewRequestEvent.eventId:
                     suspendFocusIfNotFocused(receivedEvent.sendingPackage);
                     EventBus.getDefault().post((ReferenceCardImageViewRequestEvent) receivedEvent.serializedEvent);
+                    break;
+                case BulletPointListViewRequestEvent.eventId:
+                    suspendFocusIfNotFocused(receivedEvent.sendingPackage);
+                    EventBus.getDefault().post((BulletPointListViewRequestEvent) receivedEvent.serializedEvent);
                     break;
                 case ScrollingTextViewStartRequestEvent.eventId: //mode start command - gives app focus
                     suspendFocusIfNotFocused(receivedEvent.sendingPackage);

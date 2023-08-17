@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
@@ -56,8 +57,15 @@ public class TPABroadcastSender {
         String eventId = receivedEvent.eventId;
         sendEventToSGM(eventId, receivedEvent);
     }
+
     @Subscribe
     public void onReferenceCardImageViewEvent(ReferenceCardImageViewRequestEvent receivedEvent){
+        String eventId = receivedEvent.eventId;
+        sendEventToSGM(eventId, receivedEvent);
+    }
+
+    @Subscribe
+    public void onBulletPointListViewEvent(BulletPointListViewRequestEvent receivedEvent){
         String eventId = receivedEvent.eventId;
         sendEventToSGM(eventId, receivedEvent);
     }
