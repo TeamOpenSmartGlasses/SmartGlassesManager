@@ -33,6 +33,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
     UltraliteSDK ultraliteSdk;
     UltraliteSDK.Canvas ultraliteCanvas;
+    UltraliteListener ultraliteListener;
     LifecycleOwner lifecycleOwner;
     Context context;
 
@@ -78,7 +79,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         killHandler = new Handler();
 
         ultraliteSdk = UltraliteSDK.get(context);
-        ultraliteSdk.addEventListener(new UltraliteListener());
+        ultraliteListener = new UltraliteListener();
+        ultraliteSdk.addEventListener(ultraliteListener);
 
         LiveData<Boolean> ultraliteConnectedLive = ultraliteSdk.getConnected();
         ultraliteConnectedLive.observe(lifecycleOwner, isConnected -> {
@@ -206,6 +208,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //                   ultraliteSdk.releaseControl();
 //               }
 //           }, 800);
+           ultraliteSdk.removeEventListener(ultraliteListener);
            ultraliteSdk.releaseControl();
        }
     }
