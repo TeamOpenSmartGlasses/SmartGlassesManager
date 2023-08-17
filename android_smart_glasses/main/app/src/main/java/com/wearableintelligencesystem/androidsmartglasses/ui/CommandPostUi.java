@@ -31,7 +31,9 @@ import org.w3c.dom.Text;
 public class CommandPostUi extends ASGFragment {
     private final String TAG = "WearableAi_CommandPostUi";
 
+    private TextView commandArgsTextViewL;
     private TextView commandArgsTextView;
+    private TextView previousCommandStringL;
     private TextView previousCommandString;
 
     public CommandPostUi() {
@@ -54,9 +56,11 @@ public class CommandPostUi extends ASGFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         super.onViewCreated(view, savedInstanceState);
+        previousCommandStringL = view.findViewById(R.id.main_title_l);
         previousCommandString = view.findViewById(R.id.main_title);
         setupCommandArgsTextView(view);
         //previousCommandString.setText(getArguments().getString(MessageTypes.INPUT_WAKE_WORD) + " " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
+        previousCommandStringL.setText("Command: " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
         previousCommandString.setText("Command: " + getArguments().getString(MessageTypes.INPUT_VOICE_COMMAND_NAME));
     }
 
@@ -81,6 +85,7 @@ public class CommandPostUi extends ASGFragment {
                 if (typeOf.equals(MessageTypes.VOICE_COMMAND_STREAM_EVENT)) {
                     if (data.getString(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE).equals(MessageTypes.COMMAND_ARGS_EVENT_TYPE)) {
                         String args = data.getString(MessageTypes.INPUT_VOICE_STRING);
+                        commandArgsTextViewL.setText(args);
                         commandArgsTextView.setText(args);
                     }
                 }
@@ -92,6 +97,7 @@ public class CommandPostUi extends ASGFragment {
 
 
     private void setupCommandArgsTextView(View view){
+        commandArgsTextViewL = view.findViewById(R.id.command_args_l);
         commandArgsTextView = view.findViewById(R.id.command_args);
 
         commandArgsTextView.addTextChangedListener(new TextWatcher() {
@@ -102,6 +108,7 @@ public class CommandPostUi extends ASGFragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                UiUtils.scrollToBottom(commandArgsTextViewL);
                 UiUtils.scrollToBottom(commandArgsTextView);
             }
 
@@ -110,6 +117,7 @@ public class CommandPostUi extends ASGFragment {
 
             }
         });
+        UiUtils.scrollToBottom(commandArgsTextViewL);
         UiUtils.scrollToBottom(commandArgsTextView);
     }
 

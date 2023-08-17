@@ -35,6 +35,9 @@ public class ReferenceUi extends ASGFragment {
     private String imgUrl;
 
     //referenceCard ui
+    TextView referenceCardResultTitleL;
+    TextView referenceCardResultSummaryL;
+    ImageView referenceCardResultImageL;
     TextView referenceCardResultTitle;
     TextView referenceCardResultSummary;
     ImageView referenceCardResultImage;
@@ -86,11 +89,18 @@ public class ReferenceUi extends ASGFragment {
                 Log.d(TAG, "moi: " + body);
 
                 //get the views
+                referenceCardResultTitleL = (TextView) getActivity().findViewById(R.id.reference_card_result_title_l);
+                referenceCardResultSummaryL = (TextView) getActivity().findViewById(R.id.reference_card_result_summary_l);
+                referenceCardResultImageL = (ImageView) getActivity().findViewById(R.id.reference_card_result_image_l);
                 referenceCardResultTitle = (TextView) getActivity().findViewById(R.id.reference_card_result_title);
                 referenceCardResultSummary = (TextView) getActivity().findViewById(R.id.reference_card_result_summary);
                 referenceCardResultImage = (ImageView) getActivity().findViewById(R.id.reference_card_result_image);
 
                 //set the text
+                referenceCardResultTitleL.setText(title);
+                referenceCardResultSummaryL.setText(body);
+                referenceCardResultSummaryL.setMovementMethod(new ScrollingMovementMethod());
+                referenceCardResultSummaryL.setSelected(true);
                 referenceCardResultTitle.setText(title);
                 referenceCardResultSummary.setText(body);
                 referenceCardResultSummary.setMovementMethod(new ScrollingMovementMethod());
@@ -99,6 +109,32 @@ public class ReferenceUi extends ASGFragment {
                 if (imgUrl != null) {
                     Picasso.Builder builder = new Picasso.Builder(getActivity());
                     builder.downloader(new OkHttp3Downloader(getActivity()));
+
+                    //ABSOLUTELY DISGUSTING
+                    //JESUS CHRIST MY EYES
+                    //EVEN RMS DOESNT WANT MY CODE
+                    //https://www.youtube.com/watch?v=FoUWHfh733Y
+
+                    //BEGIN LEFT SIDE
+                    builder.build()
+                            .load(imgUrl.trim())
+                            .resize(400,0)
+                            .into(referenceCardResultImageL, new Callback() {
+
+                                @Override
+                                public void onSuccess() {
+                                    Log.d(TAG, "Picasso Image load success");
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    Log.e("Picasso", "Image load failed");
+                                }
+                            });
+
+                    //END LEFT SIDE
+                    //BEGIN RIGHT SIDE
+
                     builder.build()
                             .load(imgUrl.trim())
                             .resize(400,0)

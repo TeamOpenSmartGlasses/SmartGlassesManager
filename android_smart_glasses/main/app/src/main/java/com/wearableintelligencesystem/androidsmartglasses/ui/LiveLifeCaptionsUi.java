@@ -44,6 +44,7 @@ public class LiveLifeCaptionsUi extends Fragment {
     //live life captions ui
     ArrayList<Spanned> textHolder = new ArrayList<>();
     int textHolderSizeLimit = 20; // how many lines maximum in the text holder
+    TextView liveLifeCaptionsTextL;
     TextView liveLifeCaptionsText;
 
     boolean currentlyScrolling = false;
@@ -70,6 +71,7 @@ public class LiveLifeCaptionsUi extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        liveLifeCaptionsTextL = (TextView) view.findViewById(R.id.livelifecaptionstextview_l);
         liveLifeCaptionsText = (TextView) view.findViewById(R.id.livelifecaptionstextview);
         liveLifeCaptionsText.setMovementMethod(new ScrollingMovementMethod());
         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
@@ -82,6 +84,7 @@ public class LiveLifeCaptionsUi extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                UiUtils.scrollToBottom(liveLifeCaptionsTextL);
                 UiUtils.scrollToBottom(liveLifeCaptionsText);
             }
 
@@ -91,7 +94,9 @@ public class LiveLifeCaptionsUi extends Fragment {
             }
         });
 
+        liveLifeCaptionsTextL.setText(getCurrentTranscriptScrollText());
         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
+        UiUtils.scrollToBottom(liveLifeCaptionsTextL);
         UiUtils.scrollToBottom(liveLifeCaptionsText);
         //navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
     }
@@ -154,6 +159,7 @@ public class LiveLifeCaptionsUi extends Fragment {
                         textBuilder = textBuilder + "</p>";
                         textHolder.add(Html.fromHtml(textBuilder));
                     }
+                    liveLifeCaptionsTextL.setText(getCurrentTranscriptScrollText());
                     liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -163,6 +169,7 @@ public class LiveLifeCaptionsUi extends Fragment {
                         if ((System.currentTimeMillis() - lastIntermediateMillis) > intermediateTranscriptPeriod) {
                             lastIntermediateMillis = System.currentTimeMillis();
                             String intermediate_transcript = intent.getStringExtra(MessageTypes.SCROLLING_TEXT_VIEW_TEXT);
+                            liveLifeCaptionsTextL.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
                             liveLifeCaptionsText.setText(TextUtils.concat(getCurrentTranscriptScrollText(), Html.fromHtml("<p>" + intermediate_transcript.trim() + "</p>")));
                         }
             } else if (intent.hasExtra(GlboxClientSocket.COMMAND_RESPONSE)) {
@@ -170,6 +177,7 @@ public class LiveLifeCaptionsUi extends Fragment {
                         //change newlines to <br/>
                         command_response_text = command_response_text.replaceAll("\n", "<br/>");
                         textHolder.add(Html.fromHtml("<p><font color='#00CC00'>" + command_response_text.trim() + "</font></p>"));
+                        liveLifeCaptionsTextL.setText(getCurrentTranscriptScrollText());
                         liveLifeCaptionsText.setText(getCurrentTranscriptScrollText());
             } else {
                 Log.d(TAG, "GOT SOMETHING ELSE");
