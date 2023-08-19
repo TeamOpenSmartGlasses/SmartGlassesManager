@@ -231,7 +231,9 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body){
+        Log.d(TAG, "Checking if connected... Displaying simpel reference card");
         if (isConnected()) {
+            Log.d(TAG, "Displaying simpel reference card");
             connectedGlasses.clear();
             ArrayList<Object> stuffToDisplay = new ArrayList<>();
             stuffToDisplay.add(new TextLineSG(title, LARGE_FONT));
@@ -245,7 +247,12 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     public void displayBulletList(String title, String [] bullets, int lingerTime){
-
+        Log.d(TAG, "Displaying bullet list");
+        String body = "";
+        for (String bullet : bullets){
+            body = body.concat("⬤ " + bullet + "\n");
+        }
+        displayReferenceCardSimple(title, body);
     }
 
 
@@ -395,6 +402,7 @@ public class ActiveLookSGC extends SmartGlassesCommunicator {
     }
 
     private void sendTextToGlasses(TextLineSG textLine, Point percentLoc){
+        Log.d(TAG, "Sending text to glasses");
         Point pixelLoc = percentScreenToPixelsLocation(percentLoc.x, percentLoc.y);
         connectedGlasses.txt(pixelLoc, Rotation.TOP_LR, (byte) textLine.getFontSizeCode(), (byte) 0x0F, textLine.getText());
     }

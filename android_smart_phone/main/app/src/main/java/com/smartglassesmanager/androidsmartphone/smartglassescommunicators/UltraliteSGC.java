@@ -343,7 +343,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         int displaceY = 80;
         int displaceX = 35;
         for (String bullet : bullets){
-            ultraliteCanvas.createText("⬤ " + bullet, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, displaceX, displaceY, 640, -1, TextWrapMode.WRAP, true);
+            ultraliteCanvas.createText("⬤ " + bullet, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, displaceX, displaceY, 640 - displaceX, -1, TextWrapMode.WRAP, true);
             displaceY += 80;
         }
 

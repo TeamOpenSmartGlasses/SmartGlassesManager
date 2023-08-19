@@ -110,7 +110,7 @@ public class CommandSystem {
 
     public void loadDefaultCommands() {
         //live life captions - test scrolling view text
-//        registerCommand("Live Captions", UUID.fromString("933b8950-412e-429e-8fb6-430f973cc9dc"), new String[]{"live captions", "live life captions", "captions", "transcription"}, "Starts streaming captions live to the glasses display.", this::launchLiveCaptions);
+        registerLocalCommand("Live Captions", UUID.fromString("933b8950-412e-429e-8fb6-430f973cc9dc"), new String[]{"live captions", "live life captions", "captions", "transcription"}, "Starts streaming captions live to the glasses display.", this::launchLiveCaptions);
 
         //test reference card
         registerLocalCommand("Test", UUID.fromString("f4290426-18d5-431a-aea4-21844b832735"), new String[]{"test", "test", "show me a test card", "test card", "testing", "show test card"}, "Shows a test Reference Card on the glasses display.", this::launchTestCard);
