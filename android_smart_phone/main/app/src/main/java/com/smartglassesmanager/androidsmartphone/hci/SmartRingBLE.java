@@ -83,16 +83,9 @@ public class SmartRingBLE {
     private NotificationManager mNotificationManager; //manage notifications...
     private Context mContext;
 
-    //state of the ring
-    private long currTime = 0;
-    private long lastTouched = 0;
-    private long lastPressed = 0;
     private boolean screenTouched;
     private boolean screenPressed;
 
-    // Double clicking constants
-    private final long doublePressTimeConst = 420;
-    private final long doubleTouchTimeConst = 420;
     public SmartRingBLE(Context mContext) {
         this.mContext = mContext;
 
@@ -205,39 +198,13 @@ public class SmartRingBLE {
 
         private void throwScreenTouchedEvent(boolean touched){
             Log.d(TAG, "Screen touch is: " + touched);
-            currTime = System.currentTimeMillis();
-
-            if(touched && currTime - lastTouched < doubleTouchTimeConst){
-                //Double touch
-               EventBus.getDefault().post(new SmartRingButtonOutputEvent(2, System.currentTimeMillis(), touched));
-            }
-            else {
-                //Single touch
-               EventBus.getDefault().post(new SmartRingButtonOutputEvent(0, System.currentTimeMillis(), touched));
-            }
-
-            if(touched) {
-                lastTouched = System.currentTimeMillis();
-            }
+            EventBus.getDefault().post(new SmartRingButtonOutputEvent(0, System.currentTimeMillis(), touched));
         }
 
         private void throwScreenPressedEvent(boolean pressed){
             Log.d(TAG, "Screen press is: " + pressed);
-            currTime = System.currentTimeMillis();
-
-            if(pressed && currTime - lastPressed < doublePressTimeConst) {
-                Log.d(TAG, "CurrTime-lastPressed: "+ (currTime-lastPressed));
-                //Double press
-                EventBus.getDefault().post(new SmartRingButtonOutputEvent(3, currTime, pressed));
-            }
-            else{
-                //Single press
-                EventBus.getDefault().post(new SmartRingButtonOutputEvent(1, System.currentTimeMillis(), pressed));
-            }
-
-            if(pressed) {
-                lastPressed = System.currentTimeMillis();
-            }
+            //Single press
+            EventBus.getDefault().post(new SmartRingButtonOutputEvent(1, System.currentTimeMillis(), pressed));
         }
 
         @Override
