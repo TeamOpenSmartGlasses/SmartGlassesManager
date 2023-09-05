@@ -12,5 +12,5 @@
     <dimen name="headerIconWidth">20dp</dimen>
     <dimen name="headerIconHeight">20dp</dimen>
     <dimen name="headerHeight">40dp</dimen>
-    <dimen name="llcMarginBottom">-55dp</dimen>
+    <dimen name="llcMarginBottom">0dp</dimen>
 </resources>
