@@ -18,6 +18,11 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.preference.PreferenceManager;
 
+import com.ffalcon.blechat.BleComponent;
+import com.ffalcon.blechat.BleComponentFactory;
+import com.ffalcon.blechat.BleConfig;
+import com.ffalcon.blechat.core.DeviceConnectionState;
+import com.ffalcon.blechat.permission.PermissionUtils;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
@@ -77,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         //get permissions
         permissionsUtils = new PermissionsUtils(this, TAG);
         permissionsUtils.getSomePermissions();
+        startBle();
 //        permissionsUtils.checkPermission();
     }
 
@@ -285,5 +291,41 @@ public class MainActivity extends AppCompatActivity {
         if (mService != null){
             mService.changeChosenAsrFramework(asrFramework);
         }
+    }
+
+
+    private void startBle(){
+
+        //we need permissions to auto connect to  ble device
+        PermissionUtils.requestPermission( this , result->{
+            if( result ){
+                configBle();
+            }
+        });
+    }
+    BleComponent bleComponent = null;
+    private void configBle(){
+        // Define your Service ID, Message ID, and Confirmation ID here as unique identifiers for your app.
+        // Devices with the same UUIDs will be automatically recognized, paired, connected, and messages will be automatically confirmed.
+        String serviceUUID = "7A7A7486-16F7-967E-656F-1234567ABABD";
+        String messageUUID = "7A7A7486-16F7-967E-656F-1234567ABABE";
+        String confirmUUID = "7A7A7486-16F7-967E-656F-1234567ABABF";
+        // Bluetooth Ble communication service will stop on lifecycleOwner's onStop and start on onStart.
+        // You can either use the activity or your custom lifecycleOwner, and manually call stop and start methods.
+        bleComponent = BleComponentFactory.INSTANCE.create( this,this)
+                .setBleConfig( new BleConfig.Builder().setServiceUuid( serviceUUID)
+                        .setMessageUUid( messageUUID )
+                        .setConfirmUuid( confirmUUID ).build())
+                .setConnectionStateListener( this,newState->{
+                    Log.d(TAG, "BLE connection state changed to : " + newState);
+                    if( newState instanceof DeviceConnectionState.Connected ){
+                        bleComponent.obtainMessage("This message from Phone",isSend->{
+                            Log.d(TAG,"Phone send first message success ");
+                        });
+                    }
+                }).setMessageListener(this,message->{
+                    Log.d(TAG, "BLE message received : " + message);
+                }).autoConnect();
+
     }
 }

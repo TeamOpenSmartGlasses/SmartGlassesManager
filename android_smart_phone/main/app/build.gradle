@@ -2,6 +2,8 @@ plugins {
     id 'com.android.application'
 //    id 'kotlin-android'
     id 'com.google.protobuf'
+    id 'org.jetbrains.kotlin.android'
+
 }
 
 android {
@@ -73,6 +75,8 @@ android {
 }
 
 dependencies {
+    implementation(fileTree("libs"))
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     testImplementation 'junit:junit:4.+'
