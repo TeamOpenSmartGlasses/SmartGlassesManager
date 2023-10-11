@@ -1,5 +1,6 @@
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
 }
 
 repositories {
@@ -44,7 +45,7 @@ android {
 }
 
 dependencies {
-
+    implementation(fileTree("libs"))
     //fragments
     def fragment_version = "1.2.0"
     def fragment_nav_version = "2.2.0"
@@ -61,7 +62,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.squareup.picasso:picasso:2.71828'
-    implementation 'com.intellij:annotations:+@jar'
     implementation "org.java-websocket:Java-WebSocket:1.5.2"
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
 
