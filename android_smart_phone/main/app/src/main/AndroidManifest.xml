@@ -3,9 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.smartglassesmanager.androidsmartphone">
 
-  <uses-sdk
-      android:minSdkVersion="29"
-      android:targetSdkVersion="30" />
+
 
 <!--    STORAGE-->
 <!--    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->
@@ -23,13 +21,16 @@
 <!--    BLUETOOTH-->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-                        android:usesPermissionFlags="neverForLocation"/>
 
 <!--    AUDIO-->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!--From Android 12-->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"  />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"  />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
 <!--    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />-->
 

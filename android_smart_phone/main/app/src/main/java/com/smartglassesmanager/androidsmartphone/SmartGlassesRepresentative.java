@@ -71,7 +71,7 @@ class SmartGlassesRepresentative {
         switch (smartGlassesDevice.getGlassesOs()){
             case ANDROID_OS_GLASSES:
                 Log.d(TAG, "MAKING ANDROID SGC");
-                smartGlassesCommunicator = new AndroidSGC(context, dataObservable);
+                smartGlassesCommunicator = new AndroidSGC(context, dataObservable,true);
                 break;
             case ACTIVELOOK_OS_GLASSES:
                 smartGlassesCommunicator = new ActiveLookSGC(context);

@@ -2,6 +2,8 @@ plugins {
     id 'com.android.application'
 //    id 'kotlin-android'
     id 'com.google.protobuf'
+    id 'org.jetbrains.kotlin.android'
+
 }
 
 android {
@@ -11,7 +13,13 @@ android {
     aaptOptions {
         noCompress "tflite"
     }
-
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
     packagingOptions {
         exclude 'META-INF/proguard/androidx-annotations.pro'
         resources {
@@ -22,7 +30,7 @@ android {
 
     defaultConfig {
         applicationId "com.smartglassesmanager.androidsmartphone"
-        minSdk 29
+        minSdk 30
         targetSdk 32
         versionCode 3
         versionName "0.1"

@@ -1,5 +1,6 @@
 package com.smartglassesmanager.androidsmartphone.smartglassescommunicators;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.graphics.Point;
 import android.os.Handler;
@@ -7,11 +8,24 @@ import android.os.HandlerThread;
 import android.os.StrictMode;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+
 import com.smartglassesmanager.androidsmartphone.comms.AspWebsocketServer;
 import com.smartglassesmanager.androidsmartphone.comms.AudioSystem;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.gatt.BleConfig;
+import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.gatt.BleServer;
+import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.gatt.DeviceConnectionState;
+import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.gatt.Message;
+import com.smartglassesmanager.androidsmartphone.utils.ManualLifecycleOwner;
 import com.smartglassesmanager.androidsmartphone.utils.NetworkUtils;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,10 +39,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -81,18 +97,30 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
     Context context;
 
-    public AndroidSGC(Context context, PublishSubject<JSONObject> dataObservable){
+    private boolean useBle =false;
+    private BleConfig bleConfig = new BleConfig.Builder().build();
+
+    private final ManualLifecycleOwner  manualLifecycleOwner = new ManualLifecycleOwner();
+
+    public AndroidSGC(Context context, PublishSubject<JSONObject> dataObservable,boolean useBle){
         super();
         this.dataObservable = dataObservable;
         this.context = context;
-
+        this.useBle = useBle;
+        if( useBle ){
+            BleServer.INSTANCE.startServer(context,bleConfig);
+        }
         //create a new queue to hold outbound message
-        queue = new ArrayBlockingQueue<byte[]>(50);
+        queue = new ArrayBlockingQueue<>(50);
 
         killme = false;
 
         //state information
         mConnectState = 0;
+    }
+
+    public void setBleConfig( BleConfig bleConfig ){
+        this.bleConfig = bleConfig;
     }
 
     //not used/valid yet
@@ -104,6 +132,14 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     }
 
     public void connectToSmartGlasses(){
+        if( !useBle){
+            connectBySocket();
+        }else{
+            connectByBle();
+        }
+    }
+
+    private void connectBySocket(){
         //open the UDP socket to broadcast our IP address
         openSocket();
 
@@ -125,6 +161,50 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         Log.d(TAG, "running start socket");
         startSocket();
     }
+
+    private void connectByBle(){
+        //start ble server
+        if( mConnectState != 0 ){
+            Log.d(TAG,"already start connect");
+            return;
+        }
+        Log.d(TAG,"connectByBle");
+        manualLifecycleOwner.onStart();
+        connectionEvent( 1);
+        manualLifecycleOwner.getLifecycle().addObserver((LifecycleEventObserver) (source, event) -> {
+            if (event == Lifecycle.Event.ON_DESTROY) {
+                BleServer.INSTANCE.stopServer();
+            }
+        });
+        BleServer.INSTANCE.getConnectionRequest().observe(manualLifecycleOwner, new Observer<BluetoothDevice>() {
+            @Override
+            public void onChanged(BluetoothDevice bluetoothDevice) {
+                //Connect to device and set current connection
+                Log.d(TAG,"get bluetooth device ");
+                BleServer.INSTANCE.setCurrentChatConnection( bluetoothDevice );
+            }
+        });
+        BleServer.INSTANCE.getMessages().observe( manualLifecycleOwner, new Observer<Message>() {
+            @Override
+            public void onChanged(Message s) {
+                if(s.getText().equals("STOP")){
+                    //disconnect device
+                    BleServer.INSTANCE.disconnectDevice();
+                }
+            }
+        });
+
+        BleServer.INSTANCE.getDeviceConnection().observe(manualLifecycleOwner, new Observer<DeviceConnectionState>() {
+            @Override
+            public void onChanged(DeviceConnectionState deviceConnectionState) {
+                if( mConnectState != deviceConnectionState.getState() ) {
+                    connectionEvent(deviceConnectionState.getState());
+                }
+            }
+        });
+    }
+
+
 
     class SendAdvThread extends Thread {
         public void run() {
@@ -490,7 +570,16 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
     public void destroy(){
         killme = true;
+        manualLifecycleOwner.onStop();
+        manualLifecycleOwner.onDestroy();
+        if( useBle ){
+            killBle();
+        }else {
+            killAspWebSocket();
+        }
+    }
 
+    private void killAspWebSocket(){
         //kill AudioSystem
         audioSystem.destroy();
 
@@ -525,10 +614,14 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                 ReceiveThread.join();
             }
             Log.i(TAG, "RECEIVE THREAD JOINED");
-        } catch (InterruptedException e){
+        } catch (InterruptedException e) {
             e.printStackTrace();
             Log.d(TAG, "Error waiting for threads to joing");
         }
+    }
+
+    private void killBle(){
+        BleServer.INSTANCE.stopServer();
     }
 
     public void displayReferenceCardSimple(String title, String body){
@@ -541,6 +634,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+            EventBus.getDefault().post(new Message.LocalMessage(commandResponseObject.toString()));
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -557,6 +651,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+            EventBus.getDefault().post(new Message.LocalMessage(commandResponseObject.toString()));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -571,6 +667,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+            EventBus.getDefault().post(new Message.LocalMessage(commandResponseObject.toString()));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -587,6 +685,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+            EventBus.getDefault().post(new Message.LocalMessage(commandResponseObject.toString()));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -601,6 +701,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+            EventBus.getDefault().post(new Message.LocalMessage(commandResponseObject.toString()));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -616,6 +718,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+            EventBus.getDefault().post(new Message.LocalMessage(commandResponseObject.toString()));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -630,6 +734,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
             //send the command result to web socket, to send to asg
             dataObservable.onNext(commandResponseObject);
+            EventBus.getDefault().post(new Message.LocalMessage(commandResponseObject.toString()));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -681,6 +787,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                 wakeWordFoundEvent.put(MessageTypes.VOICE_COMMAND_LIST, argsList.toString());
                 wakeWordFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, prompt);
                 dataObservable.onNext(wakeWordFoundEvent);
+                EventBus.getDefault().post(new Message.LocalMessage(wakeWordFoundEvent.toString()));
+
             } catch (JSONException e){
                 e.printStackTrace();
             }
@@ -706,6 +814,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             commandFoundEvent.put(MessageTypes.INPUT_WAKE_WORD, "myWakeWord");
             commandFoundEvent.put(MessageTypes.VOICE_ARG_EXPECT_TYPE, MessageTypes.VOICE_ARG_EXPECT_NATURAL_LANGUAGE);
             dataObservable.onNext(commandFoundEvent);
+            EventBus.getDefault().post(new Message.LocalMessage(commandFoundEvent.toString()));
+
         } catch (JSONException e){
             e.printStackTrace();
         }
@@ -718,6 +828,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                 commandFoundEvent.put(MessageTypes.VOICE_COMMAND_STREAM_EVENT_TYPE, MessageTypes.COMMAND_ARGS_EVENT_TYPE);
                 commandFoundEvent.put(MessageTypes.INPUT_VOICE_STRING, naturalLanguageArgs);
                 dataObservable.onNext(commandFoundEvent);
+                EventBus.getDefault().post(new Message.LocalMessage(commandFoundEvent.toString()));
         } catch (JSONException e) {
             e.printStackTrace();
         }

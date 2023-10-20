@@ -154,6 +154,11 @@ public class PermissionsUtils {
 
     public void getSomePermissions(){
         ActivityCompat.requestPermissions(mCallingActivity,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.BLUETOOTH_SCAN, android.Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADVERTISE, android.Manifest.permission.RECORD_AUDIO}, REQUEST_PERMISSION_CODE);
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        android.Manifest.permission.BLUETOOTH_SCAN,
+                        android.Manifest.permission.BLUETOOTH_CONNECT,
+                        Manifest.permission.BLUETOOTH_ADVERTISE,
+                        android.Manifest.permission.RECORD_AUDIO}, REQUEST_PERMISSION_CODE);
     }
 }
