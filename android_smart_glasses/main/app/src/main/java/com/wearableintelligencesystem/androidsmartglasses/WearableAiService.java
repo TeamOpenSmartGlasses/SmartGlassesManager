@@ -27,6 +27,7 @@ import com.wearableintelligencesystem.androidsmartglasses.archive.GlboxClientSoc
 import com.wearableintelligencesystem.androidsmartglasses.comms.MessageTypes;
 import com.wearableintelligencesystem.androidsmartglasses.comms.WifiStatusCallback;
 import com.wearableintelligencesystem.androidsmartglasses.comms.WifiUtils;
+import com.wearableintelligencesystem.androidsmartglasses.comms.gatt.BleConfig;
 import com.wearableintelligencesystem.androidsmartglasses.sensors.BluetoothScanner;
 
 import org.json.JSONException;
@@ -65,6 +66,9 @@ public class WearableAiService extends Service {
 
     //ASP socket
     ASPClientSocket asp_client_socket;
+
+    BleClient bleClient;
+
     String asp_address;
     String asp_adv_key = "WearableAiCyborg";
 
@@ -116,6 +120,12 @@ public class WearableAiService extends Service {
         //setup our connection to the ASP
         asp_client_socket = ASPClientSocket.getInstance(this);
         asp_client_socket.setObservable(dataObservable);
+
+        bleClient = new BleClient( this, new BleConfig.Builder().build());
+        bleClient.setObservable(dataObservable);
+
+        Log.d(TAG,"ble client start ");
+        bleClient.startScan();
 
         //first we have to listen for the UDP broadcast from the compute module so we know the IP address to connect to. Once we get that , we will connect to it on a socket and starting sending pictures
         //this will start the asp socket when ASP address is received and ASP is not connected. If ASP socket already running, it will update the ASP address (useful when ASP IP changes, like on new wifi)
@@ -208,6 +218,8 @@ public class WearableAiService extends Service {
         if (!asp_client_socket.getSocketStarted()) {
             asp_client_socket.startSocket();
         }
+
+
     }
 
 
@@ -220,7 +232,7 @@ public class WearableAiService extends Service {
         killme = true;
         dataSubscriber.dispose();
         asp_client_socket.destroy();
-
+        bleClient.stop();
         try {
             adv_thread.join();
         } catch(InterruptedException e){

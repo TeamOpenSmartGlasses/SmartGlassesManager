@@ -11,6 +11,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -50,6 +51,11 @@ public class MainActivity extends AppCompatActivity {
     public boolean mBound = false;
 
     public static String TAG = "WearableAiDisplay_MainActivity";
+
+    private String[] permissions;
+
+    public static final int PERMISSION_REQUEST_CODE = 1234;
+
 
     public boolean binding = false; //should we be binding to the service?
 
@@ -100,11 +106,30 @@ public class MainActivity extends AppCompatActivity {
 
     TextView modeStatus;
 
+
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate running");
 
         super.onCreate(savedInstanceState);
+
+        if(Build.VERSION.SDK_INT >=31 ){
+            permissions = new String[]{
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.BLUETOOTH_ADVERTISE,
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH_SCAN};
+        }else{
+            permissions = new String[]{
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION};
+        }
 
         //help us find potential issues in dev
         if (BuildConfig.DEBUG){
@@ -141,13 +166,10 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate switchMode");
         switchMode(MessageTypes.MODE_HOME);
 
+
         //setup permissions
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.RECORD_AUDIO},
-                    1234);
+        if (!checkPermissions()) {
+            requestPermissions();
         } else {
             //create the WearableAI service if it isn't already running
             startWearableAiService();
@@ -155,22 +177,42 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private boolean checkPermissions() {
+        Log.d(TAG,"checking permissions : " + permissions.length);
+
+        for (String permission : permissions) {
+            Log.d(TAG,"checking permission : " + permission + ",isGranted:"+(ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED));
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+    }
+
     //handle permissions
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
+        Log.d(TAG,"onRequestPermissionsResult");
         switch (requestCode) {
-            case 1234: {
+            case PERMISSION_REQUEST_CODE: {
                 // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("TAG", "User granted audio permissions.");
-                    startWearableAiService();
-                } else {
-                    Log.d("TAG", "permission denied by user");
+                for (int result : grantResults) {
+                    if (result != PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "permission denied by user");
+                        return;
+                    }
                 }
-                return;
+                startWearableAiService();
+                break;
             }
+            default:
+                Log.d(TAG, "This onRequestPermissionsResult is not excepted");break;
+
         }
     }
 

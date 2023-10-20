@@ -11,7 +11,7 @@ repositories {
 
 android {
     namespace "com.wearableintelligencesystem.androidsmartglasses"
-    compileSdkVersion 29
+    compileSdk 31
 //    buildToolsVersion "30.0.3"
     useLibrary 'org.apache.http.legacy'
 
