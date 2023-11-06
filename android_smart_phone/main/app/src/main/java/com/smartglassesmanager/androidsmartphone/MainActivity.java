@@ -28,6 +28,7 @@ import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDe
 import com.smartglassesmanager.androidsmartphone.supportedglasses.TCLRayNeoXTwo;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.VuzixShield;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.VuzixUltralite;
+import com.smartglassesmanager.androidsmartphone.supportedglasses.Monocle;
 import com.smartglassesmanager.androidsmartphone.utils.PermissionsUtils;
 
 /** Main activity of WearableAI compute module android app. **/
