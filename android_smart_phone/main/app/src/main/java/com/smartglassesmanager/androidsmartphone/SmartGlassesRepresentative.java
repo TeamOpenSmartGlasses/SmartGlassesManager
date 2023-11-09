@@ -90,6 +90,9 @@ class SmartGlassesRepresentative {
             case ULTRALITE_MCU_OS_GLASSES:
                 smartGlassesCommunicator = new UltraliteSGC(context, lifecycleOwner);
                 break;
+            case MONOCLE_OS_GLASSES:
+                smartGlassesCommunicator = new MonocleSGC(context, lifecycleOwner);
+                break;
         }
 
         smartGlassesCommunicator.connectToSmartGlasses();
