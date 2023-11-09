@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 public class MonocleSGC extends SmartGlassesCommunicator {
-    private static final String TAG = "WearableAi_ActivelookSGC";
+    private static final String TAG = "MonocleSGC";
 
     private Glasses connectedGlasses;
     private Sdk alsdk;
