@@ -2,6 +2,8 @@ package com.smartglassesmanager.androidsmartphone.ui;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.text.InputType;
 import android.text.method.LinkMovementMethod;
@@ -28,9 +30,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.smartglassesmanager.androidsmartphone.WearableAiAspService;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
+import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.teamopensmartglasses.sgmlib.SmartGlassesAndroidService;
 import com.smartglassesmanager.androidsmartphone.MainActivity;
 
@@ -58,10 +63,10 @@ public class SettingsUi extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.settings_fragment, container, false);
     }
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         //setup the title
         UiUtils.setupTitle(getActivity(), fragmentLabel);
@@ -69,34 +74,23 @@ public class SettingsUi extends Fragment {
         navController = Navigation.findNavController(getActivity(), R.id.nav_host_fragment);
         Context mContext = this.getContext();
 
-        final Button killServiceButton = view.findViewById(R.id.kill_wearableai_service);
-//        if (((MainActivity)getActivity()).areSmartGlassesConnected()){
-//            killServiceButton.setEnabled(true);
-//        } else {
-//            killServiceButton.setEnabled(false);
-//        }
-        killServiceButton.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                // Code here executes on main thread after user presses button
-                ((MainActivity)getActivity()).stopWearableAiService();
-            }
-        });
+        TextView headerText  = view.findViewById(R.id.textView5);
 
-        final Button connectSmartGlassesButton = view.findViewById(R.id.connect_smart_glasses);
-            connectSmartGlassesButton.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                // Code here executes on main thread after user presses button
-                //check to first make sure that user isn't trying to enable google without providing API key
-                if (WearableAiAspService.getChosenAsrFramework(mContext) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
-                    String apiKey = WearableAiAspService.getApiKey(mContext);
-                    if (apiKey == null || apiKey.equals("")) {
-                        showNoGoogleAsrDialog();
-                        return;
-                    }
+        final ToggleButton toggleGlassesButton = view.findViewById(R.id.toggle_glasses_button);
+        toggleGlassesButton.setChecked(((MainActivity)getActivity()).areSmartGlassesConnected());
+
+        toggleGlassesButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // The toggle is enabled
+                    Log.d(TAG, "RETARD: START");
+                    startGlasses();
+                } else {
+                    // The toggle is disabled
+                    stopGlasses();
                 }
 
-                ((MainActivity)getActivity()).startWearableAiService();
-                navController.navigate(R.id.nav_select_smart_glasses);
+                ((MainActivity)getActivity()).updateHeaderText();
             }
         });
 
@@ -208,6 +202,31 @@ public class SettingsUi extends Fragment {
                 ((MainActivity)getActivity()).runDefaultApp();
             }
         });
+
+        ((MainActivity)getActivity()).updateHeaderText();
+    }
+
+    public void stopGlasses(){
+        // Code here executes on main thread after user presses button
+        ((MainActivity)getActivity()).stopWearableAiService();
+        ((MainActivity)getActivity()).saveLatestGlasses("noGlassesFound");
+        //headerText.setText(headerTextNewText);
+    }
+
+    public void startGlasses(){
+        Context mContext = this.getContext();
+        // Code here executes on main thread after user presses button
+        //check to first make sure that user isn't trying to enable google without providing API key
+        if (WearableAiAspService.getChosenAsrFramework(mContext) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
+            String apiKey = WearableAiAspService.getApiKey(mContext);
+            if (apiKey == null || apiKey.equals("")) {
+                showNoGoogleAsrDialog();
+                return;
+            }
+        }
+
+        ((MainActivity)getActivity()).startWearableAiService();
+        navController.navigate(R.id.nav_select_smart_glasses);
     }
 
     public void sendTestCard(){

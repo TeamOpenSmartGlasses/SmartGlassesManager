@@ -7,9 +7,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -52,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
     //list of glasses we support
     public SmartGlassesDevice [] smartGlassesDevices;
 
+    private Handler handler = new Handler();
+    private Runnable runnable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,6 +87,24 @@ public class MainActivity extends AppCompatActivity {
         permissionsUtils = new PermissionsUtils(this, TAG);
         permissionsUtils.getSomePermissions();
 //        permissionsUtils.checkPermission();
+
+        // Start wearable ai service
+        startWearableAiService();
+
+        // Initialize the Runnable
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                // Update the UI
+                updateHeaderText();
+
+                // Schedule the Runnable again
+                handler.postDelayed(this, 1000); // Update every second
+            }
+        };
+
+        handler.post(runnable); // Start the Runnable
+
     }
 
 //    @Override
@@ -86,6 +113,34 @@ public class MainActivity extends AppCompatActivity {
 //        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 //        permissionsUtils.onRequestPermissionsResult(requestCode, permissions, grantResults);
 //    }
+
+    public void updateHeaderText(){
+        // Update header text
+        TextView headerText = findViewById(R.id.textView5);
+        if(headerText != null) {
+            if (areSmartGlassesConnected()) {
+                headerText.setVisibility(View.GONE);
+            }
+            else{
+                headerText.setVisibility(View.VISIBLE);
+            }
+        }
+
+        // Update header image
+        ImageView headerImage = findViewById(R.id.home_glasses_image);
+        if(headerImage != null) {
+            if (areSmartGlassesConnected()) {
+                SmartGlassesDevice device = selectedDevice;
+                String uri = "@drawable/" + device.getDeviceIconName();  // where myresource (without the extension) is the file
+                int imageResource = getResources().getIdentifier(uri, null, getPackageName());
+                Drawable res = getResources().getDrawable(imageResource);
+                headerImage.setImageDrawable(res);
+                headerImage.setVisibility(View.VISIBLE);
+            } else {
+                headerImage.setVisibility(View.GONE);
+            }
+        }
+    }
 
     private static IntentFilter makeMainServiceReceiverIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
@@ -118,9 +173,38 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void saveLatestGlasses(String deviceModelName) {
+        //save glasses to storage
+        // Get a reference to the SharedPreferences object
+        Context mContext = this;
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences("SGMPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove("recentGlasses");
+        editor.putString("recentGlasses", deviceModelName);
+        editor.apply();
+    }
+
+    public void maybeConnectToRecentGlasses(){
+        Context ctx = this.getApplicationContext();
+        SharedPreferences sharedPreferences = ctx.getSharedPreferences("SGMPrefs", Context.MODE_PRIVATE);
+        String recentGlasses = sharedPreferences.getString("recentGlasses", "noGlassesFound");
+        if (recentGlasses != "noGlassesFound") {
+            Log.d(TAG, "FOUND SOME GLASSES? LETS SEE!: " + recentGlasses);
+            for (SmartGlassesDevice device : smartGlassesDevices){
+                Log.d(TAG, "devName: " + device.getDeviceModelName() + "\nDevOurs: " + recentGlasses);
+                if(device.getDeviceModelName().equals(recentGlasses)) {
+                    connectSmartGlasses(device);
+                    //navController.navigate(R.id.nav_connecting_to_smart_glasses);
+                }
+            }
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+
+        handler.post(runnable); // Start the Runnable
 
         //register receiver that gets data from the service
         registerReceiver(mMainServiceReceiver, makeMainServiceReceiverIntentFilter());
@@ -139,6 +223,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+
+        handler.removeCallbacks(runnable);
 
         //unbind wearableAi service
         unbindWearableAiAspService();
@@ -238,9 +324,11 @@ public class MainActivity extends AppCompatActivity {
             WearableAiAspService.LocalBinder wearableAiServiceBinder = (WearableAiAspService.LocalBinder) service;
             mService = wearableAiServiceBinder.getService();
             mBound = true;
-
             //get update for UI
             mService.sendUiUpdate();
+
+            // Check for previously connected glasses
+            maybeConnectToRecentGlasses();
         }
 
         @Override
@@ -252,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
     //this should only be called after the WAI Service is up and bound
     public void connectSmartGlasses(SmartGlassesDevice device){
         this.selectedDevice = device;
-
+        Log.d("BLAH","sumgood shit");
         //check if the service is running. If not, we should start it first, so it doesn't die when we unbind
         if (!isMyServiceRunning(WearableAiAspService.class)){
             Log.e(TAG, "Something went wrong, service should be started and bound.");
@@ -265,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
         if (!isMyServiceRunning(WearableAiAspService.class)){
             return false;
         } else {
-            return (mService.getSmartGlassesConnectState() == 2);
+            return (mService != null && mService.getSmartGlassesConnectState() == 2);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.smartglassesmanager.androidsmartphone.ui;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -18,6 +20,7 @@ import androidx.navigation.Navigation;
 import com.smartglassesmanager.androidsmartphone.MainActivity;
 import com.smartglassesmanager.androidsmartphone.R;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
+import com.teamopensmartglasses.sgmlib.SGMCommand;
 
 public class GlassesConnectedFragment extends Fragment {
     private  final String TAG = "WearableAi_GlassesConnectedFragment";
@@ -50,6 +53,9 @@ public class GlassesConnectedFragment extends Fragment {
         if (device == null){
             return;
         }
+
+        // save device as the last connected device
+        ((MainActivity)getActivity()).saveLatestGlasses(device.getDeviceModelName());
 
         //setup the image view
         ImageView connectedImageIv = (ImageView) view.findViewById(R.id.connected_glasses_image);

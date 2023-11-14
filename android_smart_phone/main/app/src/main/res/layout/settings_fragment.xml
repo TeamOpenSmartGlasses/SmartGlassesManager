@@ -5,37 +5,53 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/header_group"
+        android:layout_width="wrap_content"
+        android:layout_height="150dp"
+        app:layout_constraintHeight_min="150dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    <ImageView
+        android:id="@+id/home_glasses_image"
+        android:layout_width="wrap_content"
+        android:layout_height="150dp"
+        android:layout_marginTop="32dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/elon" />
+
     <TextView
         android:id="@+id/textView5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:text="Wearable"
+        android:text="Glasses disconnected"
         android:textSize="32dp"
         android:textStyle="bold"
+        android:layout_margin="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@id/header_group"
+        app:layout_constraintTop_toBottomOf="@id/home_glasses_image" />
 
-    <Button
-        android:id="@+id/connect_smart_glasses"
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ToggleButton
+        android:id="@+id/toggle_glasses_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="11dp"
-        android:text="Start Wearable"
+        android:textOff="Connect Smart Glasses"
+        android:textOn="Disconnect Smart Glasses"
+        tools:layout_editor_absoluteX="160dp"
+        tools:layout_editor_absoluteY="37dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView5" />
-
-    <Button
-        android:id="@+id/kill_wearableai_service"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="11dp"
-        android:text="Stop Wearable"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/connect_smart_glasses" />
+        app:layout_constraintTop_toBottomOf="@+id/header_group" />
 
     <Button
         android:id="@+id/send_test_card_old"
@@ -45,7 +61,7 @@
         android:text="Test Wearable"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/kill_wearableai_service" />
+        app:layout_constraintTop_toBottomOf="@+id/toggle_glasses_button" />
 
 
     <TextView
