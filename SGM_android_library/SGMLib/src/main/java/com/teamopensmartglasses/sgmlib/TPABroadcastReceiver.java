@@ -15,6 +15,7 @@ import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.GlassesTapOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandSuccessEvent;
 import com.teamopensmartglasses.sgmlib.events.SmartRingButtonOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
@@ -41,6 +42,9 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
 
         //map from id to event
         switch (eventId) {
+            case RegisterCommandSuccessEvent.eventId:
+                EventBus.getDefault().post((RegisterCommandSuccessEvent) serializedEvent);
+                break;
             case CommandTriggeredEvent.eventId:
                 EventBus.getDefault().post((CommandTriggeredEvent) serializedEvent);
                 break;

@@ -1,6 +1,7 @@
 package com.teamopensmartglasses.sgmlib;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
@@ -13,6 +14,7 @@ import com.teamopensmartglasses.sgmlib.events.GlassesTapOutputEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandSuccessEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.SmartRingButtonOutputEvent;
@@ -24,6 +26,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 public class SGMLib {
     public String TAG = "SGMLib_SGMLib";
@@ -56,6 +59,22 @@ public class SGMLib {
 
         sgmCallbackMapper.putCommandWithCallback(sgmCommand, callback);
         EventBus.getDefault().post(new RegisterCommandRequestEvent(sgmCommand));
+
+        // Verify command was successfully registered
+        // If not, re-run this until it is
+        final Handler handler = new Handler();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                boolean isRegistered = sgmCallbackMapper.isCommandSuccessfullyRegistered(sgmCommand.getId());
+                if(!isRegistered)
+                {
+                    registerCommand(sgmCommand, callback); // Re-run
+                }
+            }
+        };
+        handler.postDelayed(runnable, 2000);
+
     }
 
     public void subscribe(DataStreamType dataStreamType, TranscriptCallback callback){
@@ -112,6 +131,13 @@ public class SGMLib {
 
     public void sendCenteredText(String text){
         EventBus.getDefault().post(new CenteredTextViewRequestEvent(text));
+    }
+
+    @Subscribe
+    public void onRegisterCommandSuccessEvent(RegisterCommandSuccessEvent receivedEvent){
+        Log.d(TAG, "COMMAND REGISTRATION ACKNOWLEDGED");
+        UUID commandId = receivedEvent.command.getId();
+        sgmCallbackMapper.markCommandAsSuccessfullyRegistered(commandId);
     }
 
     @Subscribe

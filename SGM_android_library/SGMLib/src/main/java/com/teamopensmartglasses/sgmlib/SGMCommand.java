@@ -21,6 +21,8 @@ public class SGMCommand implements Serializable {
     public String packageName; //the name of the package that made and owns this command
     public String serviceName;
 
+    public boolean isSuccessfullyRegistered;
+
     public SGMCommand(String name, UUID id, String[] phrases, String description){
         argRequired = false;
         setupBaseCommand(name, id, phrases, description);
@@ -64,5 +66,9 @@ public class SGMCommand implements Serializable {
     public String getServiceName(){
         return serviceName;
     }
+
+    public boolean getIsSuccessfullyRegistered() { return isSuccessfullyRegistered; }
+
+    public void setIsSuccessfullyRegistered(boolean isRegistered) { isSuccessfullyRegistered = isRegistered; }
 }
 

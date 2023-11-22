@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.util.Base64;
 import android.util.Log;
 
+import com.smartglassesmanager.androidsmartphone.comms.SGMLibBroadcastSender;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.SGMStealFocus;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.TPARequestEvent;
@@ -14,17 +15,20 @@ import com.teamopensmartglasses.sgmlib.FocusStates;
 import com.teamopensmartglasses.sgmlib.SGMCallbackMapper;
 import com.teamopensmartglasses.sgmlib.SGMCommand;
 import com.teamopensmartglasses.sgmlib.SGMCallback;
+import com.teamopensmartglasses.sgmlib.SGMLib;
 import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.CommandTriggeredEvent;
 import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusChangedEvent;
 import com.teamopensmartglasses.sgmlib.events.FocusRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
+import com.teamopensmartglasses.sgmlib.events.KillTpaEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.RegisterCommandRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StartLiveCaptionsEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.StopLiveCaptionsEvent;
+import com.teamopensmartglasses.sgmlib.events.RegisterCommandSuccessEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
@@ -48,6 +52,8 @@ public class CommandSystem {
 
     //voice command system
     VoiceCommandServer voiceCommandServer;
+
+    private SGMLibBroadcastSender sgmLibBroadcastSender;
 
     //command timeout
     class AppPrivilegeTimeout {
@@ -77,6 +83,8 @@ public class CommandSystem {
         mContext = context;
 
         sgmCallbackMapper = new SGMCallbackMapper();
+
+        sgmLibBroadcastSender = new SGMLibBroadcastSender(mContext);
 
         loadDefaultCommands();
 
@@ -147,6 +155,8 @@ public class CommandSystem {
         editor.remove(commandId);
         editor.putString(commandId, commandSerialized);
         editor.apply();
+
+        sgmLibBroadcastSender.sendEventToTPAs(RegisterCommandSuccessEvent.eventId, new RegisterCommandSuccessEvent(command), command.packageName);
     }
 
     public void loadCommands() {

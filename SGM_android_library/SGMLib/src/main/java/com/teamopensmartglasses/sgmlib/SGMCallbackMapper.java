@@ -32,4 +32,16 @@ public class SGMCallbackMapper {
         }
         return commandsList;
     }
+
+    public boolean isCommandSuccessfullyRegistered(UUID commandId){
+        SGMCommandWithCallback command = registeredCommands.get(commandId);
+        return command.command.getIsSuccessfullyRegistered();
+    }
+
+    public void markCommandAsSuccessfullyRegistered(UUID commandId) {
+        SGMCommandWithCallback command = registeredCommands.get(commandId);
+        command.command.setIsSuccessfullyRegistered(true);
+        registeredCommands.put(commandId, command);
+    }
+
 }
