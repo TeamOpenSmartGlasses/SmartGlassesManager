@@ -1,6 +1,8 @@
 package com.teamopensmartglasses.sgmlib;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.util.Log;
 
@@ -69,6 +71,11 @@ public class SGMLib {
                 boolean isRegistered = sgmCallbackMapper.isCommandSuccessfullyRegistered(sgmCommand.getId());
                 if(!isRegistered)
                 {
+                    // TODO: Launch SGM Service automatically
+                    // Intent intent = new Intent();
+                    // intent.setComponent(new ComponentName("com.smartglassesmanager.androidsmartphone", "com.smartglassesmanager.androidsmartphone.WearableAiAspService"));
+                    // mContext.startService(intent);
+
                     registerCommand(sgmCommand, callback); // Re-run
                 }
             }

@@ -59,6 +59,7 @@
       </activity>
 
           <service android:name="com.smartglassesmanager.androidsmartphone.WearableAiAspService"
+              android:exported="true"
               android:foregroundServiceType="microphone"
           />
 

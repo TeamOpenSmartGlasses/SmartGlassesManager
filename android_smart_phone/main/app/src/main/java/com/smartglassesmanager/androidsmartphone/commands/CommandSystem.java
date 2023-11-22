@@ -172,6 +172,7 @@ public class CommandSystem {
                 if (value instanceof String) {
                     SGMCommand command = (SGMCommand) deserializeObject((String) value);
                     sgmCallbackMapper.putCommandWithCallback(command, null);
+                    Log.d(TAG, "LOADED EXISTING COMMAND: " + command.getName());
                 }
             }
         }
@@ -209,7 +210,7 @@ public class CommandSystem {
 
     @Subscribe
     public void onRegisterCommandRequestEvent(RegisterCommandRequestEvent receivedEvent) {
-        Log.d(TAG, "Command was registered");
+        Log.d(TAG, "Command was registered: " + receivedEvent.command.getName());
         saveCommand(receivedEvent.command); //save the command to be loaded later
         updateInterfaceCommands();
     }
