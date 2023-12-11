@@ -1,4 +1,4 @@
-package com.smartglassesmanager.androidsmartphone.hci;
+package com.smartglassesmanager.androidsmartphone.hci.smartrings;
 
 /*
  * Copyright (C) 2013 The Android Open Source Project
@@ -34,6 +34,7 @@ import com.teamopensmartglasses.sgmlib.events.SmartRingButtonOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -46,13 +47,16 @@ public class SmartRingBLE {
     private final static String TAG = "WearableIntelligence_SmartRingBLE";
 
     public static final UUID CONFIG_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-    public static final UUID TCL_STREAM_SERVICE = UUID.fromString("0000fff0-0000-1000-8000-00805f9b34fb");
     public static final UUID TCL_PRESET_CHARACTERISTIC = UUID.fromString("0000ae02-0000-1000-8000-00805f9b34fb");
     public static final UUID TCL_STREAM_CHARACTERISTIC = UUID.fromString("0000fff1-0000-1000-8000-00805f9b34fb");
-//    public String tclMouseStreamCharId = "273e0001-4c4d-454d-96be-f03bac821358"; //write preset to this
+
+    public static final UUID OSSR_STREAM_SERVICE = UUID.fromString("000000ff-0000-1000-8000-00805f9b34fb");
+    public static final UUID OSSR_STREAM_CHARACTERISTIC = UUID.fromString("0000ff01-0000-1000-8000-00805f9b34fb");
 
     private boolean mScanning;
     private Handler mHandler;
+
+    private boolean debugLightStatus = false;
 
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -136,7 +140,8 @@ public class SmartRingBLE {
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        tclRing();
+//                        tclRing();
+                        ossrRing();
                     }
                 }, 50);
             } else {
@@ -279,8 +284,13 @@ public class SmartRingBLE {
                 public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
                     if (device != null) {
                         if (device.getName() != null) {
-                            if (device.getName().contains("RayNeo")) { //the TCL RayNeo X2 Ring
-                                Log.d(TAG, "FOUND TCL RING!!!");
+//                            if (device.getName().contains("RayNeo")) { //the TCL RayNeo X2 Ring
+//                                Log.d(TAG, "FOUND TCL RING!!!");
+//                                connect(device.getAddress());
+//                            }
+
+                            if (device.getName().contains("OSSR")) { //the TCL RayNeo X2 Ring
+                                Log.d(TAG, "FOUND OSSR Ring!!!");
                                 connect(device.getAddress());
                             }
                         }
@@ -374,6 +384,34 @@ public class SmartRingBLE {
         }
     }
 
+    public void ossrRing(){
+        //we have to setup the TCL Ring notification
+        List serve = getSupportedGattServices();
+        Log.d(TAG, "starting OSSR setup");
+        Log.d(TAG, "services available: " + getSupportedGattServices());
+        for (int i = 0; i < serve.size(); i++){
+            BluetoothGattService currServe = (BluetoothGattService) serve.get(i);
+            ArrayList chars = giveCharacteristics(currServe);
+
+            //subscribe to preset and streaming characteristics
+            for (int j = 0; j < chars.size(); j++){
+                BluetoothGattCharacteristic currChar = (BluetoothGattCharacteristic) chars.get(j);
+                Log.d(TAG, "Checking: " + currChar.getUuid().toString());
+                if (currChar.getUuid().equals(OSSR_STREAM_CHARACTERISTIC)) {
+                    Log.d(TAG, "Subscribing to OSSR TOSG Ring streaming characteristic...");
+                    mBluetoothGatt.setCharacteristicNotification(currChar, true); //enable on android
+                    BluetoothGattDescriptor descriptor = currChar.getDescriptor(CONFIG_DESCRIPTOR);
+                    while (lock == true) {
+                        //spinning block
+                    }
+                    lock = true;
+                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    Log.d(TAG, "subscribe result: " + Boolean.toString(mBluetoothGatt.writeDescriptor(descriptor))); //enable on TCL
+                    Log.d(TAG, "subscribed to: " + currChar.getUuid().toString());
+                }
+            }
+        }
+    }
 
     /**
      * Disconnects an existing connection or cancel a pending connection. The disconnection result
@@ -462,5 +500,32 @@ public class SmartRingBLE {
         }
 
         return chars;
+    }
+
+    public int getConnectionState(){
+        return mConnectionState;
+    }
+
+    public void debugLightToggle(){
+        debugLightStatus = !debugLightStatus;
+        Log.d(TAG,"Debug light toggle to: " + debugLightStatus);
+        int toWrite = 0;
+        if (!debugLightStatus){
+            toWrite = 1;
+        } else {
+            toWrite = 0;
+        }
+
+        //write that to the bluetooth ring stream characteristic
+        Log.d(TAG,"Writing started");
+        BluetoothGattService mCustomService = mBluetoothGatt.getService(OSSR_STREAM_SERVICE);
+        BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(OSSR_STREAM_CHARACTERISTIC);
+        byte[] byteArray = new byte[4];
+        // Little Endian: Least significant byte first
+        byteArray[0] = (byte) (toWrite & 0xFF);
+        mWriteCharacteristic.setValue(byteArray);
+        if(!mBluetoothGatt.writeCharacteristic(mWriteCharacteristic)){
+            Log.e(TAG, "Failed to write characteristic");
+        }
     }
 }

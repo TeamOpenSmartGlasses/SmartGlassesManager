@@ -87,7 +87,7 @@ public class VoiceCommandServer {
     boolean useNextTranscriptMetaData = true;
 
     //voice command fuzzy search threshold
-    private final double wakeWordThreshold = 0.88;
+    private final double wakeWordThreshold = 0.98;
     private final double commandThreshold = 0.88;
     private final double endWordThreshold = 0.92;
 

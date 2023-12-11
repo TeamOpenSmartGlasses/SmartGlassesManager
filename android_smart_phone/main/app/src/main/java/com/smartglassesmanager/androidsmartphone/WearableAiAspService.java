@@ -22,7 +22,7 @@ import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
 import com.smartglassesmanager.androidsmartphone.database.WearableAiRoomDatabase;
 import com.smartglassesmanager.androidsmartphone.database.phrase.PhraseRepository;
 import com.smartglassesmanager.androidsmartphone.database.voicecommand.VoiceCommandRepository;
-import com.smartglassesmanager.androidsmartphone.hci.SmartRingBLE;
+import com.smartglassesmanager.androidsmartphone.hci.smartrings.SmartRingBLE;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecSwitchSystem;
 import com.smartglassesmanager.androidsmartphone.texttospeech.TextToSpeechSystem;
@@ -78,7 +78,7 @@ public class WearableAiAspService extends LifecycleService {
     SpeechRecSwitchSystem speechRecSwitchSystem;
 
     //HCI
-    public SmartRingBLE tclRing;
+    public SmartRingBLE smartRing;
 
     //connection handler
     public Handler connectHandler;
@@ -116,8 +116,10 @@ public class WearableAiAspService extends LifecycleService {
         commandSystem = new CommandSystem(getApplicationContext());
 
         //connect smart ring
-        tclRing = new SmartRingBLE(this);
-        tclRing.start();
+        if (getSmartRingSetting(this)) {
+            smartRing = new SmartRingBLE(this);
+            smartRing.start();
+        }
 
         //setup event bus subscribers
         setupEventBusSubscribers();
@@ -247,8 +249,8 @@ public class WearableAiAspService extends LifecycleService {
         }
 
         //kill ring connection
-        if (tclRing != null){
-            tclRing.destroy();
+        if (smartRing != null){
+            smartRing.destroy();
         }
 
         //kill llc program
@@ -340,6 +342,31 @@ public class WearableAiAspService extends LifecycleService {
         }
     }
 
+    /** Saves the chosen smart ring state from shared preference. */
+    public static void saveSmartRingSetting(Context context, boolean smartRingSetting) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putBoolean(context.getResources().getString(R.string.SHARED_PREF_SMART_RING_STATE), smartRingSetting)
+                .apply();
+    }
+
+    /** Gets the chosen ring setting from shared preference. */
+    public static boolean getSmartRingSetting(Context context) {
+        boolean smartRingSetting = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getResources().getString(R.string.SHARED_PREF_SMART_RING_STATE), false);
+        return smartRingSetting;
+    }
+
+    public void changeSmartRingState(boolean ringState){
+    }
+
+    public void testSmartRing(){
+        if (getSmartRingSetting(this)){
+            if (smartRing.getConnectionState() == 2){
+                smartRing.debugLightToggle();
+            }
+        }
+    }
+
     /** Gets the API key from shared preference. */
     public static String getApiKey(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_KEY), "");
@@ -352,7 +379,6 @@ public class WearableAiAspService extends LifecycleService {
                 .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
                 .apply();
     }
-
 
     /** Gets the default command from shared preference. */
     public static String getDefaultCommand(Context context) {

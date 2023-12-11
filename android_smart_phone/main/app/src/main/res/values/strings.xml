@@ -27,4 +27,5 @@
     <string name="DEFAULT_COMMAND_SET_SHARED_PREF_KEY">default_command_set_key</string>
 
     <string name="SHARED_PREF_ASR_KEY">shared_pref_api_key</string>
+    <string name="SHARED_PREF_SMART_RING_STATE">shared_pref_smart_ring_state</string>
 </resources>

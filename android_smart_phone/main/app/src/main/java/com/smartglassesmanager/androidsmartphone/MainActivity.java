@@ -286,4 +286,10 @@ public class MainActivity extends AppCompatActivity {
             mService.changeChosenAsrFramework(asrFramework);
         }
     }
+
+    public void testSmartRing(){
+        if (mService != null){
+            mService.testSmartRing();
+        }
+    }
 }

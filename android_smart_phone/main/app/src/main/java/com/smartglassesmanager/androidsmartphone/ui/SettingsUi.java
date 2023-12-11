@@ -151,6 +151,26 @@ public class SettingsUi extends Fragment {
             }
         });
 
+        //find out the current smart ring state
+        final Switch switchSmartRingSetting = view.findViewById(R.id.use_smart_ring);
+        final Button testSmartRingButton = view.findViewById(R.id.debug_smart_ring);
+        boolean smartRingState = WearableAiAspService.getSmartRingSetting(mContext);
+        switchSmartRingSetting.setChecked(smartRingState);
+
+        testSmartRingButton.setEnabled(switchGoogleAsr.isChecked());
+        testSmartRingButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                System.out.println("test smart ring pressed");
+                ((MainActivity)getActivity()).testSmartRing();
+            }
+        });
+
+        switchSmartRingSetting.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                WearableAiAspService.saveSmartRingSetting(mContext, isChecked);
+            }
+        });
+
         //find out the current default app state, remember it
         final Button setDefaultAppButton = view.findViewById(R.id.default_app_change);
         final Switch switchDefaultApp = view.findViewById(R.id.default_app_switch);
