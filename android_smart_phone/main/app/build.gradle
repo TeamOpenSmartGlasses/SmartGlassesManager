@@ -169,7 +169,8 @@ dependencies {
     implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.15.0'
 
     //Vuzix Ultralite OEM Platform
-    implementation 'com.vuzix:ultralite-sdk-android:0.4.1'
+    //implementation 'com.vuzix:ultralite-sdk-android:0.4.1'
+    implementation 'com.vuzix:ultralite-sdk-android:1.1'
 
     //our custom SGMLib library
     implementation project (":SGMLib")

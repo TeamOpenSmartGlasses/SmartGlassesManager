@@ -278,7 +278,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        ultraliteCanvas.createText(text, ultraliteAlignment, ultraliteColor, ultraliteAnchor, true);
 //        ultraliteCanvas.createText(text, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, 0, 0, -1, 80, TextWrapMode.WRAP, true);
         ultraliteCanvas.createText(wrappedText, ultraliteAlignment, ultraliteColor, ultraliteAnchor, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.commitText();
+        ultraliteCanvas.commit();
         screenIsClear = false;
     }
 
@@ -314,7 +314,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         ultraliteCanvas.clear();
         ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 120, 640, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.commitText();
+        ultraliteCanvas.commit();
         screenIsClear = false;
 
         homeScreenInNSeconds(lingerTime);
@@ -347,7 +347,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             displaceY += 80;
         }
 
-        ultraliteCanvas.commitText();
+        ultraliteCanvas.commit();
         screenIsClear = false;
 
         if (lingerTime > 0){
@@ -387,7 +387,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
                         //send text first, cuz this is fast
                         ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
                         ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
-                        ultraliteCanvas.commitText();
+                        ultraliteCanvas.commit();
                         screenIsClear = false;
 
                         Log.d(TAG, "Sending image to Ultralite");
@@ -397,7 +397,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
                         //sending text again to ultralite in case image overwrote it
 //                        ultraliteCanvas.createText(title + "2", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
 //                        ultraliteCanvas.createText(body + "2", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
-//                        ultraliteCanvas.commitText();
+//                        ultraliteCanvas.commit();
 
 //                        //display the title at the top of the screen
 //                        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
@@ -405,7 +405,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //                //        ultraliteCanvas.clearBackground(UltraliteColor.DIM);
 //                        ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
 //                        ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-//                        ultraliteCanvas.commitText();
+//                        ultraliteCanvas.commit();
 
 
 
@@ -435,7 +435,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //            //ultraliteCanvas.clearBackground(UltraliteColor.DIM);
 //            ultraliteCanvas.createText(titleWrapped, ultraliteAlignment, ultraliteColor, Anchor.TOP_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
 //            ultraliteCanvas.createText(bodyWrapped, ultraliteAlignment, ultraliteColor, Anchor.BOTTOM_LEFT, true); //, 0, 0, -1, -1, TextWrapMode.WRAP, true);
-//            ultraliteCanvas.commitText();
+//            ultraliteCanvas.commit();
 //            screenIsClear = false;
     }
 
