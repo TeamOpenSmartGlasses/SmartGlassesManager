@@ -1,7 +1,6 @@
 package com.smartglassesmanager.androidsmartphone.texttospeech;
 
 import android.content.Context;
-import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;

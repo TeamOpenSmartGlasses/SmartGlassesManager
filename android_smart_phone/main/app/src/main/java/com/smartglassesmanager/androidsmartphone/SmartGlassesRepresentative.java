@@ -16,24 +16,22 @@ import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewE
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.HomeScreenEvent;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AudioWearableSGC;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.UltraliteSGC;
-import com.teamopensmartglasses.sgmlib.events.BulletPointListViewRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.CenteredTextViewRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.FinalScrollingTextRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.IntermediateScrollingTextRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.ReferenceCardImageViewRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.ReferenceCardSimpleViewRequestEvent;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewRequestEvent;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.NaturalLanguageArgsCommandViewUpdateRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.BulletPointListViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.CenteredTextViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.FinalScrollingTextRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.IntermediateScrollingTextRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ReferenceCardImageViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.PromptViewRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStartRequestEvent;
-import com.teamopensmartglasses.sgmlib.events.ScrollingTextViewStopRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ScrollingTextViewStartRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ScrollingTextViewStopRequestEvent;
 import com.smartglassesmanager.androidsmartphone.hci.AudioChunkCallback;
 import com.smartglassesmanager.androidsmartphone.hci.MicrophoneLocalAndBluetooth;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.ActiveLookSGC;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.AndroidSGC;
 import com.smartglassesmanager.androidsmartphone.smartglassescommunicators.SmartGlassesCommunicator;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
-import com.teamopensmartglasses.sgmlib.events.TextLineViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.TextLineViewRequestEvent;
 
 //rxjava
 import java.nio.ByteBuffer;
@@ -264,22 +262,6 @@ class SmartGlassesRepresentative {
         Log.d(TAG, "onPromptViewRequestEvent called");
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayPromptView(receivedEvent.prompt, receivedEvent.options);
-        }
-    }
-
-    @Subscribe
-    public void onNaturalLanguageArgsCommandViewRequestEvent(NaturalLanguageArgsCommandViewRequestEvent receivedEvent) {
-        Log.d(TAG, "onPromptViewRequestEvent called");
-        if (smartGlassesCommunicator != null) {
-            smartGlassesCommunicator.showNaturalLanguageCommandScreen(receivedEvent.prompt, receivedEvent.naturalLanguageInput);
-        }
-    }
-
-    @Subscribe
-    public void onNaturalLanguageArgsCommandViewUpdateRequestEvent(NaturalLanguageArgsCommandViewUpdateRequestEvent receivedEvent) {
-        Log.d(TAG, "onPromptViewRequestEvent called");
-        if (smartGlassesCommunicator != null) {
-            smartGlassesCommunicator.updateNaturalLanguageCommandScreen(receivedEvent.naturalLanguageInput);
         }
     }
 }

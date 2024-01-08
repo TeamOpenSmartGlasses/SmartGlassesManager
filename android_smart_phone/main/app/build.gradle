@@ -77,7 +77,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-//    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     implementation 'com.google.protobuf:protobuf-java:3.21.12'
     implementation 'com.google.protobuf:protobuf-java-util:3.21.12'
@@ -93,7 +92,6 @@ dependencies {
     "androidx.legacy:legacy-support-v4:1.0.0"
     implementation 'io.grpc:grpc-okhttp:1.53.0'
     implementation "androidx.recyclerview:recyclerview:1.1.0-beta02"
-//    implementation "androidx.test.espresso:espresso-core:3.1.1"
     implementation "com.github.bumptech.glide:glide:4.11.0"
     implementation "com.google.android.material:material:1.6.0-alpha01"
     implementation "com.google.code.findbugs:jsr305:3.0.2"
@@ -133,23 +131,8 @@ dependencies {
     implementation "androidx.navigation:navigation-runtime:2.2.0"
     implementation "androidx.fragment:fragment:1.2.0"
 
-    //fuzzy string matching
-    implementation "info.debatty:java-string-similarity:2.0.0"
-
     //java.util.time backport
     implementation "org.threeten:threetenbp:1.5.2"
-
-    ////TensorFlow Lite dependencies
-    implementation 'org.tensorflow:tensorflow-lite:2.7.0'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.7.0'
-    implementation 'org.tensorflow:tensorflow-lite-support:0.3.0'
-
-    ////DocumentFile and ExitInterface
-    implementation "androidx.documentfile:documentfile:1.0.1"
-    implementation "androidx.exifinterface:exifinterface:1.3.3"
-
-    //CSVs
-    implementation "com.opencsv:opencsv:4.6"
 
     //http(s) lib
     implementation "com.android.volley:volley:1.2.1"
@@ -169,11 +152,7 @@ dependencies {
     implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.15.0'
 
     //Vuzix Ultralite OEM Platform
-    //implementation 'com.vuzix:ultralite-sdk-android:0.4.1'
     implementation 'com.vuzix:ultralite-sdk-android:1.1'
-
-    //our custom SGMLib library
-    implementation project (":SGMLib")
 }
 
 //VOSK ASR prep models - need one for each language

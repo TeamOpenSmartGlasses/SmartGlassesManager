@@ -269,18 +269,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void triggerHelloWorldTpa(){
-        if (mService != null){
-            mService.triggerHelloWorldTpa();
-        }
-    }
-
-    public void runDefaultApp() {
-        if (mService != null) {
-            mService.runDefaultCommand();
-        }
-    }
-
     public void changeAsrFramework(ASR_FRAMEWORKS asrFramework){
         if (mService != null){
             mService.changeChosenAsrFramework(asrFramework);

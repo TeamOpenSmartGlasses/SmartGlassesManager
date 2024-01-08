@@ -1,7 +1,7 @@
 package com.smartglassesmanager.androidsmartphone.smartglassescommunicators;
 
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.GlassesTapOutputEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
-import com.teamopensmartglasses.sgmlib.events.GlassesTapOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 

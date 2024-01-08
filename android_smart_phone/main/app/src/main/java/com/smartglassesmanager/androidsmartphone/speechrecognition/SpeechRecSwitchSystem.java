@@ -1,7 +1,6 @@
 package com.smartglassesmanager.androidsmartphone.speechrecognition;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.SpeechRecGoogle;

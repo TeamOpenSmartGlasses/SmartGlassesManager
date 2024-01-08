@@ -14,6 +14,8 @@ import com.google.audio.asr.SpeechRecognitionModelOptions;
 import com.google.audio.asr.TranscriptionResultFormatterOptions;
 import com.smartglassesmanager.androidsmartphone.WearableAiAspService;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecFramework;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.RepeatingRecognitionSession;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.SafeTranscriptionResultFormatter;
@@ -21,8 +23,6 @@ import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.Tr
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.asrhelpers.NetworkConnectionChecker;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.gcloudspeech.CloudSpeechSessionFactory;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.vad.VadGateSpeechPolicy;
-import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
-import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
 
 import org.greenrobot.eventbus.EventBus;
 

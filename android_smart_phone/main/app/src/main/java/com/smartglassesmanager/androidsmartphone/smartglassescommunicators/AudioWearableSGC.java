@@ -1,37 +1,11 @@
 package com.smartglassesmanager.androidsmartphone.smartglassescommunicators;
 
 import android.content.Context;
-import android.graphics.Point;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.StrictMode;
 import android.util.Log;
 
-import com.smartglassesmanager.androidsmartphone.comms.AspWebsocketServer;
-import com.smartglassesmanager.androidsmartphone.comms.AudioSystem;
-import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.TextToSpeechEvent;
-import com.smartglassesmanager.androidsmartphone.utils.NetworkUtils;
 
 import org.greenrobot.eventbus.EventBus;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 public class AudioWearableSGC extends SmartGlassesCommunicator {
     private static final String TAG = "WearableAi_AndroidWearableSGC";

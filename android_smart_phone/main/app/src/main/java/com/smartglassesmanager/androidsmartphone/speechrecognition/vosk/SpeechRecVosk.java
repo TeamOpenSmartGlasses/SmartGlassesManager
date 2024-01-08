@@ -1,8 +1,20 @@
 package com.smartglassesmanager.androidsmartphone.speechrecognition.vosk;
 
 //Vosk ASR
+
+import android.content.Context;
+import android.os.Handler;
+import android.util.Base64;
+import android.util.Log;
+
+import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecFramework;
+
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.vosk.LibVosk;
 import org.vosk.LogLevel;
 import org.vosk.Model;
@@ -10,39 +22,13 @@ import org.vosk.Recognizer;
 import org.vosk.android.RecognitionListener;
 import org.vosk.android.StorageService;
 
-//vosk needs
-
-//android
-import android.util.Base64;
-import android.content.Context;
-import android.util.Log;
-import android.os.Handler;
-
-import java.lang.InterruptedException;
 import java.io.InputStream;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.VoskAudioChunkNewEvent;
-import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecFramework;
-import com.teamopensmartglasses.sgmlib.events.SpeechRecFinalOutputEvent;
-import com.teamopensmartglasses.sgmlib.events.SpeechRecIntermediateOutputEvent;
-import com.smartglassesmanager.androidsmartphone.database.phrase.Phrase;
-import com.smartglassesmanager.androidsmartphone.database.phrase.PhraseRepository;
-import com.smartglassesmanager.androidsmartphone.database.phrase.PhraseCreator;
-import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.AudioChunkNewEvent;
-
-//queue
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Locale;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
-
-//rxjava
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -56,7 +42,6 @@ public class SpeechRecVosk extends SpeechRecFramework implements RecognitionList
     private Context mContext;
 
     //the current phrase we are receiving
-    private Phrase currPhrase;
     private boolean newPhrase = true;
 
     private Model model;
