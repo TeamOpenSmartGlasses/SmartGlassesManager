@@ -29,7 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import com.smartglassesmanager.androidsmartphone.WearableAiAspService;
+import com.smartglassesmanager.androidsmartphone.SmartGlassesAndroidService;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.smartglassesmanager.androidsmartphone.MainActivity;
 
@@ -86,8 +86,8 @@ public class SettingsUi extends Fragment {
                 public void onClick(View v) {
                 // Code here executes on main thread after user presses button
                 //check to first make sure that user isn't trying to enable google without providing API key
-                if (WearableAiAspService.getChosenAsrFramework(mContext) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
-                    String apiKey = WearableAiAspService.getApiKey(mContext);
+                if (SmartGlassesAndroidService.getChosenAsrFramework(mContext) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
+                    String apiKey = SmartGlassesAndroidService.getApiKey(mContext);
                     if (apiKey == null || apiKey.equals("")) {
                         showNoGoogleAsrDialog();
                         return;
@@ -126,7 +126,7 @@ public class SettingsUi extends Fragment {
         final Switch switchGoogleAsr = view.findViewById(R.id.google_asr_switch);
 
         //find out the current ASR state, remember it
-        ASR_FRAMEWORKS asrFramework = WearableAiAspService.getChosenAsrFramework(mContext);
+        ASR_FRAMEWORKS asrFramework = SmartGlassesAndroidService.getChosenAsrFramework(mContext);
         switchGoogleAsr.setChecked(asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
 
         setGoogleApiKeyButton.setEnabled(switchGoogleAsr.isChecked());
@@ -141,10 +141,10 @@ public class SettingsUi extends Fragment {
                 setGoogleApiKeyButton.setEnabled(isChecked);
                 //save explicitly as well as force change in case the service is down, we want this to be saved either way
                 if (isChecked) {
-                    WearableAiAspService.saveChosenAsrFramework(mContext, ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+                    SmartGlassesAndroidService.saveChosenAsrFramework(mContext, ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
                     ((MainActivity)getActivity()).changeAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
                 } else {
-                    WearableAiAspService.saveChosenAsrFramework(mContext, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+                    SmartGlassesAndroidService.saveChosenAsrFramework(mContext, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
                     ((MainActivity)getActivity()).changeAsrFramework(ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
                 }
             }
@@ -175,7 +175,7 @@ public class SettingsUi extends Fragment {
         linkView.setMovementMethod(LinkMovementMethod.getInstance());
         EditText keyInput = contentLayout.findViewById(R.id.api_key_input);
         keyInput.setInputType(InputType.TYPE_CLASS_TEXT);
-        keyInput.setText(WearableAiAspService.getApiKey(this.getContext()));
+        keyInput.setText(SmartGlassesAndroidService.getApiKey(this.getContext()));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this.getContext());
         builder
@@ -184,7 +184,7 @@ public class SettingsUi extends Fragment {
                 .setPositiveButton(
                         getString(android.R.string.ok),
                         (dialog, which) -> {
-                            WearableAiAspService.saveApiKey(this.getContext(), keyInput.getText().toString().trim());
+                            SmartGlassesAndroidService.saveApiKey(this.getContext(), keyInput.getText().toString().trim());
                         })
                 .show();
     }

@@ -8,8 +8,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecOutputEvent;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecFramework;
 
 import org.greenrobot.eventbus.EventBus;
@@ -281,9 +280,9 @@ public class SpeechRecVosk extends SpeechRecFramework implements RecognitionList
 
             //post the event bus event
             if (transcriptType.equals(MessageTypes.FINAL_TRANSCRIPT)) {
-                EventBus.getDefault().post(new SpeechRecFinalOutputEvent(transcript, transcriptTime));
+                EventBus.getDefault().post(new SpeechRecOutputEvent(transcript, transcriptTime, true));
             } else {
-                EventBus.getDefault().post(new SpeechRecIntermediateOutputEvent(transcript, transcriptTime));
+                EventBus.getDefault().post(new SpeechRecOutputEvent(transcript, transcriptTime, false));
             }
         } catch (JSONException e){
             e.printStackTrace();

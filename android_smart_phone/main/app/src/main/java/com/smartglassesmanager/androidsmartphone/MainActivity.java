@@ -11,12 +11,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
-import androidx.preference.PreferenceManager;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
@@ -39,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
     public SmartGlassesDevice selectedDevice;
 
     //handle the foreground service which does all of the important stuff
-    public WearableAiAspService mService;
+    public SmartGlassesAndroidService mService;
     boolean mBound = false;
 
     //handle permissions
@@ -125,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         //register receiver that gets data from the service
         registerReceiver(mMainServiceReceiver, makeMainServiceReceiverIntentFilter());
 
-        if (isMyServiceRunning(WearableAiAspService.class)) {
+        if (isMyServiceRunning(SmartGlassesAndroidService.class)) {
             //bind to WearableAi service
             bindWearableAiAspService();
 
@@ -151,15 +149,15 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Stopping WearableAI service");
         unbindWearableAiAspService();
 
-        if (!isMyServiceRunning(WearableAiAspService.class)) return;
-        Intent stopIntent = new Intent(this, WearableAiAspService.class);
-        stopIntent.setAction(WearableAiAspService.ACTION_STOP_FOREGROUND_SERVICE);
+        if (!isMyServiceRunning(SmartGlassesAndroidService.class)) return;
+        Intent stopIntent = new Intent(this, SmartGlassesAndroidService.class);
+        stopIntent.setAction(SmartGlassesAndroidService.ACTION_STOP_FOREGROUND_SERVICE);
         startService(stopIntent);
     }
 
    public void sendWearableAiServiceMessage(String message) {
-        if (!isMyServiceRunning(WearableAiAspService.class)) return;
-        Intent messageIntent = new Intent(this, WearableAiAspService.class);
+        if (!isMyServiceRunning(SmartGlassesAndroidService.class)) return;
+        Intent messageIntent = new Intent(this, SmartGlassesAndroidService.class);
         messageIntent.setAction(message);
         Log.d(TAG, "Sending WearableAi Service this message: " + message);
         startService(messageIntent);
@@ -167,13 +165,13 @@ public class MainActivity extends AppCompatActivity {
 
    public void startWearableAiService() {
        Log.d(TAG, "Starting wearableAiService");
-        if (isMyServiceRunning(WearableAiAspService.class)){
+        if (isMyServiceRunning(SmartGlassesAndroidService.class)){
             Log.i(TAG, "WAI Service already running, stopping...");
             stopWearableAiService();
         }
 
-        Intent startIntent = new Intent(this, WearableAiAspService.class);
-        startIntent.setAction(WearableAiAspService.ACTION_START_FOREGROUND_SERVICE);
+        Intent startIntent = new Intent(this, SmartGlassesAndroidService.class);
+        startIntent.setAction(SmartGlassesAndroidService.ACTION_START_FOREGROUND_SERVICE);
         startService(startIntent);
         bindWearableAiAspService();
    }
@@ -215,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
     public void bindWearableAiAspService(){
         // Bind to that service
         if (!mBound){
-            Intent intent = new Intent(this, WearableAiAspService.class);
+            Intent intent = new Intent(this, SmartGlassesAndroidService.class);
             bindService(intent, wearableAiServiceConnection, Context.BIND_AUTO_CREATE);
         }
     }
@@ -235,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            WearableAiAspService.LocalBinder wearableAiServiceBinder = (WearableAiAspService.LocalBinder) service;
+            SmartGlassesAndroidService.LocalBinder wearableAiServiceBinder = (SmartGlassesAndroidService.LocalBinder) service;
             mService = wearableAiServiceBinder.getService();
             mBound = true;
 
@@ -254,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
         this.selectedDevice = device;
 
         //check if the service is running. If not, we should start it first, so it doesn't die when we unbind
-        if (!isMyServiceRunning(WearableAiAspService.class)){
+        if (!isMyServiceRunning(SmartGlassesAndroidService.class)){
             Log.e(TAG, "Something went wrong, service should be started and bound.");
         } else {
             mService.connectToSmartGlasses(device);
@@ -262,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public boolean areSmartGlassesConnected(){
-        if (!isMyServiceRunning(WearableAiAspService.class)){
+        if (!isMyServiceRunning(SmartGlassesAndroidService.class)){
             return false;
         } else {
             return (mService.getSmartGlassesConnectState() == 2);

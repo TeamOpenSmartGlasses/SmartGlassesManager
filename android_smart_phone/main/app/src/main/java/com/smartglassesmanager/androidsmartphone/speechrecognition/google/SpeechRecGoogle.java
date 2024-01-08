@@ -12,10 +12,8 @@ import com.google.audio.asr.CloudSpeechSessionParams;
 import com.google.audio.asr.CloudSpeechStreamObserverParams;
 import com.google.audio.asr.SpeechRecognitionModelOptions;
 import com.google.audio.asr.TranscriptionResultFormatterOptions;
-import com.smartglassesmanager.androidsmartphone.WearableAiAspService;
-import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecFinalOutputEvent;
-import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecIntermediateOutputEvent;
+import com.smartglassesmanager.androidsmartphone.SmartGlassesAndroidService;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SpeechRecOutputEvent;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecFramework;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.RepeatingRecognitionSession;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.google.asr.SafeTranscriptionResultFormatter;
@@ -78,9 +76,9 @@ public class SpeechRecGoogle extends SpeechRecFramework {
                 //post the event bus event
                 if (updateType == TranscriptionResultUpdatePublisher.UpdateType.TRANSCRIPT_FINALIZED){
                     Log.d(TAG, "GOT FINAL TRANSCRIPT: " + formattedTranscript.toString());
-                    EventBus.getDefault().post(new SpeechRecFinalOutputEvent(formattedTranscript.toString(), System.currentTimeMillis()));
+                    EventBus.getDefault().post(new SpeechRecOutputEvent(formattedTranscript.toString(), System.currentTimeMillis(), true));
                 } else {
-                    EventBus.getDefault().post(new SpeechRecIntermediateOutputEvent(formattedTranscript.toString(), System.currentTimeMillis()));
+                    EventBus.getDefault().post(new SpeechRecOutputEvent(formattedTranscript.toString(), System.currentTimeMillis(), false));
                 }
             };
 
@@ -119,7 +117,7 @@ public class SpeechRecGoogle extends SpeechRecFramework {
                         .build();
         RepeatingRecognitionSession.Builder recognizerBuilder =
                 RepeatingRecognitionSession.newBuilder()
-                        .setSpeechSessionFactory(new CloudSpeechSessionFactory(cloudParams, WearableAiAspService.getApiKey(mContext)))
+                        .setSpeechSessionFactory(new CloudSpeechSessionFactory(cloudParams, SmartGlassesAndroidService.getApiKey(mContext)))
                         .setSampleRateHz(16000)
                         .setTranscriptionResultFormatter(new SafeTranscriptionResultFormatter(formatterOptions))
                         .setSpeechRecognitionModelOptions(options)

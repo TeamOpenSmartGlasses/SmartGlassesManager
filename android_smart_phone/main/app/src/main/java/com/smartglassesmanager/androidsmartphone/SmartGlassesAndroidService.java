@@ -7,22 +7,37 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
+import androidx.preference.PreferenceManager;
 
+import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
+import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecSwitchSystem;
+import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
+import com.smartglassesmanager.androidsmartphone.texttospeech.TextToSpeechSystem;
+
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.json.JSONObject;
 
-//a service provided for third party apps to extend, that make it easier to create a service in Android that will continually run in the background
-public abstract class SmartGlassesAndroidService extends LifecycleService {
+import io.reactivex.rxjava3.subjects.PublishSubject;
+
+/** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
+public class SmartGlassesAndroidService extends LifecycleService {
+    private static final String TAG = "WearableAi_ASP_Service";
+
     // Service Binder given to clients
     private final IBinder binder = new LocalBinder();
-    public static final String INTENT_ACTION = "SGM_COMMAND_INTENT";
-    public static final String TPA_ACTION = "tpaAction";
     public static final String ACTION_START_FOREGROUND_SERVICE = "SGMLIB_ACTION_START_FOREGROUND_SERVICE";
     public static final String ACTION_STOP_FOREGROUND_SERVICE = "SGMLIB_ACTION_STOP_FOREGROUND_SERVICE";
     private int myNotificationId;
@@ -32,6 +47,21 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     private String notificationDescription;
     private int notificationDrawable;
 
+    //Text to Speech
+    private TextToSpeechSystem textToSpeechSystem;
+
+    //observables to send data around app
+    PublishSubject<JSONObject> dataObservable;
+
+    //representatives of the other pieces of the system
+    SmartGlassesRepresentative smartGlassesRepresentative;
+
+    //speech rec
+    SpeechRecSwitchSystem speechRecSwitchSystem;
+
+    //connection handler
+    public Handler connectHandler;
+
     public SmartGlassesAndroidService(Class mainActivityClass, String myChannelId, int myNotificationId, String notificationAppName, String notificationDescription, int notificationDrawable){
         this.myNotificationId = myNotificationId;
         this.mainActivityClass = mainActivityClass;
@@ -39,6 +69,147 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         this.notificationAppName = notificationAppName;
         this.notificationDescription = notificationDescription;
         this.notificationDrawable = notificationDrawable;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        //setup connection handler
+        connectHandler = new Handler();
+
+        //start speech rec
+        speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
+        ASR_FRAMEWORKS asrFramework = getChosenAsrFramework(this.getApplicationContext());
+        speechRecSwitchSystem.startAsrFramework(asrFramework);
+
+        //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
+        dataObservable = PublishSubject.create();
+
+        //start text to speech
+        textToSpeechSystem = new TextToSpeechSystem(this);
+        textToSpeechSystem.setup();
+
+        //setup event bus subscribers
+        setupEventBusSubscribers();
+    }
+
+    private void setupEventBusSubscribers() {
+        EventBus.getDefault().register(this);
+    }
+
+    @Subscribe
+    public void handleConnectionEvent(SmartGlassesConnectionEvent event) {
+        sendUiUpdate();
+    }
+
+    public void connectToSmartGlasses(SmartGlassesDevice device) {
+        //this represents the smart glasses - it handles the connection, sending data to them, etc
+        LifecycleService currContext = this;
+        connectHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                 Log.d(TAG, "CONNECTING TO SMART GLASSES");
+                smartGlassesRepresentative = new SmartGlassesRepresentative(currContext, device, currContext, dataObservable);
+                smartGlassesRepresentative.connectToSmartGlasses();
+            }
+        });
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "WearableAiAspService killing itself and all its children");
+
+        EventBus.getDefault().unregister(this);
+
+        //kill asg connection
+        if (smartGlassesRepresentative != null) {
+            smartGlassesRepresentative.destroy();
+            smartGlassesRepresentative = null;
+        }
+
+        //kill data transmitters
+        if (dataObservable != null) {
+            dataObservable.onComplete();
+        }
+
+        //kill speech rec
+        if (speechRecSwitchSystem != null){
+            speechRecSwitchSystem.destroy();
+        }
+
+        //kill textToSpeech
+        textToSpeechSystem.destroy();
+
+        //call parent destroy
+        super.onDestroy();
+        Log.d(TAG, "WearableAiAspService destroy complete");
+    }
+
+    public void sendTestCard(String title, String body, String img) {
+        Log.d(TAG, "SENDING TEST CARD FROM WAIService");
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
+    }
+
+    public int getSmartGlassesConnectState() {
+        if (smartGlassesRepresentative != null) {
+            return smartGlassesRepresentative.getConnectionState();
+        } else {
+            return 0;
+        }
+    }
+
+    public void sendUiUpdate() {
+        Intent intent = new Intent();
+        intent.setAction(MessageTypes.GLASSES_STATUS_UPDATE);
+        // Set the optional additional information in extra field.
+        int connectionState;
+        if (smartGlassesRepresentative != null) {
+            connectionState = smartGlassesRepresentative.getConnectionState();
+            intent.putExtra(MessageTypes.CONNECTION_GLASSES_GLASSES_OBJECT, smartGlassesRepresentative.smartGlassesDevice);
+        } else {
+            connectionState = 0;
+        }
+        intent.putExtra(MessageTypes.CONNECTION_GLASSES_STATUS_UPDATE, connectionState);
+        sendBroadcast(intent);
+    }
+
+    /** Saves the chosen ASR framework in user shared preference. */
+    public static void saveChosenAsrFramework(Context context, ASR_FRAMEWORKS asrFramework) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), asrFramework.name())
+                .apply();
+    }
+
+    /** Gets the chosen ASR framework from shared preference. */
+    public static ASR_FRAMEWORKS getChosenAsrFramework(Context context) {
+        String asrString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), "");
+        if (asrString.equals("")){
+            saveChosenAsrFramework(context, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
+            asrString = ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK.name();
+        }
+        return ASR_FRAMEWORKS.valueOf(asrString);
+    }
+
+    public void changeChosenAsrFramework(ASR_FRAMEWORKS asrFramework){
+        saveChosenAsrFramework(getApplicationContext(), asrFramework);
+        if (speechRecSwitchSystem != null) {
+            speechRecSwitchSystem.startAsrFramework(asrFramework);
+        }
+    }
+
+    /** Gets the API key from shared preference. */
+    public static String getApiKey(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_KEY), "");
+    }
+
+    /** Saves the API Key in user shared preference. */
+    public static void saveApiKey(Context context, String key) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
+                .apply();
     }
 
     //service stuff
@@ -89,11 +260,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         if (intent != null) {
             String action = intent.getAction();
             Bundle extras = intent.getExtras();
-           
-            //True when service is started from SGM
-            if(action == INTENT_ACTION && extras != null){
-                action = (String) extras.get(TPA_ACTION);
-            }
 
             switch (action) {
                 case ACTION_START_FOREGROUND_SERVICE:
