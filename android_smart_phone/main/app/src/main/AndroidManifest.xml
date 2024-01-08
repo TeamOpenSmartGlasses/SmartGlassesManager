@@ -51,7 +51,7 @@
           </intent-filter>
       </activity>
 
-          <service android:name="com.smartglassesmanager.androidsmartphone.SmartGlassesAndroidService"
+          <service android:name="com.smartglassesmanager.androidsmartphone.SmartGlassesService"
               android:foregroundServiceType="microphone"
           />
 

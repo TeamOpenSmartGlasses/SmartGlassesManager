@@ -45,7 +45,7 @@ public class ConnectingToSmartGlassesUi extends Fragment {
         cancelConnectButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Code here executes on main thread after user presses button
-                ((MainActivity)getActivity()).stopWearableAiService();
+                ((MainActivity)getActivity()).stopSmartGlassesService();
                 navController.navigate(R.id.nav_settings);
             }
         });

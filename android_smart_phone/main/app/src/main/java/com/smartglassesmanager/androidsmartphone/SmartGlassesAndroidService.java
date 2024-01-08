@@ -19,27 +19,35 @@ import androidx.lifecycle.LifecycleService;
 import androidx.preference.PreferenceManager;
 
 import com.smartglassesmanager.androidsmartphone.comms.MessageTypes;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.BulletPointListViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.CenteredTextViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.FinalScrollingTextRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ReferenceCardImageViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ScrollingTextViewStartRequestEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.ScrollingTextViewStopRequestEvent;
 import com.smartglassesmanager.androidsmartphone.eventbusmessages.SmartGlassesConnectionEvent;
+import com.smartglassesmanager.androidsmartphone.eventbusmessages.TextLineViewRequestEvent;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.ASR_FRAMEWORKS;
 import com.smartglassesmanager.androidsmartphone.speechrecognition.SpeechRecSwitchSystem;
 import com.smartglassesmanager.androidsmartphone.supportedglasses.SmartGlassesDevice;
 import com.smartglassesmanager.androidsmartphone.texttospeech.TextToSpeechSystem;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.EventBusException;
 import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONObject;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
 /** Main service of Smart Glasses Manager, that starts connections to smart glasses and talks to third party apps (3PAs) */
-public class SmartGlassesAndroidService extends LifecycleService {
-    private static final String TAG = "WearableAi_ASP_Service";
+public abstract class SmartGlassesAndroidService extends LifecycleService {
+    private static final String TAG = "SGM_ASP_Service";
 
     // Service Binder given to clients
     private final IBinder binder = new LocalBinder();
-    public static final String ACTION_START_FOREGROUND_SERVICE = "SGMLIB_ACTION_START_FOREGROUND_SERVICE";
-    public static final String ACTION_STOP_FOREGROUND_SERVICE = "SGMLIB_ACTION_STOP_FOREGROUND_SERVICE";
+    public static final String ACTION_START_FOREGROUND_SERVICE = "MY_ACTION_START_FOREGROUND_SERVICE";
+    public static final String ACTION_STOP_FOREGROUND_SERVICE = "MY_ACTION_STOP_FOREGROUND_SERVICE";
     private int myNotificationId;
     private Class mainActivityClass;
     private String myChannelId;
@@ -95,7 +103,12 @@ public class SmartGlassesAndroidService extends LifecycleService {
     }
 
     private void setupEventBusSubscribers() {
-        EventBus.getDefault().register(this);
+        try {
+            EventBus.getDefault().register(this);
+        }
+        catch(EventBusException e){
+            e.printStackTrace();
+        }
     }
 
     @Subscribe
@@ -274,5 +287,38 @@ public class SmartGlassesAndroidService extends LifecycleService {
             }
         }
         return Service.START_STICKY;
+    }
+        //show a reference card on the smart glasses with title and body text
+    public void sendReferenceCard(String title, String body) {
+        EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
+    }
+
+    //show a bullet point list card on the smart glasses with title and bullet points
+    public void sendBulletPointList(String title, String [] bullets) {
+        EventBus.getDefault().post(new BulletPointListViewRequestEvent(title, bullets));
+    }
+
+    public void sendReferenceCard(String title, String body, String imgUrl) {
+        EventBus.getDefault().post(new ReferenceCardImageViewRequestEvent(title, body, imgUrl));
+    }
+
+    public void startScrollingText(String title){
+        EventBus.getDefault().post(new ScrollingTextViewStartRequestEvent(title));
+    }
+
+    public void pushScrollingText(String text){
+        EventBus.getDefault().post(new FinalScrollingTextRequestEvent(text));
+    }
+
+    public void stopScrollingText(){
+        EventBus.getDefault().post(new ScrollingTextViewStopRequestEvent());
+    }
+
+    public void sendTextLine(String text) {
+        EventBus.getDefault().post(new TextLineViewRequestEvent(text));
+    }
+
+    public void sendCenteredText(String text){
+        EventBus.getDefault().post(new CenteredTextViewRequestEvent(text));
     }
 }
