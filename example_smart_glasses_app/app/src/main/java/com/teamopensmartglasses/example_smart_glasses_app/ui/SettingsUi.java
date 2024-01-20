@@ -34,7 +34,7 @@ import com.teamopensmartglasses.smartglassesmanager.speechrecognition.ASR_FRAMEW
 public class SettingsUi extends Fragment {
     private  final String TAG = "WearableAi_SettingsUIFragment";
 
-    private final String fragmentLabel = "Smart Glasses Manager";
+    private final String fragmentLabel = "Example Smart Glasses App";
 
     private NavController navController;
 
