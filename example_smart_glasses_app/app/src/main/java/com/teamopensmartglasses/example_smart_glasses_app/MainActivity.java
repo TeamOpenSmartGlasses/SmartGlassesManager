@@ -20,7 +20,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.ASR_FRAMEWORKS;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.AudioWearable;
-import com.teamopensmartglasses.smartglassesmanager.supportedglasses.EngoTwo;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.InmoAirOne;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.SmartGlassesDevice;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.TCLRayNeoXTwo;
@@ -28,10 +27,9 @@ import com.teamopensmartglasses.smartglassesmanager.supportedglasses.VuzixShield
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.VuzixUltralite;
 import com.teamopensmartglasses.smartglassesmanager.utils.PermissionsUtils;
 
-/** Main activity of WearableAI compute module android app. **/
 /** This provides a simple UI for users to connect and setup their glasses. This activity launches the service which does all of the work to communicate with glasses and third party apps. **/
 public class MainActivity extends AppCompatActivity {
-    private  final String TAG = "WearableAi_MainActivity";
+    private  final String TAG = "SGM_ExampleApp_MainActivity";
 
     //the smart glasses we're currently connecting and communicating with
     public SmartGlassesDevice selectedDevice;
@@ -114,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(mMainServiceReceiver, makeMainServiceReceiverIntentFilter());
 
         if (isMyServiceRunning(SmartGlassesService.class)) {
-            //bind to WearableAi service
+            //bind to Smart Glasses service
             bindSmartGlassesService();
 
             //ask the service to send us information about the connection
@@ -169,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    //handle bottom app bar navigation
+    //handle bottom app bar navigation - if you want a multi-page app, this is ready to go
 //    private void setupBottomNavBar(){
 //        bottomNavigation = (BottomNavigationView) findViewById(R.id.bottom_nav_main_menu_nav);
 //        bottomNavigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -229,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    //this should only be called after the WAI Service is up and bound
+    //this should only be called after the Smart glasses Service is up and bound
     public void connectSmartGlasses(SmartGlassesDevice device){
         this.selectedDevice = device;
 

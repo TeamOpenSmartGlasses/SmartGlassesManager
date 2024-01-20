@@ -21,7 +21,7 @@
         android:id="@+id/nav_settings"
         android:name="com.teamopensmartglasses.example_smart_glasses_app.ui.SettingsUi"
         tools:layout="@layout/settings_fragment"
-        android:label="Smart Glasses Manager" >
+        android:label="Example Smart Glasses App" >
     </fragment>
     <fragment
         android:id="@+id/nav_select_smart_glasses"
