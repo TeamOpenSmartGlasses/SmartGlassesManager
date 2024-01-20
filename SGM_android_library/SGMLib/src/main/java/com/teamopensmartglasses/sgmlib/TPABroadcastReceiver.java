@@ -1,5 +1,6 @@
 package com.teamopensmartglasses.sgmlib;
 
+import static android.content.Context.RECEIVER_EXPORTED;
 import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_BUNDLE;
 import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.EVENT_ID;
 import static com.teamopensmartglasses.sgmlib.SGMGlobalConstants.SGMPkgName;
@@ -32,7 +33,7 @@ public class TPABroadcastReceiver extends BroadcastReceiver {
         this.context = myContext;
         this.filterPkg = SGMGlobalConstants.TO_TPA_FILTER;
         IntentFilter intentFilter = new IntentFilter(this.filterPkg);
-        this.context.registerReceiver(this, intentFilter);
+        this.context.registerReceiver(this, intentFilter, RECEIVER_EXPORTED);
     }
 
     public void onReceive(Context context, Intent intent) {
