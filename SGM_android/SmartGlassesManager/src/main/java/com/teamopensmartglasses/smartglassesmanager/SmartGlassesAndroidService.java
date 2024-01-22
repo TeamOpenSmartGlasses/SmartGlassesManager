@@ -6,12 +6,14 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
@@ -29,13 +31,21 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlasse
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextLineViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.ASR_FRAMEWORKS;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecSwitchSystem;
+import com.teamopensmartglasses.smartglassesmanager.supportedglasses.AudioWearable;
+import com.teamopensmartglasses.smartglassesmanager.supportedglasses.InmoAirOne;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.SmartGlassesDevice;
+import com.teamopensmartglasses.smartglassesmanager.supportedglasses.TCLRayNeoXTwo;
+import com.teamopensmartglasses.smartglassesmanager.supportedglasses.VuzixShield;
+import com.teamopensmartglasses.smartglassesmanager.supportedglasses.VuzixUltralite;
 import com.teamopensmartglasses.smartglassesmanager.texttospeech.TextToSpeechSystem;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.EventBusException;
 import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import io.reactivex.rxjava3.subjects.PublishSubject;
 
@@ -172,6 +182,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     }
 
     public void sendUiUpdate() {
+        //connectionState = 2 means connected
         Intent intent = new Intent();
         intent.setAction(MessageTypes.GLASSES_STATUS_UPDATE);
         // Set the optional additional information in extra field.
@@ -287,7 +298,64 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         }
         return Service.START_STICKY;
     }
-        //show a reference card on the smart glasses with title and body text
+
+    public void aioConnectSmartGlasses(){
+        saveChosenAsrFramework(this, ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+        changeChosenAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
+        saveApiKey(getApplicationContext(), "AIzaSyAZwPNSVy5zo98R35Rt8bG44MrDIQQdOcs");
+
+        if (getChosenAsrFramework(this) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
+            String apiKey = getApiKey(getApplicationContext());
+            if (apiKey == null || apiKey.equals("")) {
+                showNoGoogleAsrDialog();
+                return;
+            }
+        }
+
+        // Attempt to connect to each pair of glasses until we get a connection
+        ArrayList<SmartGlassesDevice> smartGlassesDevices = new ArrayList<SmartGlassesDevice>(Arrays.asList(new VuzixShield(), new VuzixUltralite(), new InmoAirOne(), new TCLRayNeoXTwo(), new AudioWearable()));
+        Handler retryHandler = new Handler();
+        Runnable retryConnectionTask = new Runnable() {
+            @Override
+            public void run() {
+                if (smartGlassesRepresentative == null || smartGlassesRepresentative.getConnectionState() != 2) { // If still disconnected
+                    if(!smartGlassesDevices.isEmpty()){
+                        Log.d(TAG, "TRYING TO CONNECT TO: " + smartGlassesDevices.get(0).deviceModelName);
+                        if (smartGlassesRepresentative != null) smartGlassesRepresentative.destroy();
+                        connectToSmartGlasses(smartGlassesDevices.get(0));
+                        smartGlassesDevices.remove(0);
+                        // Schedule another retry if needed
+                        retryHandler.postDelayed(this, 5000);
+                    }
+                    else
+                    {
+                        retryHandler.removeCallbacks(this);
+                        Toast.makeText(getApplicationContext(), "No glasses found", Toast.LENGTH_LONG).show();
+                    }
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "Connected to " + smartGlassesRepresentative.smartGlassesDevice.deviceModelName, Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+
+        //start loop
+        retryConnectionTask.run();
+        Toast.makeText(getApplicationContext(), "Searching for glasses...", Toast.LENGTH_LONG).show();
+    }
+
+    public void showNoGoogleAsrDialog(){
+        new android.app.AlertDialog.Builder(getApplicationContext()).setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("No Google API Key Provided")
+                .setMessage("You have Google ASR enabled without an API key. Please turn off Google ASR or enter a valid API key.")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                }).show();
+    }
+
+    //show a reference card on the smart glasses with title and body text
     public void sendReferenceCard(String title, String body) {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
     }
