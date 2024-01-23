@@ -321,7 +321,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
                 if (smartGlassesRepresentative == null || smartGlassesRepresentative.getConnectionState() != 2) { // If still disconnected
                     if(!smartGlassesDevices.isEmpty()){
                         Log.d(TAG, "TRYING TO CONNECT TO: " + smartGlassesDevices.get(0).deviceModelName);
-                        if (smartGlassesRepresentative != null) smartGlassesRepresentative.destroy();
+                        //if (smartGlassesRepresentative != null) smartGlassesRepresentative.destroy();
                         connectToSmartGlasses(smartGlassesDevices.get(0));
                         smartGlassesDevices.remove(0);
                         // Schedule another retry if needed
