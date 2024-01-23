@@ -300,10 +300,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     }
 
     public void aioConnectSmartGlasses(){
-        saveChosenAsrFramework(this, ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
-        changeChosenAsrFramework(ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK);
-        saveApiKey(getApplicationContext(), "AIzaSyAZwPNSVy5zo98R35Rt8bG44MrDIQQdOcs");
-
         if (getChosenAsrFramework(this) == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK) {
             String apiKey = getApiKey(getApplicationContext());
             if (apiKey == null || apiKey.equals("")) {
@@ -313,19 +309,24 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         }
 
         // Attempt to connect to each pair of glasses until we get a connection
-        ArrayList<SmartGlassesDevice> smartGlassesDevices = new ArrayList<SmartGlassesDevice>(Arrays.asList(new VuzixShield(), new VuzixUltralite(), new InmoAirOne(), new TCLRayNeoXTwo(), new AudioWearable()));
+        ArrayList<SmartGlassesDevice> smartGlassesDevices = new ArrayList<SmartGlassesDevice>(Arrays.asList(new VuzixUltralite(), new VuzixShield(),  new InmoAirOne(), new TCLRayNeoXTwo()));
         Handler retryHandler = new Handler();
         Runnable retryConnectionTask = new Runnable() {
             @Override
             public void run() {
                 if (smartGlassesRepresentative == null || smartGlassesRepresentative.getConnectionState() != 2) { // If still disconnected
                     if(!smartGlassesDevices.isEmpty()){
+                        Toast.makeText(getApplicationContext(), "Searching for glasses...", Toast.LENGTH_LONG).show();
                         Log.d(TAG, "TRYING TO CONNECT TO: " + smartGlassesDevices.get(0).deviceModelName);
-                        //if (smartGlassesRepresentative != null) smartGlassesRepresentative.destroy();
+
+                        if (smartGlassesRepresentative != null) {
+                            smartGlassesRepresentative.destroy();
+                            smartGlassesRepresentative = null;
+                        }
+
                         connectToSmartGlasses(smartGlassesDevices.get(0));
-                        smartGlassesDevices.remove(0);
-                        // Schedule another retry if needed
-                        retryHandler.postDelayed(this, 5000);
+                        smartGlassesDevices.add(smartGlassesDevices.remove(0));
+                        retryHandler.postDelayed(this, 5000); // Schedule another retry if needed
                     }
                     else
                     {
@@ -341,7 +342,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
         //start loop
         retryConnectionTask.run();
-        Toast.makeText(getApplicationContext(), "Searching for glasses...", Toast.LENGTH_LONG).show();
     }
 
     public void showNoGoogleAsrDialog(){
