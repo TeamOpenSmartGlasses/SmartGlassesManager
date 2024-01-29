@@ -119,7 +119,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             hasUltraliteControl = true;
             setupUltraliteCanvas();
             connectionEvent(2);
-            displayReferenceCardSimple("Connected to SGM.", "Authors: TeamOpenSmartGlasses", 3);
+            displayReferenceCardSimple("Connected to SGM.", "Authors: TeamOpenSmartGlasses", 5);
         } else {
             hasUltraliteControl = false;
         }
@@ -283,7 +283,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body){
-       displayReferenceCardSimple(title, body, 14);
+       displayReferenceCardSimple(title, body, 40);
     }
 
     public void displayReferenceCardSimple(String title, String body, int lingerTime){
