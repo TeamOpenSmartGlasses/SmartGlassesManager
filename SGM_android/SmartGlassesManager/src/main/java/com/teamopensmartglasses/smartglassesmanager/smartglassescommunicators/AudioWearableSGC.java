@@ -32,6 +32,10 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
     public void blankScreen(){
     }
 
+    public void displayRowsCard(String[] rowStrings){
+
+    }
+
     public void destroy(){
         killme = true;
     }

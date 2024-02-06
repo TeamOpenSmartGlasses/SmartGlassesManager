@@ -23,8 +23,10 @@ import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlassesConnectionEvent;
@@ -362,9 +364,19 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
     }
 
+    //show a reference card on the smart glasses with title and body text
+    public void sendRowsCard(String[] rowStrings) {
+        EventBus.getDefault().post(new RowsCardViewRequestEvent(rowStrings));
+    }
+
     //show a bullet point list card on the smart glasses with title and bullet points
     public void sendBulletPointList(String title, String [] bullets) {
         EventBus.getDefault().post(new BulletPointListViewRequestEvent(title, bullets));
+    }
+
+    //show a list of up to 4 rows of text. Only put a few characters per line!
+    public void sendBulletPointList(String[] rowStrings) {
+        EventBus.getDefault().post(new RowsCardViewRequestEvent(rowStrings));
     }
 
     public void sendReferenceCard(String title, String body, String imgUrl) {
@@ -389,5 +401,9 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     public void sendCenteredText(String text){
         EventBus.getDefault().post(new CenteredTextViewRequestEvent(text));
+    }
+
+    public void sendHomeScreen(){
+        EventBus.getDefault().post(new HomeScreenEvent());
     }
 }

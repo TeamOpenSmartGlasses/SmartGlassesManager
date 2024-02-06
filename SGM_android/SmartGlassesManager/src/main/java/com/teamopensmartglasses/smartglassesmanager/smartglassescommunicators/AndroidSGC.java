@@ -52,6 +52,10 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     //socket
     public AspWebsocketServer asgWebSocket;
 
+    public void displayRowsCard(String[] rowStrings){
+
+    }
+
     //acutal socket
     ServerSocket serverSocket;
     Socket socket;
