@@ -193,6 +193,11 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         if (smartGlassesRepresentative != null) {
             connectionState = smartGlassesRepresentative.getConnectionState();
             intent.putExtra(MessageTypes.CONNECTION_GLASSES_GLASSES_OBJECT, smartGlassesRepresentative.smartGlassesDevice);
+
+            // Update preferred wearable if connected
+            if(connectionState == 2){
+                savePreferredWearable(this, smartGlassesRepresentative.smartGlassesDevice.deviceModelName);
+            }
         } else {
             connectionState = 0;
         }
