@@ -31,6 +31,7 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlasse
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextLineViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.ASR_FRAMEWORKS;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecSwitchSystem;
+import com.teamopensmartglasses.smartglassesmanager.supportedglasses.AudioWearable;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.InmoAirOne;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.SmartGlassesDevice;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.TCLRayNeoXTwo;
@@ -192,6 +193,11 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         if (smartGlassesRepresentative != null) {
             connectionState = smartGlassesRepresentative.getConnectionState();
             intent.putExtra(MessageTypes.CONNECTION_GLASSES_GLASSES_OBJECT, smartGlassesRepresentative.smartGlassesDevice);
+
+            // Update preferred wearable if connected
+            if(connectionState == 2){
+                savePreferredWearable(this, smartGlassesRepresentative.smartGlassesDevice.deviceModelName);
+            }
         } else {
             connectionState = 0;
         }
@@ -234,6 +240,19 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit()
                 .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
+                .apply();
+    }
+
+    /** Gets the preferred wearable from shared preference. */
+    public static String getPreferredWearable(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.PREFERRED_WEARABLE), "");
+    }
+
+    /** Saves the preferred wearable in user shared preference. */
+    public static void savePreferredWearable(Context context, String wearableName) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.PREFERRED_WEARABLE), wearableName)
                 .apply();
     }
 
@@ -303,7 +322,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
 
     // Setup for aioConnectSmartGlasses
-    ArrayList<SmartGlassesDevice> smartGlassesDevices = new ArrayList<SmartGlassesDevice>(Arrays.asList(new VuzixUltralite(), new VuzixShield(),  new InmoAirOne(), new TCLRayNeoXTwo()));
+    ArrayList<SmartGlassesDevice> smartGlassesDevices = new ArrayList<>();
     Handler aioRetryHandler = new Handler();
     Runnable aioRetryConnectionTask = new Runnable() {
         @Override
@@ -341,6 +360,20 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
                 return;
             }
         }
+
+        String preferred = getPreferredWearable(this.getApplicationContext());
+        smartGlassesDevices = new ArrayList<SmartGlassesDevice>(Arrays.asList(new VuzixUltralite(), new VuzixShield(),  new InmoAirOne(), new TCLRayNeoXTwo()));
+        for (int i = 0; i < smartGlassesDevices.size(); i++){
+            if (smartGlassesDevices.get(i).deviceModelName.equals(preferred)){
+                // Move to start for earliest search priority
+                smartGlassesDevices.add(0, smartGlassesDevices.remove(i));
+                break;
+            }
+        }
+
+        // Check for Audio Wearable
+        if (preferred.equals(new AudioWearable().deviceModelName))
+            smartGlassesDevices.add(0, new AudioWearable());
 
         //start loop
         aioRetryConnectionTask.run();
