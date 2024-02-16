@@ -99,7 +99,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         //start speech rec
         speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
         ASR_FRAMEWORKS asrFramework = getChosenAsrFramework(this.getApplicationContext());
-        speechRecSwitchSystem.startAsrFramework(asrFramework);
+        String transcribeLanguage = getChosenTranscribeLanguage(this.getApplicationContext());
+        speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage);
 
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
@@ -107,12 +108,9 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         //start text to speech
         textToSpeechSystem = new TextToSpeechSystem(this);
         textToSpeechSystem.setup();
-
-        //setup event bus subscribers
-        setupEventBusSubscribers();
     }
 
-    private void setupEventBusSubscribers() {
+    protected void setupEventBusSubscribers() {
         try {
             EventBus.getDefault().register(this);
         }
@@ -237,6 +235,22 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
                 .edit()
                 .putString(context.getResources().getString(R.string.SHARED_PREF_KEY), key)
                 .apply();
+    }
+
+    public static void saveChosenTranscribeLanguage(Context context, String targetLanguageString) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), targetLanguageString)
+                .apply();
+    }
+
+    public static String getChosenTranscribeLanguage(Context context) {
+        String targetLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), "");
+        if (targetLanguageString.equals("")){
+            saveChosenTranscribeLanguage(context, "English");
+            targetLanguageString = "English";
+        }
+        return targetLanguageString;
     }
 
     //service stuff
