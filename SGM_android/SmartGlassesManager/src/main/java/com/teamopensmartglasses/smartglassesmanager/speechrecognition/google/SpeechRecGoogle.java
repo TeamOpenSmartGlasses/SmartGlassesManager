@@ -32,7 +32,14 @@ public class SpeechRecGoogle extends SpeechRecFramework {
     public SpeechRecGoogle(Context mContext) {
         this.mContext = mContext;
 
-        initLanguageLocale();
+        initLanguageLocaleDefault();
+
+//        EventBus.getDefault().register(this);
+    }
+    public SpeechRecGoogle(Context mContext, String languageLocale) {
+        this.mContext = mContext;
+
+        initLanguageLocale(languageLocale);
 
 //        EventBus.getDefault().register(this);
     }
@@ -82,10 +89,27 @@ public class SpeechRecGoogle extends SpeechRecFramework {
                 }
             };
 
-    private void initLanguageLocale() {
+    private void initLanguageLocaleDefault() {
         // The default locale is en-US.
         currentLanguageCode = "en-US";
-        currentLanguageCodePosition = 22;
+    }
+
+    private void initLanguageLocale(String localeString) {
+        if (localeString.equals("English")) {
+            currentLanguageCode = "en-US";
+        } else if (localeString.equals("Russian")) {
+            currentLanguageCode = "ru-RU";
+        } else if (localeString.equals("Japanese")) {
+            currentLanguageCode = "ja-JP";
+        } else if (localeString.equals("Chinese")) {
+            currentLanguageCode = "zh";
+        } else if (localeString.equals("Chinese (Pinyin)")) {
+            currentLanguageCode = "zh";
+        } else if (localeString.equals("Spanish")) {
+            currentLanguageCode = "es-MX";
+        } else {
+            currentLanguageCode = "en-US";
+        }
     }
 
     private void constructRepeatingRecognitionSession() {

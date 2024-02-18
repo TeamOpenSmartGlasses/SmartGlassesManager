@@ -23,6 +23,10 @@ public class SpeechRecSwitchSystem {
     }
 
     public void startAsrFramework(ASR_FRAMEWORKS asrFramework) {
+        startAsrFramework(asrFramework, "English");
+    }
+
+    public void startAsrFramework(ASR_FRAMEWORKS asrFramework, String language) {
         //kill old asr
         EventBus.getDefault().unregister(this);
         if (speechRecFramework != null){
@@ -36,7 +40,7 @@ public class SpeechRecSwitchSystem {
         if (this.asrFramework == ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK){
            speechRecFramework = new SpeechRecVosk(mContext);
         } else if (this.asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK){
-            speechRecFramework = new SpeechRecGoogle(mContext);
+            speechRecFramework = new SpeechRecGoogle(mContext, language);
         }
 
         //start asr

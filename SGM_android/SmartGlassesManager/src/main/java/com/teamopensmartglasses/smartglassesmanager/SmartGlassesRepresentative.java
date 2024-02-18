@@ -22,6 +22,7 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScroll
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.IntermediateScrollingTextRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PromptViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
@@ -154,6 +155,12 @@ class SmartGlassesRepresentative {
         }
     }
 
+    public void showRowsCard(String[] rowStrings){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayRowsCard(rowStrings);
+        }
+    }
+
     public void startScrollingTextViewModeTest(){
         //pass for now
         if (smartGlassesCommunicator != null) {
@@ -192,6 +199,15 @@ class SmartGlassesRepresentative {
     public void onReferenceCardSimpleViewEvent(ReferenceCardSimpleViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardSimple(receivedEvent.title, receivedEvent.body);
+//            homeUiAfterDelay(referenceCardDelayTime);
+        }
+    }
+
+
+    @Subscribe
+    public void onRowsCardViewEvent(RowsCardViewRequestEvent receivedEvent){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayRowsCard(receivedEvent.rowStrings);
 //            homeUiAfterDelay(referenceCardDelayTime);
         }
     }

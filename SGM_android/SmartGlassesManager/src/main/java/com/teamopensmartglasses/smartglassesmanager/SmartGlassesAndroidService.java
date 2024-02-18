@@ -23,8 +23,10 @@ import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlassesConnectionEvent;
@@ -98,7 +100,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         //start speech rec
         speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
         ASR_FRAMEWORKS asrFramework = getChosenAsrFramework(this.getApplicationContext());
-        speechRecSwitchSystem.startAsrFramework(asrFramework);
+        String transcribeLanguage = getChosenTranscribeLanguage(this.getApplicationContext());
+        speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage);
 
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
@@ -106,12 +109,9 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         //start text to speech
         textToSpeechSystem = new TextToSpeechSystem(this);
         textToSpeechSystem.setup();
-
-        //setup event bus subscribers
-        setupEventBusSubscribers();
     }
 
-    private void setupEventBusSubscribers() {
+    protected void setupEventBusSubscribers() {
         try {
             EventBus.getDefault().register(this);
         }
@@ -256,6 +256,22 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
                 .apply();
     }
 
+    public static void saveChosenTranscribeLanguage(Context context, String targetLanguageString) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), targetLanguageString)
+                .apply();
+    }
+
+    public static String getChosenTranscribeLanguage(Context context) {
+        String targetLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), "");
+        if (targetLanguageString.equals("")){
+            saveChosenTranscribeLanguage(context, "English");
+            targetLanguageString = "English";
+        }
+        return targetLanguageString;
+    }
+
     //service stuff
     private Notification updateNotification() {
         Context context = getApplicationContext();
@@ -395,9 +411,19 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
     }
 
+    //show a reference card on the smart glasses with title and body text
+    public void sendRowsCard(String[] rowStrings) {
+        EventBus.getDefault().post(new RowsCardViewRequestEvent(rowStrings));
+    }
+
     //show a bullet point list card on the smart glasses with title and bullet points
     public void sendBulletPointList(String title, String [] bullets) {
         EventBus.getDefault().post(new BulletPointListViewRequestEvent(title, bullets));
+    }
+
+    //show a list of up to 4 rows of text. Only put a few characters per line!
+    public void sendBulletPointList(String[] rowStrings) {
+        EventBus.getDefault().post(new RowsCardViewRequestEvent(rowStrings));
     }
 
     public void sendReferenceCard(String title, String body, String imgUrl) {
@@ -422,5 +448,9 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     public void sendCenteredText(String text){
         EventBus.getDefault().post(new CenteredTextViewRequestEvent(text));
+    }
+
+    public void sendHomeScreen(){
+        EventBus.getDefault().post(new HomeScreenEvent());
     }
 }

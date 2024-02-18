@@ -22,6 +22,8 @@ import com.vuzix.ultralite.TextWrapMode;
 import com.vuzix.ultralite.UltraliteColor;
 import com.vuzix.ultralite.UltraliteSDK;
 
+import java.util.ArrayList;
+
 
 //communicate with ActiveLook smart glasses
 public class UltraliteSGC extends SmartGlassesCommunicator {
@@ -32,6 +34,12 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     UltraliteListener ultraliteListener;
     LifecycleOwner lifecycleOwner;
     Context context;
+    public static final int cardLingerTime = 50;
+
+    private ArrayList rowTextsLiveNow;
+
+    //ultralite pixel buffer on left side of screen
+    int ultraliteLeftSidePixelBuffer = 0;
 
     //handler to turn off screen
     Handler goHomeHandler;
@@ -74,6 +82,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         goHomeHandler = new Handler();
         killHandler = new Handler();
 
+        rowTextsLiveNow = new ArrayList<Integer>();
+
         ultraliteSdk = UltraliteSDK.get(context);
         ultraliteListener = new UltraliteListener();
         ultraliteSdk.addEventListener(ultraliteListener);
@@ -100,11 +110,12 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         if (isConnected) {
             Log.d(TAG, "Ultralite requesting control...");
             boolean isControlled = ultraliteSdk.requestControl();
-//            if (isControlled){
+            if (isControlled){
 //                setupUltraliteCanvas();
-//            } else {
-//                return;
-//            }
+                changeUltraliteLayout(Layout.CANVAS);
+            } else {
+                return;
+            }
             Log.d(TAG, "Ultralite RESULT control request: " + isControlled);
             connectionEvent(2);
         } else {
@@ -283,8 +294,38 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body){
-       displayReferenceCardSimple(title, body, 40);
+       displayReferenceCardSimple(title, body, cardLingerTime);
     }
+
+//    public void displayReferenceCardSimple(String title, String body, int lingerTime){
+//        if (!isConnected()) {
+//            Log.d(TAG, "Not showing reference card because not connected to Ultralites...");
+//            return;
+//        }
+//
+////        String [] bulletPoints = {"first one", "second one", "dogs and cats"};
+////        displayBulletList("Cool Bullets:", bulletPoints, 15);
+//
+//            Log.d(TAG, "Sending text to Ultralite SDK: \n" + body);
+////            ultraliteSdk.sendText("hello world"); //this is BROKEN in Vuzix ultralite 0.4.2 SDK - crashes Vuzix OEM Platform android app
+//
+//        //edit the text to add new lines to it because ultralite wrapping doesn't work
+////        String titleWrapped = addNewlineEveryNWords(title, 6);
+////        String bodyWrapped = addNewlineEveryNWords(body, 6);
+//
+//        //display the title at the top of the screen
+//        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+//        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+//        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+//        changeUltraliteLayout(Layout.CANVAS);
+//        ultraliteCanvas.clear();
+//        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+//        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, 0, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+//        ultraliteCanvas.commit();
+//        screenIsClear = false;
+//
+//        homeScreenInNSeconds(lingerTime);
+//    }
 
     public void displayReferenceCardSimple(String title, String body, int lingerTime){
         if (!isConnected()) {
@@ -292,10 +333,13 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             return;
         }
 
+        changeUltraliteLayout(Layout.CANVAS);
+        ultraliteCanvas.clear();
+
 //        String [] bulletPoints = {"first one", "second one", "dogs and cats"};
 //        displayBulletList("Cool Bullets:", bulletPoints, 15);
 
-            Log.d(TAG, "Sending text to Ultralite SDK: " + title + "     " + body);
+            Log.d(TAG, "Sending text to Ultralite SDK: \n" + body);
 //            ultraliteSdk.sendText("hello world"); //this is BROKEN in Vuzix ultralite 0.4.2 SDK - crashes Vuzix OEM Platform android app
 
         //edit the text to add new lines to it because ultralite wrapping doesn't work
@@ -306,18 +350,73 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         UltraliteColor ultraliteColor = UltraliteColor.WHITE;
         Anchor ultraliteAnchor = Anchor.TOP_LEFT;
         TextAlignment ultraliteAlignment = TextAlignment.LEFT;
-        changeUltraliteLayout(Layout.CANVAS);
-        ultraliteCanvas.clear();
-        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 120, 640, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, 0, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
         ultraliteCanvas.commit();
         screenIsClear = false;
 
         homeScreenInNSeconds(lingerTime);
     }
 
+
     public void displayBulletList(String title, String [] bullets){
         displayBulletList(title, bullets, 14);
+    }
+
+    public void displayRowsCard(String[] rowStrings){
+        displayRowsCard(rowStrings, cardLingerTime);
+    }
+
+    public void displayRowsCard(String[] rowStrings, int lingerTime){
+        if (!isConnected()) {
+            Log.d(TAG, "Not showing rows card because not connected to Ultralites...");
+            return;
+        }
+
+//        changeUltraliteLayout(Layout.CANVAS);
+//        ultraliteCanvas.clear();
+
+        //make lines to draw on screen to delineate rows
+        int line_thickness = 3;
+        for (int y = 120; y < 480; y += 120) {
+            ultraliteCanvas.clearBackgroundRect(0, y, 640, line_thickness, UltraliteColor.DIM);
+        }
+
+        //clear old text
+        for (int i = 0; i < rowTextsLiveNow.size(); i++){
+            ultraliteCanvas.removeText(i);
+        }
+        //old way to clear old text - vuzix ultralite sdk bug that clear background doesn't clear text?
+//        for (int y = 0; y < 480; y += 120) {
+//            //clear previous text
+//            ultraliteCanvas.clearBackgroundRect(0, y + line_thickness, 640, 120 - line_thickness, UltraliteColor.DIM);
+//            ultraliteCanvas.clearBackgroundRect(0, y + line_thickness, 640, 120 - line_thickness, UltraliteColor.BLACK);
+//        }
+//        ultraliteCanvas.commit();
+
+        //display the title at the top of the screen
+        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+
+        //go throw rows, draw the text, don't do more than 4
+        int y_start_height = 60;
+        for (int i = 0; i < rowStrings.length && i < 4; i++) {
+            if (i < 2) {
+//                ultraliteCanvas.createText(Integer.toString(4 - i), TextAlignment.LEFT, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 300, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true); //y_start_height + (i * 120)
+                int textId = ultraliteCanvas.createText(rowStrings[3 - i], TextAlignment.CENTER, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + (i * 105), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+                rowTextsLiveNow.add(textId);
+            } else {
+//                ultraliteCanvas.createText(Integer.toString(4 - i), TextAlignment.LEFT, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + ((i - 2) * 120), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+                int textId = ultraliteCanvas.createText(rowStrings[3 - i], TextAlignment.CENTER, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + ((i - 2) * 105), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+                rowTextsLiveNow.add(textId);
+        //        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+            }
+        }
+        ultraliteCanvas.commit();
+        screenIsClear = false;
+
+        homeScreenInNSeconds(lingerTime);
     }
 
     public void displayBulletList(String title, String [] bullets, int lingerTime){
