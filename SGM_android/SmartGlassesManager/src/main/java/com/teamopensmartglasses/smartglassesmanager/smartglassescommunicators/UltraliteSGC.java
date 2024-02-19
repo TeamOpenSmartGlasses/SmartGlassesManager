@@ -355,7 +355,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         ultraliteCanvas.commit();
         screenIsClear = false;
 
-        homeScreenInNSeconds(lingerTime);
+//        homeScreenInNSeconds(lingerTime);
     }
 
 
@@ -399,6 +399,13 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         Anchor ultraliteAnchor = Anchor.TOP_LEFT;
         TextAlignment ultraliteAlignment = TextAlignment.LEFT;
 
+        //if no input, just show the lines
+        if (rowStrings.length == 0){
+            ultraliteCanvas.commit();
+            screenIsClear = false;
+//            homeScreenInNSeconds(lingerTime);
+            return;
+        }
         //go throw rows, draw the text, don't do more than 4
         int y_start_height = 60;
         for (int i = 0; i < rowStrings.length && i < 4; i++) {
@@ -415,8 +422,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         }
         ultraliteCanvas.commit();
         screenIsClear = false;
-
-        homeScreenInNSeconds(lingerTime);
+//        homeScreenInNSeconds(lingerTime);
     }
 
     public void displayBulletList(String title, String [] bullets, int lingerTime){
@@ -445,9 +451,9 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         ultraliteCanvas.commit();
         screenIsClear = false;
 
-        if (lingerTime > 0){
-            homeScreenInNSeconds(lingerTime);
-        }
+//        if (lingerTime > 0){
+//            homeScreenInNSeconds(lingerTime);
+//        }
     }
 
     public void homeScreenInNSeconds(int n){
@@ -504,7 +510,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
 
 
-                        homeScreenInNSeconds(14);
+//                        homeScreenInNSeconds(14);
                     }
 
                     @Override

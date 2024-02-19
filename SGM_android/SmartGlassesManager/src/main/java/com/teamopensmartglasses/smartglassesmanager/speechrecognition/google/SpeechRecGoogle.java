@@ -82,7 +82,7 @@ public class SpeechRecGoogle extends SpeechRecFramework {
             (formattedTranscript, updateType) -> {
                 //post the event bus event
                 if (updateType == TranscriptionResultUpdatePublisher.UpdateType.TRANSCRIPT_FINALIZED){
-                    Log.d(TAG, "GOT FINAL TRANSCRIPT: " + formattedTranscript.toString());
+//                    Log.d(TAG, "GOT FINAL TRANSCRIPT: " + formattedTranscript.toString());
                     EventBus.getDefault().post(new SpeechRecOutputEvent(formattedTranscript.toString(), System.currentTimeMillis(), true));
                 } else {
                     EventBus.getDefault().post(new SpeechRecOutputEvent(formattedTranscript.toString(), System.currentTimeMillis(), false));
@@ -107,6 +107,8 @@ public class SpeechRecGoogle extends SpeechRecFramework {
             currentLanguageCode = "zh";
         } else if (localeString.equals("Spanish")) {
             currentLanguageCode = "es-MX";
+        } else if (localeString.equals("Hebrew")) {
+            currentLanguageCode = "iw-IL";
         } else {
             currentLanguageCode = "en-US";
         }
