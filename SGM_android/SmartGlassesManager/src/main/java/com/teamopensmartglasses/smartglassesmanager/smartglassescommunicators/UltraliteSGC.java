@@ -23,6 +23,8 @@ import com.vuzix.ultralite.UltraliteColor;
 import com.vuzix.ultralite.UltraliteSDK;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 
 //communicate with ActiveLook smart glasses
@@ -407,22 +409,22 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             return;
         }
         //go throw rows, draw the text, don't do more than 4
-        int y_start_height = 60;
-        for (int i = 0; i < rowStrings.length && i < 4; i++) {
-            if (i < 2) {
-//                ultraliteCanvas.createText(Integer.toString(4 - i), TextAlignment.LEFT, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 300, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true); //y_start_height + (i * 120)
-                int textId = ultraliteCanvas.createText(rowStrings[3 - i], TextAlignment.CENTER, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + (i * 105), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
-                rowTextsLiveNow.add(textId);
-            } else {
-//                ultraliteCanvas.createText(Integer.toString(4 - i), TextAlignment.LEFT, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + ((i - 2) * 120), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
-                int textId = ultraliteCanvas.createText(rowStrings[3 - i], TextAlignment.CENTER, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + ((i - 2) * 105), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
-                rowTextsLiveNow.add(textId);
-        //        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
-            }
+        int y_start_height = 55;
+        // Reverse rowStrings array
+        Collections.reverse(Arrays.asList(rowStrings));
+        int numRows = 4;
+        int actualRows = Math.min(rowStrings.length, numRows);
+        for (int i = 0; i < actualRows; i++) {
+            // Calculate the offset to start from the bottom for 1, 2, or 3 values
+            int yOffset = (numRows - actualRows) * 112;
+            int textId = ultraliteCanvas.createText(rowStrings[i], TextAlignment.CENTER, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + yOffset + (i * 112), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+            rowTextsLiveNow.add(textId);
         }
+
+
         ultraliteCanvas.commit();
         screenIsClear = false;
-//        homeScreenInNSeconds(lingerTime);
+//        homeScreenInNSeconds(cardLingerTime);
     }
 
     public void displayBulletList(String title, String [] bullets, int lingerTime){
@@ -441,11 +443,11 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         ultraliteCanvas.clear();
 
         ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
-        int displaceY = 80;
-        int displaceX = 35;
+        int displaceY = 25;
+        int displaceX = 25;
         for (String bullet : bullets){
             ultraliteCanvas.createText("⬤ " + bullet, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, displaceX, displaceY, 640 - displaceX, -1, TextWrapMode.WRAP, true);
-            displaceY += 80;
+            displaceY += 125;
         }
 
         ultraliteCanvas.commit();
@@ -510,7 +512,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
 
 
-//                        homeScreenInNSeconds(14);
+//                        homeScreenInNSeconds(cardLingerTime);
                     }
 
                     @Override

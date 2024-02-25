@@ -280,8 +280,8 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
       // we know it does not contain speech.
       storeSamplesInLeftovers(samples, offset, length, true);
       if (currentSession.isInitialized()) {
-        logger.atInfo().log(
-            "Session #%d ending due to lack of detected speech.", currentSession.sessionID());
+//        logger.atInfo().log(
+//            "Session #%d ending due to lack of detected speech.", currentSession.sessionID());
         requestCurrentSessionEnd();
       }
       return;
@@ -292,8 +292,8 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
       // Get the reference to the model so that the log and the session see the same version.
       SpeechRecognitionModelOptions model = modelOptions.get();
       currentSessionID++;
-      logger.atInfo().log(
-          "Starting a Session #%d in language `%s`.", currentSessionID, model.getLocale());
+//      logger.atInfo().log(
+//          "Starting a Session #%d in language `%s`.", currentSessionID, model.getLocale());
       currentSession.init(model, chunkSizeSamples, currentSessionID);
     }
 
@@ -323,8 +323,8 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
     speechDetector.stop();
     diarizer.stop();
     if (currentSession.isInitialized()) {
-      logger.atInfo().log(
-          "Session #%d abandoned due to repeated session ending.", currentSession.sessionID());
+//      logger.atInfo().log(
+//          "Session #%d abandoned due to repeated session ending.", currentSession.sessionID());
       abandonCurrentSession();
     }
     repeatedSessionIsInitialized.set(false);
@@ -346,9 +346,9 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
     if (!repeatedSessionIsInitialized.get()) {
       return;
     }
-    logger.atInfo().log(
-        "Session #%d scheduled to be abandoned due to call to reset().",
-        currentSession.sessionID());
+//    logger.atInfo().log(
+//        "Session #%d scheduled to be abandoned due to call to reset().",
+//        currentSession.sessionID());
     requests.add(
         RequestForRecognitionThread.newBuilder()
             .setAction(
@@ -377,7 +377,7 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
   // May be called from any thread.
   public void setModelOptions(SpeechRecognitionModelOptions modelOptions) {
     this.modelOptions.set(modelOptions);
-    logger.atInfo().log("Session scheduled to be ended due to model options change.");
+//    logger.atInfo().log("Session scheduled to be ended due to model options change.");
     requests.add(
         RequestForRecognitionThread.newBuilder()
             .setAction(RequestForRecognitionThread.Action.REQUEST_TO_END_SESSION)
@@ -429,20 +429,20 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
     while (request != null) {
       if (request.hasSessionID() && request.sessionID() < currentSessionID) {
         // Completely ignore results for sessions that have been abandoned.
-        logger.atInfo().log("Old event from Session #%d discarded.", request.sessionID());
+//        logger.atInfo().log("Old event from Session #%d discarded.", request.sessionID());
         request = requests.poll();
         continue;
       }
       switch (request.action()) {
         case HANDLE_NETWORK_CONNECTION_FATAL_ERROR:
-          logger.atInfo().log("Closing Session #%d due to network error.", request.sessionID());
+//          logger.atInfo().log("Closing Session #%d due to network error.", request.sessionID());
           finalizeLeftoverHypothesis();
           okToTerminateSession = true;
           processError(request.getErrorCause());
           startReconnectionTimer();
           break;
         case HANDLE_NON_NETWORK_CONNECTION_FATAL_ERROR:
-          logger.atInfo().log("Closing Session #%d due to non-network error.", request.sessionID());
+//          logger.atInfo().log("Closing Session #%d due to non-network error.", request.sessionID());
           hadNetworkConnectionError = true;
           finalizeLeftoverHypothesis();
           okToTerminateSession = true;
@@ -456,7 +456,7 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
           processResult(request.result(), request.requestIsFinal());
           break;
         case OK_TO_TERMINATE_SESSION:
-          logger.atInfo().log("Terminating Session #%d cleanly.", request.sessionID());
+//          logger.atInfo().log("Terminating Session #%d cleanly.", request.sessionID());
           okToTerminateSession = true;
           startReconnectionTimer();
           break;
@@ -488,8 +488,8 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
   private void resetInternal() {
     speechDetector.reset();
     if (currentSession.isInitialized()) {
-      logger.atInfo().log(
-          "Session #%d abandoned due to call to reset().", currentSession.sessionID());
+//      logger.atInfo().log(
+//          "Session #%d abandoned due to call to reset().", currentSession.sessionID());
       abandonCurrentSession();
     }
   }
@@ -529,8 +529,8 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
     int numLeftoverBytes = leftoverBytesReader.availableBytes();
     if (numLeftoverBytes + length > leftoverBytes.getCapacity()) {
       if (!droppingSamplesIsIntended) {
-        logger.atSevere().atMostEvery(5, TimeUnit.SECONDS).log(
-            "Dropped audio between sessions. [atMostEvery 5s]");
+//        logger.atSevere().atMostEvery(5, TimeUnit.SECONDS).log(
+//            "Dropped audio between sessions. [atMostEvery 5s]");
       }
       leftoverBytesReader.advance((numLeftoverBytes + length) - leftoverBytes.getCapacity());
     }
@@ -597,7 +597,7 @@ public class RepeatingRecognitionSession implements SampleProcessorInterface {
   private void stopReconnectionTimer() {
     if (endSessionRequestTime.isPresent()) {
       String endTime = getReconnectionTimerValue();
-      logger.atInfo().log("Reconnection timer stopped: %s.", endTime);
+//      logger.atInfo().log("Reconnection timer stopped: %s.", endTime);
     }
     endSessionRequestTime = Optional.absent();
   }

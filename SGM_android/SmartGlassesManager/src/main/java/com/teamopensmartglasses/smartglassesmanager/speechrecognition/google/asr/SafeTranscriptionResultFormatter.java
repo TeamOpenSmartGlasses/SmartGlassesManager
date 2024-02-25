@@ -265,7 +265,7 @@ public class SafeTranscriptionResultFormatter {
           if (request == null) {
             // We are ready to terminate the thread.
             synchronized (threadRestartLock) {
-              logger.atInfo().log("Formatter request queue is exhausted. %s", confinedThread);
+//              logger.atInfo().log("Formatter request queue is exhausted. %s", confinedThread);
               // Setting confinedThread to null is very important. This is how we signal in a
               // synchronizable way that this thread is no longer relevant. The parent object
               // can restart a new thread if more requests come in.
