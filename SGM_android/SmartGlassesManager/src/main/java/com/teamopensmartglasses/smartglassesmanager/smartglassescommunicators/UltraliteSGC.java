@@ -41,7 +41,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     private ArrayList rowTextsLiveNow;
 
     //ultralite pixel buffer on left side of screen
-    int ultraliteLeftSidePixelBuffer = 0;
+    int ultraliteLeftSidePixelBuffer = 40;
 
     //handler to turn off screen
     Handler goHomeHandler;

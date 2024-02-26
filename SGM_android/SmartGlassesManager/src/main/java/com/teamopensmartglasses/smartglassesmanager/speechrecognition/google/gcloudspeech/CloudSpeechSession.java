@@ -38,6 +38,7 @@ import com.teamopensmartglasses.smartglassesmanager.speechrecognition.google.asr
 import org.joda.time.Duration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
@@ -218,6 +219,10 @@ public class CloudSpeechSession extends SpeechSession {
         default:
       }
     }
+
+    ArrayList<String> languageList = new ArrayList<>();
+    languageList.add("en-US");
+
     RecognitionConfig.Builder configBuilder =
         RecognitionConfig.newBuilder()
             .setEncoding(encodingType)
@@ -226,6 +231,7 @@ public class CloudSpeechSession extends SpeechSession {
             .setEnableAutomaticPunctuation(true)
             .setEnableWordConfidence(true)
             .setEnableWordTimeOffsets(true)
+            .addAllAlternativeLanguageCodes(languageList)
             .addSpeechContexts(speechContext)
             .setLanguageCode(modelOptions.getLocale())
             .setProfanityFilter(params.getFilterProfanity())
