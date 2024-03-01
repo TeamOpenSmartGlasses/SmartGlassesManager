@@ -327,7 +327,9 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        homeScreenInNSeconds(lingerTime);
 //    }
 
-    public void displayReferenceCardSimple(String title, String body, int lingerTime){
+    public void displayReferenceCardSimple(String titleStr, String bodyStr, int lingerTime){
+        String title = maybeReverseRTLString(titleStr);
+        String body = maybeReverseRTLString(bodyStr);
         if (!isConnected()) {
             Log.d(TAG, "Not showing reference card because not connected to Ultralites...");
             return;
@@ -367,7 +369,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         displayRowsCard(rowStrings, cardLingerTime);
     }
 
-    public void displayRowsCard(String[] rowStrings, int lingerTime){
+    public void displayRowsCard(String[] rowStringList, int lingerTime){
+        String[] rowStrings = maybeReverseRTLStringList(rowStringList);
         if (!isConnected()) {
             Log.d(TAG, "Not showing rows card because not connected to Ultralites...");
             return;
@@ -419,7 +422,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         homeScreenInNSeconds(lingerTime);
     }
 
-    public void displayBulletList(String title, String [] bullets, int lingerTime){
+    public void displayBulletList(String title, String [] bulletList, int lingerTime){
+        String[] bullets = maybeReverseRTLStringList(bulletList);
         if (!isConnected()) {
             Log.d(TAG, "Not showing bullet point list because not connected to Ultralites...");
             return;
@@ -630,6 +634,49 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //            lastLocScrollingTextView = displayText(tlString, new Point(0, lastLocScrollingTextView.y));
 //        }
 
+    }
+
+    public static String maybeReverseRTLString(String text) {
+        StringBuilder result = new StringBuilder();
+        StringBuilder rtlBuffer = new StringBuilder();
+
+        for (char c : text.toCharArray()) {
+            if (isRTLCharacter(c)) {
+                rtlBuffer.append(c); // Append RTL characters to a buffer
+            } else {
+                if (rtlBuffer.length() > 0) {
+                    result.append(rtlBuffer.reverse()); // Reverse and append RTL text when a non-RTL character is found
+                    rtlBuffer.setLength(0); // Clear the buffer
+                }
+                result.append(c); // Append non-RTL characters directly to the result
+            }
+        }
+
+        if (rtlBuffer.length() > 0) {
+            result.append(rtlBuffer.reverse()); // Append any remaining RTL text in reverse
+        }
+
+        return result.toString();
+    }
+
+    private static boolean isRTLCharacter(char c) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
+        return block == Character.UnicodeBlock.ARABIC ||
+                block == Character.UnicodeBlock.HEBREW ||
+                block == Character.UnicodeBlock.SYRIAC ||
+                block == Character.UnicodeBlock.ARABIC_SUPPLEMENT ||
+                block == Character.UnicodeBlock.THAANA ||
+                block == Character.UnicodeBlock.NKO ||
+                block == Character.UnicodeBlock.SAMARITAN ||
+                block == Character.UnicodeBlock.MANDAIC ||
+                block == Character.UnicodeBlock.ARABIC_EXTENDED_A;
+        // Add other RTL blocks as needed
+    }
+    public String[] maybeReverseRTLStringList(String[] in){
+        String[] out = new String[in.length];
+        for(int i = 0; i < in.length; i++)
+            out[i] = maybeReverseRTLString(in[i]);
+        return out;
     }
 
     public void displayPromptView(String prompt, String [] options){
