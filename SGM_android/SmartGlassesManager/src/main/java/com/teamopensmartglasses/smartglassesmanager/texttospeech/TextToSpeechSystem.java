@@ -54,10 +54,21 @@ public class TextToSpeechSystem {
         });
     }
 
+    //default speak (english)
     public void speak(String text){
-        Log.d(TAG, "Speaking TTS: " + text);
+        speak(text, Locale.ENGLISH) ;
+    }
+
+    public void speak(String text, Locale locale){
+        Log.d(TAG, "Speaking TTS: " + text + " --- In language: " + locale.toString());
         if (this.isLoaded){
             // TTS engine is initialized successfully
+            int result = ttsModel.setLanguage(locale);
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e(TAG, "Language is not supported or missing data: " + locale);
+                return;
+            }
+
             if (sco) {
                 Bundle ttsParams = new Bundle();
                 ttsParams.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_VOICE_CALL);
@@ -83,7 +94,39 @@ public class TextToSpeechSystem {
 
     @Subscribe
     public void handleTtsEvent(TextToSpeechEvent event) {
-        speak(event.text);
+        String languageString = event.language;
+        Locale language = Locale.ENGLISH; // Default to English
+        switch (languageString.toLowerCase()) {
+            case "english":
+                language = Locale.ENGLISH;
+                break;
+            case "chinese":
+                language = Locale.CHINESE; // or Locale.SIMPLIFIED_CHINESE for more specificity
+                break;
+            case "italian":
+                language = Locale.ITALIAN;
+                break;
+            case "japanese":
+                language = Locale.JAPANESE;
+                break;
+            case "spanish":
+                language = new Locale("es", "ES");
+                break;
+            case "russian":
+                language = new Locale("ru", "RU");
+                break;
+            case "dutch":
+                language = new Locale("nl", "NL");
+                break;
+            case "hebrew":
+                language = new Locale("iw", "IL");
+                break;
+            default:
+                // Log or alert the user that the language is not supported for direct Locale constants
+                Log.d(TAG, "Language not supported by TTS: " + languageString);
+                break;
+        }
+        speak(event.text, language);
     }
 
     @Subscribe

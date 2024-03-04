@@ -42,12 +42,12 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
 
     public void displayReferenceCardSimple(String title, String body){
         Log.d(TAG, "TTS reference card");
-        EventBus.getDefault().post(new TextToSpeechEvent(title + ", " + body));
+        EventBus.getDefault().post(new TextToSpeechEvent(title + ", " + body, "english"));
     }
 
     public void displayReferenceCardImage(String title, String body, String imgUrl){
         Log.d(TAG, "TTS reference card");
-        EventBus.getDefault().post(new TextToSpeechEvent(title + ", " + body));
+        EventBus.getDefault().post(new TextToSpeechEvent(title + ", " + body, "english"));
     }
 
     public void displayBulletList(String title, String [] bullets){
@@ -79,7 +79,7 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
 
     public void displayTextLine(String text){
         Log.d(TAG, "displayTextLine: " + text);
-        EventBus.getDefault().post(new TextToSpeechEvent(text));
+        EventBus.getDefault().post(new TextToSpeechEvent(text, "english"));
     }
 
     public void displayCenteredText(String text){

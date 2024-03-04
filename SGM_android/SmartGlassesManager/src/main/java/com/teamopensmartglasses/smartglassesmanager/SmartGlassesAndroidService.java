@@ -31,6 +31,7 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTe
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlassesConnectionEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextLineViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextToSpeechEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.ASR_FRAMEWORKS;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecSwitchSystem;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.AudioWearable;
@@ -444,6 +445,10 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     public void sendTextLine(String text) {
         EventBus.getDefault().post(new TextLineViewRequestEvent(text));
+    }
+
+    public void sendTextToSpeech(String text, String languageString) {
+        EventBus.getDefault().post(new TextToSpeechEvent(text, languageString));
     }
 
     public void sendCenteredText(String text){
