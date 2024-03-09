@@ -184,6 +184,11 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         }
     }
 
+    public String getConnectedDeviceModelName(){
+        if(smartGlassesRepresentative.getConnectionState() != 2) return "";
+        return smartGlassesRepresentative.smartGlassesDevice.deviceModelName;
+    }
+
     public void sendUiUpdate() {
         //connectionState = 2 means connected
         Intent intent = new Intent();
