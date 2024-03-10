@@ -185,8 +185,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         }
     }
 
-    public String getConnectedDeviceModelName(){
-        if(smartGlassesRepresentative.getConnectionState() != 2) return "";
+    public SmartGlassesOperatingSystem getConnectedDeviceModelName(){
+        if(smartGlassesRepresentative.getConnectionState() != 2) return null;
         return smartGlassesRepresentative.smartGlassesDevice.glassesOs;
     }
 
