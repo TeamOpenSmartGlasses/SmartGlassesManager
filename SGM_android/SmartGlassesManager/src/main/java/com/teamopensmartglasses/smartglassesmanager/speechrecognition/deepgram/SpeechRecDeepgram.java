@@ -3,6 +3,7 @@ package com.teamopensmartglasses.smartglassesmanager.speechrecognition.deepgram;
 import android.content.Context;
 import android.util.Log;
 
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DiarizationOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SpeechRecOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecFramework;
 
@@ -19,7 +20,7 @@ import okhttp3.OkHttpClient;
         import okio.ByteString;
 
 public class SpeechRecDeepgram extends SpeechRecFramework {
-    private static final String SERVER_URL = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&smart_format=true&punctuate=true&utterances=true&diarize=true&filler_words=true&sentiment=true&language=en&model=nova-2";
+    private static final String SERVER_URL = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&interim_results=true&smart_format=true&punctuate=true&utterances=true&diarize=true&filler_words=true&sentiment=true&language=en&model=nova-2";
     private static final String API_KEY = "";
     private WebSocket webSocket;
     public String TAG = "WearableAi_SpeechRecDeepgram";
@@ -43,7 +44,7 @@ public class SpeechRecDeepgram extends SpeechRecFramework {
 
     @Override
     public void ingestAudioChunk(byte[] audioChunk) {
-        Log.d(TAG, "inject audio Deepgram");
+//        Log.d(TAG, "inject audio Deepgram");
         if (webSocket != null) {
             webSocket.send(ByteString.of(audioChunk));
         }
@@ -121,23 +122,28 @@ public class SpeechRecDeepgram extends SpeechRecFramework {
             boolean fromFinalize = obj.getBoolean("from_finalize");
 
             // Output extracted data to verify
-            System.out.println("Type: " + type);
-            System.out.println("Channel Index: " + channelIndex.toString());
-            System.out.println("Duration: " + duration);
-            System.out.println("Start: " + start);
-            System.out.println("Is Final: " + isFinal);
-            System.out.println("Speech Final: " + speechFinal);
-            System.out.println("Transcript: " + transcript);
-            System.out.println("Confidence: " + confidence);
-            System.out.println("Request ID: " + requestId);
-            System.out.println("Model Name: " + modelName);
-            System.out.println("Model Version: " + modelVersion);
-            System.out.println("Model Arch: " + modelArch);
-            System.out.println("Model UUID: " + modelUuid);
-            System.out.println("From Finalize: " + fromFinalize);
+            Log.d(TAG, "Type: " + type);
+            Log.d(TAG, "Channel Index: " + channelIndex.toString());
+            Log.d(TAG, "Duration: " + duration);
+            Log.d(TAG, "Start: " + start);
+            Log.d(TAG, "Is Final: " + isFinal);
+            Log.d(TAG, "Speech Final: " + speechFinal);
+            Log.d(TAG, "Transcript: " + transcript);
+            Log.d(TAG, "Confidence: " + confidence);
+            Log.d(TAG, "Request ID: " + requestId);
+            Log.d(TAG, "Model Name: " + modelName);
+            Log.d(TAG, "Model Version: " + modelVersion);
+            Log.d(TAG, "Model Arch: " + modelArch);
+            Log.d(TAG, "Model UUID: " + modelUuid);
+            Log.d(TAG, "From Finalize: " + fromFinalize);
 
             //send it to the system
-            EventBus.getDefault().post(new SpeechRecOutputEvent(transcript, (long) start, false));
+            if (!transcript.equals("") && !transcript.equals(" ") && transcript != null) {
+                EventBus.getDefault().post(new SpeechRecOutputEvent(transcript, (long) start, isFinal));
+                if (isFinal){ //a special function that streams the diarization data to the client
+                    EventBus.getDefault().post(new DiarizationOutputEvent(firstAlternative));
+                }
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
