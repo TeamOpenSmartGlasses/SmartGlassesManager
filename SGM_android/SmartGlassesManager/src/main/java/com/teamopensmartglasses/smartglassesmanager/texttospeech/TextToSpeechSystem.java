@@ -38,8 +38,8 @@ public class TextToSpeechSystem {
         ttsModel = new TextToSpeech(mContext, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 ttsModel.setLanguage(language);
-                ttsModel.setSpeechRate(1.6f);
-                ttsModel.setPitch(0.8f);
+//                ttsModel.setSpeechRate(1.6f);
+//                ttsModel.setPitch(0.8f);
 //                ttsModel.setAudioAttributes(new AudioAttributes.Builder()
 //                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
 //                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
@@ -101,6 +101,9 @@ public class TextToSpeechSystem {
                 language = Locale.ENGLISH;
                 break;
             case "chinese":
+                language = Locale.CHINESE; // or Locale.SIMPLIFIED_CHINESE for more specificity
+                break;
+            case "chinese (pinyin)":
                 language = Locale.CHINESE; // or Locale.SIMPLIFIED_CHINESE for more specificity
                 break;
             case "italian":
