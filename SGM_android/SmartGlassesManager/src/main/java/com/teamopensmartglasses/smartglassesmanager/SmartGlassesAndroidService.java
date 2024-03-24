@@ -37,6 +37,7 @@ import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecS
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.AudioWearable;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.InmoAirOne;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.SmartGlassesDevice;
+import com.teamopensmartglasses.smartglassesmanager.supportedglasses.SmartGlassesOperatingSystem;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.TCLRayNeoXTwo;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.VuzixShield;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.VuzixUltralite;
@@ -185,9 +186,9 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         }
     }
 
-    public String getConnectedDeviceModelName(){
-        if(smartGlassesRepresentative.getConnectionState() != 2) return "";
-        return smartGlassesRepresentative.smartGlassesDevice.deviceModelName;
+    public SmartGlassesOperatingSystem getConnectedDeviceModelOs(){
+        if(smartGlassesRepresentative.getConnectionState() != 2) return null;
+        return smartGlassesRepresentative.smartGlassesDevice.glassesOs;
     }
 
     public void sendUiUpdate() {
@@ -276,6 +277,25 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             targetLanguageString = "English";
         }
         return targetLanguageString;
+    }
+
+    //switches the currently running transcribe language without changing the default/saved language
+    public void switchRunningTranscribeLanguage(String language){
+        //kill previous speech rec
+        speechRecSwitchSystem.destroy();
+        speechRecSwitchSystem = null;
+
+        //start speech rec after small delayd
+        Handler speechRecHandler = new Handler();
+        Context context = this;
+        speechRecHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                speechRecSwitchSystem = new SpeechRecSwitchSystem(context);
+                ASR_FRAMEWORKS asrFramework = getChosenAsrFramework(context);
+                speechRecSwitchSystem.startAsrFramework(asrFramework, language);
+            }
+        }, 250);
     }
 
     //service stuff

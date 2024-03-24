@@ -231,7 +231,7 @@ public class CloudSpeechSession extends SpeechSession {
             .setEnableAutomaticPunctuation(true)
             .setEnableWordConfidence(true)
             .setEnableWordTimeOffsets(true)
-            .addAllAlternativeLanguageCodes(languageList)
+//            .addAllAlternativeLanguageCodes(languageList) //seems to be switching to english too much
             .addSpeechContexts(speechContext)
             .setLanguageCode(modelOptions.getLocale())
             .setProfanityFilter(params.getFilterProfanity())
