@@ -37,6 +37,15 @@
             app:destination="@id/nav_reference" />
     </fragment>
 
+    <fragment
+        android:id="@+id/nav_text_wall"
+        android:name="com.wearableintelligencesystem.androidsmartglasses.ui.TextWallUi"
+        tools:layout="@layout/text_wall_card"
+        android:label="Text Wall" >
+        <action
+            android:id="@+id/action_nav_text_wall_self"
+            app:destination="@id/nav_text_wall" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_language_translate"

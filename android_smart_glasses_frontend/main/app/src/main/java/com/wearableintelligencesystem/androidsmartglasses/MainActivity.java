@@ -19,6 +19,7 @@ import android.os.StrictMode;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -113,6 +114,9 @@ public class MainActivity extends AppCompatActivity {
                     .penaltyLog()
                     .build());
         }
+
+        //hide top bar
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
 
         //setup ui handler
         uiHandler = new Handler();
@@ -445,6 +449,8 @@ public class MainActivity extends AppCompatActivity {
                         showSearchEngineResults(data);
                     } else if (typeOf.equals(MessageTypes.REFERENCE_CARD_SIMPLE_VIEW)){
                         showReferenceCardSimpleView(data);
+                    } else if (typeOf.equals(MessageTypes.REFERENCE_CARD_TEXT_WALL_VIEW)){
+                        showTextWallView(data);
                     } else if (typeOf.equals(MessageTypes.REFERENCE_CARD_IMAGE_VIEW)){
                         Log.d(TAG, "GOT IMAGE REFERENCE VIEW REQUEST");
                         showReferenceCardImageView(data);
@@ -628,6 +634,37 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, body);
             switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
             showReferenceCard(title, body, null, searchEngineResultTimeout);
+        } catch (JSONException e) {
+            Log.d(TAG, e.toString());
+        }
+    }
+
+    private void showTextWallView(JSONObject data) {
+        try {
+            //get content
+            String text = data.getString(MessageTypes.REFERENCE_CARD_TEXT_WALL_TEXT);
+
+            Log.d(TAG, "Running text wall card simple view");
+            Log.d(TAG, text);
+            switchMode(MessageTypes.MODE_SEARCH_ENGINE_RESULT);
+
+            uiHandler.removeCallbacksAndMessages(null);
+            String lastMode = curr_mode;
+
+            //show the reference
+            Bundle args = new Bundle();
+            args.putString("text", text);
+            //quickly go home then to result, because if we go straight to the result, it will fail to display results if the nav_reference page is already loaded - this is a hack
+    //        switchMode(MessageTypes.MODE_HOME);
+            navController.navigate(R.id.nav_text_wall, args);
+
+            //for now, show for n seconds and then return to llc
+//            uiHandler.postDelayed(new Runnable() {
+//                public void run() {
+//                    Log.d(TAG, "showReferenceCard switchMode");
+//                    switchMode(MessageTypes.MODE_HOME);
+//                }
+//            }, timeout);
         } catch (JSONException e) {
             Log.d(TAG, e.toString());
         }
