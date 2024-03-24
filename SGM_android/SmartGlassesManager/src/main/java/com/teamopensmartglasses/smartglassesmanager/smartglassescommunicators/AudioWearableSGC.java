@@ -58,6 +58,8 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
 
     }
 
+    public void displayTextWall(String text){}
+
 
     public void stopScrollingTextViewMode() {
     }

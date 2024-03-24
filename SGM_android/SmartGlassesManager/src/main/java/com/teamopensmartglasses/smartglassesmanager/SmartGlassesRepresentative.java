@@ -14,6 +14,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.AudioWearableSGC;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.UltraliteSGC;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
@@ -193,6 +194,13 @@ class SmartGlassesRepresentative {
     @Subscribe
     public void onHomeScreenEvent(HomeScreenEvent receivedEvent){
         homeScreen();
+    }
+
+    @Subscribe
+    public void onTextWallViewEvent(TextWallViewRequestEvent receivedEvent){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayTextWall(receivedEvent.text);
+        }
     }
 
     @Subscribe

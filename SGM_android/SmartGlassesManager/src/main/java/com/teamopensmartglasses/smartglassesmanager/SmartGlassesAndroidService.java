@@ -27,6 +27,7 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenE
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlassesConnectionEvent;
@@ -435,6 +436,11 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     //show a reference card on the smart glasses with title and body text
     public void sendReferenceCard(String title, String body) {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
+    }
+
+    //show a text wall card on the smart glasses
+    public void sendTextWall(String text) {
+        EventBus.getDefault().post(new TextWallViewRequestEvent(text));
     }
 
     //show a reference card on the smart glasses with title and body text

@@ -549,6 +549,8 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+    public void displayTextWall(String text){}
+
     public void displayReferenceCardImage(String title, String body, String imgUrl){
         try{
             //build json object to send command result

@@ -17,6 +17,10 @@ public abstract class SmartGlassesCommunicator {
 
     //reference card
     public abstract void displayReferenceCardSimple(String title, String body);
+
+    //display text wall
+    public abstract void displayTextWall(String text);
+
     public abstract void displayReferenceCardImage(String title, String body, String imgUrl);
     public abstract void displayBulletList(String title, String [] bullets);
     public abstract void displayRowsCard(String[] rowStrings);

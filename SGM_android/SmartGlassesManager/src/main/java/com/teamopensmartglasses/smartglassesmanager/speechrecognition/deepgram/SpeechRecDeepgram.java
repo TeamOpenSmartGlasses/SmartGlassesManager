@@ -21,7 +21,7 @@ import okhttp3.OkHttpClient;
 
 public class SpeechRecDeepgram extends SpeechRecFramework {
     private static final String SERVER_URL = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&interim_results=true&smart_format=true&punctuate=true&utterances=true&diarize=true&filler_words=true&sentiment=true&language=en&model=nova-2";
-    private static final String API_KEY = "";
+    private static final String API_KEY = "3f01c8a32b7cd74b32cde42b1e576f9b55214ebd";
     private WebSocket webSocket;
     public String TAG = "WearableAi_SpeechRecDeepgram";
 

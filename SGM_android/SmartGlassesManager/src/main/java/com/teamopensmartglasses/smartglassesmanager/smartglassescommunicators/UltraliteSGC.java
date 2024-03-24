@@ -168,6 +168,16 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         displayReferenceCardSimple("", text);
     }
 
+    public void displayTextWall(String text){
+        Log.d(TAG, "Ultralite is doing text wall");
+        ultraliteCanvas.clear();
+        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+        ultraliteCanvas.createText(text, ultraliteAlignment, UltraliteColor.WHITE, ultraliteAnchor, true);
+        ultraliteCanvas.commit();
+        screenIsClear = false;
+    }
+
     public void displayCenteredText(String text){
     }
 
@@ -707,4 +717,5 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        }
 //        displayLinearStuff(promptPageElements, new Point(0, 11), true);
     }
+
 }
