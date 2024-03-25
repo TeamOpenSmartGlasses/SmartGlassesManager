@@ -1,16 +1,21 @@
 package com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.StrictMode;
+import android.util.Base64;
 import android.util.Log;
 
 import com.teamopensmartglasses.smartglassesmanager.comms.AspWebsocketServer;
 import com.teamopensmartglasses.smartglassesmanager.comms.AudioSystem;
 import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.GlassesPovImageEvent;
 import com.teamopensmartglasses.smartglassesmanager.utils.NetworkUtils;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -272,10 +277,12 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         //if not , reconnect,
         //if we are connected, send a heart beat to make sure we are still connected
         if (mConnectState == 0 && !killme) {
+            Log.d(TAG, "heartBeat failing");
             restartSocket();
         } else if (mConnectState == 2){
             //make sure we don't have a ton of outbound heart beats unresponded to
             if (outbound_heart_beats > 5) {
+                Log.d(TAG, "heartBeat outbounds failing");
                 restartSocket();
                 return;
             }
@@ -310,6 +317,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
                     //make sure header is verified
                     if (hello1 != 0x01 || hello2 != 0x02 || hello3 != 0x03){
+                        Log.d(TAG, "Receive thread: broken intro fail");
                         break;
                     }
                     //length of body
@@ -339,6 +347,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
 
                 //make sure footer is verified
                 if (goodbye1 != 0x03 || goodbye2 != 0x02 || goodbye3 != 0x01) {
+                    Log.d(TAG, "Receive thread: broken footer fail");
                     break;
                 }
 
@@ -346,15 +355,29 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                 if ((b1 == heart_beat_id[0]) && (b2 == heart_beat_id[1])){ //heart beat id tag
                     outbound_heart_beats--;
                 } else if ((b1 == ack_id[0]) && (b2 == ack_id[1])){ //an ack id
+                } else if ((b1 == img_id[0]) && (b2 == img_id[1])){ //an ack id
+                    Log.d(TAG, "Got IMAGE");
+                    if (raw_data != null) {
+                        //remember the time we received it
+                        long imageTime = System.currentTimeMillis();
+
+                        //ping back the client to let it know we received the message
+                        sendBytes(ack_id, null);
+
+                        handleImage(raw_data, imageTime);
+                    }
                 } else {
+                    Log.d(TAG, "Killing cuz corrupted data");
                     break;
                 }
             }
+            Log.d(TAG, "Receive thread throw broken socket");
             throwBrokenSocket();
         }
     }
 
     public void restartSocket(){
+        Log.d(TAG, "Restarting socket.");
         connectionEvent(1);
 
         outbound_heart_beats = 0;
@@ -476,12 +499,14 @@ public class AndroidSGC extends SmartGlassesCommunicator {
                     break;
                 }
             }
+            Log.d(TAG, "Send thread throw broken socket");
             throwBrokenSocket();
         }
     }
 
     public  void throwBrokenSocket(){
         if (mConnectState == 2){
+            Log.d(TAG, "Throwing broken socket");
             connectionEvent(0);
         }
     }
@@ -492,6 +517,7 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     }
 
     public void destroy(){
+        Log.d(TAG, "Destroying AndroidSGC");
         killme = true;
 
         //kill AudioSystem
@@ -549,7 +575,20 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
-    public void displayTextWall(String text){}
+    public void displayTextWall(String text){
+        Log.d(TAG, "SHOWING TEXT WALL");
+        try{
+            //build json object to send command result
+            JSONObject commandResponseObject = new JSONObject();
+            commandResponseObject.put(MessageTypes.MESSAGE_TYPE_LOCAL, MessageTypes.REFERENCE_CARD_TEXT_WALL_VIEW);
+            commandResponseObject.put(MessageTypes.REFERENCE_CARD_TEXT_WALL_TEXT, text);
+
+            //send the command result to web socket, to send to asg
+            dataObservable.onNext(commandResponseObject);
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
 
     public void displayReferenceCardImage(String title, String body, String imgUrl){
         try{
@@ -735,4 +774,18 @@ public class AndroidSGC extends SmartGlassesCommunicator {
             e.printStackTrace();
         }
     }
+
+    public void handleImage(byte [] raw_data, long imageTime){
+        //convert to bitmap
+        Bitmap bitmap = BitmapFactory.decodeByteArray(raw_data, 0, raw_data.length);
+
+        //save and process 1 image at set frequency
+        sendPovImage(raw_data, imageTime);
+    }
+
+    public void sendPovImage(byte [] img, long imageTime){
+        String encodedImage = Base64.encodeToString(img, Base64.DEFAULT);
+        EventBus.getDefault().post(new GlassesPovImageEvent(encodedImage, imageTime));
+    }
+
 }
