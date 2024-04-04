@@ -20,7 +20,7 @@ import okhttp3.OkHttpClient;
         import okio.ByteString;
 
 public class SpeechRecDeepgram extends SpeechRecFramework {
-    private static final String SERVER_URL = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&interim_results=true&smart_format=true&punctuate=true&utterances=true&diarize=true&filler_words=true&sentiment=true&language=en&model=nova-2";
+    private static final String SERVER_URL = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&interim_results=true&smart_format=true&punctuate=true&diarize=true&filler_words=true&language=en&model=nova-2";
     private static final String API_KEY = "3f01c8a32b7cd74b32cde42b1e576f9b55214ebd";
     private WebSocket webSocket;
     public String TAG = "WearableAi_SpeechRecDeepgram";
@@ -69,8 +69,8 @@ public class SpeechRecDeepgram extends SpeechRecFramework {
             public void onMessage(WebSocket webSocket, String text) {
                 // Handle incoming messages (transcriptions)
                 // Use text JSON parsing to extract transcription and update your UI accordingly
-                Log.d(TAG, "got message Deepgram");
-                Log.d(TAG, text);
+//                Log.d(TAG, "got message Deepgram");
+//                Log.d(TAG, text);
 
                 parseDeepgramMessage(text);
             }
@@ -122,20 +122,20 @@ public class SpeechRecDeepgram extends SpeechRecFramework {
             boolean fromFinalize = obj.getBoolean("from_finalize");
 
             // Output extracted data to verify
-            Log.d(TAG, "Type: " + type);
-            Log.d(TAG, "Channel Index: " + channelIndex.toString());
-            Log.d(TAG, "Duration: " + duration);
-            Log.d(TAG, "Start: " + start);
-            Log.d(TAG, "Is Final: " + isFinal);
-            Log.d(TAG, "Speech Final: " + speechFinal);
-            Log.d(TAG, "Transcript: " + transcript);
-            Log.d(TAG, "Confidence: " + confidence);
-            Log.d(TAG, "Request ID: " + requestId);
-            Log.d(TAG, "Model Name: " + modelName);
-            Log.d(TAG, "Model Version: " + modelVersion);
-            Log.d(TAG, "Model Arch: " + modelArch);
-            Log.d(TAG, "Model UUID: " + modelUuid);
-            Log.d(TAG, "From Finalize: " + fromFinalize);
+//            Log.d(TAG, "Type: " + type);
+//            Log.d(TAG, "Channel Index: " + channelIndex.toString());
+//            Log.d(TAG, "Duration: " + duration);
+//            Log.d(TAG, "Start: " + start);
+//            Log.d(TAG, "Is Final: " + isFinal);
+//            Log.d(TAG, "Speech Final: " + speechFinal);
+//            Log.d(TAG, "Transcript: " + transcript);
+//            Log.d(TAG, "Confidence: " + confidence);
+//            Log.d(TAG, "Request ID: " + requestId);
+//            Log.d(TAG, "Model Name: " + modelName);
+//            Log.d(TAG, "Model Version: " + modelVersion);
+//            Log.d(TAG, "Model Arch: " + modelArch);
+//            Log.d(TAG, "Model UUID: " + modelUuid);
+//            Log.d(TAG, "From Finalize: " + fromFinalize);
 
             //send it to the system
             if (!transcript.equals("") && !transcript.equals(" ") && transcript != null) {
