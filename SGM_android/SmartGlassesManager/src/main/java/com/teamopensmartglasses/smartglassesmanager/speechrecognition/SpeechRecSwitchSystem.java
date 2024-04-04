@@ -3,6 +3,7 @@ package com.teamopensmartglasses.smartglassesmanager.speechrecognition;
 import android.content.Context;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PauseAsrEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.deepgram.SpeechRecDeepgram;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.google.SpeechRecGoogle;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.vosk.SpeechRecVosk;
@@ -53,8 +54,16 @@ public class SpeechRecSwitchSystem {
 
     @Subscribe
     public void onAudioChunkNewEvent(AudioChunkNewEvent receivedEvent){
+        //redirect audio to the currently in use ASR framework, if it's not paused
+        if (!speechRecFramework.pauseAsrFlag) {
+            speechRecFramework.ingestAudioChunk(receivedEvent.thisChunk);
+        }
+    }
+
+    @Subscribe
+    public void onPauseAsrEvent(PauseAsrEvent receivedEvent){
         //redirect audio to the currently in use ASR framework
-        speechRecFramework.ingestAudioChunk(receivedEvent.thisChunk);
+        speechRecFramework.pauseAsr(receivedEvent.pauseAsr);
     }
 
     public void destroy(){

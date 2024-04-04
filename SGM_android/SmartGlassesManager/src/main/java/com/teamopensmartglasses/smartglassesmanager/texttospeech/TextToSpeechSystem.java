@@ -4,15 +4,19 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PauseAsrEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScoStartEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextToSpeechEvent;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.UUID;
 
 public class TextToSpeechSystem {
     private  final String TAG = "WearableAi_TextToSpeechSystem";
@@ -60,8 +64,12 @@ public class TextToSpeechSystem {
     }
 
     public void speak(String text, Locale locale){
-        Log.d(TAG, "Speaking TTS: " + text + " --- In language: " + locale.toString());
         if (this.isLoaded){
+            //setup memory of this tts
+            HashMap<String, String> params = new HashMap<>();
+            String utteranceId = UUID.randomUUID().toString();
+            params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
+
             // TTS engine is initialized successfully
             int result = ttsModel.setLanguage(locale);
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
@@ -69,17 +77,36 @@ public class TextToSpeechSystem {
                 return;
             }
 
+            ttsModel.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override
+                public void onStart(String utteranceId) {
+                    // TTS starts speaking
+                    EventBus.getDefault().post(new PauseAsrEvent(true));
+                }
+
+                @Override
+                public void onDone(String utteranceId) {
+                    EventBus.getDefault().post(new PauseAsrEvent(false));
+                }
+
+                @Override
+                public void onError(String utteranceId) {
+                    // Handle TTS error
+                }
+            });
+
             if (sco) {
                 Bundle ttsParams = new Bundle();
                 ttsParams.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_VOICE_CALL);
                 ttsParams.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
-                ttsModel.speak(text, TextToSpeech.QUEUE_FLUSH, ttsParams, null);
+                ttsModel.speak(text, TextToSpeech.QUEUE_FLUSH, ttsParams, utteranceId);
             } else {
-                ttsModel.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+                ttsModel.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
             }
         } else {
             Log.d(TAG, "TTS failed because not loaded.");
         }
+
     }
 
     public void destroy(){
