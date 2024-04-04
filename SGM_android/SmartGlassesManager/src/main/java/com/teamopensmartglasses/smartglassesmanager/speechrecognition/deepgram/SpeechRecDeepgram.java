@@ -20,7 +20,7 @@ import okhttp3.OkHttpClient;
         import okio.ByteString;
 
 public class SpeechRecDeepgram extends SpeechRecFramework {
-    private static final String SERVER_URL = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&interim_results=true&smart_format=true&punctuate=true&diarize=true&filler_words=true&language=en&model=nova-2";
+    private static final String SERVER_URL = "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&diarize=false&interim_results=true&smart_format=true&utterance_end_ms=1200&punctuate=true&filler_words=true&language=en&model=nova-2";
     private static final String API_KEY = "";
     private WebSocket webSocket;
     public String TAG = "WearableAi_SpeechRecDeepgram";
@@ -140,9 +140,9 @@ public class SpeechRecDeepgram extends SpeechRecFramework {
             //send it to the system
             if (!transcript.equals("") && !transcript.equals(" ") && transcript != null) {
                 EventBus.getDefault().post(new SpeechRecOutputEvent(transcript, (long) start, isFinal));
-                if (isFinal){ //a special function that streams the diarization data to the client
-                    EventBus.getDefault().post(new DiarizationOutputEvent(firstAlternative));
-                }
+//                if (isFinal){ //a special function that streams the diarization data to the client
+//                    EventBus.getDefault().post(new DiarizationOutputEvent(firstAlternative));
+//                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
