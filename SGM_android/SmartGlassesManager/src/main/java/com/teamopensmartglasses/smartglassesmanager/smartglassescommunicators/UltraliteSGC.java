@@ -551,8 +551,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         }
 
        //disconnect after slight delay, so our above text gets a chance to show up
-       goHomeHandler.removeCallbacksAndMessages(this);
-       goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
+       goHomeHandler.removeCallbacksAndMessages(null);
+//       goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
        goHomeRunnable = new Runnable() {
            @Override
            public void run() {
