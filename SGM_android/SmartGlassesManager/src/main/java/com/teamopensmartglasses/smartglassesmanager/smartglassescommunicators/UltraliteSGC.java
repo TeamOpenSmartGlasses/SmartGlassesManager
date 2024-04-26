@@ -407,12 +407,16 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
 //        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, 0, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
 
-        //display no title, put text on top right of screen (to not block main view)
+        //concat body and title, put text on top right of screen (to not block main view)
         UltraliteColor ultraliteColor = UltraliteColor.WHITE;
         Anchor ultraliteAnchor = Anchor.TOP_CENTER;
         TextAlignment ultraliteAlignment = TextAlignment.LEFT;
         //ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, (640 / 2) - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, 640 / 2, -1, TextWrapMode.WRAP, true);
+        if (!title.isEmpty() && !title.equals("")){
+            ultraliteCanvas.createText(title + ": " + body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, 640 / 2, -1, TextWrapMode.WRAP, true);
+        } else {
+            ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, 640 / 2, -1, TextWrapMode.WRAP, true);
+        }
 
         //NOTE:
 //        int createText(@NonNull
