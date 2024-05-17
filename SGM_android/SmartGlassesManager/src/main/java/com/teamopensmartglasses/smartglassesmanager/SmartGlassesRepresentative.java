@@ -14,6 +14,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.AudioWearableSGC;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.UltraliteSGC;
@@ -234,6 +235,14 @@ class SmartGlassesRepresentative {
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayReferenceCardImage(receivedEvent.title, receivedEvent.body, receivedEvent.imgUrl);
 //            homeUiAfterDelay(referenceCardDelayTime);
+        }
+    }
+
+    @Subscribe
+    public void onSendBitmapViewRequestEvent(SendBitmapViewRequestEvent receievedEvent){
+        Log.d(TAG, "Sending a bitmap event");
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayBitmap(receievedEvent.bmp);
         }
     }
 

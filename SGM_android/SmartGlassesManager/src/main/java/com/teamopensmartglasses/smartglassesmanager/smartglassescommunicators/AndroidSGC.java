@@ -606,6 +606,11 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+    @Override
+    public void displayBitmap(Bitmap bmp) {
+
+    }
+
     public void displayBulletList(String title, String [] bullets){
         displayBulletList(title, bullets, 0);
     }

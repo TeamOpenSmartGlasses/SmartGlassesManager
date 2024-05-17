@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,6 +28,7 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenE
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
@@ -461,6 +463,10 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     public void sendReferenceCard(String title, String body, String imgUrl) {
         EventBus.getDefault().post(new ReferenceCardImageViewRequestEvent(title, body, imgUrl));
+    }
+
+    public void sendBitmap(Bitmap bitmap) {
+        EventBus.getDefault().post(new SendBitmapViewRequestEvent(bitmap));
     }
 
     public void startScrollingText(String title){

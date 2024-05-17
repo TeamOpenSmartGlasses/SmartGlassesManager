@@ -565,6 +565,17 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
        goHomeHandler.postDelayed(goHomeRunnable, n * 1000);
     }
 
+    public void displayBitmap(Bitmap bmp) {
+        Bitmap resizedBmp = Bitmap.createScaledBitmap(bmp, 620, 460, true); // 640 x 480
+
+        changeUltraliteLayout(Layout.CANVAS);
+        screenIsClear = false;
+
+        Log.d(TAG, "Sending bitmap to Ultralite");
+        ultraliteCanvas.drawBackground(resizedBmp, 50, 80);
+        ultraliteCanvas.commit();
+    }
+
     //don't show images on activelook (screen is too low res)
     public void displayReferenceCardImage(String title, String body, String imgUrl){
         changeUltraliteLayout(Layout.CANVAS);
