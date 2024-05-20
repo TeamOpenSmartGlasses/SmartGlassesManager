@@ -13,6 +13,7 @@ import android.util.Log;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleScoAudioEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
@@ -101,6 +102,23 @@ class SmartGlassesRepresentative {
         } else if (!smartGlassesDevice.getHasInMic() && !smartGlassesDevice.getHasOutMic()) {
             connectAndStreamLocalMicrophone(false);
         }
+    }
+
+
+    @Subscribe
+    public void onDisableBleScoEvent(DisableBleScoAudioEvent receivedEvent) {
+        Log.d(TAG, "onDisableBleScoEvent called");
+        restartAudioWithNoBleSco();
+    }
+
+    public void restartAudioWithNoBleSco(){
+        //kill current audio
+        if (bluetoothAudio != null) {
+            bluetoothAudio.destroy();
+        }
+
+        //start new audio, with no bluetooth
+        connectAndStreamLocalMicrophone(false);
     }
 
     private void connectAndStreamLocalMicrophone(boolean useBluetoothSco){
@@ -297,4 +315,5 @@ class SmartGlassesRepresentative {
             smartGlassesCommunicator.displayPromptView(receivedEvent.prompt, receivedEvent.options);
         }
     }
+
 }

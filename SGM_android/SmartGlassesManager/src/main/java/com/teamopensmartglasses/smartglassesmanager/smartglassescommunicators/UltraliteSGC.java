@@ -195,17 +195,23 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         displayReferenceCardSimple("", text);
     }
 
-    public void displayTextWall(String text){
-        if (screenToggleOff){
+    private static final int MAX_LINES = 7;
+    public void displayTextWall(String text) {
+        if (screenToggleOff) {
             return;
         }
 
         Log.d(TAG, "Ultralite is doing text wall");
-        ultraliteCanvas.clear();
-        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
-        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
-        ultraliteCanvas.createText(text, ultraliteAlignment, UltraliteColor.WHITE, ultraliteAnchor, true);
-        ultraliteCanvas.commit();
+
+        // Cut text wall down to the largest number of lines possible to display
+        String[] lines = text.split("\n");
+        StringBuilder truncatedText = new StringBuilder();
+        for (int i = 0; i < Math.min(lines.length, MAX_LINES); i++) {
+            truncatedText.append(lines[i]).append("\n");
+        }
+
+        changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
+        ultraliteSdk.sendText(truncatedText.toString().trim());
         screenIsClear = false;
     }
 
@@ -282,6 +288,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             return;
         }
 
+        currentUltraliteLayout = chosenLayout;
         ultraliteSdk.setLayout(chosenLayout, 0, true);
 
         if (chosenLayout.equals(Layout.CANVAS)){

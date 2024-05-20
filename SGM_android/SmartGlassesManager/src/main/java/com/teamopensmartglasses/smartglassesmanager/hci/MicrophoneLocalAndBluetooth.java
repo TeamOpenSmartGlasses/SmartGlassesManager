@@ -18,6 +18,7 @@ import android.util.Log;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScoStartEvent;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
