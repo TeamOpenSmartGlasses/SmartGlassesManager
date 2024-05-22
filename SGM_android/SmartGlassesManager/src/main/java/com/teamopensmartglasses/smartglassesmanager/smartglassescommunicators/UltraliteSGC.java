@@ -210,8 +210,18 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             truncatedText.append(lines[i]).append("\n");
         }
 
+//        changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
         changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
         ultraliteSdk.sendText(truncatedText.toString().trim());
+
+//        changeUltraliteLayout(Layout.CANVAS);
+//        ultraliteCanvas.removeText(0); //remove last text we added
+//        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+//        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+//        int textId = ultraliteCanvas.createText(text, ultraliteAlignment, UltraliteColor.WHITE, ultraliteAnchor, ultraliteLeftSidePixelBuffer, 0, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+////        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+//        Log.d(TAG, "VUZIX TEXT ID: " + textId);
+        ultraliteCanvas.commit();
         screenIsClear = false;
     }
 
