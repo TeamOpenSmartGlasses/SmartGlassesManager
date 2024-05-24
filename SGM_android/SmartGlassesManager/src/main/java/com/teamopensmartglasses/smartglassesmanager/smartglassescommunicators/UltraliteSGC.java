@@ -619,7 +619,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
                         Log.d(TAG, "Sending image to Ultralite");
 //                        ultraliteCanvas.createImage(ultraliteImage, ultraliteImageAnchor, 0, 0, true);
-                        ultraliteCanvas.drawBackground(bitmap, 50, 80);
+                        ultraliteCanvas.drawBackground(bitmap, 0, 0);
 
                         //sending text again to ultralite in case image overwrote it
 //                        ultraliteCanvas.createText(title + "2", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);
