@@ -595,6 +595,10 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
     //don't show images on activelook (screen is too low res)
     public void displayReferenceCardImage(String title, String body, String imgUrl){
+        if (screenToggleOff){
+            return;
+        }
+
         changeUltraliteLayout(Layout.CANVAS);
         ultraliteCanvas.clear();
 
