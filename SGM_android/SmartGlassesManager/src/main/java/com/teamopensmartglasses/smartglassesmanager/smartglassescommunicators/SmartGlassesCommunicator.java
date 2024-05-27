@@ -1,5 +1,7 @@
 package com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators;
 
+import android.graphics.Bitmap;
+
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.GlassesTapOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlassesConnectionEvent;
 
@@ -43,6 +45,8 @@ public abstract class SmartGlassesCommunicator {
 
     //display text line
     public abstract void displayTextLine(String text);
+
+    public abstract void displayBitmap(Bitmap bmp);
 
     //display centered text
     public abstract void displayCenteredText(String text);

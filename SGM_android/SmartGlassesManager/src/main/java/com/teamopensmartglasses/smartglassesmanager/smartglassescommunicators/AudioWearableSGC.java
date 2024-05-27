@@ -1,6 +1,7 @@
 package com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextToSpeechEvent;
@@ -82,6 +83,11 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
     public void displayTextLine(String text){
         Log.d(TAG, "displayTextLine: " + text);
         EventBus.getDefault().post(new TextToSpeechEvent(text, "english"));
+    }
+
+    @Override
+    public void displayBitmap(Bitmap bmp) {
+
     }
 
     public void displayCenteredText(String text){

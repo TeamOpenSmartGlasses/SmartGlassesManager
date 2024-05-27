@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,11 +23,13 @@ import androidx.preference.PreferenceManager;
 import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.CenteredTextViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleScoAudioEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
@@ -188,6 +191,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     }
 
     public SmartGlassesOperatingSystem getConnectedDeviceModelOs(){
+        if (smartGlassesRepresentative == null) return null;
         if(smartGlassesRepresentative.getConnectionState() != 2) return null;
         return smartGlassesRepresentative.smartGlassesDevice.glassesOs;
     }
@@ -460,6 +464,10 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     public void sendReferenceCard(String title, String body, String imgUrl) {
         EventBus.getDefault().post(new ReferenceCardImageViewRequestEvent(title, body, imgUrl));
+    }
+
+    public void sendBitmap(Bitmap bitmap) {
+        EventBus.getDefault().post(new SendBitmapViewRequestEvent(bitmap));
     }
 
     public void startScrollingText(String title){

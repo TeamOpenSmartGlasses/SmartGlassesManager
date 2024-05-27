@@ -13,7 +13,9 @@ import android.util.Log;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleScoAudioEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.AudioWearableSGC;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.UltraliteSGC;
@@ -100,6 +102,23 @@ class SmartGlassesRepresentative {
         } else if (!smartGlassesDevice.getHasInMic() && !smartGlassesDevice.getHasOutMic()) {
             connectAndStreamLocalMicrophone(false);
         }
+    }
+
+
+    @Subscribe
+    public void onDisableBleScoEvent(DisableBleScoAudioEvent receivedEvent) {
+        Log.d(TAG, "onDisableBleScoEvent called");
+        restartAudioWithNoBleSco();
+    }
+
+    public void restartAudioWithNoBleSco(){
+        //kill current audio
+        if (bluetoothAudio != null) {
+            bluetoothAudio.destroy();
+        }
+
+        //start new audio, with no bluetooth
+        connectAndStreamLocalMicrophone(false);
     }
 
     private void connectAndStreamLocalMicrophone(boolean useBluetoothSco){
@@ -238,6 +257,14 @@ class SmartGlassesRepresentative {
     }
 
     @Subscribe
+    public void onSendBitmapViewRequestEvent(SendBitmapViewRequestEvent receievedEvent){
+        Log.d(TAG, "Sending a bitmap event");
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayBitmap(receievedEvent.bmp);
+        }
+    }
+
+    @Subscribe
     public void onTextLineViewRequestEvent(TextLineViewRequestEvent receivedEvent){
         Log.d(TAG, "Got text line event: " + receivedEvent.text);
         if (smartGlassesCommunicator != null) {
@@ -288,4 +315,5 @@ class SmartGlassesRepresentative {
             smartGlassesCommunicator.displayPromptView(receivedEvent.prompt, receivedEvent.options);
         }
     }
+
 }

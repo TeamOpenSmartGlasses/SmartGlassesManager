@@ -34,9 +34,11 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     UltraliteSDK ultraliteSdk;
     UltraliteSDK.Canvas ultraliteCanvas;
     UltraliteListener ultraliteListener;
+    Layout currentUltraliteLayout;
+    boolean screenToggleOff = false; //should we keep the screen off?
     LifecycleOwner lifecycleOwner;
     Context context;
-    public static final int cardLingerTime = 50;
+    public static final int cardLingerTime = 30;
 
     private ArrayList rowTextsLiveNow;
 
@@ -45,6 +47,11 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
     //handler to turn off screen
     Handler goHomeHandler;
+    Runnable goHomeRunnable;
+
+    //handler to turn off screen/toggle
+    Handler screenOffHandler;
+    Runnable screenOffRunnable;
 
     //handler to disconnect
     Handler killHandler;
@@ -66,9 +73,28 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
         @Override
         public void onPowerButtonPress(boolean turningOn) {
+            //since we implement our own state for the power turn on/off, we ignore what the ultralite thinks ('turningOn') and use our own state
             Log.d(TAG, "Ultralites power button pressed: " + turningOn);
-            if (screenIsClear) {
-                displayReferenceCardSimple("SGM Connected.", "Waiting for data...", 2);
+
+            //flip value of screen toggle
+            screenToggleOff = !turningOn;
+
+            if (!screenToggleOff) {
+                Log.d(TAG, "screen toggle off NOT on, showing turn ON message");
+                displayReferenceCardSimple("SGM Connected.", "Screen back on...", 4);
+            } else {
+                Log.d(TAG, "screen toggle off IS on, showing turn OFF message");
+//                ultraliteCanvas.clear();
+//                displayReferenceCardSimple("Toggling off....", "Toggling off...", -1);
+//                screenOffHandler.removeCallbacksAndMessages(this);
+//                screenOffHandler.removeCallbacksAndMessages(screenOffRunnable);
+//                screenOffRunnable = new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        ultraliteSdk.screenOff();
+//                    }
+//                };
+//                screenOffHandler.postDelayed(screenOffRunnable, 2200);
             }
         }
     }
@@ -82,6 +108,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         hasUltraliteControl = false;
         screenIsClear = true;
         goHomeHandler = new Handler();
+        screenOffHandler = new Handler();
         killHandler = new Handler();
 
         rowTextsLiveNow = new ArrayList<Integer>();
@@ -132,7 +159,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             hasUltraliteControl = true;
             setupUltraliteCanvas();
             connectionEvent(2);
-            displayReferenceCardSimple("Connected to SGM.", "Authors: TeamOpenSmartGlasses", 5);
+            displayReferenceCardSimple("Connected to SGM.", "Connected to SGM by TeamOpenSmartGlasses", 5);
         } else {
             hasUltraliteControl = false;
         }
@@ -168,12 +195,32 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         displayReferenceCardSimple("", text);
     }
 
-    public void displayTextWall(String text){
+    private static final int MAX_LINES = 7;
+    public void displayTextWall(String text) {
+        if (screenToggleOff) {
+            return;
+        }
+
         Log.d(TAG, "Ultralite is doing text wall");
-        ultraliteCanvas.clear();
-        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
-        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
-        ultraliteCanvas.createText(text, ultraliteAlignment, UltraliteColor.WHITE, ultraliteAnchor, true);
+
+        // Cut text wall down to the largest number of lines possible to display
+        String[] lines = text.split("\n");
+        StringBuilder truncatedText = new StringBuilder();
+        for (int i = 0; i < Math.min(lines.length, MAX_LINES); i++) {
+            truncatedText.append(lines[i]).append("\n");
+        }
+
+//        changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
+        changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
+        ultraliteSdk.sendText(truncatedText.toString().trim());
+
+//        changeUltraliteLayout(Layout.CANVAS);
+//        ultraliteCanvas.removeText(0); //remove last text we added
+//        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+//        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+//        int textId = ultraliteCanvas.createText(text, ultraliteAlignment, UltraliteColor.WHITE, ultraliteAnchor, ultraliteLeftSidePixelBuffer, 0, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+////        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+//        Log.d(TAG, "VUZIX TEXT ID: " + textId);
         ultraliteCanvas.commit();
         screenIsClear = false;
     }
@@ -246,6 +293,12 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void changeUltraliteLayout(Layout chosenLayout) {
+        //don't update layout if it's already setup
+        if (currentUltraliteLayout != null && currentUltraliteLayout == chosenLayout){
+            return;
+        }
+
+        currentUltraliteLayout = chosenLayout;
         ultraliteSdk.setLayout(chosenLayout, 0, true);
 
         if (chosenLayout.equals(Layout.CANVAS)){
@@ -340,6 +393,10 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //    }
 
     public void displayReferenceCardSimple(String titleStr, String bodyStr, int lingerTime){
+        if (screenToggleOff){
+            return;
+        }
+
         String title = maybeReverseRTLString(titleStr);
         String body = maybeReverseRTLString(bodyStr);
         if (!isConnected()) {
@@ -360,16 +417,45 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        String titleWrapped = addNewlineEveryNWords(title, 6);
 //        String bodyWrapped = addNewlineEveryNWords(body, 6);
 
-        //display the title at the top of the screen
+        //display title top of scren adn text middle of screen
+//        UltraliteColor ultraliteColor = UltraliteColor.WHITE;
+//        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+//        TextAlignment ultraliteAlignment = TextAlignment.LEFT;
+//        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+//        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, 0, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+
+        //concat body and title, put text on top right of screen (to not block main view)
         UltraliteColor ultraliteColor = UltraliteColor.WHITE;
-        Anchor ultraliteAnchor = Anchor.TOP_LEFT;
+        Anchor ultraliteAnchor = Anchor.TOP_CENTER;
         TextAlignment ultraliteAlignment = TextAlignment.LEFT;
-        ultraliteCanvas.createText(title, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, 120, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
-        ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.MIDDLE_LEFT, ultraliteLeftSidePixelBuffer, 0, 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+        //ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, (640 / 2) - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
+        if (!title.isEmpty() && !title.equals("")){
+            ultraliteCanvas.createText(title + ": " + body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, 640 / 2, -1, TextWrapMode.WRAP, true);
+        } else {
+            ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, 640 / 2, -1, TextWrapMode.WRAP, true);
+        }
+
+        //NOTE:
+//        int createText(@NonNull
+//                String text,
+//                @NonNull
+//                        TextAlignment alignment,
+//                @NonNull
+//                        UltraliteColor color,
+//                @NonNull
+//                        Anchor anchor,
+//        int offsetX,
+//        int offsetY,
+//        int width,
+//        int height,
+//        @Nullable
+//        TextWrapMode wrap,
+//        boolean visible)
+
         ultraliteCanvas.commit();
         screenIsClear = false;
 
-//        homeScreenInNSeconds(lingerTime);
+        homeScreenInNSeconds(lingerTime);
     }
 
 
@@ -382,6 +468,10 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void displayRowsCard(String[] rowStringList, int lingerTime){
+        if (screenToggleOff){
+            return;
+        }
+
         String[] rowStrings = maybeReverseRTLStringList(rowStringList);
         if (!isConnected()) {
             Log.d(TAG, "Not showing rows card because not connected to Ultralites...");
@@ -441,6 +531,10 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void displayBulletList(String title, String [] bulletList, int lingerTime){
+        if (screenToggleOff){
+            return;
+        }
+
         String[] bullets = maybeReverseRTLStringList(bulletList);
         if (!isConnected()) {
             Log.d(TAG, "Not showing bullet point list because not connected to Ultralites...");
@@ -473,18 +567,38 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     }
 
     public void homeScreenInNSeconds(int n){
+        if (n == -1){
+            return;
+        }
+
        //disconnect after slight delay, so our above text gets a chance to show up
-       goHomeHandler.removeCallbacksAndMessages(this);
-       goHomeHandler.postDelayed(new Runnable() {
+       goHomeHandler.removeCallbacksAndMessages(null);
+//       goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
+       goHomeRunnable = new Runnable() {
            @Override
            public void run() {
-                           showHomeScreen();
-                                            }
-       }, n * 1000);
+               showHomeScreen();
+        }};
+       goHomeHandler.postDelayed(goHomeRunnable, n * 1000);
+    }
+
+    public void displayBitmap(Bitmap bmp) {
+        Bitmap resizedBmp = Bitmap.createScaledBitmap(bmp, 620, 460, true); // 640 x 480
+
+        changeUltraliteLayout(Layout.CANVAS);
+        screenIsClear = false;
+
+        Log.d(TAG, "Sending bitmap to Ultralite");
+        ultraliteCanvas.drawBackground(resizedBmp, 50, 80);
+        ultraliteCanvas.commit();
     }
 
     //don't show images on activelook (screen is too low res)
     public void displayReferenceCardImage(String title, String body, String imgUrl){
+        if (screenToggleOff){
+            return;
+        }
+
         changeUltraliteLayout(Layout.CANVAS);
         ultraliteCanvas.clear();
 
@@ -509,7 +623,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
                         Log.d(TAG, "Sending image to Ultralite");
 //                        ultraliteCanvas.createImage(ultraliteImage, ultraliteImageAnchor, 0, 0, true);
-                        ultraliteCanvas.drawBackground(bitmap, 50, 80);
+                        ultraliteCanvas.drawBackground(bitmap, 0, 0);
 
                         //sending text again to ultralite in case image overwrote it
 //                        ultraliteCanvas.createText(title + "2", TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.BOTTOM_LEFT, 0, 0, 640, -1, TextWrapMode.WRAP, true);

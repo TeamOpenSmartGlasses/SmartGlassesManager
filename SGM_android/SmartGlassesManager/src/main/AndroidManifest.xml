@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.teamopensmartglasses.smartglassesmanager">
 
-  <uses-sdk android:minSdkVersion="30"
-      android:targetSdkVersion="30"
+  <uses-sdk android:minSdkVersion="34"
+      android:targetSdkVersion="34"
       />
 
     <!--    NETWORK-->
@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <!--    LOCATION-->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!--    BLUETOOTH-->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />

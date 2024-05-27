@@ -18,6 +18,7 @@ import android.util.Log;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScoStartEvent;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -80,10 +81,10 @@ public class MicrophoneLocalAndBluetooth {
                         startRecording();
                         break;
                     case AudioManager.SCO_AUDIO_STATE_CONNECTING:
-                        Log.i(TAG, "Bluetooth HFP Headset is connecting");
+                        //Log.i(TAG, "Bluetooth HFP Headset is connecting");
                         handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
                     case AudioManager.SCO_AUDIO_STATE_DISCONNECTED:
-                        Log.i(TAG, "Bluetooth HFP Headset is disconnected");
+                        //Log.i(TAG, "Bluetooth HFP Headset is disconnected");
                         handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
                         // Always receive SCO_AUDIO_STATE_DISCONNECTED on call to startBluetooth()
                         // which at that stage we do not want to do anything. Thus the if condition.
