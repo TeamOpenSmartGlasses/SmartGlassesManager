@@ -111,7 +111,9 @@ public class SpeechRecGoogle extends SpeechRecFramework {
             currentLanguageCode = "iw-IL";
         } else if (localeString.equals("Dutch")) {
             currentLanguageCode = "nl-NL";
-        } else {
+        } else if(localeString.equals("French")){
+            currentLanguageCode = "fr-FR";
+        }else {
             currentLanguageCode = "en-US";
         }
     }
