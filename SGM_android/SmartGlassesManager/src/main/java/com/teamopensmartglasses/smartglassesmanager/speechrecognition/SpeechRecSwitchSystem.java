@@ -44,7 +44,7 @@ public class SpeechRecSwitchSystem {
         } else if (this.asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK){
             speechRecFramework = new SpeechRecGoogle(mContext, language);
         } else if (this.asrFramework == ASR_FRAMEWORKS.DEEPGRAM_ASR_FRAMEWORK){
-            speechRecFramework = new SpeechRecDeepgram(mContext);
+            speechRecFramework = new SpeechRecDeepgram(mContext, language);
         }
 
         //start asr

@@ -229,7 +229,7 @@ public class MicrophoneLocalAndBluetooth {
             EventBus.getDefault().post(new ScoStartEvent(false));
         }
 
-        recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
+        recorder = new AudioRecord(MediaRecorder.AudioSource.UNPROCESSED,
                 SAMPLING_RATE_IN_HZ, CHANNEL_CONFIG, AUDIO_FORMAT, bufferSize * 2);
 
         recorder.startRecording();
