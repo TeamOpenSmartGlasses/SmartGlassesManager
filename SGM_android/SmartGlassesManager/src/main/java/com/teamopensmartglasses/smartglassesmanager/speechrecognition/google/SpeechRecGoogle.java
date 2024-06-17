@@ -113,7 +113,19 @@ public class SpeechRecGoogle extends SpeechRecFramework {
             currentLanguageCode = "nl-NL";
         } else if(localeString.equals("French")){
             currentLanguageCode = "fr-FR";
-        }else {
+        }else if (localeString.equals("German")) {
+            currentLanguageCode = "de-DE";
+        } else if (localeString.equals("Arabic")) {
+            currentLanguageCode = "ar-AR";
+        } else if (localeString.equals("Korean")) {
+            currentLanguageCode = "ko-KR";
+        } else if (localeString.equals("Italian")) {
+            currentLanguageCode = "it-IT";
+        } else if (localeString.equals("Turkish")) {
+            currentLanguageCode = "tr-TR";
+        } else if (localeString.equals("Portuguese")) {
+            currentLanguageCode = "pt-PT";
+        } else {
             currentLanguageCode = "en-US";
         }
     }
