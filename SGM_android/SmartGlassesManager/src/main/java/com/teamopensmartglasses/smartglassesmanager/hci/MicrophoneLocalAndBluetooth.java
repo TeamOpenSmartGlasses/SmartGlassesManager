@@ -23,38 +23,25 @@ import org.greenrobot.eventbus.Subscribe;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-/**
- * Sample that demonstrates how to record from a Bluetooth HFP microphone using {@link AudioRecord}.
- */
 public class MicrophoneLocalAndBluetooth {
-
     private static final String TAG = "WearableAi_MicrophoneLocalAndBluetooth";
 
     private static final int SAMPLING_RATE_IN_HZ = 16000;
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-    /**
-     * Factor by that the minimum buffer size is multiplied. The bigger the factor is the less
-     * likely it is that samples will be dropped, but more memory will be used. The minimum buffer
-     * size is determined by {@link AudioRecord#getMinBufferSize(int, int, int)} and depends on the
-     * recording settings.
-     */
-//    private final static float BUFFER_SIZE_SECONDS = 0.2f;
     private final static float BUFFER_SIZE_SECONDS = 0.192f; // gives us 1024*3 = 3072 samples
-//    private final static float BUFFER_SIZE_SECONDS = 0.064f;
     private static final int BUFFER_SIZE_FACTOR = 2;
     private final int bufferSize;
-    private boolean bluetoothAudio = false; //are we using local audio or bluetooth audio?
+    private boolean bluetoothAudio = false; // are we using local audio or bluetooth audio?
+    private boolean shouldUseHearItBleMicrophone = false; // should we use HearIt BLE microphone?
     private int retries = 0;
     private int retryLimit = 3;
 
     private Handler mHandler;
 
-    /**
-     * Signals whether a recording is in progress (true) or not (false).
-     */
     private final AtomicBoolean recordingInProgress = new AtomicBoolean(false);
+
+    private HearItBleMicrophone hearItBleMicrophone;
 
     private final BroadcastReceiver bluetoothStateReceiver = new BroadcastReceiver() {
         private BluetoothState bluetoothState = BluetoothState.UNAVAILABLE;
@@ -66,14 +53,10 @@ public class MicrophoneLocalAndBluetooth {
                 int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, -1);
                 switch (state) {
                     case AudioManager.SCO_AUDIO_STATE_CONNECTED:
-                        Log.i(TAG, "Bluetooth HFP Headset is connected");
-                        //handleBluetoothStateChange(BluetoothState.AVAILABLE);
-                        if (mIsStarting){
-                            // When the device is connected before the application starts,
-                            // ACTION_ACL_CONNECTED will not be received, so call onHeadsetConnected here
+                        if (mIsStarting) {
                             mIsStarting = false;
                         }
-                        if (mIsCountDownOn){
+                        if (mIsCountDownOn) {
                             mIsCountDownOn = false;
                             mCountDown.cancel();
                         }
@@ -81,24 +64,17 @@ public class MicrophoneLocalAndBluetooth {
                         startRecording();
                         break;
                     case AudioManager.SCO_AUDIO_STATE_CONNECTING:
-                        //Log.i(TAG, "Bluetooth HFP Headset is connecting");
                         handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
                     case AudioManager.SCO_AUDIO_STATE_DISCONNECTED:
-                        //Log.i(TAG, "Bluetooth HFP Headset is disconnected");
                         handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
-                        // Always receive SCO_AUDIO_STATE_DISCONNECTED on call to startBluetooth()
-                        // which at that stage we do not want to do anything. Thus the if condition.
                         break;
                     case AudioManager.SCO_AUDIO_STATE_ERROR:
-                        Log.i(TAG, "Bluetooth HFP Headset is in error state");
                         handleBluetoothStateChange(BluetoothState.UNAVAILABLE);
                         break;
                 }
-            } else if (action.equals(BluetoothDevice.ACTION_ACL_CONNECTED)){
-                Log.i(TAG, "New bluetooth device is available");
+            } else if (action.equals(BluetoothDevice.ACTION_ACL_CONNECTED)) {
                 handleNewBluetoothDevice();
-            } else if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECTED)){
-                Log.i(TAG, "Bluetooth device was disconnected");
+            } else if (action.equals(BluetoothDevice.ACTION_ACL_DISCONNECTED)) {
                 handleDisconnectBluetoothDevice();
             }
         }
@@ -111,30 +87,20 @@ public class MicrophoneLocalAndBluetooth {
             bluetoothStateChanged(state);
         }
 
-        private void handleNewBluetoothDevice(){
-            //check if the new device is a headset, if so, connect
-            retries = 0; //reset retries as there is a new device
-//            if (!bluetoothAudio){
-//                activateBluetoothSco();
-//            }
-
-            // start bluetooth Sco audio connection.
-            // Calling startBluetoothSco() always returns faIL here,
-            // that why a count down timer is implemented to call
-            // startBluetoothSco() in the onTick.
+        private void handleNewBluetoothDevice() {
+            retries = 0;
             mIsCountDownOn = true;
             mCountDown.start();
         }
 
         private void handleDisconnectBluetoothDevice() {
-            if (mIsCountDownOn)
-            {
+            if (mIsCountDownOn) {
                 mIsCountDownOn = false;
                 mCountDown.cancel();
             }
             bluetoothAudio = false;
             deactivateBluetoothSco();
-            startRecording(); //if disconnected, now we should switch to recording on local mic
+            startRecording();
         }
     };
 
@@ -152,34 +118,30 @@ public class MicrophoneLocalAndBluetooth {
 
     public MicrophoneLocalAndBluetooth(Context context, boolean useBluetoothSco, AudioChunkCallback chunkCallback) {
         this(context, chunkCallback);
+        this.shouldUseHearItBleMicrophone = true;
         useBluetoothMic(useBluetoothSco);
     }
 
     public MicrophoneLocalAndBluetooth(Context context, AudioChunkCallback chunkCallback) {
         bufferSize = Math.round(SAMPLING_RATE_IN_HZ * BUFFER_SIZE_SECONDS);
 
-        // need for audio sco, see mBroadcastReceiver
         mIsStarting = true;
 
-        //setup context
         mContext = context;
 
-        //setup audio manager
         audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
 
         mChunkCallback = chunkCallback;
 
-        //setup handler
         mHandler = new Handler();
 
-        //first, start recording on local microphone
         startRecording();
     }
 
-    private void useBluetoothMic(boolean shouldUseBluetoothSco){
+    private void useBluetoothMic(boolean shouldUseBluetoothSco) {
         bluetoothAudio = shouldUseBluetoothSco;
 
-        if (shouldUseBluetoothSco){
+        if (shouldUseBluetoothSco) {
             startBluetoothSco();
         } else {
             stopBluetoothSco();
@@ -190,8 +152,7 @@ public class MicrophoneLocalAndBluetooth {
         }
     }
 
-    private void startBluetoothSco(){
-        //listen for bluetooth HFP events
+    private void startBluetoothSco() {
         mContext.registerReceiver(bluetoothStateReceiver, new IntentFilter(
                 AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED));
         mContext.registerReceiver(bluetoothStateReceiver,
@@ -199,32 +160,28 @@ public class MicrophoneLocalAndBluetooth {
         mContext.registerReceiver(bluetoothStateReceiver,
                 new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED));
 
-        //the, immediately try to startup the SCO connection
         mIsCountDownOn = true;
         mCountDown.start();
     }
 
-    private void stopBluetoothSco(){
+    private void stopBluetoothSco() {
         mIsCountDownOn = false;
         mCountDown.cancel();
-        try{
+        try {
             mContext.unregisterReceiver(bluetoothStateReceiver);
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
     }
 
     private void startRecording() {
-        //if already recording, stop previous and start a new one
         if (recorder != null) {
             stopRecording();
         }
         if (bluetoothAudio) {
-            Log.d(TAG, "Starting recording on Bluetooth Microphone");
             audioManager.setMode(AudioManager.MODE_IN_CALL);
             EventBus.getDefault().post(new ScoStartEvent(true));
         } else {
-            Log.d(TAG, "Starting recording on local microphone");
             audioManager.setMode(AudioManager.MODE_NORMAL);
             EventBus.getDefault().post(new ScoStartEvent(false));
         }
@@ -238,13 +195,45 @@ public class MicrophoneLocalAndBluetooth {
 
         recordingThread = new Thread(new RecordingRunnable(), "Recording Thread");
         recordingThread.start();
+
+        if (bluetoothAudio && shouldUseHearItBleMicrophone) {
+            Log.d(TAG, "Connecting HearItBle... ");
+            hearItBleMicrophone = new HearItBleMicrophone(mContext);
+            hearItBleMicrophone.setHearItBleMicCallback(new HearItBleMicrophone.HearItBleMicCallback() {
+                @Override
+                public void onConnected() {
+                    Log.d(TAG, "--- HearItBle connected!");
+                    stopAndroidMics();
+                }
+
+                @Override
+                public void onPcmDataAvailable(byte[] pcmData) {
+                    ByteBuffer b_buffer = ByteBuffer.allocate(pcmData.length);
+                    b_buffer.put(pcmData);
+                    mChunkCallback.onSuccess(b_buffer);
+                }
+            });
+            hearItBleMicrophone.startScanning();
+        }
+    }
+
+    private void stopAndroidMics(){
+        mIsCountDownOn = false;
+        mCountDown.cancel();
+        deactivateBluetoothSco();
+        audioManager.setMode(AudioManager.MODE_NORMAL);
+
+        stopRecording();
     }
 
     private void stopRecording() {
-        Log.d(TAG, "Stopping audio recording");
-        if (null == recorder) {
+        Log.d(TAG, "Running stopRecording...");
+
+        if (recorder == null) {
+            Log.d(TAG, "--- Recorder null, exiting.");
             return;
         }
+
         recordingInProgress.set(false);
         recorder.stop();
         recorder.release();
@@ -253,12 +242,10 @@ public class MicrophoneLocalAndBluetooth {
     }
 
     private void activateBluetoothSco() {
-        Log.d(TAG, "Activating Bluetooth SCO");
-
         retries += 1;
 
         if (!audioManager.isBluetoothScoAvailableOffCall()) {
-            Log.e(TAG, "SCO ist not available, recording is not possible");
+            Log.e(TAG, "SCO is not available, recording is not possible");
             return;
         }
 
@@ -268,46 +255,37 @@ public class MicrophoneLocalAndBluetooth {
         audioManager.startBluetoothSco();
     }
 
-    private void deactivateBluetoothSco(){
-        Log.d(TAG, "Deactivating Bluetooth SCO");
+    private void deactivateBluetoothSco() {
         audioManager.stopBluetoothSco();
     }
 
     private void bluetoothStateChanged(BluetoothState state) {
-        Log.i(TAG, "Bluetooth state changed to:" + state);
-
         if (BluetoothState.UNAVAILABLE == state && recordingInProgress.get()) {
             bluetoothAudio = false;
             stopRecording();
             deactivateBluetoothSco();
-        } else if (BluetoothState.AVAILABLE == state && !recordingInProgress.get()){
+        } else if (BluetoothState.AVAILABLE == state && !recordingInProgress.get()) {
             bluetoothAudio = true;
             startRecording();
-        } else if (BluetoothState.AVAILABLE == state && !bluetoothAudio){
+        } else if (BluetoothState.AVAILABLE == state && !bluetoothAudio) {
             bluetoothAudio = true;
             startRecording();
         }
     }
 
     private class RecordingRunnable implements Runnable {
-
         @Override
         public void run() {
-//            final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
             short[] short_buffer = new short[bufferSize];
             ByteBuffer b_buffer = ByteBuffer.allocate(short_buffer.length * 2);
 
             while (recordingInProgress.get()) {
-//                    int result = recorder.read(buffer, BUFFER_SIZE);
-                // read the data into the buffer
                 int result = recorder.read(short_buffer, 0, short_buffer.length);
                 if (result < 0) {
                     Log.d(TAG, "ERROR");
                 }
-                //convert short array to byte array
                 b_buffer.order(ByteOrder.LITTLE_ENDIAN);
                 b_buffer.asShortBuffer().put(short_buffer);
-                //send to audio system
                 mChunkCallback.onSuccess(b_buffer);
                 b_buffer.clear();
             }
@@ -333,50 +311,33 @@ public class MicrophoneLocalAndBluetooth {
         AVAILABLE, UNAVAILABLE
     }
 
-    /**
-     * Try to connect to audio headset in onTick.
-     */
-    private CountDownTimer mCountDown = new CountDownTimer(1201, 400)
-    {
-
+    private CountDownTimer mCountDown = new CountDownTimer(1201, 400) {
         @SuppressWarnings("synthetic-access")
         @Override
-        public void onTick(long millisUntilFinished)
-        {
-            // When this call is successful, this count down timer will be canceled.
+        public void onTick(long millisUntilFinished) {
             audioManager.startBluetoothSco();
-
-            Log.d(TAG, "onTick start bluetooth Sco"); //$NON-NLS-1$
         }
 
         @SuppressWarnings("synthetic-access")
         @Override
-        public void onFinish()
-        {
-            // Calls to startBluetoothSco() in onStick are not successful.
-            // Should implement something to inform user of this failure
+        public void onFinish() {
             mIsCountDownOn = false;
-
-            //if it fails after n tries, then we should start recording with local microphone
             bluetoothAudio = false;
             startRecording();
-
-            Log.d(TAG, "onFinish fail to connect to headset audio"); //$NON-NLS-1$
         }
     };
 
-    public void destroy(){
+    public void destroy() {
         stopRecording();
 
-        //cleanup bluetooth
         mIsCountDownOn = false;
         mCountDown.cancel();
         deactivateBluetoothSco();
         audioManager.setMode(AudioManager.MODE_NORMAL);
         if (mContext != null) {
-            try{
+            try {
                 mContext.unregisterReceiver(bluetoothStateReceiver);
-            } catch(IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             }
         }

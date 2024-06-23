@@ -48,12 +48,12 @@ public class TextToSpeechSystem {
 //                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
 //                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
 //                        .build());
-                Log.d("TextToSpeech","TTS Model initialized");
+//                Log.d("TextToSpeech","TTS Model initialized");
                 this.isLoaded = true;
-                Log.d(TAG, ttsModel.getVoices().toString());
+//                Log.d(TAG, ttsModel.getVoices().toString());
                 Log.d(TAG, ttsModel.getDefaultEngine());
             } else {
-                Log.d(TAG, "TTS failed with code: " + status);
+//                Log.d(TAG, "TTS failed with code: " + status);
             }
         });
     }
@@ -115,7 +115,7 @@ public class TextToSpeechSystem {
             ttsModel.shutdown();
         }
 
-        Log.d("TextToSpeech","TTS destroyed");
+//        Log.d("TextToSpeech","TTS destroyed");
     }
 
 
