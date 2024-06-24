@@ -101,8 +101,6 @@ public class SpeechRecGoogle extends SpeechRecFramework {
             currentLanguageCode = "ru-RU";
         } else if (localeString.equals("Japanese")) {
             currentLanguageCode = "ja-JP";
-        } else if (localeString.equals("Chinese")) {
-            currentLanguageCode = "zh";
         } else if (localeString.contains("Chinese")) {
             currentLanguageCode = "zh";
         } else if (localeString.equals("Spanish")) {

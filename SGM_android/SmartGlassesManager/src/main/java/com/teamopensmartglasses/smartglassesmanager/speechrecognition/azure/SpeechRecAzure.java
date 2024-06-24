@@ -415,6 +415,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             case "Italian (Switzerland)":
                 currentLanguageCode = "it-CH";
                 break;
+            case "Italian":
             case "Italian (Italy)":
                 currentLanguageCode = "it-IT";
                 break;
@@ -437,6 +438,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             case "Kannada (India)":
                 currentLanguageCode = "kn-IN";
                 break;
+            case "Korean":
             case "Korean (Korea)":
                 currentLanguageCode = "ko-KR";
                 break;
@@ -492,6 +494,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             case "Pashto (Afghanistan)":
                 currentLanguageCode = "ps-AF";
                 break;
+            case "Portuguese":
             case "Portuguese (Brazil)":
                 currentLanguageCode = "pt-BR";
                 break;
