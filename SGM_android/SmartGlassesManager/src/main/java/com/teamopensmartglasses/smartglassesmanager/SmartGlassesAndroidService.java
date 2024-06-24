@@ -150,6 +150,11 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
         EventBus.getDefault().unregister(this);
 
+        //kill speech rec
+        if (speechRecSwitchSystem != null){
+            speechRecSwitchSystem.destroy();
+        }
+
         //kill asg connection
         if (smartGlassesRepresentative != null) {
             smartGlassesRepresentative.destroy();
@@ -159,11 +164,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         //kill data transmitters
         if (dataObservable != null) {
             dataObservable.onComplete();
-        }
-
-        //kill speech rec
-        if (speechRecSwitchSystem != null){
-            speechRecSwitchSystem.destroy();
         }
 
         //kill textToSpeech
@@ -229,8 +229,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     public static ASR_FRAMEWORKS getChosenAsrFramework(Context context) {
         String asrString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), "");
         if (asrString.equals("")){
-            saveChosenAsrFramework(context, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
-            asrString = ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK.name();
+            saveChosenAsrFramework(context, ASR_FRAMEWORKS.AZURE_ASR_FRAMEWORK);
+            asrString = ASR_FRAMEWORKS.AZURE_ASR_FRAMEWORK.name();
         }
         return ASR_FRAMEWORKS.valueOf(asrString);
     }

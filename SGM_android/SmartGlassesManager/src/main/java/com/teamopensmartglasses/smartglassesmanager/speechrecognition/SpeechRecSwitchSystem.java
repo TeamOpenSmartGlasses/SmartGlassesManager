@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PauseAsrEvent;
+import com.teamopensmartglasses.smartglassesmanager.speechrecognition.azure.SpeechRecAzure;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.deepgram.SpeechRecDeepgram;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.google.SpeechRecGoogle;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.vosk.SpeechRecVosk;
@@ -45,6 +46,8 @@ public class SpeechRecSwitchSystem {
             speechRecFramework = new SpeechRecGoogle(mContext, language);
         } else if (this.asrFramework == ASR_FRAMEWORKS.DEEPGRAM_ASR_FRAMEWORK){
             speechRecFramework = new SpeechRecDeepgram(mContext, language);
+        } else if (this.asrFramework == ASR_FRAMEWORKS.AZURE_ASR_FRAMEWORK){
+            speechRecFramework = new SpeechRecAzure(mContext, language);
         }
 
         //start asr

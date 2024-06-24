@@ -155,6 +155,9 @@ dependencies {
 
     //Vuzix Ultralite OEM Platform / Vuzix Z100
     implementation 'com.vuzix:ultralite-sdk-android:1.4.1'
+
+    //Azure ASR
+    implementation "com.microsoft.cognitiveservices.speech:client-sdk:1.38.0"
 }
 
 //VOSK ASR prep models - need one for each language
