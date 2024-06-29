@@ -101,8 +101,6 @@ public class SpeechRecGoogle extends SpeechRecFramework {
             currentLanguageCode = "ru-RU";
         } else if (localeString.equals("Japanese")) {
             currentLanguageCode = "ja-JP";
-        } else if (localeString.equals("Chinese")) {
-            currentLanguageCode = "zh";
         } else if (localeString.contains("Chinese")) {
             currentLanguageCode = "zh";
         } else if (localeString.equals("Spanish")) {
@@ -111,6 +109,20 @@ public class SpeechRecGoogle extends SpeechRecFramework {
             currentLanguageCode = "iw-IL";
         } else if (localeString.equals("Dutch")) {
             currentLanguageCode = "nl-NL";
+        } else if(localeString.equals("French")){
+            currentLanguageCode = "fr-FR";
+        }else if (localeString.equals("German")) {
+            currentLanguageCode = "de-DE";
+        } else if (localeString.equals("Arabic")) {
+            currentLanguageCode = "ar-AR";
+        } else if (localeString.equals("Korean")) {
+            currentLanguageCode = "ko-KR";
+        } else if (localeString.equals("Italian")) {
+            currentLanguageCode = "it-IT";
+        } else if (localeString.equals("Turkish")) {
+            currentLanguageCode = "tr-TR";
+        } else if (localeString.equals("Portuguese")) {
+            currentLanguageCode = "pt-PT";
         } else {
             currentLanguageCode = "en-US";
         }

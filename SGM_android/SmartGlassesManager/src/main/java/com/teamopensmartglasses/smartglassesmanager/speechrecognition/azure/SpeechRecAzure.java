@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class SpeechRecAzure extends SpeechRecFramework {
-    private static final String API_KEY = "22dfd2d4eca44898bc489fee5fce02a9";
+    private static final String API_KEY = "0a2244c410664011bbf33fdb2cdc0f30";
     private static final String REGION = "eastasia";
     private static final String TAG = "WearableAi_SpeechRecAzure";
 
@@ -40,30 +40,29 @@ public class SpeechRecAzure extends SpeechRecFramework {
         initializeRecognizer();
     }
 
+    private void stopReco() {
+        Log.d(TAG, "Attempting to stop continuous recognition.");
+        if (speechRecognizer != null) {
+            executorService.submit(() -> {
+                try {
+                    speechRecognizer.stopContinuousRecognitionAsync().get();
+                    Log.i(TAG, "Continuous recognition stopped.");
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to stop continuous recognition: " + e.getMessage());
+                } finally {
+                    speechRecognizer.close();
+                    speechRecognizer = null;
+                    Log.i(TAG, "SpeechRecognizer instance closed and set to null.");
+//                    runOnUiThread(() -> startRecoButton.setEnabled(true));
+                    AzureAudioInputStream.getInstance().close();
+                }
+            });
+        }
+    }
+
     @Override
     public void destroy() {
-        Log.d(TAG, "Destroying Azure Speech Recognition");
-        if (speechRecognizer != null) {
-            speechRecognizer.close();
-            speechRecognizer = null;
-        }
-        Log.d(TAG, "--- closed recognizer.");
-        if (speechConfig != null) {
-            speechConfig.close();
-            speechConfig = null;
-        }
-        Log.d(TAG, "--- closed speechConfig.");
-
-        if (executorService != null) {
-            executorService.shutdownNow(); // Terminates the executor service immediately
-            try {
-                if (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
-                    Log.w(TAG, "Executor did not terminate in the specified time.");
-                }
-            } catch (InterruptedException e) {
-                Log.e(TAG, "Termination interrupted", e);
-            }
-        }
+        stopReco();
         Log.d(TAG, "--- Azure speech rec destroyed.");
     }
 
@@ -416,6 +415,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             case "Italian (Switzerland)":
                 currentLanguageCode = "it-CH";
                 break;
+            case "Italian":
             case "Italian (Italy)":
                 currentLanguageCode = "it-IT";
                 break;
@@ -438,6 +438,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             case "Kannada (India)":
                 currentLanguageCode = "kn-IN";
                 break;
+            case "Korean":
             case "Korean (Korea)":
                 currentLanguageCode = "ko-KR";
                 break;
@@ -493,6 +494,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             case "Pashto (Afghanistan)":
                 currentLanguageCode = "ps-AF";
                 break;
+            case "Portuguese":
             case "Portuguese (Brazil)":
                 currentLanguageCode = "pt-BR";
                 break;

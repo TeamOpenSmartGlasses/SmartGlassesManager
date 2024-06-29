@@ -150,6 +150,11 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
         EventBus.getDefault().unregister(this);
 
+        //kill speech rec
+        if (speechRecSwitchSystem != null){
+            speechRecSwitchSystem.destroy();
+        }
+
         //kill asg connection
         if (smartGlassesRepresentative != null) {
             smartGlassesRepresentative.destroy();
@@ -159,11 +164,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         //kill data transmitters
         if (dataObservable != null) {
             dataObservable.onComplete();
-        }
-
-        //kill speech rec
-        if (speechRecSwitchSystem != null){
-            speechRecSwitchSystem.destroy();
         }
 
         //kill textToSpeech
@@ -229,8 +229,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     public static ASR_FRAMEWORKS getChosenAsrFramework(Context context) {
         String asrString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_ASR_KEY), "");
         if (asrString.equals("")){
-            saveChosenAsrFramework(context, ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK);
-            asrString = ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK.name();
+            saveChosenAsrFramework(context, ASR_FRAMEWORKS.AZURE_ASR_FRAMEWORK);
+            asrString = ASR_FRAMEWORKS.AZURE_ASR_FRAMEWORK.name();
         }
         return ASR_FRAMEWORKS.valueOf(asrString);
     }
@@ -286,11 +286,15 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     //switches the currently running transcribe language without changing the default/saved language
     public void switchRunningTranscribeLanguage(String language){
+        if (speechRecSwitchSystem.currentLanguage == language){
+            return;
+        }
+
         //kill previous speech rec
         speechRecSwitchSystem.destroy();
         speechRecSwitchSystem = null;
 
-        //start speech rec after small delayd
+        //start speech rec after small delay
         Handler speechRecHandler = new Handler();
         Context context = this;
         speechRecHandler.postDelayed(new Runnable() {
