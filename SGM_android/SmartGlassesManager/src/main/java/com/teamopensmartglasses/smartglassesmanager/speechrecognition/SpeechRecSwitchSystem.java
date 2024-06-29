@@ -1,6 +1,7 @@
 package com.teamopensmartglasses.smartglassesmanager.speechrecognition;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PauseAsrEvent;
@@ -20,6 +21,7 @@ public class SpeechRecSwitchSystem {
     private SpeechRecVosk speechRecVosk;
     private SpeechRecGoogle speechRecGoogle;
     private Context mContext;
+    public String currentLanguage;
 
     public SpeechRecSwitchSystem(Context mContext) {
         this.mContext = mContext;
@@ -35,6 +37,9 @@ public class SpeechRecSwitchSystem {
         if (speechRecFramework != null){
             speechRecFramework.destroy();
         }
+
+        //set language
+        this.currentLanguage = language;
 
         //set new asr
         this.asrFramework = asrFramework;

@@ -286,11 +286,15 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     //switches the currently running transcribe language without changing the default/saved language
     public void switchRunningTranscribeLanguage(String language){
+        if (speechRecSwitchSystem.currentLanguage == language){
+            return;
+        }
+
         //kill previous speech rec
         speechRecSwitchSystem.destroy();
         speechRecSwitchSystem = null;
 
-        //start speech rec after small delayd
+        //start speech rec after small delay
         Handler speechRecHandler = new Handler();
         Context context = this;
         speechRecHandler.postDelayed(new Runnable() {

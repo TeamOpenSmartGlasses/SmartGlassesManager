@@ -64,6 +64,8 @@ public class TextToSpeechSystem {
     }
 
     public void speak(String text, Locale locale){
+        Log.d(TAG, "TTS speaking text: " + text);
+        Log.d(TAG, "TTS speaking this language: " + locale.toString());
         if (this.isLoaded){
             //setup memory of this tts
             HashMap<String, String> params = new HashMap<>();
