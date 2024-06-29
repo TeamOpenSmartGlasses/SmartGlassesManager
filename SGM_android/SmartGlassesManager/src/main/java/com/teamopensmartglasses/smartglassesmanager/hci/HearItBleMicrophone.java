@@ -50,6 +50,10 @@ public class HearItBleMicrophone {
         this.hearItBleMicCallback = hearItBleMicCallback;
     }
 
+    public boolean isConnected(){
+        return isConnected.get();
+    }
+
     public HearItBleMicrophone(Context context) {
         this.context = context;
         this.bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -172,4 +176,16 @@ public class HearItBleMicrophone {
             pcmDataBuffer.putShort((short) predict);
         }
     }
+
+    public void destroy() {
+        if (bluetoothGatt != null) {
+            bluetoothGatt.disconnect();
+            bluetoothGatt.close();
+            bluetoothGatt = null;
+        }
+        hearItBleMicCallback = null;
+        isConnected.set(false);
+        Log.i(TAG, "Bluetooth connection closed and callback turned off.");
+    }
+
 }

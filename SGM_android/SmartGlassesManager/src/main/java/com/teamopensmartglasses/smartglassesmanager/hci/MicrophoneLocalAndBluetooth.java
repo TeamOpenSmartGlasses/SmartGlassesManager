@@ -286,7 +286,9 @@ public class MicrophoneLocalAndBluetooth {
                 }
                 b_buffer.order(ByteOrder.LITTLE_ENDIAN);
                 b_buffer.asShortBuffer().put(short_buffer);
-                mChunkCallback.onSuccess(b_buffer);
+                if (hearItBleMicrophone != null && !hearItBleMicrophone.isConnected()) {
+                    mChunkCallback.onSuccess(b_buffer);
+                }
                 b_buffer.clear();
             }
         }
@@ -330,6 +332,7 @@ public class MicrophoneLocalAndBluetooth {
     public void destroy() {
         stopRecording();
 
+        hearItBleMicrophone.destroy();
         mIsCountDownOn = false;
         mCountDown.cancel();
         deactivateBluetoothSco();
