@@ -3,6 +3,7 @@ package com.teamopensmartglasses.smartglassesmanager.speechrecognition.azure;
 import android.content.Context;
 import android.util.Log;
 
+import com.microsoft.cognitiveservices.speech.Connection;
 import com.microsoft.cognitiveservices.speech.PhraseListGrammar;
 import com.microsoft.cognitiveservices.speech.ProfanityOption;
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
@@ -103,13 +104,35 @@ public class SpeechRecAzure extends SpeechRecFramework {
             }
         });
 
+        Connection connection = Connection.fromRecognizer(speechRecognizer);
+        connection.disconnected.addEventListener((s, connectionEventArgs) -> {
+            Log.e(TAG, "Disconnected from Azure Speech Service, sessionId: " + connectionEventArgs.getSessionId());
+            handleDisconnect();
+        });
+
         executorService.submit(() -> {
             try {
                 speechRecognizer.startContinuousRecognitionAsync().get();
                 Log.i(TAG, "Continuous recognition started.");
             } catch (Exception e) {
                 Log.e(TAG, "Error starting continuous recognition: " + e.getMessage());
-                initializeRecognizer(); // Auto-restart on failure
+                handleDisconnect();
+            }
+        });
+    }
+
+    private void handleDisconnect() {
+        executorService.submit(() -> {
+            boolean connected = false;
+            while (!connected) {
+                try {
+                    Thread.sleep(1000);
+                    speechRecognizer.startContinuousRecognitionAsync().get();
+                    connected = true;
+                    Log.i(TAG, "Reconnected and continuous recognition started.");
+                } catch (Exception e) {
+                    Log.e(TAG, "Error reconnecting: " + e.getMessage());
+                }
             }
         });
     }
