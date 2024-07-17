@@ -25,6 +25,7 @@ import com.vuzix.ultralite.UltraliteSDK;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.function.Function;
 
 
 //communicate with ActiveLook smart glasses
@@ -224,6 +225,42 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         ultraliteCanvas.commit();
         screenIsClear = false;
     }
+
+    public void displayDoubleTextWall(String textTop, String textBottom) {
+        if (screenToggleOff) {
+            return;
+        }
+
+        Log.d(TAG, "Ultralite is doing double text wall");
+
+        // Constants for maximum lines and characters per line
+        final int maxLines = 10; // Adjusted from 11.5 for practical use
+        final int maxCharsPerLine = 20; // Assuming max 27 characters fit per line on your display
+
+        // Calculate bottom text requirement
+        int bottomLinesRequired = maxLines / 2;
+        StringBuilder bottomBuilder = new StringBuilder(textBottom);
+        int currentBottomLines = (int) Math.ceil((double) textBottom.length() / maxCharsPerLine);
+
+        // Add necessary newlines to push bottom text to the required position
+        for (int i = currentBottomLines; i < bottomLinesRequired; i++) {
+            bottomBuilder.insert(0, "\n");
+        }
+
+        // Combine top and bottom text
+        StringBuilder combinedText = new StringBuilder(textTop);
+        if (!textTop.isEmpty()) {
+            combinedText.append("\n"); // Ensure there's a separation between top and bottom text if top text exists
+        }
+        combinedText.append(bottomBuilder);
+
+        // Display the combined text using TEXT_BOTTOM_LEFT_ALIGN layout
+        changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
+        ultraliteSdk.sendText(combinedText.toString().trim());
+        ultraliteCanvas.commit();
+        screenIsClear = false;
+    }
+
 
     public void displayCenteredText(String text){
     }

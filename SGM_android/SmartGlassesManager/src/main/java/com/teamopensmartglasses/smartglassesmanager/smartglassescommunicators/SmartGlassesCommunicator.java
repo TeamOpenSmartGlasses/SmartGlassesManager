@@ -22,6 +22,7 @@ public abstract class SmartGlassesCommunicator {
 
     //display text wall
     public abstract void displayTextWall(String text);
+    public abstract void displayDoubleTextWall(String textTop, String textBottom);
 
     public abstract void displayReferenceCardImage(String title, String body, String imgUrl);
     public abstract void displayBulletList(String title, String [] bullets);

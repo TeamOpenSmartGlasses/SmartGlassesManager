@@ -24,6 +24,7 @@ import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.CenteredTextViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleScoAudioEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DoubleTextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
@@ -449,6 +450,11 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     //show a text wall card on the smart glasses
     public void sendTextWall(String text) {
         EventBus.getDefault().post(new TextWallViewRequestEvent(text));
+    }
+
+    //show a double text wall card on the smart glasses
+    public void sendDoubleTextWall(String textTop, String textBottom) {
+        EventBus.getDefault().post(new DoubleTextWallViewRequestEvent(textTop, textBottom));
     }
 
     //show a reference card on the smart glasses with title and body text

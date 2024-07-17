@@ -590,6 +590,12 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         }
     }
 
+
+    public void displayDoubleTextWall(String textTop, String textBottom){
+        Log.d(TAG, "TODO: SHOWING DOUBLE TEXT WALL");
+        displayTextWall(textTop + textBottom);
+    }
+
     public void displayReferenceCardImage(String title, String body, String imgUrl){
         try{
             //build json object to send command result

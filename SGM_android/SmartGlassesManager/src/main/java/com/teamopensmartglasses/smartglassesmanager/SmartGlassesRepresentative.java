@@ -14,6 +14,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleScoAudioEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DoubleTextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
@@ -219,6 +220,13 @@ class SmartGlassesRepresentative {
     public void onTextWallViewEvent(TextWallViewRequestEvent receivedEvent){
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayTextWall(receivedEvent.text);
+        }
+    }
+
+    @Subscribe
+    public void onDoubleTextWallViewEvent(DoubleTextWallViewRequestEvent receivedEvent){
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayDoubleTextWall(receivedEvent.textTop, receivedEvent.textBottom);
         }
     }
 
