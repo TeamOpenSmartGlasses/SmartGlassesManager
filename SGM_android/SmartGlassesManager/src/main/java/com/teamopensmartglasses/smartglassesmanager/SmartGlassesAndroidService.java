@@ -284,18 +284,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         return targetLanguageString;
     }
 
-    public Boolean isVocabularyUpgradeEnabled(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean(context.getResources().getString(R.string.SHARED_PREF_VOCABULARY_UPGRADE), false);
-    }
-
-    public void setVocabularyUpgradeEnabled(Context context, boolean isEnabled) {
-        PreferenceManager.getDefaultSharedPreferences(context)
-                .edit()
-                .putBoolean(context.getResources().getString(R.string.SHARED_PREF_VOCABULARY_UPGRADE), isEnabled)
-                .apply();
-    }
-
     //switches the currently running transcribe language without changing the default/saved language
     public void switchRunningTranscribeLanguage(String language){
         if (speechRecSwitchSystem.currentLanguage == language){
