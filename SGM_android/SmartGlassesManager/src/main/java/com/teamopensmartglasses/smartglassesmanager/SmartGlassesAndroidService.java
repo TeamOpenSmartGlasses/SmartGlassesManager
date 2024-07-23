@@ -137,7 +137,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         connectHandler.post(new Runnable() {
             @Override
             public void run() {
-                 Log.d(TAG, "CONNECTING TO SMART GLASSES");
+                Log.d(TAG, "CONNECTING TO SMART GLASSES");
                 smartGlassesRepresentative = new SmartGlassesRepresentative(currContext, device, currContext, dataObservable);
                 smartGlassesRepresentative.connectToSmartGlasses();
             }
@@ -282,6 +282,18 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             targetLanguageString = "English";
         }
         return targetLanguageString;
+    }
+
+    public Boolean isVocabularyUpgradeEnabled(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean(context.getResources().getString(R.string.SHARED_PREF_VOCABULARY_UPGRADE), false);
+    }
+
+    public void setVocabularyUpgradeEnabled(Context context, boolean isEnabled) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putBoolean(context.getResources().getString(R.string.SHARED_PREF_VOCABULARY_UPGRADE), isEnabled)
+                .apply();
     }
 
     //switches the currently running transcribe language without changing the default/saved language

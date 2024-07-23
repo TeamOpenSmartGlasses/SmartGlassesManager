@@ -29,4 +29,5 @@
 
     <string name="SHARED_PREF_ASR_KEY">shared_pref_api_key</string>
     <string name="SHARED_PREF_TRANSCRIBE_LANGUAGE">shared_pref_transcribe_language</string>
+    <string name="SHARED_PREF_VOCABULARY_UPGRADE">shared_pref_vocabulary_upgrade</string>
 </resources>
