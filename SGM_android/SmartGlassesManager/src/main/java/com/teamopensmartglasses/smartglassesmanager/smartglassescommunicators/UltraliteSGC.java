@@ -202,6 +202,9 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             return;
         }
 
+        goHomeHandler.removeCallbacksAndMessages(null);
+        goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
+
         Log.d(TAG, "Ultralite is doing text wall");
 
         // Cut text wall down to the largest number of lines possible to display
@@ -230,6 +233,9 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         if (screenToggleOff) {
             return;
         }
+
+        goHomeHandler.removeCallbacksAndMessages(null);
+        goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
 
         Log.d(TAG, "Ultralite is doing double text wall");
 
@@ -615,7 +621,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
        //disconnect after slight delay, so our above text gets a chance to show up
        goHomeHandler.removeCallbacksAndMessages(null);
-//       goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
+       goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
        goHomeRunnable = new Runnable() {
            @Override
            public void run() {
