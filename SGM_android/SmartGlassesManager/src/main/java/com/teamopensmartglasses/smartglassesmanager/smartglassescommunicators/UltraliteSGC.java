@@ -234,13 +234,19 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         Log.d(TAG, "Ultralite is doing double text wall");
 
         // Constants for maximum lines and characters per line
-        final int maxLines = 10; // Adjusted from 11.5 for practical use
-        final int maxCharsPerLine = 20; // Assuming max 27 characters fit per line on your display
+        final int maxLines = 12; // Adjusted from 11.5 for practical use
+        final int maxCharsPerLine = 38; // Assuming max 27 characters fit per line on your display
 
         // Calculate bottom text requirement
         int bottomLinesRequired = maxLines / 2;
         StringBuilder bottomBuilder = new StringBuilder(textBottom);
-        int currentBottomLines = (int) Math.ceil((double) textBottom.length() / maxCharsPerLine);
+
+        // Calculate the number of lines in textBottom
+        String[] bottomLines = textBottom.split("\n");
+        int currentBottomLines = 0;
+        for (String line : bottomLines) {
+            currentBottomLines += Math.ceil((double) line.length() / maxCharsPerLine);
+        }
 
         // Add necessary newlines to push bottom text to the required position
         for (int i = currentBottomLines; i < bottomLinesRequired; i++) {
@@ -260,7 +266,6 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         ultraliteCanvas.commit();
         screenIsClear = false;
     }
-
 
     public void displayCenteredText(String text){
     }
