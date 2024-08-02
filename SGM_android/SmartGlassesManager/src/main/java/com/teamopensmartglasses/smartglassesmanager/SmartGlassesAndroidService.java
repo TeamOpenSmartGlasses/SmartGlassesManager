@@ -20,10 +20,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 import androidx.preference.PreferenceManager;
 
+import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.SmartGlassesFontSize;
 import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.CenteredTextViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleScoAudioEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DoubleTextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScrollingTextRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
@@ -31,6 +31,7 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCa
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SetFontSizeEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
@@ -132,6 +133,8 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         sendUiUpdate();
     }
 
+    protected abstract void onGlassesConnected(SmartGlassesDevice device);
+
     public void connectToSmartGlasses(SmartGlassesDevice device) {
         //this represents the smart glasses - it handles the connection, sending data to them, etc
         LifecycleService currContext = this;
@@ -210,6 +213,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             // Update preferred wearable if connected
             if(connectionState == 2){
                 savePreferredWearable(this, smartGlassesRepresentative.smartGlassesDevice.deviceModelName);
+                onGlassesConnected(smartGlassesRepresentative.smartGlassesDevice);
             }
         } else {
             connectionState = 0;
@@ -507,4 +511,6 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     public void sendHomeScreen(){
         EventBus.getDefault().post(new HomeScreenEvent());
     }
+
+    public void setFontSize(SmartGlassesFontSize fontSize) { EventBus.getDefault().post(new SetFontSizeEvent(fontSize)); }
 }

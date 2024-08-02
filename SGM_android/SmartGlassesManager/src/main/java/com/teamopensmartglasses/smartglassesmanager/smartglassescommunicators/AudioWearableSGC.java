@@ -101,4 +101,6 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
 
     public void updateNaturalLanguageCommandScreen(String naturalLanguageArgs){
     }
+
+    public void setFontSize(SmartGlassesFontSize fontSize){}
 }

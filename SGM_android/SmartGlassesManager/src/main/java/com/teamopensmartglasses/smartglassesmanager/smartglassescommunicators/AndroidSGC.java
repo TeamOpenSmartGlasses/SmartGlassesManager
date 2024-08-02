@@ -799,4 +799,5 @@ public class AndroidSGC extends SmartGlassesCommunicator {
         EventBus.getDefault().post(new GlassesPovImageEvent(encodedImage, imageTime));
     }
 
+    public void setFontSize(SmartGlassesFontSize fontSize){}
 }

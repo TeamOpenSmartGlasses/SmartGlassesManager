@@ -55,6 +55,8 @@ public abstract class SmartGlassesCommunicator {
     //home screen
     public abstract void showHomeScreen();
 
+    public abstract void setFontSize(SmartGlassesFontSize fontSize);
+
     //fonts
     public int LARGE_FONT;
     public int MEDIUM_FONT;

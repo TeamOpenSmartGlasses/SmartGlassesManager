@@ -17,6 +17,7 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleS
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DoubleTextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SetFontSizeEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.AudioWearableSGC;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.UltraliteSGC;
@@ -321,6 +322,13 @@ class SmartGlassesRepresentative {
         Log.d(TAG, "onPromptViewRequestEvent called");
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayPromptView(receivedEvent.prompt, receivedEvent.options);
+        }
+    }
+
+    @Subscribe
+    public void onSetFontSizeEvent(SetFontSizeEvent receivedEvent) {
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.setFontSize(receivedEvent.fontSize);
         }
     }
 

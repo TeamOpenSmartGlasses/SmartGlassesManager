@@ -25,7 +25,6 @@ import com.vuzix.ultralite.UltraliteSDK;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.function.Function;
 
 
 //communicate with ActiveLook smart glasses
@@ -440,6 +439,24 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        homeScreenInNSeconds(lingerTime);
 //    }
 
+    public void setFontSize(SmartGlassesFontSize fontSize){
+        int textSize;
+        switch (fontSize){
+            case SMALL:
+                textSize = 25;
+                break;
+            case MEDIUM:
+                textSize = 30;
+                break;
+            case LARGE:
+                textSize = 40;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown font size: " + fontSize);
+        }
+        ultraliteSdk.setFont(null, 0, textSize);
+    }
+
     public void displayReferenceCardSimple(String titleStr, String bodyStr, int lingerTime){
         if (screenToggleOff){
             return;
@@ -482,6 +499,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         } else {
             ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, 640 / 2, -1, TextWrapMode.WRAP, true);
         }
+
+
 
         //NOTE:
 //        int createText(@NonNull
