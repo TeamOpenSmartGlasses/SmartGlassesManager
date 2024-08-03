@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.util.Log;
@@ -44,6 +45,10 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
     //ultralite pixel buffer on left side of screen
     int ultraliteLeftSidePixelBuffer = 40;
+
+    // Constants for maximum lines and characters per line //depends on size of pixel buffer! //for MEDIUM text!
+    private int maxLines = 12; // Adjusted from 11.5 for practical use
+    private int maxCharsPerLine = 38; // Assuming max 27 characters fit per line on your display
 
     //handler to turn off screen
     Handler goHomeHandler;
@@ -236,11 +241,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         goHomeHandler.removeCallbacksAndMessages(null);
         goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
 
-        Log.d(TAG, "Ultralite is doing double text wall");
-
-        // Constants for maximum lines and characters per line
-        final int maxLines = 12; // Adjusted from 11.5 for practical use
-        final int maxCharsPerLine = 38; // Assuming max 27 characters fit per line on your display
+//        Log.d(TAG, "Ultralite is doing double text wall");
 
         // Calculate bottom text requirement
         int bottomLinesRequired = maxLines / 2;
@@ -443,13 +444,19 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         int textSize;
         switch (fontSize){
             case SMALL:
-                textSize = 25;
+                textSize = 24;
+                maxLines = 14;
+                maxCharsPerLine = 42;
                 break;
             case MEDIUM:
-                textSize = 30;
+                textSize = 29;
+                maxLines = 12; // Adjusted from 11.5 for practical use
+                maxCharsPerLine = 38; // Assuming max 27 characters fit per line on your display
                 break;
             case LARGE:
                 textSize = 40;
+                maxLines = 7;
+                maxCharsPerLine = 28;
                 break;
             default:
                 throw new IllegalArgumentException("Unknown font size: " + fontSize);
