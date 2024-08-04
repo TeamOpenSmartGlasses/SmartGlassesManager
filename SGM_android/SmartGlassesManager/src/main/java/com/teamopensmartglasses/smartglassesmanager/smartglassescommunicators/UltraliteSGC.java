@@ -39,7 +39,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     boolean screenToggleOff = false; //should we keep the screen off?
     LifecycleOwner lifecycleOwner;
     Context context;
-    public static final int cardLingerTime = 30;
+    public static final int cardLingerTime = 15;
 
     private ArrayList rowTextsLiveNow;
 
@@ -164,7 +164,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             hasUltraliteControl = true;
             setupUltraliteCanvas();
             connectionEvent(2);
-            displayReferenceCardSimple("Connected to SGM.", "Connected to SGM by TeamOpenSmartGlasses", 5);
+            displayReferenceCardSimple("Connected to SGM", "by TeamOpenSmartGlasses", 5);
         } else {
             hasUltraliteControl = false;
         }

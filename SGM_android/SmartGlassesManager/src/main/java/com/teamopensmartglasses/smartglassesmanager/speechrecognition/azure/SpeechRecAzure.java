@@ -91,7 +91,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             BigInteger offset = e.getResult().getOffset();
             if (intermediateResult != null && !intermediateResult.trim().isEmpty()) {
                 EventBus.getDefault().post(new SpeechRecOutputEvent(intermediateResult, offset.longValue(), false));
-                Log.d(TAG, "Got intermediate ASR: " + intermediateResult);
+//                Log.d(TAG, "Got intermediate ASR: " + intermediateResult);
             }
         });
 
@@ -100,7 +100,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             BigInteger offset = e.getResult().getOffset();
             if (finalResult != null && !finalResult.trim().isEmpty()) {
                 EventBus.getDefault().post(new SpeechRecOutputEvent(finalResult, offset.longValue(), true));
-                Log.d(TAG, "Got final ASR: " + finalResult);
+//                Log.d(TAG, "Got final ASR: " + finalResult);
             }
         });
 
