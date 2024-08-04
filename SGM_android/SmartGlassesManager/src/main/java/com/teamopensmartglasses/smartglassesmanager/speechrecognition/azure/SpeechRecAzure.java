@@ -9,15 +9,16 @@ import com.microsoft.cognitiveservices.speech.ProfanityOption;
 import com.microsoft.cognitiveservices.speech.SpeechConfig;
 import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
+import com.microsoft.cognitiveservices.speech.translation.SpeechTranslationConfig;
+import com.microsoft.cognitiveservices.speech.translation.TranslationRecognizer;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SpeechRecOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecFramework;
-import java.math.BigInteger;
-
 import org.greenrobot.eventbus.EventBus;
 
+import java.math.BigInteger;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class SpeechRecAzure extends SpeechRecFramework {
     private static final String API_KEY = "0a2244c410664011bbf33fdb2cdc0f30";
@@ -26,24 +27,56 @@ public class SpeechRecAzure extends SpeechRecFramework {
 
     private SpeechConfig speechConfig;
     private SpeechRecognizer speechRecognizer;
+
+    private SpeechTranslationConfig speechTranslationConfig;
+    private TranslationRecognizer translationRecognizer;
+
     private ExecutorService executorService = Executors.newCachedThreadPool();
     private Context mContext;
     private String currentLanguageCode;
+    private String targetLanguageCode;
+    private boolean isTranslation;
 
     public SpeechRecAzure(Context context, String languageLocale) {
         this.mContext = context;
-        initLanguageLocale(languageLocale);
+        this.currentLanguageCode = initLanguageLocale(languageLocale);
+        this.isTranslation = false;
+    }
+
+    public SpeechRecAzure(Context context, String currentLanguageLocale, String targetLanguageLocale) {
+        this.mContext = context;
+        this.currentLanguageCode = initLanguageLocale(currentLanguageLocale);
+        this.targetLanguageCode = initLanguageLocale(targetLanguageLocale);
+        this.isTranslation = true;
     }
 
     @Override
     public void start() {
-        Log.d(TAG, "Starting Azure Speech Recognition");
-        initializeRecognizer();
+        Log.d(TAG, "Starting Azure Speech Service");
+        if (isTranslation) {
+            initializeTranslationRecognizer();
+        } else {
+            initializeSpeechRecognizer();
+        }
     }
 
     private void stopReco() {
         Log.d(TAG, "Attempting to stop continuous recognition.");
-        if (speechRecognizer != null) {
+        if (isTranslation && translationRecognizer != null) {
+            executorService.submit(() -> {
+                try {
+                    translationRecognizer.stopContinuousRecognitionAsync().get();
+                    Log.i(TAG, "Continuous translation stopped.");
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to stop continuous translation: " + e.getMessage());
+                } finally {
+                    translationRecognizer.close();
+                    translationRecognizer = null;
+                    Log.i(TAG, "TranslationRecognizer instance closed and set to null.");
+                    AzureAudioInputStream.getInstance().close();
+                }
+            });
+        } else if (!isTranslation && speechRecognizer != null) {
             executorService.submit(() -> {
                 try {
                     speechRecognizer.stopContinuousRecognitionAsync().get();
@@ -54,7 +87,6 @@ public class SpeechRecAzure extends SpeechRecFramework {
                     speechRecognizer.close();
                     speechRecognizer = null;
                     Log.i(TAG, "SpeechRecognizer instance closed and set to null.");
-//                    runOnUiThread(() -> startRecoButton.setEnabled(true));
                     AzureAudioInputStream.getInstance().close();
                 }
             });
@@ -64,17 +96,19 @@ public class SpeechRecAzure extends SpeechRecFramework {
     @Override
     public void destroy() {
         stopReco();
-        Log.d(TAG, "--- Azure speech rec destroyed.");
+        Log.d(TAG, "--- Azure speech service destroyed.");
     }
 
     @Override
     public void ingestAudioChunk(byte[] audioChunk) {
-        if (speechRecognizer != null) {
+        if (isTranslation && translationRecognizer != null) {
+            AzureAudioInputStream.getInstance().push(audioChunk);
+        } else if (!isTranslation && speechRecognizer != null) {
             AzureAudioInputStream.getInstance().push(audioChunk);
         }
     }
 
-    private void initializeRecognizer() {
+    private void initializeSpeechRecognizer() {
         speechConfig = SpeechConfig.fromSubscription(API_KEY, REGION);
         speechConfig.setSpeechRecognitionLanguage(currentLanguageCode);
         speechConfig.requestWordLevelTimestamps();
@@ -91,7 +125,6 @@ public class SpeechRecAzure extends SpeechRecFramework {
             BigInteger offset = e.getResult().getOffset();
             if (intermediateResult != null && !intermediateResult.trim().isEmpty()) {
                 EventBus.getDefault().post(new SpeechRecOutputEvent(intermediateResult, offset.longValue(), false));
-//                Log.d(TAG, "Got intermediate ASR: " + intermediateResult);
             }
         });
 
@@ -100,7 +133,6 @@ public class SpeechRecAzure extends SpeechRecFramework {
             BigInteger offset = e.getResult().getOffset();
             if (finalResult != null && !finalResult.trim().isEmpty()) {
                 EventBus.getDefault().post(new SpeechRecOutputEvent(finalResult, offset.longValue(), true));
-//                Log.d(TAG, "Got final ASR: " + finalResult);
             }
         });
 
@@ -121,13 +153,71 @@ public class SpeechRecAzure extends SpeechRecFramework {
         });
     }
 
+    private void initializeTranslationRecognizer() {
+        speechTranslationConfig = SpeechTranslationConfig.fromSubscription(API_KEY, REGION);
+        speechTranslationConfig.setSpeechRecognitionLanguage(currentLanguageCode);
+        speechTranslationConfig.addTargetLanguage(targetLanguageCode);
+
+        AudioConfig audioConfig = AudioConfig.fromStreamInput(AzureAudioInputStream.getInstance());
+
+        translationRecognizer = new TranslationRecognizer(speechTranslationConfig, audioConfig);
+
+        translationRecognizer.recognizing.addEventListener((o, e) -> {
+            String intermediateResult = e.getResult().getText();
+            BigInteger offset = e.getResult().getOffset();
+            if (intermediateResult != null && !intermediateResult.trim().isEmpty()) {
+                // Get the single entry from the map
+                Map.Entry<String, String> translation = e.getResult().getTranslations().entrySet().iterator().next();
+                String translatedText = translation.getValue();
+                String targetLanguage = translation.getKey();
+                Log.d(TAG, "Translated into " + targetLanguage + ": " + translatedText);
+                EventBus.getDefault().post(new SpeechRecOutputEvent(translatedText, offset.longValue(), false, false));
+                EventBus.getDefault().post(new SpeechRecOutputEvent(translatedText, offset.longValue(), false, true));
+            }
+        });
+
+        translationRecognizer.recognized.addEventListener((o, e) -> {
+            String finalResult = e.getResult().getText();
+            BigInteger offset = e.getResult().getOffset();
+            if (finalResult != null && !finalResult.trim().isEmpty()) {
+                // Get the single entry from the map
+                Map.Entry<String, String> translation = e.getResult().getTranslations().entrySet().iterator().next();
+                String translatedText = translation.getValue();
+                String targetLanguage = translation.getKey();
+                Log.d(TAG, "Translated into " + targetLanguage + ": " + translatedText);
+                EventBus.getDefault().post(new SpeechRecOutputEvent(translatedText, offset.longValue(), true, false));
+                EventBus.getDefault().post(new SpeechRecOutputEvent(translatedText, offset.longValue(), true, true));
+            }
+        });
+
+        Connection connection = Connection.fromRecognizer(translationRecognizer);
+        connection.disconnected.addEventListener((s, connectionEventArgs) -> {
+            Log.e(TAG, "Disconnected from Azure Speech Service, sessionId: " + connectionEventArgs.getSessionId());
+            handleDisconnect();
+        });
+
+        executorService.submit(() -> {
+            try {
+                translationRecognizer.startContinuousRecognitionAsync().get();
+                Log.i(TAG, "Continuous recognition started.");
+            } catch (Exception e) {
+                Log.e(TAG, "Error starting continuous recognition: " + e.getMessage());
+                handleDisconnect();
+            }
+        });
+    }
+
     private void handleDisconnect() {
         executorService.submit(() -> {
             boolean connected = false;
             while (!connected) {
                 try {
                     Thread.sleep(1000);
-                    speechRecognizer.startContinuousRecognitionAsync().get();
+                    if (isTranslation) {
+                        translationRecognizer.startContinuousRecognitionAsync().get();
+                    } else {
+                        speechRecognizer.startContinuousRecognitionAsync().get();
+                    }
                     connected = true;
                     Log.i(TAG, "Reconnected and continuous recognition started.");
                 } catch (Exception e) {
@@ -145,473 +235,311 @@ public class SpeechRecAzure extends SpeechRecFramework {
         phraseListGrammar.addPhrase("smart glasses");
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     //below is long list of languages
-    private void initLanguageLocale(String localeString) {
+    private String initLanguageLocale(String localeString) {
         switch (localeString) {
             case "Afrikaans (South Africa)":
-                currentLanguageCode = "af-ZA";
-                break;
+                return "af-ZA";
             case "Amharic (Ethiopia)":
-                currentLanguageCode = "am-ET";
-                break;
+                return "am-ET";
             case "Arabic (United Arab Emirates)":
-                currentLanguageCode = "ar-AE";
-                break;
+                return "ar-AE";
             case "Arabic (Bahrain)":
-                currentLanguageCode = "ar-BH";
-                break;
+                return "ar-BH";
             case "Arabic (Algeria)":
-                currentLanguageCode = "ar-DZ";
-                break;
+                return "ar-DZ";
             case "Arabic (Egypt)":
-                currentLanguageCode = "ar-EG";
-                break;
+                return "ar-EG";
             case "Arabic (Israel)":
-                currentLanguageCode = "ar-IL";
-                break;
+                return "ar-IL";
             case "Arabic (Iraq)":
-                currentLanguageCode = "ar-IQ";
-                break;
+                return "ar-IQ";
             case "Arabic (Jordan)":
-                currentLanguageCode = "ar-JO";
-                break;
+                return "ar-JO";
             case "Arabic (Kuwait)":
-                currentLanguageCode = "ar-KW";
-                break;
+                return "ar-KW";
             case "Arabic (Lebanon)":
-                currentLanguageCode = "ar-LB";
-                break;
+                return "ar-LB";
             case "Arabic (Libya)":
-                currentLanguageCode = "ar-LY";
-                break;
+                return "ar-LY";
             case "Arabic (Morocco)":
-                currentLanguageCode = "ar-MA";
-                break;
+                return "ar-MA";
             case "Arabic (Oman)":
-                currentLanguageCode = "ar-OM";
-                break;
+                return "ar-OM";
             case "Arabic (Palestinian Authority)":
-                currentLanguageCode = "ar-PS";
-                break;
+                return "ar-PS";
             case "Arabic (Qatar)":
-                currentLanguageCode = "ar-QA";
-                break;
+                return "ar-QA";
             case "Arabic (Saudi Arabia)":
-                currentLanguageCode = "ar-SA";
-                break;
+                return "ar-SA";
             case "Arabic (Syria)":
-                currentLanguageCode = "ar-SY";
-                break;
+                return "ar-SY";
             case "Arabic (Tunisia)":
-                currentLanguageCode = "ar-TN";
-                break;
+                return "ar-TN";
             case "Arabic (Yemen)":
-                currentLanguageCode = "ar-YE";
-                break;
+                return "ar-YE";
             case "Azerbaijani (Latin, Azerbaijan)":
-                currentLanguageCode = "az-AZ";
-                break;
+                return "az-AZ";
             case "Bulgarian (Bulgaria)":
-                currentLanguageCode = "bg-BG";
-                break;
+                return "bg-BG";
             case "Bengali (India)":
-                currentLanguageCode = "bn-IN";
-                break;
+                return "bn-IN";
             case "Bosnian (Bosnia and Herzegovina)":
-                currentLanguageCode = "bs-BA";
-                break;
+                return "bs-BA";
             case "Catalan":
-                currentLanguageCode = "ca-ES";
-                break;
+                return "ca-ES";
             case "Czech (Czechia)":
-                currentLanguageCode = "cs-CZ";
-                break;
+                return "cs-CZ";
             case "Welsh (United Kingdom)":
-                currentLanguageCode = "cy-GB";
-                break;
+                return "cy-GB";
             case "Danish (Denmark)":
-                currentLanguageCode = "da-DK";
-                break;
+                return "da-DK";
             case "German (Austria)":
-                currentLanguageCode = "de-AT";
-                break;
+                return "de-AT";
             case "German (Switzerland)":
-                currentLanguageCode = "de-CH";
-                break;
+                return "de-CH";
             case "German":
             case "German (Germany)":
-                currentLanguageCode = "de-DE";
-                break;
+                return "de-DE";
             case "Greek (Greece)":
-                currentLanguageCode = "el-GR";
-                break;
+                return "el-GR";
             case "English (Australia)":
-                currentLanguageCode = "en-AU";
-                break;
+                return "en-AU";
             case "English (Canada)":
-                currentLanguageCode = "en-CA";
-                break;
+                return "en-CA";
             case "English (United Kingdom)":
-                currentLanguageCode = "en-GB";
-                break;
+                return "en-GB";
             case "English (Ghana)":
-                currentLanguageCode = "en-GH";
-                break;
+                return "en-GH";
             case "English (Hong Kong SAR)":
-                currentLanguageCode = "en-HK";
-                break;
+                return "en-HK";
             case "English (Ireland)":
-                currentLanguageCode = "en-IE";
-                break;
+                return "en-IE";
             case "English (India)":
-                currentLanguageCode = "en-IN";
-                break;
+                return "en-IN";
             case "English (Kenya)":
-                currentLanguageCode = "en-KE";
-                break;
+                return "en-KE";
             case "English (Nigeria)":
-                currentLanguageCode = "en-NG";
-                break;
+                return "en-NG";
             case "English (New Zealand)":
-                currentLanguageCode = "en-NZ";
-                break;
+                return "en-NZ";
             case "English (Philippines)":
-                currentLanguageCode = "en-PH";
-                break;
+                return "en-PH";
             case "English (Singapore)":
-                currentLanguageCode = "en-SG";
-                break;
+                return "en-SG";
             case "English (Tanzania)":
-                currentLanguageCode = "en-TZ";
-                break;
+                return "en-TZ";
             case "English":
             case "English (United States)":
-                currentLanguageCode = "en-US";
-                break;
+                return "en-US";
             case "English (South Africa)":
-                currentLanguageCode = "en-ZA";
-                break;
+                return "en-ZA";
             case "Spanish (Argentina)":
-                currentLanguageCode = "es-AR";
-                break;
+                return "es-AR";
             case "Spanish (Bolivia)":
-                currentLanguageCode = "es-BO";
-                break;
+                return "es-BO";
             case "Spanish (Chile)":
-                currentLanguageCode = "es-CL";
-                break;
+                return "es-CL";
             case "Spanish (Colombia)":
-                currentLanguageCode = "es-CO";
-                break;
+                return "es-CO";
             case "Spanish (Costa Rica)":
-                currentLanguageCode = "es-CR";
-                break;
+                return "es-CR";
             case "Spanish (Cuba)":
-                currentLanguageCode = "es-CU";
-                break;
+                return "es-CU";
             case "Spanish (Dominican Republic)":
-                currentLanguageCode = "es-DO";
-                break;
+                return "es-DO";
             case "Spanish (Ecuador)":
-                currentLanguageCode = "es-EC";
-                break;
+                return "es-EC";
             case "Spanish (Spain)":
-                currentLanguageCode = "es-ES";
-                break;
+                return "es-ES";
             case "Spanish (Equatorial Guinea)":
-                currentLanguageCode = "es-GQ";
-                break;
+                return "es-GQ";
             case "Spanish (Guatemala)":
-                currentLanguageCode = "es-GT";
-                break;
+                return "es-GT";
             case "Spanish (Honduras)":
-                currentLanguageCode = "es-HN";
-                break;
+                return "es-HN";
             case "Spanish":
             case "Spanish (Mexico)":
-                currentLanguageCode = "es-MX";
-                break;
+                return "es-MX";
             case "Spanish (Nicaragua)":
-                currentLanguageCode = "es-NI";
-                break;
+                return "es-NI";
             case "Spanish (Panama)":
-                currentLanguageCode = "es-PA";
-                break;
+                return "es-PA";
             case "Spanish (Peru)":
-                currentLanguageCode = "es-PE";
-                break;
+                return "es-PE";
             case "Spanish (Puerto Rico)":
-                currentLanguageCode = "es-PR";
-                break;
+                return "es-PR";
             case "Spanish (Paraguay)":
-                currentLanguageCode = "es-PY";
-                break;
+                return "es-PY";
             case "Spanish (El Salvador)":
-                currentLanguageCode = "es-SV";
-                break;
+                return "es-SV";
             case "Spanish (United States)":
-                currentLanguageCode = "es-US";
-                break;
+                return "es-US";
             case "Spanish (Uruguay)":
-                currentLanguageCode = "es-UY";
-                break;
+                return "es-UY";
             case "Spanish (Venezuela)":
-                currentLanguageCode = "es-VE";
-                break;
+                return "es-VE";
             case "Estonian (Estonia)":
-                currentLanguageCode = "et-EE";
-                break;
+                return "et-EE";
             case "Basque":
-                currentLanguageCode = "eu-ES";
-                break;
+                return "eu-ES";
             case "Persian (Iran)":
-                currentLanguageCode = "fa-IR";
-                break;
+                return "fa-IR";
             case "Finnish (Finland)":
-                currentLanguageCode = "fi-FI";
-                break;
+                return "fi-FI";
             case "Filipino (Philippines)":
-                currentLanguageCode = "fil-PH";
-                break;
+                return "fil-PH";
             case "French (Belgium)":
-                currentLanguageCode = "fr-BE";
-                break;
+                return "fr-BE";
             case "French (Canada)":
-                currentLanguageCode = "fr-CA";
-                break;
+                return "fr-CA";
             case "French (Switzerland)":
-                currentLanguageCode = "fr-CH";
-                break;
+                return "fr-CH";
             case "French":
             case "French (France)":
-                currentLanguageCode = "fr-FR";
-                break;
+                return "fr-FR";
             case "Irish (Ireland)":
-                currentLanguageCode = "ga-IE";
-                break;
+                return "ga-IE";
             case "Galician":
-                currentLanguageCode = "gl-ES";
-                break;
+                return "gl-ES";
             case "Gujarati (India)":
-                currentLanguageCode = "gu-IN";
-                break;
+                return "gu-IN";
             case "Hebrew":
             case "Hebrew (Israel)":
-                currentLanguageCode = "he-IL";
-                break;
+                return "he-IL";
             case "Hindi (India)":
-                currentLanguageCode = "hi-IN";
-                break;
+                return "hi-IN";
             case "Croatian (Croatia)":
-                currentLanguageCode = "hr-HR";
-                break;
+                return "hr-HR";
             case "Hungarian (Hungary)":
-                currentLanguageCode = "hu-HU";
-                break;
+                return "hu-HU";
             case "Armenian (Armenia)":
-                currentLanguageCode = "hy-AM";
-                break;
+                return "hy-AM";
             case "Indonesian (Indonesia)":
-                currentLanguageCode = "id-ID";
-                break;
+                return "id-ID";
             case "Icelandic (Iceland)":
-                currentLanguageCode = "is-IS";
-                break;
+                return "is-IS";
             case "Italian (Switzerland)":
-                currentLanguageCode = "it-CH";
-                break;
+                return "it-CH";
             case "Italian":
             case "Italian (Italy)":
-                currentLanguageCode = "it-IT";
-                break;
+                return "it-IT";
             case "Japanese":
             case "Japanese (Japan)":
-                currentLanguageCode = "ja-JP";
-                break;
+                return "ja-JP";
             case "Javanese (Latin, Indonesia)":
-                currentLanguageCode = "jv-ID";
-                break;
+                return "jv-ID";
             case "Georgian (Georgia)":
-                currentLanguageCode = "ka-GE";
-                break;
+                return "ka-GE";
             case "Kazakh (Kazakhstan)":
-                currentLanguageCode = "kk-KZ";
-                break;
+                return "kk-KZ";
             case "Khmer (Cambodia)":
-                currentLanguageCode = "km-KH";
-                break;
+                return "km-KH";
             case "Kannada (India)":
-                currentLanguageCode = "kn-IN";
-                break;
+                return "kn-IN";
             case "Korean":
             case "Korean (Korea)":
-                currentLanguageCode = "ko-KR";
-                break;
+                return "ko-KR";
             case "Lao (Laos)":
-                currentLanguageCode = "lo-LA";
-                break;
+                return "lo-LA";
             case "Lithuanian (Lithuania)":
-                currentLanguageCode = "lt-LT";
-                break;
+                return "lt-LT";
             case "Latvian (Latvia)":
-                currentLanguageCode = "lv-LV";
-                break;
+                return "lv-LV";
             case "Macedonian (North Macedonia)":
-                currentLanguageCode = "mk-MK";
-                break;
+                return "mk-MK";
             case "Malayalam (India)":
-                currentLanguageCode = "ml-IN";
-                break;
+                return "ml-IN";
             case "Mongolian (Mongolia)":
-                currentLanguageCode = "mn-MN";
-                break;
+                return "mn-MN";
             case "Marathi (India)":
-                currentLanguageCode = "mr-IN";
-                break;
+                return "mr-IN";
             case "Malay (Malaysia)":
-                currentLanguageCode = "ms-MY";
-                break;
+                return "ms-MY";
             case "Maltese (Malta)":
-                currentLanguageCode = "mt-MT";
-                break;
+                return "mt-MT";
             case "Burmese (Myanmar)":
-                currentLanguageCode = "my-MM";
-                break;
+                return "my-MM";
             case "Norwegian Bokmål (Norway)":
-                currentLanguageCode = "nb-NO";
-                break;
+                return "nb-NO";
             case "Nepali (Nepal)":
-                currentLanguageCode = "ne-NP";
-                break;
+                return "ne-NP";
             case "Dutch":
             case "Dutch (Belgium)":
-                currentLanguageCode = "nl-BE";
-                break;
+                return "nl-BE";
             case "Dutch (Netherlands)":
-                currentLanguageCode = "nl-NL";
-                break;
+                return "nl-NL";
             case "Punjabi (India)":
-                currentLanguageCode = "pa-IN";
-                break;
+                return "pa-IN";
             case "Polish (Poland)":
-                currentLanguageCode = "pl-PL";
-                break;
+                return "pl-PL";
             case "Pashto (Afghanistan)":
-                currentLanguageCode = "ps-AF";
-                break;
+                return "ps-AF";
             case "Portuguese":
             case "Portuguese (Brazil)":
-                currentLanguageCode = "pt-BR";
-                break;
+                return "pt-BR";
             case "Portuguese (Portugal)":
-                currentLanguageCode = "pt-PT";
-                break;
+                return "pt-PT";
             case "Romanian (Romania)":
-                currentLanguageCode = "ro-RO";
-                break;
+                return "ro-RO";
             case "Russian (Russia)":
-                currentLanguageCode = "ru-RU";
-                break;
+                return "ru-RU";
             case "Sinhala (Sri Lanka)":
-                currentLanguageCode = "si-LK";
-                break;
+                return "si-LK";
             case "Slovak (Slovakia)":
-                currentLanguageCode = "sk-SK";
-                break;
+                return "sk-SK";
             case "Slovenian (Slovenia)":
-                currentLanguageCode = "sl-SI";
-                break;
+                return "sl-SI";
             case "Somali (Somalia)":
-                currentLanguageCode = "so-SO";
-                break;
+                return "so-SO";
             case "Albanian (Albania)":
-                currentLanguageCode = "sq-AL";
-                break;
+                return "sq-AL";
             case "Serbian (Cyrillic, Serbia)":
-                currentLanguageCode = "sr-RS";
-                break;
+                return "sr-RS";
             case "Swedish (Sweden)":
-                currentLanguageCode = "sv-SE";
-                break;
+                return "sv-SE";
             case "Swahili (Kenya)":
-                currentLanguageCode = "sw-KE";
-                break;
+                return "sw-KE";
             case "Swahili (Tanzania)":
-                currentLanguageCode = "sw-TZ";
-                break;
+                return "sw-TZ";
             case "Tamil (India)":
-                currentLanguageCode = "ta-IN";
-                break;
+                return "ta-IN";
             case "Telugu (India)":
-                currentLanguageCode = "te-IN";
-                break;
+                return "te-IN";
             case "Thai (Thailand)":
-                currentLanguageCode = "th-TH";
-                break;
+                return "th-TH";
             case "Turkish":
             case "Turkish (Türkiye)":
-                currentLanguageCode = "tr-TR";
-                break;
+                return "tr-TR";
             case "Ukrainian (Ukraine)":
-                currentLanguageCode = "uk-UA";
-                break;
+                return "uk-UA";
             case "Urdu (India)":
-                currentLanguageCode = "ur-IN";
-                break;
+                return "ur-IN";
             case "Uzbek (Latin, Uzbekistan)":
-                currentLanguageCode = "uz-UZ";
-                break;
+                return "uz-UZ";
             case "Vietnamese (Vietnam)":
-                currentLanguageCode = "vi-VN";
-                break;
+                return "vi-VN";
             case "Chinese (Wu, Simplified)":
-                currentLanguageCode = "wuu-CN";
-                break;
+                return "wuu-CN";
             case "Chinese (Cantonese, Simplified)":
-                currentLanguageCode = "yue-CN";
-                break;
+                return "yue-CN";
             case "Chinese":
             case "Chinese (Pinyin)":
             case "Chinese (Hanzi)":
             case "Chinese (Mandarin, Simplified)":
-                currentLanguageCode = "zh-CN";
-                break;
+                return "zh-CN";
             case "Chinese (Jilu Mandarin, Simplified)":
-                currentLanguageCode = "zh-CN-shandong";
-                break;
+                return "zh-CN-shandong";
             case "Chinese (Southwestern Mandarin, Simplified)":
-                currentLanguageCode = "zh-CN-sichuan";
-                break;
+                return "zh-CN-sichuan";
             case "Chinese (Cantonese, Traditional)":
-                currentLanguageCode = "zh-HK";
-                break;
+                return "zh-HK";
             case "Chinese (Taiwanese Mandarin, Traditional)":
-                currentLanguageCode = "zh-TW";
-                break;
+                return "zh-TW";
             case "Zulu (South Africa)":
-                currentLanguageCode = "zu-ZA";
-                break;
+                return "zu-ZA";
             default:
-                currentLanguageCode = "en-US";
-                break;
+                return "en-US";
         }
     }
 }
