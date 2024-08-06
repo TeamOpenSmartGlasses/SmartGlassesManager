@@ -109,7 +109,9 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
         ASR_FRAMEWORKS asrFramework = getChosenAsrFramework(this.getApplicationContext());
         String transcribeLanguage = getChosenTranscribeLanguage(this.getApplicationContext());
-        speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage);
+//        String sourceLanguage = getCh
+//        speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage);
+        speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage, "Chinese (Hanzi)");
 
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
@@ -288,6 +290,22 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         }
         return targetLanguageString;
     }
+
+//    public static void saveChosenTranscribeLanguage(Context context, String targetLanguageString) {
+//        PreferenceManager.getDefaultSharedPreferences(context)
+//                .edit()
+//                .putString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), targetLanguageString)
+//                .apply();
+//    }
+//
+//    public static String getChosenTranscribeLanguage(Context context) {
+//        String targetLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), "");
+//        if (targetLanguageString.equals("")){
+//            saveChosenTranscribeLanguage(context, "English");
+//            targetLanguageString = "English";
+//        }
+//        return targetLanguageString;
+//    }
 
     //switches the currently running transcribe language without changing the default/saved language
     public void switchRunningTranscribeLanguage(String language){
