@@ -60,6 +60,33 @@ public class SpeechRecSwitchSystem {
         EventBus.getDefault().register(this);
     }
 
+    public void startAsrFramework(ASR_FRAMEWORKS asrFramework, String transcribeLanguage, String sourceLanguage) {
+        //kill old asr
+        EventBus.getDefault().unregister(this);
+        if (speechRecFramework != null){
+            speechRecFramework.destroy();
+        }
+
+//        if (!(this.asrFramework == ASR_FRAMEWORKS.AZURE_ASR_FRAMEWORK)) {
+//            Log.e(TAG, "startAsrFramework: This function is only for Azure ASR");
+//            return;
+//        }
+
+
+        //set language
+        this.currentLanguage = transcribeLanguage;
+
+        //set new asr
+        this.asrFramework = asrFramework;
+
+        //create new asr
+        speechRecFramework = new SpeechRecAzure(mContext, transcribeLanguage, sourceLanguage);
+
+        //start asr
+        speechRecFramework.start();
+        EventBus.getDefault().register(this);
+    }
+
     @Subscribe
     public void onAudioChunkNewEvent(AudioChunkNewEvent receivedEvent){
         //redirect audio to the currently in use ASR framework, if it's not paused
