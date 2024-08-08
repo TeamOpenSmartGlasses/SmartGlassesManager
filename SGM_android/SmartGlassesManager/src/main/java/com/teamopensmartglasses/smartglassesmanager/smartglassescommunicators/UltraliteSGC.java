@@ -233,15 +233,34 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         screenIsClear = false;
     }
 
+    private String cleanText(String input){
+        return input.replace("，", ",")
+                .replace("。", ".")
+                .replace("！", "!")
+                .replace("？", "?")
+                .replace("：", ":")
+                .replace("；", ";")
+                .replace("（", "(")
+                .replace("）", ")")
+                .replace("【", "[")
+                .replace("】", "]")
+                .replace("“", "\"")
+                .replace("”", "\"")
+                .replace("\"、\"", ",")
+                .replace("‘", "'")
+                .replace("’", "'");
+    }
+
     public void displayDoubleTextWall(String textTop, String textBottom) {
         if (screenToggleOff) {
             return;
         }
 
+        textTop = cleanText(textTop);
+        textBottom = cleanText(textBottom);
+
         goHomeHandler.removeCallbacksAndMessages(null);
         goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
-
-//        Log.d(TAG, "Ultralite is doing double text wall");
 
         // Calculate bottom text requirement
         int bottomLinesRequired = maxLines / 2;
@@ -252,6 +271,11 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         int currentBottomLines = 0;
         for (String line : bottomLines) {
             currentBottomLines += Math.ceil((double) line.length() / maxCharsPerLine);
+        }
+
+        //allow user to add padding to bottom text
+        if (textBottom.charAt(textBottom.length() - 1) == '\n'){
+            currentBottomLines++;
         }
 
         // Add necessary newlines to push bottom text to the required position
@@ -268,7 +292,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
         // Display the combined text using TEXT_BOTTOM_LEFT_ALIGN layout
         changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
-        ultraliteSdk.sendText(combinedText.toString().trim());
+        //ultraliteSdk.sendText(combinedText.toString().trim());
+        ultraliteSdk.sendText(combinedText.toString());
         ultraliteCanvas.commit();
         screenIsClear = false;
     }
@@ -506,8 +531,6 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         } else {
             ultraliteCanvas.createText(body, TextAlignment.AUTO, UltraliteColor.WHITE, Anchor.TOP_RIGHT, 0, 0, 640 / 2, -1, TextWrapMode.WRAP, true);
         }
-
-
 
         //NOTE:
 //        int createText(@NonNull
