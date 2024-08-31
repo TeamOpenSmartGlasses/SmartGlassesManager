@@ -109,9 +109,15 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         speechRecSwitchSystem = new SpeechRecSwitchSystem(this.getApplicationContext());
         ASR_FRAMEWORKS asrFramework = getChosenAsrFramework(this.getApplicationContext());
         String transcribeLanguage = getChosenTranscribeLanguage(this.getApplicationContext());
-//        String sourceLanguage = getCh
-//        speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage);
-        speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage, "Chinese (Hanzi)");
+        String targetLanguage = getChosenTargetLanguage(this.getApplicationContext());
+        String sourceLanguage = getChosenSourceLanguage(this.getApplicationContext());
+        int selectedLiveCaptionsTranslation = getSelectedLiveCaptionsTranslation(this.getApplicationContext());
+        if (selectedLiveCaptionsTranslation != 2) speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage);
+        else {
+            if (transcribeLanguage.equals(sourceLanguage)) speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage, targetLanguage); // If transcribe language and source language are the same translate to the target language
+            else speechRecSwitchSystem.startAsrFramework(asrFramework, transcribeLanguage, sourceLanguage);
+        }
+//        speechRecSwitchSystem.startAsrFramework(asrFramework, "Chinese (Hanzi)", "English");
 
         //setup data observable which passes information (transcripts, commands, etc. around our app using mutlicasting
         dataObservable = PublishSubject.create();
@@ -275,41 +281,68 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
                 .apply();
     }
 
-    public static void saveChosenTranscribeLanguage(Context context, String targetLanguageString) {
+    public static void saveChosenTranscribeLanguage(Context context, String transcribeLanguageString) {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit()
-                .putString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), targetLanguageString)
+                .putString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), transcribeLanguageString)
                 .apply();
     }
 
     public static String getChosenTranscribeLanguage(Context context) {
-        String targetLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), "");
-        if (targetLanguageString.equals("")){
+        String transcribeLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), "");
+        if (transcribeLanguageString.equals("")){
             saveChosenTranscribeLanguage(context, "English");
+            transcribeLanguageString = "English";
+        }
+        return transcribeLanguageString;
+    }
+
+    public static void saveChosenTargetLanguage(Context context, String targetLanguageString) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_TARGET_LANGUAGE), targetLanguageString)
+                .apply();
+    }
+
+    public static String getChosenTargetLanguage(Context context) {
+        String targetLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_TARGET_LANGUAGE), "");
+        if (targetLanguageString.equals("")){
+            saveChosenTargetLanguage(context, "English");
             targetLanguageString = "English";
         }
         return targetLanguageString;
     }
 
-//    public static void saveChosenTranscribeLanguage(Context context, String targetLanguageString) {
-//        PreferenceManager.getDefaultSharedPreferences(context)
-//                .edit()
-//                .putString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), targetLanguageString)
-//                .apply();
-//    }
-//
-//    public static String getChosenTranscribeLanguage(Context context) {
-//        String targetLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_TRANSCRIBE_LANGUAGE), "");
-//        if (targetLanguageString.equals("")){
-//            saveChosenTranscribeLanguage(context, "English");
-//            targetLanguageString = "English";
-//        }
-//        return targetLanguageString;
-//    }
+    public static void saveChosenSourceLanguage(Context context, String sourceLanguageString) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(context.getResources().getString(R.string.SHARED_PREF_SOURCE_LANGUAGE), sourceLanguageString)
+                .apply();
+    }
+
+    public static String getChosenSourceLanguage(Context context) {
+        String sourceLanguageString = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getResources().getString(R.string.SHARED_PREF_SOURCE_LANGUAGE), "");
+        if (sourceLanguageString.equals("")){
+            saveChosenSourceLanguage(context, "English");
+            sourceLanguageString = "English";
+        }
+        return sourceLanguageString;
+    }
+
+    public static void saveSelectedLiveCaptionsChecked(Context context, int liveCaptionsTranslationSelected) {
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putInt(context.getResources().getString(R.string.SHARED_PREF_LIVE_CAPTIONS_TRANSLATION), liveCaptionsTranslationSelected)
+                .apply();
+    }
+
+    public static int getSelectedLiveCaptionsTranslation(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getResources().getString(R.string.SHARED_PREF_LIVE_CAPTIONS_TRANSLATION), 0);
+    }
 
     //switches the currently running transcribe language without changing the default/saved language
     public void switchRunningTranscribeLanguage(String language){
-        if (speechRecSwitchSystem.currentLanguage == language){
+        if (speechRecSwitchSystem.currentLanguage.equals(language)){
             return;
         }
 
