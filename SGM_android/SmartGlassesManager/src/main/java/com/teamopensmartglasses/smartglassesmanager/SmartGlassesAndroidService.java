@@ -498,22 +498,22 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
     }
 
     //show a reference card on the smart glasses with title and body text
-    public void sendReferenceCard(String title, String body) {
+    public static void sendReferenceCard(String title, String body) {
         EventBus.getDefault().post(new ReferenceCardSimpleViewRequestEvent(title, body));
     }
 
     //show a text wall card on the smart glasses
-    public void sendTextWall(String text) {
+    public static void sendTextWall(String text) {
         EventBus.getDefault().post(new TextWallViewRequestEvent(text));
     }
 
     //show a double text wall card on the smart glasses
-    public void sendDoubleTextWall(String textTop, String textBottom) {
+    public static void sendDoubleTextWall(String textTop, String textBottom) {
         EventBus.getDefault().post(new DoubleTextWallViewRequestEvent(textTop, textBottom));
     }
 
     //show a reference card on the smart glasses with title and body text
-    public void sendRowsCard(String[] rowStrings) {
+    public static void sendRowsCard(String[] rowStrings) {
         EventBus.getDefault().post(new RowsCardViewRequestEvent(rowStrings));
     }
 

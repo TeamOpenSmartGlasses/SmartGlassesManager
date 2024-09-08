@@ -251,6 +251,16 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
                 .replace("’", "'");
     }
 
+    public static int countNewLines(String str) {
+        int count = 0;
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == '\n') {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public void displayDoubleTextWall(String textTop, String textBottom) {
         if (screenToggleOff) {
             return;
@@ -259,40 +269,30 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         textTop = cleanText(textTop);
         textBottom = cleanText(textBottom);
 
+        if (textBottom.endsWith("\n")) {
+            textBottom = textBottom.substring(0, textBottom.length() - 1);
+        }
+
         goHomeHandler.removeCallbacksAndMessages(null);
         goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);
 
-        // Calculate bottom text requirement
-        int bottomLinesRequired = maxLines / 2;
+//        int rowsTop = 5;
+        int rowsTop = 5 - countNewLines(textTop);
+
+        StringBuilder combinedText = new StringBuilder();
+        combinedText.append(textTop);
+
+        for (int i = 0; i < rowsTop; i++) {
+            combinedText.append("\n");
+        }
+
         StringBuilder bottomBuilder = new StringBuilder(textBottom);
 
-        // Calculate the number of lines in textBottom
-        String[] bottomLines = textBottom.split("\n");
-        int currentBottomLines = 0;
-        for (String line : bottomLines) {
-            currentBottomLines += Math.ceil((double) line.length() / maxCharsPerLine);
-        }
-
-        //allow user to add padding to bottom text
-        if (textBottom.charAt(textBottom.length() - 1) == '\n'){
-            currentBottomLines++;
-        }
-
-        // Add necessary newlines to push bottom text to the required position
-        for (int i = currentBottomLines; i < bottomLinesRequired; i++) {
-            bottomBuilder.insert(0, "\n");
-        }
-
-        // Combine top and bottom text
-        StringBuilder combinedText = new StringBuilder(textTop);
-        if (!textTop.isEmpty()) {
-            combinedText.append("\n"); // Ensure there's a separation between top and bottom text if top text exists
-        }
         combinedText.append(bottomBuilder);
 
         // Display the combined text using TEXT_BOTTOM_LEFT_ALIGN layout
         changeUltraliteLayout(Layout.TEXT_BOTTOM_LEFT_ALIGN);
-        //ultraliteSdk.sendText(combinedText.toString().trim());
+        // ultraliteSdk.sendText(combinedText.toString().trim());
         ultraliteSdk.sendText(combinedText.toString());
         ultraliteCanvas.commit();
         screenIsClear = false;
@@ -608,6 +608,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //            homeScreenInNSeconds(lingerTime);
             return;
         }
+
         //go throw rows, draw the text, don't do more than 4
         int y_start_height = 55;
         // Reverse rowStrings array
@@ -620,7 +621,6 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
             int textId = ultraliteCanvas.createText(rowStrings[i], TextAlignment.CENTER, UltraliteColor.WHITE, Anchor.TOP_LEFT, ultraliteLeftSidePixelBuffer, y_start_height + yOffset + (i * 112), 640 - ultraliteLeftSidePixelBuffer, -1, TextWrapMode.WRAP, true);
             rowTextsLiveNow.add(textId);
         }
-
 
         ultraliteCanvas.commit();
         screenIsClear = false;
