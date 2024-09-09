@@ -244,7 +244,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 //        Log.d(TAG, "Ultralite is doing double text wall");
 
         // Calculate bottom text requirement
-        int bottomLinesRequired = maxLines / 2;
+        int bottomLinesRequired = (maxLines / 2) - 1;
         StringBuilder bottomBuilder = new StringBuilder(textBottom);
 
         // Calculate the number of lines in textBottom

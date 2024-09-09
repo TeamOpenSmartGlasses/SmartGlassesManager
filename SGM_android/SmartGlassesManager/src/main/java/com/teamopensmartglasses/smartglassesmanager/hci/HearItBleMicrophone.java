@@ -27,6 +27,7 @@ public class HearItBleMicrophone {
     private BluetoothGattCharacteristic voiceDataCharacteristic;
     private Context context;
     private AtomicBoolean isConnected = new AtomicBoolean(false);
+    private boolean foundHearIt = false;
 
     private final int[] idxtbl = {-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8};
     private final int[] steptbl = {
@@ -70,7 +71,8 @@ public class HearItBleMicrophone {
     private BluetoothAdapter.LeScanCallback leScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-            if (device.getName() != null && device.getName().startsWith("GMIC")) {
+            if (!foundHearIt && device.getName() != null && device.getName().startsWith("GMIC")) {
+                foundHearIt = true;
                 bluetoothAdapter.stopLeScan(leScanCallback);
                 connectToDevice(device);
             }

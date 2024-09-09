@@ -127,6 +127,10 @@ public class SpeechRecAzure extends SpeechRecFramework {
             while (!connected) {
                 try {
                     Thread.sleep(1000);
+                    if (speechRecognizer == null){
+                        return;
+                    }
+
                     speechRecognizer.startContinuousRecognitionAsync().get();
                     connected = true;
                     Log.i(TAG, "Reconnected and continuous recognition started.");
@@ -527,6 +531,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
             case "Romanian (Romania)":
                 currentLanguageCode = "ro-RO";
                 break;
+            case "Russian":
             case "Russian (Russia)":
                 currentLanguageCode = "ru-RU";
                 break;
