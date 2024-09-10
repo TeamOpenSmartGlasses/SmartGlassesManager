@@ -332,14 +332,19 @@ public class MicrophoneLocalAndBluetooth {
     public void destroy() {
         stopRecording();
 
-        hearItBleMicrophone.destroy();
+        if (hearItBleMicrophone != null) {
+            hearItBleMicrophone.destroy();
+        }
+
         mIsCountDownOn = false;
         mCountDown.cancel();
         deactivateBluetoothSco();
         audioManager.setMode(AudioManager.MODE_NORMAL);
         if (mContext != null) {
             try {
-                mContext.unregisterReceiver(bluetoothStateReceiver);
+                if (bluetoothAudio) {
+                    mContext.unregisterReceiver(bluetoothStateReceiver);
+                }
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             }

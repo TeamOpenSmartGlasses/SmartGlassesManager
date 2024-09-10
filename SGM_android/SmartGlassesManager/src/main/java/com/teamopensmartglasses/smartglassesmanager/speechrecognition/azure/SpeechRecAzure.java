@@ -213,11 +213,21 @@ public class SpeechRecAzure extends SpeechRecFramework {
             while (!connected) {
                 try {
                     Thread.sleep(1000);
+                    if (speechRecognizer == null){
+                        return;
+                    }
                     if (isTranslation) {
+                        if (translationRecognizer == null){
+                            return;
+                        }
                         translationRecognizer.startContinuousRecognitionAsync().get();
                     } else {
+                        if (speechRecognizer == null){
+                            return;
+                        }
                         speechRecognizer.startContinuousRecognitionAsync().get();
                     }
+
                     connected = true;
                     Log.i(TAG, "Reconnected and continuous recognition started.");
                 } catch (Exception e) {
@@ -482,6 +492,7 @@ public class SpeechRecAzure extends SpeechRecFramework {
                 return "pt-PT";
             case "Romanian (Romania)":
                 return "ro-RO";
+            case "Russian":
             case "Russian (Russia)":
                 return "ru-RU";
             case "Sinhala (Sri Lanka)":
