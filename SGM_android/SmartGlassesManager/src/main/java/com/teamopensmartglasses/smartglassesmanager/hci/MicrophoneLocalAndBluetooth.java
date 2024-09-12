@@ -342,9 +342,7 @@ public class MicrophoneLocalAndBluetooth {
         audioManager.setMode(AudioManager.MODE_NORMAL);
         if (mContext != null) {
             try {
-                if (bluetoothAudio) {
-                    mContext.unregisterReceiver(bluetoothStateReceiver);
-                }
+                mContext.unregisterReceiver(bluetoothStateReceiver);
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             }
