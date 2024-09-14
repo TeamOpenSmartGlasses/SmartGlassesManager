@@ -202,6 +202,8 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
 
     private static final int MAX_LINES = 7;
     public void displayTextWall(String text) {
+        String cleanedText = cleanText(text);
+
         if (screenToggleOff) {
             return;
         }
@@ -212,7 +214,7 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         Log.d(TAG, "Ultralite is doing text wall");
 
         // Cut text wall down to the largest number of lines possible to display
-        String[] lines = text.split("\n");
+        String[] lines = cleanedText.split("\n");
         StringBuilder truncatedText = new StringBuilder();
         for (int i = 0; i < Math.min(lines.length, MAX_LINES); i++) {
             truncatedText.append(lines[i]).append("\n");
@@ -269,9 +271,9 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         textTop = cleanText(textTop);
         textBottom = cleanText(textBottom);
 
-        if (textBottom.endsWith("\n")) {
-            textBottom = textBottom.substring(0, textBottom.length() - 1);
-        }
+//        if (textBottom.endsWith("\n")) {
+//            textBottom = textBottom.substring(0, textBottom.length() - 1);
+//        }
 
         goHomeHandler.removeCallbacksAndMessages(null);
         goHomeHandler.removeCallbacksAndMessages(goHomeRunnable);

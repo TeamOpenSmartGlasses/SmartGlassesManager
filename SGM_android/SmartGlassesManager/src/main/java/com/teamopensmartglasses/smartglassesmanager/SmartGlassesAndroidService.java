@@ -329,7 +329,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         return sourceLanguageString;
     }
 
-    public static void saveSelectedLiveCaptionsChecked(Context context, int liveCaptionsTranslationSelected) {
+    public static void saveSelectedLiveCaptionsTranslationChecked(Context context, int liveCaptionsTranslationSelected) {
         PreferenceManager.getDefaultSharedPreferences(context)
                 .edit()
                 .putInt(context.getResources().getString(R.string.SHARED_PREF_LIVE_CAPTIONS_TRANSLATION), liveCaptionsTranslationSelected)
