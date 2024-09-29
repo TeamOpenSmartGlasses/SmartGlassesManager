@@ -235,10 +235,14 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
         screenIsClear = false;
     }
 
-    private String cleanText(String input){
-        return input.replace("，", ",")
+    private String cleanText(String input) {
+        // Replace Chinese punctuation with English equivalents
+        String cleaned = input.replace(" ，", ", ")
+                .replace("，", ", ")
+                .replace(" 。", ".")
                 .replace("。", ".")
-                .replace("！", "!")
+                .replace(" ！", "!")
+                .replace(" ？", "?")
                 .replace("？", "?")
                 .replace("：", ":")
                 .replace("；", ";")
@@ -248,9 +252,17 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
                 .replace("】", "]")
                 .replace("“", "\"")
                 .replace("”", "\"")
-                .replace("\"、\"", ",")
+                .replace("、", ",") // No quotes around this one
                 .replace("‘", "'")
                 .replace("’", "'");
+
+        // Fix contractions: handle spaces around apostrophes
+        cleaned = cleaned.replaceAll("\\s+'\\s*", "'");
+
+        // Remove any non-breaking spaces and trim leading/trailing spaces
+//        cleaned = cleaned.replace("\u00A0", " ").trim();
+
+        return cleaned;
     }
 
     public static int countNewLines(String str) {
