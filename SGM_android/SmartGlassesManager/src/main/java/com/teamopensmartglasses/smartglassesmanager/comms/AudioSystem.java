@@ -29,7 +29,7 @@ import java.io.DataInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
+import com.teamopensmartglasses.augmentoslib.events.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.utils.AES;
 
 import android.util.Log;

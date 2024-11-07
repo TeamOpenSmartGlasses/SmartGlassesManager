@@ -12,32 +12,33 @@ import android.util.Log;
 //custom, our code
 import androidx.lifecycle.LifecycleOwner;
 
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
+import com.teamopensmartglasses.augmentoslib.events.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DisableBleScoAudioEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DoubleTextWallViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.DisplayCustomContentRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.DoubleTextWallViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.HomeScreenEvent;
+import com.teamopensmartglasses.augmentoslib.events.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SetFontSizeEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.TextWallViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.AudioWearableSGC;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.UltraliteSGC;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.CenteredTextViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScrollingTextRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.IntermediateScrollingTextRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PromptViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.BulletPointListViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.CenteredTextViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.IntermediateScrollingTextRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.ReferenceCardImageViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.RowsCardViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.PromptViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.ScrollingTextViewStartRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.hci.AudioChunkCallback;
 import com.teamopensmartglasses.smartglassesmanager.hci.MicrophoneLocalAndBluetooth;
 //import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.ActiveLookSGC;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.AndroidSGC;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.SmartGlassesCommunicator;
 import com.teamopensmartglasses.smartglassesmanager.supportedglasses.SmartGlassesDevice;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextLineViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.TextLineViewRequestEvent;
 
 //rxjava
 import java.nio.ByteBuffer;
@@ -93,6 +94,9 @@ class SmartGlassesRepresentative {
                 break;
             case ULTRALITE_MCU_OS_GLASSES:
                 smartGlassesCommunicator = new UltraliteSGC(context, lifecycleOwner);
+                break;
+            case EVENREALITIES_G1_MCU_OS_GLASSES:
+                // smartGlassesCommunicator = new EvenRealitiesG1SGC(context, lifecycleOwner);
                 break;
         }
 
@@ -270,6 +274,14 @@ class SmartGlassesRepresentative {
         Log.d(TAG, "Sending a bitmap event");
         if (smartGlassesCommunicator != null) {
             smartGlassesCommunicator.displayBitmap(receievedEvent.bmp);
+        }
+    }
+
+    @Subscribe
+    public void onDisplayCustomContentRequestEvent(DisplayCustomContentRequestEvent receivedEvent){
+        Log.d(TAG, "Got display custom content event: " + receivedEvent.json);
+        if (smartGlassesCommunicator != null) {
+            smartGlassesCommunicator.displayCustomContent(receivedEvent.json);
         }
     }
 

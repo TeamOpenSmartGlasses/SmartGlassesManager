@@ -12,7 +12,7 @@ import android.util.Log;
 import com.teamopensmartglasses.smartglassesmanager.comms.AspWebsocketServer;
 import com.teamopensmartglasses.smartglassesmanager.comms.AudioSystem;
 import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.GlassesPovImageEvent;
+import com.teamopensmartglasses.augmentoslib.events.GlassesPovImageEvent;
 import com.teamopensmartglasses.smartglassesmanager.utils.NetworkUtils;
 
 import org.greenrobot.eventbus.EventBus;
@@ -757,6 +757,10 @@ public class AndroidSGC extends SmartGlassesCommunicator {
     public void displayCenteredText(String text){
         //TODO: Complete this
         displayTextLine(text);
+    }
+
+    public void displayCustomContent(String json) {
+        displayReferenceCardSimple("CustomDisplayNotImplemented", json);
     }
 
 

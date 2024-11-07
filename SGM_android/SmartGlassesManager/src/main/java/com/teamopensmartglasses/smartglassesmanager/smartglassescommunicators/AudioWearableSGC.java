@@ -95,6 +95,11 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
         displayTextLine(text);
     }
 
+    @Override
+    public void displayCustomContent(String json) {
+        displayTextLine(json);
+    }
+
 
     public void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageArgs){
     }

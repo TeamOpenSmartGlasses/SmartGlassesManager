@@ -13,7 +13,7 @@ import com.google.audio.asr.CloudSpeechStreamObserverParams;
 import com.google.audio.asr.SpeechRecognitionModelOptions;
 import com.google.audio.asr.TranscriptionResultFormatterOptions;
 import com.teamopensmartglasses.smartglassesmanager.SmartGlassesAndroidService;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SpeechRecOutputEvent;
+import com.teamopensmartglasses.augmentoslib.events.SpeechRecOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecFramework;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.google.asr.RepeatingRecognitionSession;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.google.asr.SafeTranscriptionResultFormatter;

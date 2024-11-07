@@ -11,7 +11,7 @@ import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import com.microsoft.cognitiveservices.speech.translation.SpeechTranslationConfig;
 import com.microsoft.cognitiveservices.speech.translation.TranslationRecognizer;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SpeechRecOutputEvent;
+import com.teamopensmartglasses.augmentoslib.events.SpeechRecOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecFramework;
 import org.greenrobot.eventbus.EventBus;
 

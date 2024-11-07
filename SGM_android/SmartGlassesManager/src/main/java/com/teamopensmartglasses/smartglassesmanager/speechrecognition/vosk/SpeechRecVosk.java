@@ -8,7 +8,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SpeechRecOutputEvent;
+import com.teamopensmartglasses.augmentoslib.events.SpeechRecOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecFramework;
 
 import org.greenrobot.eventbus.EventBus;

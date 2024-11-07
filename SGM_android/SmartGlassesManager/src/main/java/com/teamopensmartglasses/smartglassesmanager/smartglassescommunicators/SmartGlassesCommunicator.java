@@ -2,7 +2,7 @@ package com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators;
 
 import android.graphics.Bitmap;
 
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.GlassesTapOutputEvent;
+import com.teamopensmartglasses.augmentoslib.events.GlassesTapOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlassesConnectionEvent;
 
 import org.greenrobot.eventbus.EventBus;
@@ -51,6 +51,8 @@ public abstract class SmartGlassesCommunicator {
 
     //display centered text
     public abstract void displayCenteredText(String text);
+
+    public abstract void displayCustomContent(String json);
 
     //home screen
     public abstract void showHomeScreen();

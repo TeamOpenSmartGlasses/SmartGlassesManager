@@ -158,6 +158,8 @@ dependencies {
 
     //Azure ASR
     implementation "com.microsoft.cognitiveservices.speech:client-sdk:1.38.0"
+
+    implementation project(path: ':AugmentOSLib')
 }
 
 //VOSK ASR prep models - need one for each language
