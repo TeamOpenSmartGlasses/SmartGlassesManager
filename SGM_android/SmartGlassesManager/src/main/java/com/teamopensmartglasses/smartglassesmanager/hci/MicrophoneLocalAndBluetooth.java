@@ -118,7 +118,6 @@ public class MicrophoneLocalAndBluetooth {
 
     public MicrophoneLocalAndBluetooth(Context context, boolean useBluetoothSco, AudioChunkCallback chunkCallback) {
         this(context, chunkCallback);
-        this.shouldUseHearItBleMicrophone = true;
         useBluetoothMic(useBluetoothSco);
     }
 
@@ -286,7 +285,11 @@ public class MicrophoneLocalAndBluetooth {
                 }
                 b_buffer.order(ByteOrder.LITTLE_ENDIAN);
                 b_buffer.asShortBuffer().put(short_buffer);
-                if (hearItBleMicrophone != null && !hearItBleMicrophone.isConnected()) {
+                if (shouldUseHearItBleMicrophone) {
+                    if (hearItBleMicrophone != null && !hearItBleMicrophone.isConnected()) {
+                        mChunkCallback.onSuccess(b_buffer);
+                    }
+                } else {
                     mChunkCallback.onSuccess(b_buffer);
                 }
                 b_buffer.clear();
