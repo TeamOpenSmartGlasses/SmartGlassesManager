@@ -11,8 +11,15 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.util.Log;
+import com.google.gson.Gson;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
@@ -48,8 +55,9 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private boolean isRightConnected = false;
     private int currentSeq = 0;
     private boolean stopper = false;
+    private boolean debugStopper = false;
 
-    private static final long DELAY_BETWEEN_SENDS_MS = 400;
+    private static final long DELAY_BETWEEN_SENDS_MS = 1;
     private static final long HEARTBEAT_INTERVAL_MS = 5000;
 
     private Handler heartbeatHandler = new Handler();
@@ -93,6 +101,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         if (txChar != null) {
                             if ("Left".equals(side)) leftTxChar = txChar;
                             else rightTxChar = txChar;
+                            txChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT); // Add this line
                             Log.d(TAG, side + " glass TX characteristic found");
                         }
 
@@ -102,6 +111,8 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                             enableNotification(gatt, rxChar);
                             Log.d(TAG, side + " glass RX characteristic found");
                         }
+
+
 
                         startHeartbeat();
                     } else {
@@ -259,17 +270,115 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         displayReferenceCardSimple(title, body, 20);
     }
 
+    private static final int NOTIFICATION = 0x4B; // Notification command
+
+    private String createNotificationJson(String appIdentifier, String title, String subtitle, String message) {
+        Notification notification = new Notification();
+        notification.ncs_notification = new NCSNotification(
+                1,  // msg_id
+                1,  // type
+                appIdentifier,
+                title,
+                subtitle,
+                message,
+                System.currentTimeMillis() / 1000L, // time_s
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()), // date
+                "Test Notification"  // display_name
+        );
+        notification.type = "Add";
+
+        Gson gson = new Gson();
+        return gson.toJson(notification);
+    }
+
+    // Classes for Notification and NCSNotification
+    class Notification {
+        NCSNotification ncs_notification;
+        String type;
+    }
+
+    class NCSNotification {
+        int msg_id;
+        int type;
+        String app_identifier;
+        String title;
+        String subtitle;
+        String message;
+        long time_s;
+        String date;
+        String display_name;
+
+        public NCSNotification(int msg_id, int type, String app_identifier, String title, String subtitle, String message, long time_s, String date, String display_name) {
+            this.msg_id = msg_id;
+            this.type = type;
+            this.app_identifier = app_identifier;
+            this.title = title;
+            this.subtitle = subtitle;
+            this.message = message;
+            this.time_s = time_s;
+            this.date = date;
+            this.display_name = display_name;
+        }
+    }
+
+    private List<byte[]> createNotificationChunks(String json) {
+        final int MAX_CHUNK_SIZE = 176; // 180 - 4 header bytes
+        byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
+        int totalChunks = (int) Math.ceil((double) jsonBytes.length / MAX_CHUNK_SIZE);
+
+        List<byte[]> chunks = new ArrayList<>();
+        for (int i = 0; i < totalChunks; i++) {
+            int start = i * MAX_CHUNK_SIZE;
+            int end = Math.min(start + MAX_CHUNK_SIZE, jsonBytes.length);
+            byte[] payloadChunk = Arrays.copyOfRange(jsonBytes, start, end);
+
+            // Create the header
+            byte[] header = new byte[] {
+                    (byte) NOTIFICATION,
+                    0x00, // notify_id (can be updated as needed)
+                    (byte) totalChunks,
+                    (byte) i
+            };
+
+            // Combine header and payload
+            ByteBuffer chunk = ByteBuffer.allocate(header.length + payloadChunk.length);
+            chunk.put(header);
+            chunk.put(payloadChunk);
+
+            chunks.add(chunk.array());
+        }
+
+        return chunks;
+    }
+
     public void displayReferenceCardSimple(String title, String body, int lingerTime) {
         if (!isConnected()) {
             Log.d(TAG, "Not connected to glasses");
             return;
         }
-        String displayText = title.isEmpty() ? body : title + "\n" + body;
-        byte[] data = createTextPackage(displayText, 1, 1, 0x30);
-        sendDataSequentially(data);
-//        data = createTextPackage(displayText, 1, 1, 0x40);
-//        sendDataSequentially(data);
+        if (debugStopper){
+            return;
+        }
+        debugStopper = true;
+
+        // Create JSON and chunks
+//        String json = createNotificationJson("org.telegram.messenger", "Title", "This is sick", "and this is good too");
+        String json = createNotificationJson("org.telegram.messenger", "Test", "message", "Short message");
+        Log.d(TAG, "G1 Generated JSON: " + json);
+        List<byte[]> chunks = createNotificationChunks(json);
+
+        // Log chunks for debugging
+        for (byte[] chunk : chunks) {
+            Log.d(TAG, "Chunk: " + Arrays.toString(chunk));
+        }
+
+        // Send each chunk sequentially
+        for (byte[] chunk : chunks) {
+            sendDataSequentially(chunk);
+        }
     }
+
+
 
     @Override
     public void destroy() {
