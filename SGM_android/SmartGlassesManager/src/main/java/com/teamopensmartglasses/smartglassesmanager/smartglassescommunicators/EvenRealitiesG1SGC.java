@@ -16,6 +16,17 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
+import android.bluetooth.*;
+import android.content.*;
+import android.graphics.Bitmap;
+import android.os.Handler;
+import android.util.Log;
+
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.util.UUID;
+import java.util.concurrent.Semaphore;
+
 public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private static final String TAG = "WearableAi_EvenRealitiesG1SGC";
 
@@ -39,6 +50,10 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private boolean stopper = false;
 
     private static final long DELAY_BETWEEN_SENDS_MS = 400;
+    private static final long HEARTBEAT_INTERVAL_MS = 5000;
+
+    private Handler heartbeatHandler = new Handler();
+    private Runnable heartbeatRunnable;
 
     public EvenRealitiesG1SGC(Context context) {
         super();
@@ -111,14 +126,13 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                     Log.d(TAG, "Received response: " + bytesToHex(data));
 
                     // Check if it's a heartbeat response
-                    if (data.length > 0 && data[0] == 0x25) { // Check for heartbeat response
+                    if (data.length > 0 && data[0] == 0x25) {
                         Log.d(TAG, "Heartbeat response received");
                     }
                 }
             }
         };
     }
-
 
     private void enableNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
         gatt.setCharacteristicNotification(characteristic, true);
@@ -142,6 +156,43 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
     }
 
+    // Pairing functionality
+    private void pairDevice(BluetoothDevice device) {
+        try {
+            Log.d(TAG, "Attempting to pair with device: " + device.getName());
+            Method method = device.getClass().getMethod("createBond");
+            method.invoke(device);
+        } catch (Exception e) {
+            Log.e(TAG, "Pairing failed: " + e.getMessage());
+        }
+    }
+
+    private final BroadcastReceiver pairingReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1);
+
+                if (bondState == BluetoothDevice.BOND_BONDED) {
+                    Log.d(TAG, "Paired with device: " + device.getName());
+                    connectToGatt(device);
+                } else if (bondState == BluetoothDevice.BOND_NONE) {
+                    Log.d(TAG, "Pairing failed or unpaired: " + device.getName());
+                }
+            }
+        }
+    };
+
+    private void connectToGatt(BluetoothDevice device) {
+        if (device.getName().contains("_L_") && leftGlassGatt == null) {
+            leftGlassGatt = device.connectGatt(context, false, leftGattCallback);
+        } else if (device.getName().contains("_R_") && rightGlassGatt == null) {
+            rightGlassGatt = device.connectGatt(context, false, rightGattCallback);
+        }
+    }
+
     @Override
     public void connectToSmartGlasses() {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -149,10 +200,11 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         BluetoothAdapter.LeScanCallback leScanCallback = (device, rssi, scanRecord) -> {
             String name = device.getName();
             if (name != null && name.contains("G1")) {
-                if (name.contains("_L_") && leftGlassGatt == null) {
-                    leftGlassGatt = device.connectGatt(context, false, leftGattCallback);
-                } else if (name.contains("_R_") && rightGlassGatt == null) {
-                    rightGlassGatt = device.connectGatt(context, false, rightGattCallback);
+                int bondState = device.getBondState();
+                if (bondState != BluetoothDevice.BOND_BONDED) {
+                    pairDevice(device);
+                } else {
+                    connectToGatt(device);
                 }
             }
         };
@@ -161,14 +213,14 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         handler.postDelayed(() -> bluetoothAdapter.stopLeScan(leScanCallback), 10000);
     }
 
-    private byte[] createTextPackage(String text, int currentPage, int totalPages) {
+    private byte[] createTextPackage(String text, int currentPage, int totalPages, int screenStatus) {
         byte[] textBytes = text.getBytes();
         ByteBuffer buffer = ByteBuffer.allocate(9 + textBytes.length);
         buffer.put((byte) 0x4E);
         buffer.put((byte) (currentSeq++ & 0xFF));
         buffer.put((byte) 1);
         buffer.put((byte) 0);
-        buffer.put((byte) 0x31); // New content display
+        buffer.put((byte) screenStatus);
         buffer.put((byte) 0);
         buffer.put((byte) 0);
         buffer.put((byte) currentPage);
@@ -186,7 +238,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
             try {
                 if (leftGlassGatt != null && leftTxChar != null) {
                     leftTxChar.setValue(data);
-                    if (!leftGlassGatt.writeCharacteristic(leftTxChar)) return;
+                    leftGlassGatt.writeCharacteristic(leftTxChar);
                     Thread.sleep(DELAY_BETWEEN_SENDS_MS);
                 }
 
@@ -202,14 +254,21 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }).start();
     }
 
+    @Override
+    public void displayReferenceCardSimple(String title, String body) {
+        displayReferenceCardSimple(title, body, 20);
+    }
+
     public void displayReferenceCardSimple(String title, String body, int lingerTime) {
         if (!isConnected()) {
             Log.d(TAG, "Not connected to glasses");
             return;
         }
         String displayText = title.isEmpty() ? body : title + "\n" + body;
-        byte[] data = createTextPackage(displayText, 1, 1);
+        byte[] data = createTextPackage(displayText, 1, 1, 0x30);
         sendDataSequentially(data);
+//        data = createTextPackage(displayText, 1, 1, 0x40);
+//        sendDataSequentially(data);
     }
 
     @Override
@@ -223,46 +282,16 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
             rightGlassGatt.close();
         }
 
-        //clean up heartbeat
+        context.unregisterReceiver(pairingReceiver);
         stopHeartbeat();
     }
-
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X ", b));
-        }
-        return sb.toString().trim();
-    }
-
-    @Override
-    public void displayReferenceCardSimple(String title, String body) {
-        displayReferenceCardSimple(title, body, 20);
-    }
-
-//    public void displayReferenceCardSimple(String title, String body, int lingerTime) {
-//        if (!isConnected()) {
-//            Log.d(TAG, "Not connected to glasses");
-//            return;
-//        }
-//
-//        // Combine title and body into a single text payload
-//        String displayText = title.isEmpty() ? body : title + "\n" + body;
-//
-//        // Create a text package to send
-//        byte[] data = createTextPackage(displayText, 1, 1); // Assuming single page for simplicity
-//
-//        // Log the package being sent
-//        Log.d(TAG, "Sending text package for displayReferenceCardSimple: " + bytesToHex(data));
-//
-//        // Send the data to the glasses
-//        sendDataSequentially(data);
-//    }
 
     @Override
     public boolean isConnected() {
         return mConnectState == 2;
     }
+
+    // Remaining methods
     @Override
     public void displayCenteredText(String text) {}
 
@@ -304,28 +333,23 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     public void displayBulletList(String title, String[] bullets) {}
 
     public void displayReferenceCardImage(String title, String body, String imgUrl) {}
+
     public void displayTextWall(String a) {}
-    public void setFontSizes(){}
 
-    //heartbeat stuff
-    // Add these variables at the top of the class
-    private static final long HEARTBEAT_INTERVAL_MS = 5000; // 5 seconds
-    private Handler heartbeatHandler = new Handler();
-    private Runnable heartbeatRunnable;
+    public void setFontSizes() {}
 
-    // Heartbeat packet construction
+    // Heartbeat methods
     private byte[] constructHeartbeat() {
         ByteBuffer buffer = ByteBuffer.allocate(6);
-        buffer.put((byte) 0x25);                    // Heartbeat command
-        buffer.put((byte) 6);                       // Packet length
-        buffer.put((byte) (currentSeq & 0xFF));    // Sequence number
-        buffer.put((byte) 0x00);                    // Reserved
-        buffer.put((byte) 0x04);                    // Heartbeat flag
-        buffer.put((byte) (currentSeq++ & 0xFF));  // Sequence number again
+        buffer.put((byte) 0x25);
+        buffer.put((byte) 6);
+        buffer.put((byte) (currentSeq & 0xFF));
+        buffer.put((byte) 0x00);
+        buffer.put((byte) 0x04);
+        buffer.put((byte) (currentSeq++ & 0xFF));
         return buffer.array();
     }
 
-    // Start the heartbeat timer
     private void startHeartbeat() {
         heartbeatRunnable = new Runnable() {
             @Override
@@ -337,14 +361,12 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         heartbeatHandler.post(heartbeatRunnable);
     }
 
-    // Stop the heartbeat timer
     private void stopHeartbeat() {
         if (heartbeatHandler != null) {
             heartbeatHandler.removeCallbacks(heartbeatRunnable);
         }
     }
 
-    // Send heartbeat packets
     private void sendHeartbeat() {
         byte[] heartbeatPacket = constructHeartbeat();
         Log.d(TAG, "Sending heartbeat: " + bytesToHex(heartbeatPacket));
@@ -363,5 +385,13 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                 Log.e(TAG, "Error sending heartbeat: " + e.getMessage());
             }
         }).start();
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b));
+        }
+        return sb.toString().trim();
     }
 }
