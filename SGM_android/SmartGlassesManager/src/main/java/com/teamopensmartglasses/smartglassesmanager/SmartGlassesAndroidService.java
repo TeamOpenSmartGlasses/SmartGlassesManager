@@ -446,7 +446,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             if (smartGlassesRepresentative == null || smartGlassesRepresentative.getConnectionState() != 2) { // If still disconnected
                 if(!smartGlassesDevices.isEmpty()){
                     Toast.makeText(getApplicationContext(), "Searching for glasses...", Toast.LENGTH_LONG).show();
-                    EventBus.getDefault().post(new PostGenericGlobalMessageEvent("Searching for glasses..."));
+                    // EventBus.getDefault().post(new PostGenericGlobalMessageEvent("Searching for glasses..."));
                     Log.d(TAG, "TRYING TO CONNECT TO: " + smartGlassesDevices.get(0).deviceModelName);
 
                     if (smartGlassesRepresentative != null) {
@@ -462,12 +462,12 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
                 {
                     aioRetryHandler.removeCallbacks(this);
                     Toast.makeText(getApplicationContext(), "No glasses found", Toast.LENGTH_LONG).show();
-                    EventBus.getDefault().post(new PostGenericGlobalMessageEvent("No glasses found"));
+                    // EventBus.getDefault().post(new PostGenericGlobalMessageEvent("No glasses found"));
                 }
             }
             else {
                 Toast.makeText(getApplicationContext(), "Connected to " + smartGlassesRepresentative.smartGlassesDevice.deviceModelName, Toast.LENGTH_LONG).show();
-                EventBus.getDefault().post(new PostGenericGlobalMessageEvent("Connected to " + smartGlassesRepresentative.smartGlassesDevice.deviceModelName));
+                // EventBus.getDefault().post(new PostGenericGlobalMessageEvent("Connected to " + smartGlassesRepresentative.smartGlassesDevice.deviceModelName));
             }
         }
     };

@@ -29,7 +29,7 @@ public class PermissionsUtils {
 
     //location permissions
     //private int LOCATION_PERMISSION_CODE = 1;
-    private int REQUEST_PERMISSION_CODE = 0;
+    private int REQUEST_PERMISSION_CODE = 1;
     private int BACKGROUND_LOCATION_PERMISSION_CODE = 2;
 
     //handle permissions
