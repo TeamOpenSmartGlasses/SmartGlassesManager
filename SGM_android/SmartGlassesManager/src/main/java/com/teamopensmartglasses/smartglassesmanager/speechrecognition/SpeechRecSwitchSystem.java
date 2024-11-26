@@ -8,7 +8,6 @@ import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PauseAsrEve
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.azure.SpeechRecAzure;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.deepgram.SpeechRecDeepgram;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.google.SpeechRecGoogle;
-import com.teamopensmartglasses.smartglassesmanager.speechrecognition.vosk.SpeechRecVosk;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -18,7 +17,6 @@ public class SpeechRecSwitchSystem {
     private final String TAG = "WearableAi_SpeechRecSwitchSystem";
     private ASR_FRAMEWORKS asrFramework;
     private SpeechRecFramework speechRecFramework;
-    private SpeechRecVosk speechRecVosk;
     private SpeechRecGoogle speechRecGoogle;
     private Context mContext;
     public String currentLanguage;
@@ -45,9 +43,7 @@ public class SpeechRecSwitchSystem {
         this.asrFramework = asrFramework;
 
         //create new asr
-        if (this.asrFramework == ASR_FRAMEWORKS.VOSK_ASR_FRAMEWORK){
-           speechRecFramework = new SpeechRecVosk(mContext);
-        } else if (this.asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK){
+        if (this.asrFramework == ASR_FRAMEWORKS.GOOGLE_ASR_FRAMEWORK){
             speechRecFramework = new SpeechRecGoogle(mContext, language);
         } else if (this.asrFramework == ASR_FRAMEWORKS.DEEPGRAM_ASR_FRAMEWORK){
             speechRecFramework = new SpeechRecDeepgram(mContext, language);
