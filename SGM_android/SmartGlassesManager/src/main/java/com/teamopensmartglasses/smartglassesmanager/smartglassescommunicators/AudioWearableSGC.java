@@ -18,12 +18,13 @@ public class AudioWearableSGC extends SmartGlassesCommunicator {
     public AudioWearableSGC(Context context){
         super();
 
-        //state information
+        //state informatio
         killme = false;
         mConnectState = 0;
     }
 
     public void setFontSizes(){
+        setFontSize(SmartGlassesFontSize.MEDIUM);
     }
 
     public void connectToSmartGlasses(){
