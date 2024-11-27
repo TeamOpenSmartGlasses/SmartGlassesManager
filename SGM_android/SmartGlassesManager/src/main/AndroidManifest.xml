@@ -27,11 +27,11 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
-    <queries>
-        <intent>
-            <action android:name="SGM_COMMAND_INTENT" />
-        </intent>
-    </queries>
+<!--    <queries>-->
+<!--        <intent>-->
+<!--            <action android:name="AUGMENTOS_INTENT" />-->
+<!--        </intent>-->
+<!--    </queries>-->
 
     <queries>
         <intent>

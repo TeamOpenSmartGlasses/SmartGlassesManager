@@ -3,7 +3,7 @@ package com.teamopensmartglasses.smartglassesmanager.speechrecognition.deepgram;
 import android.content.Context;
 import android.util.Log;
 
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SpeechRecOutputEvent;
+import com.teamopensmartglasses.augmentoslib.events.SpeechRecOutputEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecFramework;
 
 import org.greenrobot.eventbus.EventBus;

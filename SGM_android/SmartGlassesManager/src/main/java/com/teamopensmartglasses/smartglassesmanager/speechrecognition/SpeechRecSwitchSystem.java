@@ -3,7 +3,7 @@ package com.teamopensmartglasses.smartglassesmanager.speechrecognition;
 import android.content.Context;
 import android.util.Log;
 
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.AudioChunkNewEvent;
+import com.teamopensmartglasses.augmentoslib.events.AudioChunkNewEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PauseAsrEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.azure.SpeechRecAzure;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.deepgram.SpeechRecDeepgram;

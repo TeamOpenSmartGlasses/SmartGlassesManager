@@ -315,6 +315,11 @@ public class UltraliteSGC extends SmartGlassesCommunicator {
     public void displayCenteredText(String text){
     }
 
+    public void displayCustomContent(String json) {
+        displayReferenceCardSimple("CustomDisplayNotImplemented", json);
+    }
+
+
     public void showNaturalLanguageCommandScreen(String prompt, String naturalLanguageInput){
 //        int boxDelta = 3;
 //

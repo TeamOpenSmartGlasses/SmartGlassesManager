@@ -15,3 +15,6 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Smart Glasses Manager"
 include ':SmartGlassesManager'
+
+include ':AugmentOSLib'
+project(':AugmentOSLib').projectDir = new File(rootProject.projectDir, '../AugmentOS/augmentos_android_library/AugmentOSLib')

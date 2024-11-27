@@ -20,23 +20,25 @@ import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LifecycleService;
 import androidx.preference.PreferenceManager;
 
+import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.PostGenericGlobalMessageEvent;
+import com.teamopensmartglasses.augmentoslib.events.SmartGlassesConnectedEvent;
 import com.teamopensmartglasses.smartglassesmanager.smartglassescommunicators.SmartGlassesFontSize;
 import com.teamopensmartglasses.smartglassesmanager.comms.MessageTypes;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.BulletPointListViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.CenteredTextViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.DoubleTextWallViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.FinalScrollingTextRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.HomeScreenEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardImageViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ReferenceCardSimpleViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.RowsCardViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SendBitmapViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.BulletPointListViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.CenteredTextViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.DoubleTextWallViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.FinalScrollingTextRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.HomeScreenEvent;
+import com.teamopensmartglasses.augmentoslib.events.ReferenceCardImageViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.ReferenceCardSimpleViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.RowsCardViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.SendBitmapViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SetFontSizeEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextWallViewRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStartRequestEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.ScrollingTextViewStopRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.TextWallViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.ScrollingTextViewStartRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.ScrollingTextViewStopRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.SmartGlassesConnectionEvent;
-import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextLineViewRequestEvent;
+import com.teamopensmartglasses.augmentoslib.events.TextLineViewRequestEvent;
 import com.teamopensmartglasses.smartglassesmanager.eventbusmessages.TextToSpeechEvent;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.ASR_FRAMEWORKS;
 import com.teamopensmartglasses.smartglassesmanager.speechrecognition.SpeechRecSwitchSystem;
@@ -202,6 +204,12 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
         }
     }
 
+    public SmartGlassesDevice getConnectedSmartGlasses() {
+        if (smartGlassesRepresentative == null) return null;
+        if(smartGlassesRepresentative.getConnectionState() != 2) return null;
+        return smartGlassesRepresentative.smartGlassesDevice;
+    }
+
     public SmartGlassesOperatingSystem getConnectedDeviceModelOs(){
         if (smartGlassesRepresentative == null) return null;
         if(smartGlassesRepresentative.getConnectionState() != 2) return null;
@@ -222,6 +230,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             if(connectionState == 2){
                 savePreferredWearable(this, smartGlassesRepresentative.smartGlassesDevice.deviceModelName);
                 onGlassesConnected(smartGlassesRepresentative.smartGlassesDevice);
+                EventBus.getDefault().post(new SmartGlassesConnectedEvent(smartGlassesRepresentative.smartGlassesDevice));
             }
         } else {
             connectionState = 0;
@@ -437,6 +446,7 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
             if (smartGlassesRepresentative == null || smartGlassesRepresentative.getConnectionState() != 2) { // If still disconnected
                 if(!smartGlassesDevices.isEmpty()){
                     Toast.makeText(getApplicationContext(), "Searching for glasses...", Toast.LENGTH_LONG).show();
+                    // EventBus.getDefault().post(new PostGenericGlobalMessageEvent("Searching for glasses..."));
                     Log.d(TAG, "TRYING TO CONNECT TO: " + smartGlassesDevices.get(0).deviceModelName);
 
                     if (smartGlassesRepresentative != null) {
@@ -452,10 +462,12 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
                 {
                     aioRetryHandler.removeCallbacks(this);
                     Toast.makeText(getApplicationContext(), "No glasses found", Toast.LENGTH_LONG).show();
+                    // EventBus.getDefault().post(new PostGenericGlobalMessageEvent("No glasses found"));
                 }
             }
             else {
                 Toast.makeText(getApplicationContext(), "Connected to " + smartGlassesRepresentative.smartGlassesDevice.deviceModelName, Toast.LENGTH_LONG).show();
+                // EventBus.getDefault().post(new PostGenericGlobalMessageEvent("Connected to " + smartGlassesRepresentative.smartGlassesDevice.deviceModelName));
             }
         }
     };
@@ -557,6 +569,10 @@ public abstract class SmartGlassesAndroidService extends LifecycleService {
 
     public void sendCenteredText(String text){
         EventBus.getDefault().post(new CenteredTextViewRequestEvent(text));
+    }
+
+    public void sendCustomContent(String json){
+        EventBus.getDefault().post(new CenteredTextViewRequestEvent(json));
     }
 
     public void sendHomeScreen(){
