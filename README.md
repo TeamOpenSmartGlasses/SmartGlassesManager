@@ -2,11 +2,6 @@
 
 **SmartGlassesManager** is now part of **AugmentOS**, the #1 way to make a smart glasses app. Check it out [here](https://github.com/teamopensmartglasses/augmentos)!
 
-
-<p align="center">
-    <b>The easiest way to write a smart glasses app. Write 1 app that runs on any pair of smart glasses..</b>
-</p>
-
 <p align="center">
     <img src="./res/SGM_app_icon_google_play.png" width="25%">
 </p>
