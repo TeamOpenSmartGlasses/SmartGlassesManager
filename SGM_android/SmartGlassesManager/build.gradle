@@ -16,9 +16,9 @@ android {
     namespace "com.teamopensmartglasses.smartglassesmanager"
     compileSdk 33
 
-    aaptOptions {
-        noCompress "tflite"
-    }
+//    aaptOptions {
+//        noCompress "tflite"
+//    }
 
     packagingOptions {
         exclude 'META-INF/proguard/androidx-annotations.pro'
@@ -36,9 +36,9 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
-        }
+//        ndk {
+//            abiFilters 'armeabi-v7a', 'arm64-v8a'
+//        }
 
     }
 
@@ -48,34 +48,34 @@ android {
         }
     }
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-//        debug {
-//            applicationIdSuffix ".debug" //so we can have both release and debug on the same phone
+//    buildTypes {
+//        release {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 //        }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    sourceSets {
-        main {
-            assets.srcDirs += "$buildDir/generated/assets"
-            java.srcDirs += 'src/main/java'
-            proto.srcDirs += 'src/main/proto'
-        }
-    }
-
-    externalNativeBuild {
-        cmake {
-            path file('CMakeLists.txt')
-            version '3.22.1'
-        }
-    }
+////        debug {
+////            applicationIdSuffix ".debug" //so we can have both release and debug on the same phone
+////        }
+//    }
+//    compileOptions {
+//        sourceCompatibility JavaVersion.VERSION_1_8
+//        targetCompatibility JavaVersion.VERSION_1_8
+//    }
+//
+//    sourceSets {
+//        main {
+//            assets.srcDirs += "$buildDir/generated/assets"
+//            java.srcDirs += 'src/main/java'
+//            proto.srcDirs += 'src/main/proto'
+//        }
+//    }
+//
+//    externalNativeBuild {
+//        cmake {
+//            path file('CMakeLists.txt')
+//            version '3.22.1'
+//        }
+//    }
 
 }
 
