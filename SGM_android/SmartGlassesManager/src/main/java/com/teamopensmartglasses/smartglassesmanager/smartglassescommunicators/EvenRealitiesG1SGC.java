@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import com.google.gson.Gson;
 
@@ -60,8 +61,13 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private static final long DELAY_BETWEEN_SENDS_MS = 1;
     private static final long HEARTBEAT_INTERVAL_MS = 5000;
 
+    //heartbeat sender
     private Handler heartbeatHandler = new Handler();
     private Runnable heartbeatRunnable;
+
+    //notification period sender
+    private Handler notificationHandler = new Handler();
+    private Runnable notificationRunnable;
 
     public EvenRealitiesG1SGC(Context context) {
         super();
@@ -93,7 +99,13 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 if (status == BluetoothGatt.GATT_SUCCESS) {
+
+                    gatt.requestMtu(251); // Request a higher MTU size
+                    Log.d(TAG, "Requested MTU size: 251");
+
                     BluetoothGattService uartService = gatt.getService(UART_SERVICE_UUID);
+
+
                     if (uartService != null) {
                         BluetoothGattCharacteristic txChar = uartService.getCharacteristic(UART_TX_CHAR_UUID);
                         BluetoothGattCharacteristic rxChar = uartService.getCharacteristic(UART_RX_CHAR_UUID);
@@ -101,20 +113,38 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         if (txChar != null) {
                             if ("Left".equals(side)) leftTxChar = txChar;
                             else rightTxChar = txChar;
-                            txChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT); // Add this line
+                            txChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                             Log.d(TAG, side + " glass TX characteristic found");
                         }
 
                         if (rxChar != null) {
+
+                            // Bond the device
+                            if (gatt.getDevice().getBondState() != BluetoothDevice.BOND_BONDED) {
+                                Log.d(TAG, "Creating bond with device: " + gatt.getDevice().getName());
+                                gatt.getDevice().createBond();
+                            } else {
+                                Log.d(TAG, "Device already bonded: " + gatt.getDevice().getName());
+                            }
+
                             if ("Left".equals(side)) leftRxChar = rxChar;
                             else rightRxChar = rxChar;
                             enableNotification(gatt, rxChar);
                             Log.d(TAG, side + " glass RX characteristic found");
                         }
 
+                        // Request MTU size
+                        gatt.requestMtu(251);
+                        Log.d(TAG, "Requested MTU size: 251");
 
-
+                        //start heartbeat
                         startHeartbeat();
+
+                        // Start MIC streaming
+                        setMicEnabled(true); // Enable the MIC
+
+                        //start sending notifications
+                        startPeriodicNotifications();
                     } else {
                         Log.e(TAG, side + " glass UART service not found");
                     }
@@ -132,16 +162,28 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 
             @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                if (characteristic.getUuid().equals(UART_RX_CHAR_UUID)) {
-                    byte[] data = characteristic.getValue();
-                    Log.d(TAG, "Received response: " + bytesToHex(data));
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (characteristic.getUuid().equals(UART_RX_CHAR_UUID)) {
+                        byte[] data = characteristic.getValue();
 
-                    // Check if it's a heartbeat response
-                    if (data.length > 0 && data[0] == 0x25) {
-                        Log.d(TAG, "Heartbeat response received");
+                        // Handle MIC audio data
+                        if (data.length > 0 && (data[0] & 0xFF) == 0xF1) {
+                            int seq = data[1] & 0xFF; // Sequence number
+                            byte[] audioData = Arrays.copyOfRange(data, 2, data.length); // Extract audio data
+//                            Log.d(TAG, "Audio data received. Seq: " + seq + ", Data: " + Arrays.toString(audioData));
+                        } else {
+                            Log.d(TAG, "Received non-audio response: " + bytesToHex(data));
+                        }
+
+                        // Check if it's a heartbeat response
+                        if (data.length > 0 && data[0] == 0x25) {
+                            Log.d(TAG, "Heartbeat response received");
+                        }
                     }
-                }
+                });
             }
+
+
         };
     }
 
@@ -150,19 +192,29 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID);
         if (descriptor != null) {
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            gatt.writeDescriptor(descriptor);
+            boolean result = gatt.writeDescriptor(descriptor);
+            if (result) {
+                Log.d(TAG, "Descriptor write successful for characteristic: " + characteristic.getUuid());
+            } else {
+                Log.e(TAG, "Failed to write descriptor for characteristic: " + characteristic.getUuid());
+            }
+        } else {
+            Log.e(TAG, "Descriptor not found for characteristic: " + characteristic.getUuid());
         }
     }
 
     private void updateConnectionState() {
         if (isLeftConnected && isRightConnected) {
             mConnectState = 2;
+            Log.d(TAG, "Both glasses connected");
             connectionEvent(2);
         } else if (isLeftConnected || isRightConnected) {
             mConnectState = 1;
+            Log.d(TAG, "One glass connected");
             connectionEvent(1);
         } else {
             mConnectState = 0;
+            Log.d(TAG, "No glasses connected");
             connectionEvent(0);
         }
     }
@@ -378,10 +430,9 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
     }
 
-
-
     @Override
     public void destroy() {
+        setMicEnabled(false); // Disable the MIC
         if (leftGlassGatt != null) {
             leftGlassGatt.disconnect();
             leftGlassGatt.close();
@@ -391,9 +442,13 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
             rightGlassGatt.close();
         }
 
+        // Stop periodic notifications
+        stopPeriodicNotifications();
+
         context.unregisterReceiver(pairingReceiver);
         stopHeartbeat();
     }
+
 
     @Override
     public boolean isConnected() {
@@ -503,4 +558,65 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
         return sb.toString().trim();
     }
+
+    //microphone stuff
+    public void setMicEnabled(boolean enable) {
+        if (!isConnected()) {
+            Log.d(TAG, "Tryna start mic: Not connected to glasses");
+            return;
+        }
+
+        byte command = 0x0E; // Command for MIC control
+        byte enableByte = (byte) (enable ? 1 : 0); // 1 to enable, 0 to disable
+
+        ByteBuffer buffer = ByteBuffer.allocate(2);
+        buffer.put(command);
+        buffer.put(enableByte);
+
+        sendDataSequentially(buffer.array());
+        Log.d(TAG, "Sent MIC command: " + bytesToHex(buffer.array()));
+    }
+
+    //notifications
+    private void startPeriodicNotifications() {
+        notificationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // Send notification
+                sendPeriodicNotification();
+
+                // Schedule the next notification
+                notificationHandler.postDelayed(this, 5000); // 5 seconds
+            }
+        };
+
+        // Start the first notification after 5 seconds
+        notificationHandler.postDelayed(notificationRunnable, 5000);
+    }
+
+    private void sendPeriodicNotification() {
+        if (!isConnected()) {
+            Log.d(TAG, "Cannot send notification: Not connected to glasses");
+            return;
+        }
+
+        // Example notification data (replace with your actual data)
+        String json = createNotificationJson("com.even.test", "Periodic Notification", "Hello", "This is a recurring notification.");
+        List<byte[]> chunks = createNotificationChunks(json);
+
+        // Send each chunk
+        for (byte[] chunk : chunks) {
+            sendDataSequentially(chunk);
+        }
+
+        Log.d(TAG, "Sent periodic notification");
+    }
+
+    private void stopPeriodicNotifications() {
+        if (notificationHandler != null && notificationRunnable != null) {
+            notificationHandler.removeCallbacks(notificationRunnable);
+            Log.d(TAG, "Stopped periodic notifications");
+        }
+    }
+
 }
