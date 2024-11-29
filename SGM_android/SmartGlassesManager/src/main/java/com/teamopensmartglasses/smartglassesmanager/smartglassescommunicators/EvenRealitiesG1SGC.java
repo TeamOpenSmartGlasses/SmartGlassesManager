@@ -59,8 +59,8 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private boolean stopper = false;
     private boolean debugStopper = false;
 
-    private static final long DELAY_BETWEEN_SENDS_MS = 1;
-    private static final long HEARTBEAT_INTERVAL_MS = 5000;
+    private static final long DELAY_BETWEEN_SENDS_MS = 20;
+    private static final long HEARTBEAT_INTERVAL_MS = 12000;
 
     //heartbeat sender
     private Handler heartbeatHandler = new Handler();
@@ -70,6 +70,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private Handler notificationHandler = new Handler();
     private Runnable notificationRunnable;
     private boolean notifysStarted = false;
+    private int notificationNum = 10;
 
     public EvenRealitiesG1SGC(Context context) {
         super();
@@ -146,10 +147,10 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         sendDataSequentially(new byte[] {(byte) 0xF4, (byte) 0x01});
 
                         //start heartbeat
-//                        startHeartbeat();
+                        startHeartbeat();
 
                         // Start MIC streaming
-//                        setMicEnabled(true); // Enable the MIC
+                        setMicEnabled(true); // Enable the MIC
 
                         //start sending notifications
                         startPeriodicNotifications();
@@ -336,7 +337,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         String currentDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()); // Date format for 'date' field
 
         NCSNotification ncsNotification = new NCSNotification(
-                6,  // Increment sequence ID for uniqueness
+                notificationNum++,  // Increment sequence ID for uniqueness
                 1,             // type (e.g., 1 = notification type)
                 appIdentifier,
                 title,
@@ -344,7 +345,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                 message,
                 (int) currentTime,  // Cast long to int to match Python
                 currentDate,        // Add the current date to the notification
-                "AugmentOS"  // display_name
+                "AugmentOS:" + notificationNum // display_name
         );
 
         Notification notification = new Notification(ncsNotification, "Add");
@@ -646,7 +647,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 
             // Sleep for 100 milliseconds between sending each chunk
             try {
-                Thread.sleep(100);
+                Thread.sleep(150);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
