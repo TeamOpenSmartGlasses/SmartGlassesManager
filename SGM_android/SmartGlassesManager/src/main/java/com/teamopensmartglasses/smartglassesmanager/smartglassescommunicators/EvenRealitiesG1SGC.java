@@ -616,7 +616,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                 sendPeriodicNotification();
 
                 // Schedule the next notification
-                notificationHandler.postDelayed(this, 5000); // 5 seconds
+                notificationHandler.postDelayed(this, 12000);
             }
         };
 
