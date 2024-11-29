@@ -14,6 +14,7 @@ import android.os.Looper;
 import android.util.Log;
 import com.google.gson.Gson;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -68,6 +69,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     //notification period sender
     private Handler notificationHandler = new Handler();
     private Runnable notificationRunnable;
+    private boolean notifysStarted = false;
 
     public EvenRealitiesG1SGC(Context context) {
         super();
@@ -113,6 +115,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         if (txChar != null) {
                             if ("Left".equals(side)) leftTxChar = txChar;
                             else rightTxChar = txChar;
+                            enableNotification(gatt, rxChar, side);
                             txChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                             Log.d(TAG, side + " glass TX characteristic found");
                         }
@@ -129,7 +132,8 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 
                             if ("Left".equals(side)) leftRxChar = rxChar;
                             else rightRxChar = rxChar;
-                            enableNotification(gatt, rxChar);
+                            enableNotification(gatt, rxChar, side);
+                            txChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                             Log.d(TAG, side + " glass RX characteristic found");
                         }
 
@@ -137,11 +141,15 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         gatt.requestMtu(251);
                         Log.d(TAG, "Requested MTU size: 251");
 
+                        //no idea why but it's in the Even app - Cayden
+                        Log.d(TAG, "Sending 0xF4 Command");
+                        sendDataSequentially(new byte[] {(byte) 0xF4, (byte) 0x01});
+
                         //start heartbeat
-                        startHeartbeat();
+//                        startHeartbeat();
 
                         // Start MIC streaming
-                        setMicEnabled(true); // Enable the MIC
+//                        setMicEnabled(true); // Enable the MIC
 
                         //start sending notifications
                         startPeriodicNotifications();
@@ -187,19 +195,19 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         };
     }
 
-    private void enableNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+    private void enableNotification(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, String side) {
         gatt.setCharacteristicNotification(characteristic, true);
         BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID);
         if (descriptor != null) {
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             boolean result = gatt.writeDescriptor(descriptor);
             if (result) {
-                Log.d(TAG, "Descriptor write successful for characteristic: " + characteristic.getUuid());
+                Log.d(TAG, side + " SIDE," + "Descriptor write successful for characteristic: " + characteristic.getUuid());
             } else {
-                Log.e(TAG, "Failed to write descriptor for characteristic: " + characteristic.getUuid());
+                Log.e(TAG, side + " SIDE," + "Failed to write descriptor for characteristic: " + characteristic.getUuid());
             }
         } else {
-            Log.e(TAG, "Descriptor not found for characteristic: " + characteristic.getUuid());
+            Log.e(TAG, side + " SIDE," + "Descriptor not found for characteristic: " + characteristic.getUuid());
         }
     }
 
@@ -323,30 +331,41 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     }
 
     private static final int NOTIFICATION = 0x4B; // Notification command
-
     private String createNotificationJson(String appIdentifier, String title, String subtitle, String message) {
-        Notification notification = new Notification();
-        notification.ncs_notification = new NCSNotification(
-                1,  // msg_id
-                1,  // type
+        long currentTime = System.currentTimeMillis() / 1000L; // Unix timestamp in seconds
+        String currentDate = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()); // Date format for 'date' field
+
+        NCSNotification ncsNotification = new NCSNotification(
+                6,  // Increment sequence ID for uniqueness
+                1,             // type (e.g., 1 = notification type)
                 appIdentifier,
                 title,
                 subtitle,
                 message,
-                System.currentTimeMillis() / 1000L, // time_s
-                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()), // date
-                "Test Notification"  // display_name
+                (int) currentTime,  // Cast long to int to match Python
+                currentDate,        // Add the current date to the notification
+                "AugmentOS"  // display_name
         );
-        notification.type = "Add";
+
+        Notification notification = new Notification(ncsNotification, "Add");
 
         Gson gson = new Gson();
         return gson.toJson(notification);
     }
 
-    // Classes for Notification and NCSNotification
+
     class Notification {
         NCSNotification ncs_notification;
         String type;
+
+        public Notification() {
+            // Default constructor
+        }
+
+        public Notification(NCSNotification ncs_notification, String type) {
+            this.ncs_notification = ncs_notification;
+            this.type = type;
+        }
     }
 
     class NCSNotification {
@@ -356,11 +375,11 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         String title;
         String subtitle;
         String message;
-        long time_s;
-        String date;
+        int time_s;  // Changed from long to int for consistency
+        String date; // Added to match Python's date field
         String display_name;
 
-        public NCSNotification(int msg_id, int type, String app_identifier, String title, String subtitle, String message, long time_s, String date, String display_name) {
+        public NCSNotification(int msg_id, int type, String app_identifier, String title, String subtitle, String message, int time_s, String date, String display_name) {
             this.msg_id = msg_id;
             this.type = type;
             this.app_identifier = app_identifier;
@@ -368,10 +387,13 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
             this.subtitle = subtitle;
             this.message = message;
             this.time_s = time_s;
-            this.date = date;
+            this.date = date; // Initialize the date field
             this.display_name = display_name;
         }
     }
+
+
+
 
     private List<byte[]> createNotificationChunks(String json) {
         final int MAX_CHUNK_SIZE = 176; // 180 - 4 header bytes
@@ -404,30 +426,30 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     }
 
     public void displayReferenceCardSimple(String title, String body, int lingerTime) {
-        if (!isConnected()) {
-            Log.d(TAG, "Not connected to glasses");
-            return;
-        }
-        if (debugStopper){
-            return;
-        }
-        debugStopper = true;
-
-        // Create JSON and chunks
-//        String json = createNotificationJson("org.telegram.messenger", "Title", "This is sick", "and this is good too");
-        String json = createNotificationJson("org.telegram.messenger", "Test", "message", "Short message");
-        Log.d(TAG, "G1 Generated JSON: " + json);
-        List<byte[]> chunks = createNotificationChunks(json);
-
-        // Log chunks for debugging
-        for (byte[] chunk : chunks) {
-            Log.d(TAG, "Chunk: " + Arrays.toString(chunk));
-        }
-
-        // Send each chunk sequentially
-        for (byte[] chunk : chunks) {
-            sendDataSequentially(chunk);
-        }
+//        if (!isConnected()) {
+//            Log.d(TAG, "Not connected to glasses");
+//            return;
+//        }
+//        if (debugStopper){
+//            return;
+//        }
+//        debugStopper = true;
+//
+//        // Create JSON and chunks
+////        String json = createNotificationJson("org.telegram.messenger", "Title", "This is sick", "and this is good too");
+//        String json = createNotificationJson("org.telegram.messenger", "Test", "message", "Short message");
+//        Log.d(TAG, "G1 Generated JSON: " + json);
+//        List<byte[]> chunks = createNotificationChunks(json);
+//
+//        // Log chunks for debugging
+//        for (byte[] chunk : chunks) {
+//            Log.d(TAG, "Chunk: " + Arrays.toString(chunk));
+//        }
+//
+//        // Send each chunk sequentially
+//        for (byte[] chunk : chunks) {
+//            sendDataSequentially(chunk);
+//        }
     }
 
     @Override
@@ -445,7 +467,9 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         // Stop periodic notifications
         stopPeriodicNotifications();
 
-        context.unregisterReceiver(pairingReceiver);
+        if (pairingReceiver != null) {
+            context.unregisterReceiver(pairingReceiver);
+        }
         stopHeartbeat();
     }
 
@@ -579,6 +603,11 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 
     //notifications
     private void startPeriodicNotifications() {
+        if (notifysStarted){
+            return;
+        }
+        notifysStarted = true;
+
         notificationRunnable = new Runnable() {
             @Override
             public void run() {
@@ -591,7 +620,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         };
 
         // Start the first notification after 5 seconds
-        notificationHandler.postDelayed(notificationRunnable, 5000);
+        notificationHandler.postDelayed(notificationRunnable, 3000);
     }
 
     private void sendPeriodicNotification() {
@@ -601,15 +630,33 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
 
         // Example notification data (replace with your actual data)
-        String json = createNotificationJson("com.even.test", "Periodic Notification", "Hello", "This is a recurring notification.");
+        String json = createNotificationJson("com.even.test", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
+        Log.d(TAG, "the JSON to send: " + json);
         List<byte[]> chunks = createNotificationChunks(json);
+//        Log.d(TAG, "THE CHUNKS:");
+//        Log.d(TAG, chunks.get(0).toString());
+//        Log.d(TAG, chunks.get(1).toString());
+        for (byte[] chunk : chunks) {
+            Log.d(TAG, "Sent chunk to glasses: " + bytesToUtf8(chunk));
+        }
 
-        // Send each chunk
+        // Send each chunk with a short sleep between each send
         for (byte[] chunk : chunks) {
             sendDataSequentially(chunk);
+
+            // Sleep for 100 milliseconds between sending each chunk
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
         Log.d(TAG, "Sent periodic notification");
+    }
+
+    private static String bytesToUtf8(byte[] bytes) {
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private void stopPeriodicNotifications() {
