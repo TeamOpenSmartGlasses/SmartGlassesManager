@@ -72,6 +72,14 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private boolean notifysStarted = false;
     private int notificationNum = 10;
 
+    //pairing logic
+    private boolean isLeftPairing = false;
+    private boolean isRightPairing = false;
+    private boolean isLeftBonded = false;
+    private boolean isRightBonded = false;
+    private BluetoothDevice leftDevice = null;
+    private BluetoothDevice rightDevice = null;
+
     public EvenRealitiesG1SGC(Context context) {
         super();
         this.context = context;
@@ -228,18 +236,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
     }
 
-    // Pairing functionality
-    private void pairDevice(BluetoothDevice device) {
-        try {
-            Log.d(TAG, "Attempting to pair with device: " + device.getName());
-            Method method = device.getClass().getMethod("createBond");
-            method.invoke(device);
-        } catch (Exception e) {
-            Log.e(TAG, "Pairing failed: " + e.getMessage());
-        }
-    }
-
-    private final BroadcastReceiver pairingReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver bondingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -248,10 +245,31 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                 int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1);
 
                 if (bondState == BluetoothDevice.BOND_BONDED) {
-                    Log.d(TAG, "Paired with device: " + device.getName());
-                    connectToGatt(device);
+                    Log.d(TAG, "Bonded with device: " + device.getName());
+                    if (device.getName().contains("_L_")) {
+                        isLeftBonded = true;
+                        isLeftPairing = false;
+                    } else if (device.getName().contains("_R_")) {
+                        isRightBonded = true;
+                        isRightPairing = false;
+                    }
+
+                    // Restart scan for the next device
+                    if (!isLeftBonded || !isRightBonded) {
+                        Log.d(TAG, "Restarting scan to find remaining device...");
+                        startScan(BluetoothAdapter.getDefaultAdapter());
+                    } else {
+                        Log.d(TAG, "Both devices bonded. Proceeding with connections...");
+                        connectToGatt(leftDevice);
+                        connectToGatt(rightDevice);
+                    }
                 } else if (bondState == BluetoothDevice.BOND_NONE) {
-                    Log.d(TAG, "Pairing failed or unpaired: " + device.getName());
+                    Log.d(TAG, "Bonding failed for device: " + device.getName());
+                    if (device.getName().contains("_L_")) isLeftPairing = false;
+                    if (device.getName().contains("_R_")) isRightPairing = false;
+
+                    // Restart scanning to retry bonding
+                    startScan(BluetoothAdapter.getDefaultAdapter());
                 }
             }
         }
@@ -265,24 +283,99 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
     }
 
+    private BluetoothAdapter.LeScanCallback leScanCallback = (device, rssi, scanRecord) -> {
+        String name = device.getName();
+
+        //check if G1 arm
+        if (name == null || !name.contains("G1")) {
+            return;
+        }
+
+        //figure out which G1 arm it is
+        boolean isLeft = name.contains("_L_");
+        if (isLeft){
+            leftDevice = device;
+        } else{
+            rightDevice = device;
+        }
+
+        //check if we've already bonded/paired
+        int bondState = device.getBondState();
+        if (bondState != BluetoothDevice.BOND_BONDED) {
+            // Stop scan before initiating bond
+            stopScan(BluetoothAdapter.getDefaultAdapter());
+
+            if (isLeft && !isLeftPairing && !isLeftBonded) {
+                Log.d(TAG, "Bonding with Left Glass...");
+                isLeftPairing = true;
+                bondDevice(device);
+            } else if (!isLeft && !isRightPairing && !isRightBonded) {
+                Log.d(TAG, "Bonding with Right Glass...");
+                isRightPairing = true;
+                bondDevice(device);
+            }
+        } else { //only runs if we've already setup the bond previously
+            // Mark the device as bonded
+            if (isLeft) isLeftBonded = true;
+            if (!isLeft) isRightBonded = true;
+
+            // Attempt GATT connection only after both sides are bonded
+            if (isLeftBonded && isRightBonded) {
+                Log.d(TAG, "Both sides bonded. Ready to connect to GATT.");
+                attemptGattConnection(leftDevice);
+                attemptGattConnection(rightDevice);
+            }
+        }
+    };
+
     @Override
     public void connectToSmartGlasses() {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        BluetoothAdapter.LeScanCallback leScanCallback = (device, rssi, scanRecord) -> {
-            String name = device.getName();
-            if (name != null && name.contains("G1")) {
-                int bondState = device.getBondState();
-                if (bondState != BluetoothDevice.BOND_BONDED) {
-                    pairDevice(device);
-                } else {
-                    connectToGatt(device);
-                }
-            }
-        };
+        // Register bonding receiver
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        context.registerReceiver(bondingReceiver, filter);
 
+        // Start scanning for devices
+        startScan(bluetoothAdapter);
+    }
+
+    private void startScan(BluetoothAdapter bluetoothAdapter) {
         bluetoothAdapter.startLeScan(leScanCallback);
-        handler.postDelayed(() -> bluetoothAdapter.stopLeScan(leScanCallback), 10000);
+        Log.d(TAG, "Started scanning for devices...");
+//        handler.postDelayed(() -> stopScan(bluetoothAdapter), 5000); // Stop scan after 5 seconds
+    }
+
+    private void stopScan(BluetoothAdapter bluetoothAdapter) {
+        bluetoothAdapter.stopLeScan(leScanCallback);
+        Log.d(TAG, "Stopped scanning for devices");
+    }
+
+    private void bondDevice(BluetoothDevice device) {
+        try {
+            Log.d(TAG, "Attempting to bond with device: " + device.getName());
+            Method method = device.getClass().getMethod("createBond");
+            method.invoke(device);
+        } catch (Exception e) {
+            Log.e(TAG, "Bonding failed: " + e.getMessage());
+        }
+    }
+
+    private void attemptGattConnection(BluetoothDevice device) {
+        if (!isLeftBonded || !isRightBonded) {
+            Log.d(TAG, "Cannot connect to GATT: Both devices are not bonded yet");
+            return;
+        }
+
+        if (device.getName().contains("_L_") && leftGlassGatt == null) {
+            Log.d(TAG, "Connecting to GATT for Left Glass...");
+            leftGlassGatt = device.connectGatt(context, false, leftGattCallback);
+            isLeftConnected = true;
+        } else if (device.getName().contains("_R_") && rightGlassGatt == null) {
+            Log.d(TAG, "Connecting to GATT for Right Glass...");
+            rightGlassGatt = device.connectGatt(context, false, rightGattCallback);
+            isRightConnected = true;
+        }
     }
 
     private byte[] createTextPackage(String text, int currentPage, int totalPages, int screenStatus) {
@@ -468,9 +561,11 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         // Stop periodic notifications
         stopPeriodicNotifications();
 
-        if (pairingReceiver != null) {
-            context.unregisterReceiver(pairingReceiver);
+        if (bondingReceiver != null) {
+            context.unregisterReceiver(bondingReceiver);
         }
+
+        //stop sending heartbeat
         stopHeartbeat();
     }
 
