@@ -31,6 +31,10 @@ import android.graphics.Bitmap;
 import android.os.Handler;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -161,17 +165,18 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         Log.d(TAG, "Sending 0xF4 Command");
                         sendDataSequentially(new byte[] {(byte) 0xF4, (byte) 0x01});
 
+                        //below has odd staggered times so they don't happen in sync
                         // Start MIC streaming
-                        setMicEnabled(true, 300); // Enable the MIC
+                        setMicEnabled(true, 993); // Enable the MIC
 
                         //enable our AugmentOS notification key
-//                        sendWhiteListCommand(650);
+                        sendWhiteListCommand(2038);
 
                         //start sending notifications
-//                        startPeriodicNotifications(4200);
+                        startPeriodicNotifications(302);
 
                         //start heartbeat
-                        startHeartbeat(12000);
+                        startHeartbeat(411);
                     } else {
                         Log.e(TAG, side + " glass UART service not found");
                     }
@@ -197,7 +202,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         if (data.length > 0 && (data[0] & 0xFF) == 0xF1) {
                             int seq = data[1] & 0xFF; // Sequence number
                             byte[] audioData = Arrays.copyOfRange(data, 2, data.length); // Extract audio data
-//                            Log.d(TAG, "Audio data received. Seq: " + seq + ", Data: " + Arrays.toString(audioData));
+                            Log.d(TAG, "Audio data received. Seq: " + seq + ", Data: " + Arrays.toString(audioData) + ", from: " + gatt.getDevice().getName());
                         } else {
                             Log.d(TAG, "Received non-audio response: " + bytesToHex(data) + ", from: " + gatt.getDevice().getName());
                         }
@@ -568,7 +573,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 
         // Example notification data (replace with your actual data)
 //        String json = createNotificationJson("com.augment.os", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
-        String json = createNotificationJson("com.even.test", title, "...", body);
+        String json = createNotificationJson("com.augment.os", title, "...", body);
         Log.d(TAG, "the JSON to send: " + json);
         List<byte[]> chunks = createNotificationChunks(json);
 //        Log.d(TAG, "THE CHUNKS:");
@@ -705,7 +710,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                 List<byte[]> chunks = getWhitelistChunks();
                 for (byte[] chunk : chunks) {
                     Log.d(TAG, "Sending this chunk for white list:" + bytesToUtf8(chunk));
-                    sendDataSequentially(chunk, true);
+                    sendDataSequentially(chunk, false);
 
                     // Sleep for 100 milliseconds between sending each chunk
                     try {
@@ -805,7 +810,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 
         // Example notification data (replace with your actual data)
 //        String json = createNotificationJson("com.augment.os", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
-        String json = createNotificationJson("com.even.test", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
+        String json = createNotificationJson("com.augment.os", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
         Log.d(TAG, "the JSON to send: " + json);
         List<byte[]> chunks = createNotificationChunks(json);
 //        Log.d(TAG, "THE CHUNKS:");
@@ -845,12 +850,58 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private static final int WHITELIST_CMD = 0x04; // Command ID for whitelist
     public List<byte[]> getWhitelistChunks() {
         // Define the hardcoded whitelist JSON
-        String whitelistJson = "[{\"id\": \"com.augment.os\", \"name\": \"AugmentOS\"}]";
+        List<AppInfo> apps = new ArrayList<>();
+        apps.add(new AppInfo("com.augment.os", "AugmentOS"));
+        String whitelistJson = createWhitelistJson(apps);
 
         Log.d(TAG, "Creating chunks for hardcoded whitelist: " + whitelistJson);
 
         // Convert JSON to bytes and split into chunks
         return createWhitelistChunks(whitelistJson);
+    }
+
+    private String createWhitelistJson(List<AppInfo> apps) {
+        JSONArray appList = new JSONArray();
+        try {
+            // Add each app to the list
+            for (AppInfo app : apps) {
+                JSONObject appJson = new JSONObject();
+                appJson.put("id", app.getId());
+                appJson.put("name", app.getName());
+                appList.put(appJson);
+            }
+
+            JSONObject whitelistJson = new JSONObject();
+            whitelistJson.put("calendar_enable", false);
+            whitelistJson.put("call_enable", false);
+            whitelistJson.put("msg_enable", false);
+            whitelistJson.put("ios_mail_enable", false);
+
+            JSONObject appObject = new JSONObject();
+            appObject.put("list", appList);
+            appObject.put("enable", true);
+
+            whitelistJson.put("app", appObject);
+
+            return whitelistJson.toString();
+        } catch (JSONException e) {
+            Log.e(TAG, "Error creating whitelist JSON: " + e.getMessage());
+            return "{}";
+        }
+    }
+
+    // Simple class to hold app info
+    class AppInfo {
+        private String id;
+        private String name;
+
+        public AppInfo(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public String getId() { return id; }
+        public String getName() { return name; }
     }
 
     // Helper function to split JSON into chunks
