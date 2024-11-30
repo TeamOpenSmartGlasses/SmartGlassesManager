@@ -66,6 +66,14 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private Handler heartbeatHandler = new Handler();
     private Runnable heartbeatRunnable;
 
+    //white list sender
+    private Handler whiteListHandler = new Handler();
+    private boolean whiteListedAlready = false;
+
+    //mic enable Handler
+    private Handler micEnableHandler = new Handler();
+    private boolean micEnabledAlready = false;
+
     //notification period sender
     private Handler notificationHandler = new Handler();
     private Runnable notificationRunnable;
@@ -116,7 +124,6 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 
                     BluetoothGattService uartService = gatt.getService(UART_SERVICE_UUID);
 
-
                     if (uartService != null) {
                         BluetoothGattCharacteristic txChar = uartService.getCharacteristic(UART_TX_CHAR_UUID);
                         BluetoothGattCharacteristic rxChar = uartService.getCharacteristic(UART_RX_CHAR_UUID);
@@ -154,14 +161,17 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         Log.d(TAG, "Sending 0xF4 Command");
                         sendDataSequentially(new byte[] {(byte) 0xF4, (byte) 0x01});
 
-                        //start heartbeat
-                        startHeartbeat();
-
                         // Start MIC streaming
-                        setMicEnabled(true); // Enable the MIC
+                        setMicEnabled(true, 300); // Enable the MIC
+
+                        //enable our AugmentOS notification key
+//                        sendWhiteListCommand(650);
 
                         //start sending notifications
-                        startPeriodicNotifications();
+//                        startPeriodicNotifications(4200);
+
+                        //start heartbeat
+                        startHeartbeat(12000);
                     } else {
                         Log.e(TAG, side + " glass UART service not found");
                     }
@@ -189,7 +199,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                             byte[] audioData = Arrays.copyOfRange(data, 2, data.length); // Extract audio data
 //                            Log.d(TAG, "Audio data received. Seq: " + seq + ", Data: " + Arrays.toString(audioData));
                         } else {
-                            Log.d(TAG, "Received non-audio response: " + bytesToHex(data));
+                            Log.d(TAG, "Received non-audio response: " + bytesToHex(data) + ", from: " + gatt.getDevice().getName());
                         }
 
                         // Check if it's a heartbeat response
@@ -260,6 +270,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                         startScan(BluetoothAdapter.getDefaultAdapter());
                     } else {
                         Log.d(TAG, "Both devices bonded. Proceeding with connections...");
+                        stopScan(BluetoothAdapter.getDefaultAdapter());
                         connectToGatt(leftDevice);
                         connectToGatt(rightDevice);
                     }
@@ -322,6 +333,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
             // Attempt GATT connection only after both sides are bonded
             if (isLeftBonded && isRightBonded) {
                 Log.d(TAG, "Both sides bonded. Ready to connect to GATT.");
+                stopScan(BluetoothAdapter.getDefaultAdapter());
                 attemptGattConnection(leftDevice);
                 attemptGattConnection(rightDevice);
             }
@@ -343,7 +355,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     private void startScan(BluetoothAdapter bluetoothAdapter) {
         bluetoothAdapter.startLeScan(leScanCallback);
         Log.d(TAG, "Started scanning for devices...");
-//        handler.postDelayed(() -> stopScan(bluetoothAdapter), 5000); // Stop scan after 5 seconds
+        handler.postDelayed(() -> stopScan(bluetoothAdapter), 60000); // Stop scan after 60 seconds
     }
 
     private void stopScan(BluetoothAdapter bluetoothAdapter) {
@@ -396,6 +408,10 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     }
 
     private void sendDataSequentially(byte[] data) {
+        sendDataSequentially(data, false);
+    }
+
+    private void sendDataSequentially(byte[] data, boolean onlyLeft) {
         if (stopper) return;
         stopper = true;
 
@@ -407,7 +423,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                     Thread.sleep(DELAY_BETWEEN_SENDS_MS);
                 }
 
-                if (rightGlassGatt != null && rightTxChar != null) {
+                if (!onlyLeft && rightGlassGatt != null && rightTxChar != null) {
                     rightTxChar.setValue(data);
                     rightGlassGatt.writeCharacteristic(rightTxChar);
                     Thread.sleep(DELAY_BETWEEN_SENDS_MS);
@@ -438,7 +454,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                 message,
                 (int) currentTime,  // Cast long to int to match Python
                 currentDate,        // Add the current date to the notification
-                "AugmentOS:" + notificationNum // display_name
+                "AugmentOS" // display_name
         );
 
         Notification notification = new Notification(ncsNotification, "Add");
@@ -544,11 +560,42 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
 //        for (byte[] chunk : chunks) {
 //            sendDataSequentially(chunk);
 //        }
+
+        if (!isConnected()) {
+            Log.d(TAG, "Cannot send notification: Not connected to glasses");
+            return;
+        }
+
+        // Example notification data (replace with your actual data)
+//        String json = createNotificationJson("com.augment.os", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
+        String json = createNotificationJson("com.even.test", title, "...", body);
+        Log.d(TAG, "the JSON to send: " + json);
+        List<byte[]> chunks = createNotificationChunks(json);
+//        Log.d(TAG, "THE CHUNKS:");
+//        Log.d(TAG, chunks.get(0).toString());
+//        Log.d(TAG, chunks.get(1).toString());
+        for (byte[] chunk : chunks) {
+            Log.d(TAG, "Sent chunk to glasses: " + bytesToUtf8(chunk));
+        }
+
+        // Send each chunk with a short sleep between each send
+        for (byte[] chunk : chunks) {
+            sendDataSequentially(chunk);
+
+            // Sleep for 100 milliseconds between sending each chunk
+            try {
+                Thread.sleep(150);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Log.d(TAG, "Sent simple reference card");
     }
 
     @Override
     public void destroy() {
-        setMicEnabled(false); // Disable the MIC
+        setMicEnabled(false, 0); // Disable the MIC
         if (leftGlassGatt != null) {
             leftGlassGatt.disconnect();
             leftGlassGatt.close();
@@ -634,7 +681,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         return buffer.array();
     }
 
-    private void startHeartbeat() {
+    private void startHeartbeat(int delay) {
         heartbeatRunnable = new Runnable() {
             @Override
             public void run() {
@@ -642,7 +689,33 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
                 heartbeatHandler.postDelayed(this, HEARTBEAT_INTERVAL_MS);
             }
         };
-        heartbeatHandler.post(heartbeatRunnable);
+        heartbeatHandler.postDelayed(heartbeatRunnable, delay);
+    }
+
+    private void sendWhiteListCommand(int delay) {
+        if (whiteListedAlready){
+            return;
+        }
+        whiteListedAlready = true;
+
+        Log.d(TAG, "Sending whitelist command");
+        whiteListHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                List<byte[]> chunks = getWhitelistChunks();
+                for (byte[] chunk : chunks) {
+                    Log.d(TAG, "Sending this chunk for white list:" + bytesToUtf8(chunk));
+                    sendDataSequentially(chunk, true);
+
+                    // Sleep for 100 milliseconds between sending each chunk
+                    try {
+                        Thread.sleep(150);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }, delay);
     }
 
     private void stopHeartbeat() {
@@ -680,25 +753,30 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
     }
 
     //microphone stuff
-    public void setMicEnabled(boolean enable) {
-        if (!isConnected()) {
-            Log.d(TAG, "Tryna start mic: Not connected to glasses");
-            return;
-        }
+    public void setMicEnabled(boolean enable, int delay) {
+        micEnableHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (!isConnected()) {
+                    Log.d(TAG, "Tryna start mic: Not connected to glasses");
+                    return;
+                }
 
-        byte command = 0x0E; // Command for MIC control
-        byte enableByte = (byte) (enable ? 1 : 0); // 1 to enable, 0 to disable
+                byte command = 0x0E; // Command for MIC control
+                byte enableByte = (byte) (enable ? 1 : 0); // 1 to enable, 0 to disable
 
-        ByteBuffer buffer = ByteBuffer.allocate(2);
-        buffer.put(command);
-        buffer.put(enableByte);
+                ByteBuffer buffer = ByteBuffer.allocate(2);
+                buffer.put(command);
+                buffer.put(enableByte);
 
-        sendDataSequentially(buffer.array());
-        Log.d(TAG, "Sent MIC command: " + bytesToHex(buffer.array()));
+                sendDataSequentially(buffer.array());
+                Log.d(TAG, "Sent MIC command: " + bytesToHex(buffer.array()));
+            }
+        }, delay);
     }
 
     //notifications
-    private void startPeriodicNotifications() {
+    private void startPeriodicNotifications(int delay) {
         if (notifysStarted){
             return;
         }
@@ -716,7 +794,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         };
 
         // Start the first notification after 5 seconds
-        notificationHandler.postDelayed(notificationRunnable, 3000);
+        notificationHandler.postDelayed(notificationRunnable, delay);
     }
 
     private void sendPeriodicNotification() {
@@ -726,6 +804,7 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
 
         // Example notification data (replace with your actual data)
+//        String json = createNotificationJson("com.augment.os", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
         String json = createNotificationJson("com.even.test", "QuestionAnswerer", "How much caffeine in dark chocolate?", "25 to 50 grams per piece");
         Log.d(TAG, "the JSON to send: " + json);
         List<byte[]> chunks = createNotificationChunks(json);
@@ -762,4 +841,45 @@ public class EvenRealitiesG1SGC extends SmartGlassesCommunicator {
         }
     }
 
+    // handle white list stuff
+    private static final int WHITELIST_CMD = 0x04; // Command ID for whitelist
+    public List<byte[]> getWhitelistChunks() {
+        // Define the hardcoded whitelist JSON
+        String whitelistJson = "[{\"id\": \"com.augment.os\", \"name\": \"AugmentOS\"}]";
+
+        Log.d(TAG, "Creating chunks for hardcoded whitelist: " + whitelistJson);
+
+        // Convert JSON to bytes and split into chunks
+        return createWhitelistChunks(whitelistJson);
+    }
+
+    // Helper function to split JSON into chunks
+    private List<byte[]> createWhitelistChunks(String json) {
+        final int MAX_CHUNK_SIZE = 180 - 4; // Reserve space for the header
+        byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
+        int totalChunks = (int) Math.ceil((double) jsonBytes.length / MAX_CHUNK_SIZE);
+
+        List<byte[]> chunks = new ArrayList<>();
+        for (int i = 0; i < totalChunks; i++) {
+            int start = i * MAX_CHUNK_SIZE;
+            int end = Math.min(start + MAX_CHUNK_SIZE, jsonBytes.length);
+            byte[] payloadChunk = Arrays.copyOfRange(jsonBytes, start, end);
+
+            // Create the header: [WHITELIST_CMD, total_chunks, chunk_index]
+            byte[] header = new byte[] {
+                    (byte) WHITELIST_CMD,  // Command ID
+                    (byte) totalChunks,   // Total number of chunks
+                    (byte) i              // Current chunk index
+            };
+
+            // Combine header and payload
+            ByteBuffer buffer = ByteBuffer.allocate(header.length + payloadChunk.length);
+            buffer.put(header);
+            buffer.put(payloadChunk);
+
+            chunks.add(buffer.array());
+        }
+
+        return chunks;
+    }
 }
